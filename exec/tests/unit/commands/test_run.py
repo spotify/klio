@@ -464,7 +464,7 @@ def test_set_google_cloud_options(
         "klio={}".format(klio_lib_version_clean),
     ]
     if user:
-        exp_labels.append("deployed_by={}".format(user))
+        exp_labels.append("deployed_by={}".format(user).lower())
     if klio_cli_version:
         exp_labels.append("klio-cli={}".format(klio_cli_version_clean))
     assert sorted(exp_labels) == sorted(actual_gcp_opts.labels)

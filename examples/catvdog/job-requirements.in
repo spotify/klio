@@ -1,0 +1,6 @@
+apache-beam[gcp]==2.22.0
+Keras
+tensorflow
+livelossplot
+efficientnet
+numpy

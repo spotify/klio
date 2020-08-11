@@ -1,0 +1,34 @@
+job_name: catvdog
+pipeline_options:
+  streaming: True
+  update: False
+  worker_harness_container_image: gcr.io/$GCP_PROJECT/catvdog-worker
+  experiments:
+    - beam_fn_api
+  project: $GCP_PROJECT
+  region: europe-west1
+  staging_location: gs://$GCP_PROJECT-dataflow-tmp/catvdog/staging
+  temp_location: gs://$GCP_PROJECT-dataflow-tmp/catvdog/temp
+  num_workers: 2
+  max_num_workers: 2
+  autoscaling_algorithm: NONE
+  disk_size_gb: 32
+  worker_machine_type: n1-standard-2
+  runner: DataflowRunner
+job_config:
+  allow_non_klio_messages: False
+  events:
+    inputs:
+      - type: pubsub
+        subscription: projects/$GCP_PROJECT/subscriptions/catvdog-input-catvdog
+    outputs:
+      - type: pubsub
+        topic: projects/$GCP_PROJECT/topics/catvdog-output
+  data:
+    inputs:
+      - type: gcs
+        location: gs://$GCP_PROJECT-input/catvdog
+    outputs:
+      - type: gcs
+        location: gs://$GCP_PROJECT-output/catvdog
+  model_file: model.h5  # relative to job directory

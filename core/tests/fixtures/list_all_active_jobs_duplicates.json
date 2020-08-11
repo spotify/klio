@@ -1,0 +1,40 @@
+{
+  "jobs": [
+    {
+      "id": "2019-03-06_11_58_18-10135744837917459861",
+      "projectId": "sigint",
+      "name": "benchmark-beats",
+      "type": "JOB_TYPE_STREAMING",
+      "currentState": "JOB_STATE_RUNNING",
+      "currentStateTime": "2019-03-06T19:58:27.354367Z",
+      "createTime": "2019-03-06T19:58:19.243085Z",
+      "location": "europe-west1",
+      "jobMetadata": {
+        "sdkVersion": {
+          "version": "2.11.0",
+          "versionDisplayName": "Apache Beam Python 2.7 SDK",
+          "sdkSupportStatus": "SUPPORTED"
+        }
+      },
+      "startTime": "2019-03-06T19:58:19.243085Z"
+    },
+    {
+      "id": "2019-03-06_11_58_18-10135744837917459861",
+      "projectId": "sigint",
+      "name": "benchmark-beats",
+      "type": "JOB_TYPE_STREAMING",
+      "currentState": "JOB_STATE_RUNNING",
+      "currentStateTime": "2019-03-06T19:58:27.354367Z",
+      "createTime": "2019-03-06T19:58:19.243085Z",
+      "location": "us-central1",
+      "jobMetadata": {
+        "sdkVersion": {
+          "version": "2.11.0",
+          "versionDisplayName": "Apache Beam Python 2.7 SDK",
+          "sdkSupportStatus": "SUPPORTED"
+        }
+      },
+      "startTime": "2019-03-06T19:58:19.243085Z"
+    }
+  ]
+}

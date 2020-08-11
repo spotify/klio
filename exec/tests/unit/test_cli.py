@@ -1,0 +1,789 @@
+# -*- coding: utf-8 -*-
+# Copyright 2019 Spotify AB
+
+from __future__ import absolute_import
+
+import os
+
+import click
+import pytest
+import yaml
+
+from click import testing
+
+from klio_core import config as kconfig
+
+from klio_exec import cli
+from klio_exec.commands import profile
+
+
+@pytest.fixture
+def mock_os_getcwd(monkeypatch):
+    test_dir = "/test/dir"
+    monkeypatch.setattr(os, "getcwd", lambda: test_dir)
+    return test_dir
+
+
+@pytest.fixture
+def cli_runner():
+    return testing.CliRunner()
+
+
+@pytest.fixture
+def config():
+    return {
+        "job_name": "klio-job-name",
+        "job_config": {
+            "inputs": [
+                {
+                    "data_location": "gs://test-in-data",
+                    "topic": "test-in-topic",
+                    "subscription": "test-sub",
+                }
+            ],
+            "outputs": [
+                {
+                    "data_location": "gs://test-out-data",
+                    "topic": "test-out-topic",
+                }
+            ],
+        },
+        "pipeline_options": {
+            "streaming": True,
+            "update": False,
+            "worker_harness_container_image": "a-worker-image",
+            "experiments": ["beam_fn_api"],
+            "project": "test-gcp-project",
+            "zone": "europe-west1-c",
+            "region": "europe-west1",
+            "staging_location": "gs://test-gcp-project-dataflow-tmp/staging",
+            "temp_location": "gs://test-gcp-project-dataflow-tmp/temp",
+            "max_num_workers": 2,
+            "disk_size_gb": 32,
+            "worker_machine_type": "n1-standard-2",
+            "subnetwork": "some/path",
+            "runner": "DataflowRunner",
+        },
+    }
+
+
+@pytest.fixture
+def klio_config(config):
+    return kconfig.KlioConfig(config)
+
+
+@pytest.fixture
+def patch_get_config(monkeypatch, config):
+    monkeypatch.setattr(cli, "_get_config", lambda x: config)
+
+
+@pytest.fixture
+def patch_klio_config(monkeypatch, klio_config):
+    monkeypatch.setattr(cli.config, "KlioConfig", lambda x: klio_config)
+
+
+@pytest.fixture
+def patch_run_basic_pipeline(mocker, monkeypatch):
+    mock = mocker.Mock()
+    monkeypatch.setattr(cli.run.KlioPipeline, "run", mock)
+    return mock
+
+
+@pytest.fixture
+def mock_compare_runtime_to_buildtime_config(mocker, monkeypatch):
+    mock = mocker.Mock()
+    monkeypatch.setattr(cli, "_compare_runtime_to_buildtime_config", mock)
+    return mock
+
+
+@pytest.mark.parametrize(
+    "ret_command,command_name,exp_get_command_calls",
+    (
+        (True, "some-command", 1),
+        (False, "run-basic", 2),
+        (None, "some-command", 1),
+    ),
+)
+def test_aliased_run_get_command(
+    ret_command, command_name, exp_get_command_calls, mocker, monkeypatch
+):
+    mock_get_command = mocker.Mock()
+
+    ret_command_value = None
+    if ret_command:
+        ret_command_value = mocker.Mock()
+    mock_get_command.return_value = ret_command_value
+    monkeypatch.setattr(cli.click.Group, "get_command", mock_get_command)
+
+    ar = cli.AliasedRun()
+    actual_ret_command = ar.get_command({}, command_name)
+
+    assert ret_command_value == actual_ret_command
+    assert exp_get_command_calls == mock_get_command.call_count
+
+    if command_name == "run-basic":
+        assert [
+            mocker.call(ar, {}, "run-basic"),
+            mocker.call(ar, {}, "run"),
+        ] == mock_get_command.call_args_list
+    else:
+        assert mocker.call(ar, {}, command_name) == mock_get_command.call_args
+
+
+def test_get_config(tmpdir, config):
+    tmp_config = tmpdir.mkdir("klio-exec-testing").join("klio-job.yaml")
+    tmp_config.write(yaml.dump(config))
+
+    ret_config = cli._get_config(str(tmp_config))
+    assert config == ret_config
+
+
+def test_get_config_loaded_safely(tmpdir, config, mocker, monkeypatch):
+    mock_safe_load = mocker.Mock()
+    mock_safe_load.return_value = config
+    monkeypatch.setattr(cli.yaml, "safe_load", mock_safe_load)
+    tmp_config = tmpdir.mkdir("klio-exec-testing").join("klio-job.yaml")
+
+    open_name = "klio_exec.cli.open"
+    config_str = yaml.dump(config)
+    m_open = mocker.mock_open(read_data=config_str)
+    m = mocker.patch(open_name, m_open)
+
+    cli._get_config(tmp_config.strpath)
+    m.assert_called_once_with(tmp_config.strpath)
+    mock_safe_load.assert_called_once_with(m_open.return_value)
+
+
+def test_get_config_raises(tmpdir, caplog):
+    tmp_config = tmpdir.mkdir("klio-exec-testing")
+
+    does_not_exist = os.path.join(str(tmp_config), "klio-config.yaml")
+    with pytest.raises(SystemExit):
+        cli._get_config(does_not_exist)
+
+    assert 1 == len(caplog.records)
+
+
+@pytest.mark.parametrize(
+    "addl_runtime_data,buildtime_exists,exp_retval",
+    (
+        ({}, True, True),
+        ({"baz": "bla"}, True, False),
+        ({}, False, True),
+        ({"baz": "bla"}, False, True),  # not possible but CYA
+    ),
+)
+def test_compare_runtime_to_buildtime_config(
+    mocker, monkeypatch, addl_runtime_data, buildtime_exists, exp_retval
+):
+    monkeypatch.setattr(os.path, "exists", lambda x: buildtime_exists)
+
+    buildtime_data = {"foo": "bar"}
+    runtime_data = buildtime_data.copy()
+    runtime_data.update(addl_runtime_data)
+
+    # multiple `open` mocks: https://stackoverflow.com/a/26830397/1579977
+    open_name = "klio_exec.cli.open"
+    buildtime_data_str = yaml.dump(buildtime_data).encode("utf-8")
+    runtime_data_str = yaml.dump(runtime_data).encode("utf-8")
+
+    mock_open_buildtime = mocker.mock_open(read_data=buildtime_data_str)
+    mock_open_runtime = mocker.mock_open(read_data=runtime_data_str)
+    mock_open = mocker.patch(open_name, mock_open_buildtime)
+
+    side_effect = (
+        mock_open_runtime.return_value,
+        mock_open_buildtime.return_value,
+    )
+    mock_open.side_effect = side_effect
+
+    act_retval = cli._compare_runtime_to_buildtime_config("klio-job.yaml")
+    assert exp_retval == act_retval
+
+
+@pytest.mark.parametrize("blocking", (True, False, None))
+@pytest.mark.parametrize(
+    "image_tag,direct_runner,update",
+    (
+        (None, True, False),
+        (None, False, True),
+        (None, False, None),
+        ("a-tag", True, False),
+        ("a-tag", False, False),
+        ("a-tag", True, True),  # irrelevant, but CYA
+    ),
+)
+def test_run_pipeline(
+    image_tag,
+    direct_runner,
+    update,
+    blocking,
+    cli_runner,
+    klio_config,
+    patch_get_config,
+    patch_run_basic_pipeline,
+    patch_klio_config,
+    mock_compare_runtime_to_buildtime_config,
+):
+    mock_compare_runtime_to_buildtime_config.return_value = True
+    runtime_conf = cli.RuntimeConfig(
+        image_tag=None, direct_runner=False, update=None, blocking=None
+    )
+    cli_inputs = []
+    if image_tag:
+        cli_inputs.extend(["--image-tag", image_tag])
+        runtime_conf = runtime_conf._replace(image_tag=image_tag)
+    if direct_runner:
+        cli_inputs.append("--direct-runner")
+        runtime_conf = runtime_conf._replace(direct_runner=True)
+    if update:
+        cli_inputs.append("--update")
+        runtime_conf = runtime_conf._replace(update=True)
+    if update is False:
+        cli_inputs.append("--no-update")
+    if not update:  # if none or false
+        runtime_conf = runtime_conf._replace(update=False)
+    if blocking:
+        cli_inputs.append("--blocking")
+        runtime_conf._replace(blocking=True)
+    if blocking is False:
+        cli_inputs.append("--no-blocking")
+    if not blocking:
+        runtime_conf._replace(blocking=False)
+
+    result = cli_runner.invoke(cli.run_pipeline, cli_inputs)
+    assert 0 == result.exit_code
+
+    patch_run_basic_pipeline.assert_called_once_with()
+    mock_compare_runtime_to_buildtime_config.assert_called_once_with(
+        "klio-job.yaml"
+    )
+
+
+@pytest.mark.parametrize(
+    "config_file_override,compare_conf_retval",
+    (
+        (None, True),
+        (None, False),
+        ("klio-job2.yaml", True),
+        ("klio-job2.yaml", False),
+    ),
+)
+def test_run_pipeline_conf_override(
+    config_file_override,
+    compare_conf_retval,
+    cli_runner,
+    config,
+    klio_config,
+    patch_get_config,
+    patch_run_basic_pipeline,
+    patch_klio_config,
+    mock_compare_runtime_to_buildtime_config,
+    caplog,
+    tmpdir,
+    monkeypatch,
+):
+    mock_compare_runtime_to_buildtime_config.return_value = compare_conf_retval
+
+    cli_inputs = []
+
+    temp_dir = tmpdir.mkdir("testing")
+    temp_dir_str = str(temp_dir)
+    monkeypatch.setattr(os, "getcwd", lambda: temp_dir_str)
+
+    exp_conf_file = "klio-job.yaml"
+    if config_file_override:
+        exp_conf_file = os.path.join(temp_dir_str, config_file_override)
+        cli_inputs.extend(["--config-file", exp_conf_file])
+
+        # create a tmp file else click will complain it doesn't exist
+        with open(exp_conf_file, "w") as f:
+            yaml.dump(config, f)
+
+    result = cli_runner.invoke(cli.run_pipeline, cli_inputs)
+    assert 0 == result.exit_code
+
+    patch_run_basic_pipeline.assert_called_once_with()
+
+    mock_compare_runtime_to_buildtime_config.assert_called_once_with(
+        exp_conf_file
+    )
+
+    if compare_conf_retval is False:
+        assert 1 == len(caplog.records)
+        assert "WARNING" == caplog.records[0].levelname
+    else:
+        assert 0 == len(caplog.records)
+
+
+@pytest.mark.parametrize("config_file_override", (None, "klio-job2.yaml"))
+def test_stop_job(
+    config_file_override,
+    mocker,
+    monkeypatch,
+    config,
+    klio_config,
+    patch_klio_config,
+    cli_runner,
+    tmpdir,
+):
+    mock_stop = mocker.Mock()
+    monkeypatch.setattr(cli.stop, "stop", mock_stop)
+
+    mock_get_config = mocker.Mock()
+    monkeypatch.setattr(cli, "_get_config", mock_get_config)
+
+    cli_inputs = []
+
+    temp_dir = tmpdir.mkdir("testing")
+    temp_dir_str = str(temp_dir)
+    monkeypatch.setattr(os, "getcwd", lambda: temp_dir_str)
+
+    exp_file = os.path.join(temp_dir_str, "klio-job.yaml")
+    if config_file_override:
+        # create a tmp file else click will complain it doesn't exist
+        exp_file = os.path.join(temp_dir_str, config_file_override)
+        cli_inputs.extend(["--config-file", exp_file])
+        with open(exp_file, "w") as f:
+            yaml.dump(config, f)
+
+    result = cli_runner.invoke(cli.stop_job, cli_inputs)
+    assert 0 == result.exit_code
+
+    mock_stop.assert_called_once_with(klio_config, "cancel")
+    mock_get_config.assert_called_once_with(exp_file)
+
+
+@pytest.mark.parametrize(
+    "pytest_args",
+    [
+        [],
+        ["test_file.py::test_foo"],
+        ["-s -h"],
+        ["test_file.py::test_foo test:file_.py::test_foo2 -s"],
+    ],
+)
+def test_test_job(pytest_args, mocker, monkeypatch, cli_runner):
+    mock_test = mocker.Mock()
+    monkeypatch.setattr(pytest, "main", mock_test)
+    mock_test.return_value = 0
+
+    result = cli_runner.invoke(cli.test_job, pytest_args)
+
+    assert "true" == os.environ["KLIO_TEST_MODE"]
+    assert 0 == result.exit_code
+
+    mock_test.assert_called_once_with(pytest_args)
+
+
+@pytest.mark.parametrize(
+    "pytest_args",
+    [
+        [],
+        ["test_file.py::test_foo"],
+        ["-s -h"],
+        ["test_file.py::test_foo test:file_.py::test_foo2 -s"],
+    ],
+)
+def test_test_job_raises(pytest_args, mocker, monkeypatch, cli_runner):
+    mock_test = mocker.Mock()
+    mock_test.return_value = 1
+    monkeypatch.setattr(pytest, "main", mock_test)
+
+    result = cli_runner.invoke(cli.test_job, pytest_args)
+
+    assert 1 == result.exit_code
+
+    assert "true" == os.environ["KLIO_TEST_MODE"]
+    mock_test.assert_called_once_with(pytest_args)
+
+
+@pytest.mark.parametrize(
+    "input_file,entity_ids,exp_raise,exp_msg",
+    (
+        ("input.txt", (), False, None),
+        (None, ("foo", "bar"), False, None),
+        ("input.txt", ("foo", "bar"), True, "Illegal usage"),
+        (None, (), True, "Must provide"),
+    ),
+)
+def test_require_profile_input_data(
+    input_file, entity_ids, exp_raise, exp_msg
+):
+    if exp_raise:
+        with pytest.raises(click.UsageError, match=exp_msg):
+            cli._require_profile_input_data(input_file, entity_ids)
+    else:
+        ret = cli._require_profile_input_data(input_file, entity_ids)
+        assert ret is None
+
+
+@pytest.mark.parametrize("input_file", (None, "input-data.txt"))
+@pytest.mark.parametrize("show_logs", (True, False))
+def test_run_profile_pipeline(input_file, show_logs, cli_runner, mocker):
+    mock_req_prof_input_data = mocker.patch.object(
+        cli, "_require_profile_input_data"
+    )
+    mock_klio_pipeline = mocker.patch.object(profile, "KlioPipeline")
+    mock_logging_disable = mocker.patch.object(cli.logging, "disable")
+
+    cli_inputs = ["run-pipeline"]
+    if show_logs:
+        cli_inputs.append("--show-logs")
+
+    with cli_runner.isolated_filesystem():
+        if input_file:
+            with open(input_file, "w") as in_f:
+                in_f.write("foo\n")
+            cli_inputs.extend(["--input-file", input_file])
+
+        result = cli_runner.invoke(cli.profile_job, cli_inputs)
+
+    assert "true" == os.environ["KLIO_TEST_MODE"]
+    assert 0 == result.exit_code
+
+    mock_req_prof_input_data.assert_called_once_with(input_file, ())
+    mock_klio_pipeline.assert_called_once_with(
+        input_file=input_file, entity_ids=()
+    )
+    mock_klio_pipeline.return_value.profile.assert_called_once_with(what="run")
+
+    if not show_logs:
+        mock_logging_disable.assert_called_once_with(cli.logging.CRITICAL)
+    else:
+        mock_logging_disable.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "interval,inc_child,multiproc", ((None, False, False), (0.5, True, True))
+)
+@pytest.mark.parametrize(
+    "plot_graph,show_logs", ((True, True), (False, False))
+)
+@pytest.mark.parametrize(
+    "input_file,output_file", ((None, None), ("input.txt", "output.txt"))
+)
+@pytest.mark.parametrize("entity_ids", (None, ("foo", "bar")))
+def test_profile_memory(
+    entity_ids,
+    input_file,
+    output_file,
+    plot_graph,
+    show_logs,
+    interval,
+    inc_child,
+    multiproc,
+    cli_runner,
+    mocker,
+):
+    mock_req_prof_input_data = mocker.patch.object(
+        cli, "_require_profile_input_data"
+    )
+    mock_klio_pipeline = mocker.patch.object(profile, "KlioPipeline")
+    if not plot_graph:
+        # it otherwise returns a mock, which evaluates to True
+        mock_klio_pipeline.return_value.profile.return_value = None
+
+    cli_inputs = ["memory"]
+    if interval:
+        cli_inputs.extend(["--interval", interval])
+    if inc_child:
+        cli_inputs.append("--include-children")
+    if multiproc:
+        cli_inputs.append("--multiprocess")
+    if plot_graph:
+        cli_inputs.append("--plot-graph")
+    if show_logs:
+        cli_inputs.append("--show-logs")
+    if output_file:
+        cli_inputs.extend(["--output-file", output_file])
+    if entity_ids:
+        cli_inputs.extend(entity_ids)
+
+    with cli_runner.isolated_filesystem():
+        if input_file:
+            with open(input_file, "w") as in_f:
+                in_f.write("foo\n")
+            cli_inputs.extend(["--input-file", input_file])
+
+        result = cli_runner.invoke(cli.profile_job, cli_inputs)
+
+    assert "true" == os.environ["KLIO_TEST_MODE"]
+    assert 0 == result.exit_code
+
+    mock_req_prof_input_data.assert_called_once_with(
+        input_file, entity_ids or ()
+    )
+    mock_klio_pipeline.assert_called_once_with(
+        input_file=input_file,
+        output_file=output_file,
+        entity_ids=entity_ids or (),
+    )
+    exp_kwargs = {
+        "include_children": inc_child,
+        "multiprocess": multiproc,
+        "interval": interval or 0.1,
+        "show_logs": show_logs,
+        "plot_graph": plot_graph,
+    }
+
+    mock_klio_pipeline.return_value.profile.assert_called_once_with(
+        what="memory", **exp_kwargs
+    )
+    if plot_graph:
+        assert "Memory plot graph generated at" in result.output
+    else:
+        assert "" == result.output
+
+
+@pytest.mark.parametrize("maximum,per_element", ((True, False), (False, True)))
+@pytest.mark.parametrize("show_logs", (True, False))
+@pytest.mark.parametrize(
+    "input_file,output_file", ((None, None), ("input.txt", "output.txt"))
+)
+@pytest.mark.parametrize("entity_ids", (None, ("foo", "bar")))
+def test_profile_memory_per_line(
+    entity_ids,
+    input_file,
+    output_file,
+    maximum,
+    per_element,
+    show_logs,
+    cli_runner,
+    mocker,
+):
+    mock_req_prof_input_data = mocker.patch.object(
+        cli, "_require_profile_input_data"
+    )
+    mock_klio_pipeline = mocker.patch.object(profile, "KlioPipeline")
+    mock_logging_disable = mocker.patch.object(cli.logging, "disable")
+
+    cli_inputs = ["memory-per-line"]
+
+    if maximum:
+        cli_inputs.append("--maximum")
+    if per_element:
+        cli_inputs.append("--per-element")
+    if show_logs:
+        cli_inputs.append("--show-logs")
+    if output_file:
+        cli_inputs.extend(["--output-file", output_file])
+    if entity_ids:
+        cli_inputs.extend(entity_ids)
+
+    with cli_runner.isolated_filesystem():
+        if input_file:
+            with open(input_file, "w") as in_f:
+                in_f.write("foo\n")
+            cli_inputs.extend(["--input-file", input_file])
+
+        result = cli_runner.invoke(cli.profile_job, cli_inputs)
+
+    assert 0 == result.exit_code
+    assert "true" == os.environ["KLIO_TEST_MODE"]
+
+    if not show_logs:
+        mock_logging_disable.assert_called_once_with(cli.logging.CRITICAL)
+    else:
+        mock_logging_disable.assert_not_called()
+
+    mock_req_prof_input_data.assert_called_once_with(
+        input_file, entity_ids or ()
+    )
+    mock_klio_pipeline.assert_called_once_with(
+        input_file=input_file,
+        output_file=output_file,
+        entity_ids=entity_ids or (),
+    )
+
+    mock_klio_pipeline.return_value.profile.assert_called_once_with(
+        what="memory_per_line", get_maximum=maximum
+    )
+
+
+@pytest.mark.parametrize(
+    "interval,plot_graph,show_logs", ((None, True, True), (0.5, False, False))
+)
+@pytest.mark.parametrize(
+    "input_file,output_file", ((None, None), ("input.txt", "output.txt"))
+)
+@pytest.mark.parametrize("entity_ids", (None, ("foo", "bar")))
+def test_profile_cpu(
+    entity_ids,
+    input_file,
+    output_file,
+    plot_graph,
+    show_logs,
+    interval,
+    cli_runner,
+    mocker,
+):
+    mock_req_prof_input_data = mocker.patch.object(
+        cli, "_require_profile_input_data"
+    )
+    mock_klio_pipeline = mocker.patch.object(profile, "KlioPipeline")
+    if not plot_graph:
+        # it otherwise returns a mock, which evaluates to True
+        mock_klio_pipeline.return_value.profile.return_value = None
+
+    cli_inputs = ["cpu"]
+    if interval:
+        cli_inputs.extend(["--interval", interval])
+    if plot_graph:
+        cli_inputs.append("--plot-graph")
+    if show_logs:
+        cli_inputs.append("--show-logs")
+    if output_file:
+        cli_inputs.extend(["--output-file", output_file])
+    if entity_ids:
+        cli_inputs.extend(entity_ids)
+
+    with cli_runner.isolated_filesystem():
+        if input_file:
+            with open(input_file, "w") as in_f:
+                in_f.write("foo\n")
+            cli_inputs.extend(["--input-file", input_file])
+
+        result = cli_runner.invoke(cli.profile_job, cli_inputs)
+
+    assert "true" == os.environ["KLIO_TEST_MODE"]
+    assert 0 == result.exit_code
+
+    mock_req_prof_input_data.assert_called_once_with(
+        input_file, entity_ids or ()
+    )
+    mock_klio_pipeline.assert_called_once_with(
+        input_file=input_file,
+        output_file=output_file,
+        entity_ids=entity_ids or (),
+    )
+    exp_kwargs = {
+        "interval": interval or 0.1,
+        "show_logs": show_logs,
+        "plot_graph": plot_graph,
+    }
+
+    mock_klio_pipeline.return_value.profile.assert_called_once_with(
+        what="cpu", **exp_kwargs
+    )
+    if plot_graph:
+        assert "CPU plot graph generated at" in result.output
+    else:
+        assert "" == result.output
+
+
+@pytest.mark.parametrize("iterations,show_logs", ((None, True), (5, False)))
+@pytest.mark.parametrize(
+    "input_file,output_file", ((None, None), ("input.txt", "output.txt"))
+)
+@pytest.mark.parametrize("entity_ids", (None, ("foo", "bar")))
+def test_profile_wall_time(
+    entity_ids,
+    input_file,
+    output_file,
+    iterations,
+    show_logs,
+    cli_runner,
+    mocker,
+):
+    mock_req_prof_input_data = mocker.patch.object(
+        cli, "_require_profile_input_data"
+    )
+    mock_klio_pipeline = mocker.patch.object(profile, "KlioPipeline")
+    mock_logging_disable = mocker.patch.object(cli.logging, "disable")
+
+    cli_inputs = ["timeit"]
+
+    if iterations:
+        cli_inputs.extend(["--iterations", str(iterations)])
+    if show_logs:
+        cli_inputs.append("--show-logs")
+    if output_file:
+        cli_inputs.extend(["--output-file", output_file])
+    if entity_ids:
+        cli_inputs.extend(entity_ids)
+
+    with cli_runner.isolated_filesystem():
+        if input_file:
+            with open(input_file, "w") as in_f:
+                in_f.write("foo\n")
+            cli_inputs.extend(["--input-file", input_file])
+
+        result = cli_runner.invoke(cli.profile_job, cli_inputs)
+
+    assert 0 == result.exit_code
+    assert "true" == os.environ["KLIO_TEST_MODE"]
+
+    if not show_logs:
+        mock_logging_disable.assert_called_once_with(cli.logging.CRITICAL)
+    else:
+        mock_logging_disable.assert_not_called()
+
+    mock_req_prof_input_data.assert_called_once_with(
+        input_file, entity_ids or ()
+    )
+    mock_klio_pipeline.assert_called_once_with(
+        input_file=input_file,
+        output_file=output_file,
+        entity_ids=entity_ids or (),
+    )
+
+    exp_iterations = iterations or 10
+    mock_klio_pipeline.return_value.profile.assert_called_once_with(
+        what="timeit", iterations=exp_iterations
+    )
+
+
+@pytest.mark.parametrize("config_file", (None, "klio-job2.yaml"))
+@pytest.mark.parametrize("list_steps", (True, False))
+def test_audit_job(
+    list_steps,
+    config_file,
+    patch_get_config,
+    cli_runner,
+    tmpdir,
+    mocker,
+    monkeypatch,
+    mock_terminal_writer,
+):
+    test_dir = tmpdir.mkdir("testing")
+    monkeypatch.setattr(os, "getcwd", lambda: str(test_dir))
+    mock_audit = mocker.Mock()
+    monkeypatch.setattr(cli.audit, "audit", mock_audit)
+    mock_klio_config = mocker.Mock()
+    monkeypatch.setattr(cli.config, "KlioConfig", mock_klio_config)
+
+    # mocking out what audit.list_audit_steps calls, rather than the func
+    # itself since it is a little difficult to patch directly (it's a
+    # callback in a decorator, where it gets evaluated at import time, not
+    # runtime)
+    mock_print_plugins = mocker.Mock()
+    monkeypatch.setattr(
+        cli.audit.plugin_utils, "print_plugins", mock_print_plugins
+    )
+
+    cli_inputs = []
+    if list_steps:
+        cli_inputs.append("--list")
+    if config_file:
+        path = test_dir.join(config_file)
+        path.write("foo")
+        cli_inputs.extend(["--config-file", str(path)])
+
+    ret = cli_runner.invoke(cli.audit_job, cli_inputs)
+
+    assert 0 == ret.exit_code
+    if not list_steps:
+        mock_terminal_writer.sep.assert_not_called()
+        mock_print_plugins.assert_not_called()
+        assert "true" == os.environ["KLIO_TEST_MODE"]
+        mock_audit.assert_called_once_with(
+            str(test_dir), mock_klio_config.return_value
+        )
+    else:
+        # call args are already tested in test_audit.py::test_list_audit_steps
+        assert 1 == mock_terminal_writer.sep.call_count
+        # difficult to actually patch the click context that's passed into the
+        # callback; let's just care that it's actually called for now
+        assert 1 == mock_print_plugins.call_count
+        mock_audit.assert_not_called()

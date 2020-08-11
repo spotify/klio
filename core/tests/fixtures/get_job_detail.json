@@ -1,0 +1,762 @@
+{
+  "id": "2019-03-06_11_58_18-10135744837917459861",
+  "projectId": "sigint",
+  "name": "benchmark-beats",
+  "type": "JOB_TYPE_STREAMING",
+  "environment": {
+    "tempStoragePrefix": "storage.googleapis.com/sigint-dataflow-tmp/benchmark/beats/temp/benchmark-beats.1551902284.405789",
+    "clusterManagerApiService": "compute.googleapis.com",
+    "experiments": [
+      "beam_fn_api",
+      "no_use_multiple_sdk_containers",
+      "runner_harness_container_image=gcr.io/cloud-dataflow/v1beta3/harness:2.11.0"
+    ],
+    "workerPools": [
+      {
+        "kind": "harness",
+        "numWorkers": 200,
+        "packages": [
+          {
+            "name": "pickled_main_session",
+            "location": "storage.googleapis.com/sigint-dataflow-tmp/benchmark/beats/staging/benchmark-beats.1551902284.405789/pickled_main_session"
+          },
+          {
+            "name": "dataflow_python_sdk.tar",
+            "location": "storage.googleapis.com/sigint-dataflow-tmp/benchmark/beats/staging/benchmark-beats.1551902284.405789/dataflow_python_sdk.tar"
+          },
+          {
+            "name": "apache_beam-2.11.0-cp27-cp27mu-manylinux1_x86_64.whl",
+            "location": "storage.googleapis.com/sigint-dataflow-tmp/benchmark/beats/staging/benchmark-beats.1551902284.405789/apache_beam-2.11.0-cp27-cp27mu-manylinux1_x86_64.whl"
+          }
+        ],
+        "machineType": "n1-highmem-16",
+        "teardownPolicy": "TEARDOWN_ALWAYS",
+        "diskSizeGb": 20,
+        "zone": "europe-west1-c",
+        "onHostMaintenance": "MIGRATE",
+        "dataDisks": [
+          {
+            "sizeGb": 10
+          }
+        ],
+        "autoscalingSettings": {
+          "maxNumWorkers": 200
+        },
+        "poolArgs": {},
+        "network": "default",
+        "workerHarnessContainerImage": "gcr.io/sigint/benchmark-beats-worker",
+        "subnetwork": "https://www.googleapis.com/compute/v1/projects/xpn-master/regions/europe-west1/subnetworks/xpn-euw1"
+      }
+    ],
+    "userAgent": {
+      "name": "Apache Beam Python 2.7 SDK",
+      "version": "2.11.0"
+    },
+    "version": {
+      "major": "7",
+      "job_type": "FNAPI_STREAMING"
+    },
+    "dataset": "bigquery.googleapis.com/cloud_dataflow",
+    "sdkPipelineOptions": {
+      "options": {
+        "no_auth": false,
+        "profile_sample_rate": 1,
+        "machine_type": "n1-highmem-16",
+        "pipeline_type_check": true,
+        "experiments": [
+          "beam_fn_api",
+          "no_use_multiple_sdk_containers",
+          "runner_harness_container_image=gcr.io/cloud-dataflow/v1beta3/harness:2.11.0"
+        ],
+        "num_workers": 200,
+        "profile_memory": false,
+        "update": false,
+        "dry_run": false,
+        "direct_runner_bundle_repeat": 0,
+        "dataflow_endpoint": "https://dataflow.googleapis.com",
+        "enable_streaming_engine": false,
+        "region": "europe-west1",
+        "disk_size_gb": 20,
+        "sdk_location": "default",
+        "pipelineUrl": "gs://sigint-dataflow-tmp/benchmark/beats/staging/benchmark-beats.1551902284.405789/pipeline.pb",
+        "job_name": "benchmark-beats",
+        "zone": "europe-west1-c",
+        "save_main_session": true,
+        "runtime_type_check": false,
+        "direct_runner_use_stacked_bundle": true,
+        "runner": "DataflowRunner",
+        "project": "sigint",
+        "profile_cpu": false,
+        "worker_harness_container_image": "gcr.io/sigint/benchmark-beats-worker",
+        "max_num_workers": 200,
+        "beam_plugins": [
+          "apache_beam.io.filesystem.FileSystem",
+          "apache_beam.io.hadoopfilesystem.HadoopFileSystem",
+          "apache_beam.io.localfilesystem.LocalFileSystem",
+          "apache_beam.io.gcp.gcsfilesystem.GCSFileSystem"
+        ],
+        "temp_location": "gs://sigint-dataflow-tmp/benchmark/beats/temp/benchmark-beats.1551902284.405789",
+        "subnetwork": "https://www.googleapis.com/compute/v1/projects/xpn-master/regions/europe-west1/subnetworks/xpn-euw1",
+        "type_check_strictness": "DEFAULT_TO_ANY",
+        "streaming": true,
+        "staging_location": "gs://sigint-dataflow-tmp/benchmark/beats/staging/benchmark-beats.1551902284.405789"
+      },
+      "display_data": [
+        {
+          "key": "disk_size_gb",
+          "type": "INTEGER",
+          "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+          "value": 20
+        },
+        {
+          "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+          "value": true,
+          "key": "save_main_session",
+          "type": "BOOLEAN"
+        },
+        {
+          "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+          "value": "europe-west1-c",
+          "key": "zone",
+          "type": "STRING"
+        },
+        {
+          "type": "INTEGER",
+          "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+          "value": 200,
+          "key": "num_workers"
+        },
+        {
+          "type": "STRING",
+          "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+          "value": "DataflowRunner",
+          "key": "runner"
+        },
+        {
+          "key": "region",
+          "type": "STRING",
+          "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+          "value": "europe-west1"
+        },
+        {
+          "key": "staging_location",
+          "type": "STRING",
+          "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+          "value": "gs://sigint-dataflow-tmp/benchmark/beats/staging/benchmark-beats.1551902284.405789"
+        },
+        {
+          "type": "STRING",
+          "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+          "value": "sigint",
+          "key": "project"
+        },
+        {
+          "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+          "value": true,
+          "key": "streaming",
+          "type": "BOOLEAN"
+        },
+        {
+          "type": "STRING",
+          "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+          "value": "['beam_fn_api', 'no_use_multiple_sdk_containers', 'runner_harness_container_image=gcr.io/cloud-dataflow/v1beta3/harness:2.11.0']",
+          "key": "experiments"
+        },
+        {
+          "key": "machine_type",
+          "type": "STRING",
+          "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+          "value": "n1-highmem-16"
+        },
+        {
+          "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+          "value": 200,
+          "key": "max_num_workers",
+          "type": "INTEGER"
+        },
+        {
+          "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+          "value": "gs://sigint-dataflow-tmp/benchmark/beats/temp/benchmark-beats.1551902284.405789",
+          "key": "temp_location",
+          "type": "STRING"
+        },
+        {
+          "key": "subnetwork",
+          "type": "STRING",
+          "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+          "value": "https://www.googleapis.com/compute/v1/projects/xpn-master/regions/europe-west1/subnetworks/xpn-euw1"
+        },
+        {
+          "type": "STRING",
+          "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+          "value": "['apache_beam.io.filesystem.FileSystem', 'apache_beam.io.hadoopfilesystem.HadoopFileSystem', 'apache_beam.io.localfilesystem.LocalFileSystem', 'apache_beam.io.gcp.gcsfilesystem.GCSFileSystem']",
+          "key": "beam_plugins"
+        },
+        {
+          "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+          "value": "benchmark-beats",
+          "key": "job_name",
+          "type": "STRING"
+        },
+        {
+          "key": "worker_harness_container_image",
+          "type": "STRING",
+          "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+          "value": "gcr.io/sigint/benchmark-beats-worker"
+        }
+      ]
+    }
+  },
+  "steps": [
+    {
+      "kind": "ParallelRead",
+      "name": "s1",
+      "properties": {
+        "output_info": [
+          {
+            "encoding": {
+              "@type": "kind:windowed_value",
+              "component_encodings": [
+                {
+                  "@type": "kind:bytes"
+                },
+                {
+                  "@type": "kind:global_window"
+                }
+              ],
+              "is_wrapper": {
+                "@type": "http://schema.org/Boolean",
+                "value": true
+              }
+            },
+            "output_name": {
+              "value": "out",
+              "@type": "http://schema.org/Text"
+            },
+            "user_name": {
+              "value": "ReadFromPubSub/Read.out",
+              "@type": "http://schema.org/Text"
+            }
+          }
+        ],
+        "pubsub_topic": {
+          "@type": "http://schema.org/Text",
+          "value": "projects/sigint/topics/benchmark-audio-download-output"
+        },
+        "format": {
+          "value": "pubsub",
+          "@type": "http://schema.org/Text"
+        },
+        "user_name": {
+          "value": "ReadFromPubSub/Read",
+          "@type": "http://schema.org/Text"
+        },
+        "display_data": [
+          {
+            "type": {
+              "@type": "http://schema.org/Text",
+              "value": "STRING"
+            },
+            "value": {
+              "value": "apache_beam.io.gcp.pubsub._PubSubSource",
+              "@type": "http://schema.org/Text"
+            },
+            "namespace": {
+              "value": "apache_beam.io.iobase.Read",
+              "@type": "http://schema.org/Text"
+            },
+            "key": {
+              "@type": "http://schema.org/Text",
+              "value": "source"
+            },
+            "label": {
+              "value": "Read Source",
+              "@type": "http://schema.org/Text"
+            },
+            "shortValue": {
+              "value": "_PubSubSource",
+              "@type": "http://schema.org/Text"
+            }
+          },
+          {
+            "type": {
+              "@type": "http://schema.org/Text",
+              "value": "STRING"
+            },
+            "label": {
+              "@type": "http://schema.org/Text",
+              "value": "Pubsub Topic"
+            },
+            "namespace": {
+              "value": "apache_beam.io.gcp.pubsub._PubSubSource",
+              "@type": "http://schema.org/Text"
+            },
+            "value": {
+              "value": "projects/sigint/topics/benchmark-audio-download-output",
+              "@type": "http://schema.org/Text"
+            },
+            "key": {
+              "@type": "http://schema.org/Text",
+              "value": "topic"
+            }
+          },
+          {
+            "label": {
+              "value": "With Attributes",
+              "@type": "http://schema.org/Text"
+            },
+            "namespace": {
+              "value": "apache_beam.io.gcp.pubsub._PubSubSource",
+              "@type": "http://schema.org/Text"
+            },
+            "value": {
+              "value": false,
+              "@type": "http://schema.org/Boolean"
+            },
+            "key": {
+              "value": "with_attributes",
+              "@type": "http://schema.org/Text"
+            },
+            "type": {
+              "value": "BOOLEAN",
+              "@type": "http://schema.org/Text"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "ParallelDo",
+      "name": "s2",
+      "properties": {
+        "output_info": [
+          {
+            "output_name": {
+              "value": "out",
+              "@type": "http://schema.org/Text"
+            },
+            "user_name": {
+              "@type": "http://schema.org/Text",
+              "value": "ParDo(BeatsFn).out"
+            },
+            "encoding": {
+              "@type": "kind:windowed_value",
+              "component_encodings": [
+                {
+                  "@type": "kind:bytes"
+                },
+                {
+                  "@type": "kind:global_window"
+                }
+              ],
+              "is_wrapper": {
+                "@type": "http://schema.org/Boolean",
+                "value": true
+              }
+            }
+          }
+        ],
+        "user_name": {
+          "@type": "http://schema.org/Text",
+          "value": "ParDo(BeatsFn)"
+        },
+        "display_data": [
+          {
+            "label": {
+              "@type": "http://schema.org/Text",
+              "value": "Transform Function"
+            },
+            "shortValue": {
+              "@type": "http://schema.org/Text",
+              "value": "BeatsFn"
+            },
+            "type": {
+              "value": "STRING",
+              "@type": "http://schema.org/Text"
+            },
+            "namespace": {
+              "@type": "http://schema.org/Text",
+              "value": "apache_beam.transforms.core.ParDo"
+            },
+            "value": {
+              "value": "transforms.BeatsFn",
+              "@type": "http://schema.org/Text"
+            },
+            "key": {
+              "@type": "http://schema.org/Text",
+              "value": "fn"
+            }
+          }
+        ],
+        "serialized_fn": {
+          "value": "ref_AppliedPTransform_ParDo(BeatsFn)_4",
+          "@type": "http://schema.org/Text"
+        },
+        "parallel_input": {
+          "output_name": "out",
+          "@type": "OutputReference",
+          "step_name": "s1"
+        }
+      }
+    },
+    {
+      "kind": "ParallelWrite",
+      "name": "s3",
+      "properties": {
+        "parallel_input": {
+          "@type": "OutputReference",
+          "step_name": "s2",
+          "output_name": "out"
+        },
+        "encoding": {
+          "component_encodings": [
+            {
+              "@type": "kind:bytes"
+            },
+            {
+              "@type": "kind:global_window"
+            }
+          ],
+          "is_wrapper": {
+            "value": true,
+            "@type": "http://schema.org/Boolean"
+          },
+          "@type": "kind:windowed_value"
+        },
+        "pubsub_topic": {
+          "@type": "http://schema.org/Text",
+          "value": "projects/sigint/topics/benchmark-beats-output"
+        },
+        "format": {
+          "@type": "http://schema.org/Text",
+          "value": "pubsub"
+        },
+        "user_name": {
+          "@type": "http://schema.org/Text",
+          "value": "WriteToPubSub/Write/NativeWrite"
+        }
+      }
+    }
+  ],
+  "currentState": "JOB_STATE_RUNNING",
+  "currentStateTime": "2019-03-06T19:58:27.354367Z",
+  "createTime": "2019-03-06T19:58:19.243085Z",
+  "location": "europe-west1",
+  "pipelineDescription": {
+    "originalPipelineTransform": [
+      {
+        "id": "s3",
+        "name": "WriteToPubSub/Write/NativeWrite",
+        "inputCollectionName": [
+          "ParDo(BeatsFn).out0"
+        ]
+      },
+      {
+        "kind": "PAR_DO_KIND",
+        "id": "s2",
+        "name": "ParDo(BeatsFn)",
+        "displayData": [
+          {
+            "key": "fn",
+            "namespace": "apache_beam.transforms.core.ParDo",
+            "strValue": "transforms.BeatsFn",
+            "shortStrValue": "BeatsFn",
+            "label": "Transform Function"
+          }
+        ],
+        "outputCollectionName": [
+          "ParDo(BeatsFn).out0"
+        ],
+        "inputCollectionName": [
+          "ReadFromPubSub/Read.out0"
+        ]
+      },
+      {
+        "id": "s1",
+        "name": "ReadFromPubSub/Read",
+        "displayData": [
+          {
+            "key": "source",
+            "namespace": "apache_beam.io.iobase.Read",
+            "strValue": "apache_beam.io.gcp.pubsub._PubSubSource",
+            "shortStrValue": "_PubSubSource",
+            "label": "Read Source"
+          },
+          {
+            "key": "topic",
+            "namespace": "apache_beam.io.gcp.pubsub._PubSubSource",
+            "strValue": "projects/sigint/topics/benchmark-audio-download-output",
+            "label": "Pubsub Topic"
+          },
+          {
+            "key": "with_attributes",
+            "namespace": "apache_beam.io.gcp.pubsub._PubSubSource",
+            "boolValue": false,
+            "label": "With Attributes"
+          }
+        ],
+        "outputCollectionName": [
+          "ReadFromPubSub/Read.out0"
+        ]
+      }
+    ],
+    "executionPipelineStage": [
+      {
+        "name": "F0",
+        "id": "S01",
+        "kind": "PAR_DO_KIND",
+        "componentTransform": [
+          {
+            "userName": "ReadFromPubSub/Read",
+            "name": "s1",
+            "originalTransform": "ReadFromPubSub/Read"
+          },
+          {
+            "userName": "ParDo(BeatsFn)",
+            "name": "s2",
+            "originalTransform": "ParDo(BeatsFn)"
+          },
+          {
+            "userName": "WriteToPubSub/Write/NativeWrite",
+            "name": "s3",
+            "originalTransform": "WriteToPubSub/Write/NativeWrite"
+          }
+        ],
+        "componentSource": [
+          {
+            "userName": "ReadFromPubSub/Read-out0",
+            "name": "s1.out",
+            "originalTransformOrCollection": "ReadFromPubSub/Read.out0"
+          },
+          {
+            "userName": "ParDo(BeatsFn)-out0",
+            "name": "s2.out",
+            "originalTransformOrCollection": "ParDo(BeatsFn).out0"
+          }
+        ]
+      }
+    ],
+    "displayData": [
+      {
+        "key": "disk_size_gb",
+        "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+        "int64Value": "20"
+      },
+      {
+        "key": "save_main_session",
+        "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+        "boolValue": true
+      },
+      {
+        "key": "zone",
+        "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+        "strValue": "europe-west1-c"
+      },
+      {
+        "key": "num_workers",
+        "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+        "int64Value": "200"
+      },
+      {
+        "key": "runner",
+        "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+        "strValue": "DataflowRunner"
+      },
+      {
+        "key": "region",
+        "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+        "strValue": "europe-west1"
+      },
+      {
+        "key": "staging_location",
+        "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+        "strValue": "gs://sigint-dataflow-tmp/benchmark/beats/staging/benchmark-beats.1551902284.405789"
+      },
+      {
+        "key": "project",
+        "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+        "strValue": "sigint"
+      },
+      {
+        "key": "streaming",
+        "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+        "boolValue": true
+      },
+      {
+        "key": "experiments",
+        "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+        "strValue": "['beam_fn_api', 'no_use_multiple_sdk_containers', 'runner_harness_container_image=gcr.io/cloud-dataflow/v1beta3/harness:2.11.0']"
+      },
+      {
+        "key": "machine_type",
+        "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+        "strValue": "n1-highmem-16"
+      },
+      {
+        "key": "max_num_workers",
+        "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+        "int64Value": "200"
+      },
+      {
+        "key": "autoscaling_algorithm",
+        "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+        "strValue": "THROUGHPUT_BASED"
+      },
+      {
+        "key": "temp_location",
+        "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+        "strValue": "gs://sigint-dataflow-tmp/benchmark/beats/temp/benchmark-beats.1551902284.405789"
+      },
+      {
+        "key": "subnetwork",
+        "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+        "strValue": "https://www.googleapis.com/compute/v1/projects/xpn-master/regions/europe-west1/subnetworks/xpn-euw1"
+      },
+      {
+        "key": "beam_plugins",
+        "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+        "strValue": "['apache_beam.io.filesystem.FileSystem', 'apache_beam.io.hadoopfilesystem.HadoopFileSystem', 'apache_beam.io.localfilesystem.LocalFileSystem', 'apache_beam.io.gcp.gcsfilesystem.GCSFileSystem']"
+      },
+      {
+        "key": "job_name",
+        "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+        "strValue": "benchmark-beats"
+      },
+      {
+        "key": "worker_harness_container_image",
+        "namespace": "apache_beam.options.pipeline_options.PipelineOptions",
+        "strValue": "gcr.io/sigint/benchmark-beats-worker"
+      }
+    ]
+  },
+  "stageStates": [
+    {
+      "executionStageName": "pause_detach_disk_step10",
+      "executionStageState": "JOB_STATE_PENDING",
+      "currentStateTime": "2019-03-06T19:58:27.379Z"
+    },
+    {
+      "executionStageName": "move_stop_computation_step5",
+      "executionStageState": "JOB_STATE_PENDING",
+      "currentStateTime": "2019-03-06T19:58:27.379Z"
+    },
+    {
+      "executionStageName": "failure1",
+      "executionStageState": "JOB_STATE_PENDING",
+      "currentStateTime": "2019-03-06T19:58:27.379Z"
+    },
+    {
+      "executionStageName": "setup_windmill1",
+      "executionStageState": "JOB_STATE_DONE",
+      "currentStateTime": "2019-03-06T19:58:37.126Z"
+    },
+    {
+      "executionStageName": "topology_init_attach_disk_input_step",
+      "executionStageState": "JOB_STATE_DONE",
+      "currentStateTime": "2019-03-06T19:59:13.749Z"
+    },
+    {
+      "executionStageName": "teardown_resource_global_gce_worker_pool14",
+      "executionStageState": "JOB_STATE_PENDING",
+      "currentStateTime": "2019-03-06T19:58:27.379Z"
+    },
+    {
+      "executionStageName": "move_start_computation_step8",
+      "executionStageState": "JOB_STATE_PENDING",
+      "currentStateTime": "2019-03-06T19:58:27.379Z"
+    },
+    {
+      "executionStageName": "success0",
+      "executionStageState": "JOB_STATE_PENDING",
+      "currentStateTime": "2019-03-06T19:58:27.379Z"
+    },
+    {
+      "executionStageName": "F0",
+      "executionStageState": "JOB_STATE_RUNNING",
+      "currentStateTime": "2019-03-06T19:58:37.117Z"
+    },
+    {
+      "executionStageName": "topology_move_out_disk_input_step",
+      "executionStageState": "JOB_STATE_PENDING",
+      "currentStateTime": "2019-03-06T19:58:27.379Z"
+    },
+    {
+      "executionStageName": "teardown_resource_benchmark-audio-download-output.subscription-1707389374947987110912",
+      "executionStageState": "JOB_STATE_PENDING",
+      "currentStateTime": "2019-03-06T19:58:27.379Z"
+    },
+    {
+      "executionStageName": "move_attach_disks_step7",
+      "executionStageState": "JOB_STATE_PENDING",
+      "currentStateTime": "2019-03-06T19:58:27.379Z"
+    },
+    {
+      "executionStageName": "init_start_computation_step3",
+      "executionStageState": "JOB_STATE_DONE",
+      "currentStateTime": "2019-03-06T20:00:45.945Z"
+    },
+    {
+      "executionStageName": "start2",
+      "executionStageState": "JOB_STATE_DONE",
+      "currentStateTime": "2019-03-06T19:58:27.437Z"
+    },
+    {
+      "executionStageName": "pause_stop_computation_step9",
+      "executionStageState": "JOB_STATE_PENDING",
+      "currentStateTime": "2019-03-06T19:58:27.379Z"
+    },
+    {
+      "executionStageName": "setup_resource_benchmark-audio-download-output.subscription-1707389374947987110911",
+      "executionStageState": "JOB_STATE_DONE",
+      "currentStateTime": "2019-03-06T19:58:33.469Z"
+    },
+    {
+      "executionStageName": "teardown_resource_disks_harness16",
+      "executionStageState": "JOB_STATE_PENDING",
+      "currentStateTime": "2019-03-06T19:58:27.379Z"
+    },
+    {
+      "executionStageName": "topology_move_in_disk_input_step",
+      "executionStageState": "JOB_STATE_PENDING",
+      "currentStateTime": "2019-03-06T19:58:27.379Z"
+    },
+    {
+      "executionStageName": "init_attach_disk_step2",
+      "executionStageState": "JOB_STATE_DONE",
+      "currentStateTime": "2019-03-06T19:59:29.539Z"
+    },
+    {
+      "executionStageName": "move_wait_windmill_setup_step4",
+      "executionStageState": "JOB_STATE_PENDING",
+      "currentStateTime": "2019-03-06T19:58:27.379Z"
+    },
+    {
+      "executionStageName": "topology_pause_input_step",
+      "executionStageState": "JOB_STATE_PENDING",
+      "currentStateTime": "2019-03-06T19:58:27.379Z"
+    },
+    {
+      "executionStageName": "setup_resource_global_gce_worker_pool13",
+      "executionStageState": "JOB_STATE_DONE",
+      "currentStateTime": "2019-03-06T19:58:27.459Z"
+    },
+    {
+      "executionStageName": "setup_resource_disks_harness15",
+      "executionStageState": "JOB_STATE_DONE",
+      "currentStateTime": "2019-03-06T19:58:37.104Z"
+    },
+    {
+      "executionStageName": "move_detach_disks_step6",
+      "executionStageState": "JOB_STATE_PENDING",
+      "currentStateTime": "2019-03-06T19:58:27.379Z"
+    }
+  ],
+  "jobMetadata": {
+    "sdkVersion": {
+      "version": "2.11.0",
+      "versionDisplayName": "Apache Beam Python 2.7 SDK",
+      "sdkSupportStatus": "SUPPORTED"
+    }
+  },
+  "startTime": "2019-03-06T19:58:19.243085Z"
+}

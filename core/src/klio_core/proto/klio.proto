@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+
+// Version maps klio config version to message version when actually
+// handling/parsing klio messages
+enum Version {
+    UNKNOWN = 0;  // default (per proto3 requirements)
+    V1 = 1;  // maps to V1Data
+    V2 = 2;  // maps to V2Data
+}
+
+
+message KlioMessage {
+    message Metadata {
+        // optional - used for bottom-up
+        repeated KlioJob downstream = 1;
+        // optional - unique jobs this message has visited
+        repeated KlioJob visited = 2;
+        // optional - audit log for all jobs message has visited (complete)
+        repeated KlioJobAuditLogItem job_audit_log = 3;
+        // optional - force computation even if output exists; default = false
+        bool force = 4;
+        // optional - if true, then no transformation work is done; default = false
+        bool ping = 5;
+    }
+
+    // maps to klio config version 1
+    message V1Data {
+        // required
+        string entity_id = 1;
+        // optional - non-klio binary message
+        bytes payload = 2;
+    }
+
+    // maps to klio config version 2
+    message V2Data {
+        // required  (FKA entity_id from V1)
+        bytes element = 1;
+        // optional - inter-pipeline state/payload
+        bytes payload = 2;
+    }
+
+    message Data {
+        // required
+        oneof data_version {
+            string entity_id = 1;  // backwards-compatibility - maybe move to reserved in the future
+            V1Data v1 = 3;
+            V2Data v2 = 4;
+        }
+        reserved 2;  // moved to v1.payload
+        reserved "payload";
+    }
+
+    Metadata metadata = 1;
+    Data data = 2;
+    // map klio config version to message version
+    Version version = 3;
+}
+
+
+message KlioJob {
+    message JobInput {
+        string topic = 1;
+        string subscription = 2;
+        string data_location = 3;
+    }
+    // required
+    string job_name = 1;
+    // required
+    string gcp_project = 2;
+    // required
+    repeated JobInput inputs = 3;
+}
+
+
+message KlioJobAuditLogItem {
+    // required - timestamp of when the log item was created
+    google.protobuf.Timestamp timestamp = 1;
+    // required
+    KlioJob klio_job = 2;
+}

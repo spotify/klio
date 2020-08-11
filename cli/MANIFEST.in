@@ -1,0 +1,16 @@
+# Include anything required to run the library that is *not* a Python file in `src/`
+include *.txt tox.ini .coveragerc *.rst *.md
+recursive-include tests *.py *.yaml *.txt *.md *.json *.in Dockerfile VERSION
+
+# Source Code
+recursive-include src *.tpl
+recursive-include src *.proto
+
+# Documentation
+recursive-include docs *.png
+recursive-include docs *.ico
+recursive-include docs *.md
+recursive-include docs *.rst
+
+# No need for GitHub-specific files.
+prune .github

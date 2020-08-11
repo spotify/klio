@@ -1,0 +1,24 @@
+[run]
+parallel = True
+branch = True
+source =
+    src
+omit =
+    # ignore protobuf-y things
+    src/klio_core/proto/*/*_pb2.py
+    .tox/*/site-packages/*/*_pb2.py
+
+[paths]
+source =
+   src
+   .tox/*/site-packages
+
+[report]
+show_missing = True
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    @abc.abstractmethod
+
+[xml]
+output = cobertura/coverage.xml

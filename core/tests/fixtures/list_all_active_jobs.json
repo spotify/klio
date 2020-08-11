@@ -1,0 +1,76 @@
+{
+  "jobs": [
+    {
+      "id": "2019-03-06_11_58_18-10135744837917459861",
+      "projectId": "sigint",
+      "name": "benchmark-beats",
+      "type": "JOB_TYPE_STREAMING",
+      "currentState": "JOB_STATE_RUNNING",
+      "currentStateTime": "2019-03-06T19:58:27.354367Z",
+      "createTime": "2019-03-06T19:58:19.243085Z",
+      "location": "europe-west1",
+      "jobMetadata": {
+        "sdkVersion": {
+          "version": "2.11.0",
+          "versionDisplayName": "Apache Beam Python 2.7 SDK",
+          "sdkSupportStatus": "SUPPORTED"
+        }
+      },
+      "startTime": "2019-03-06T19:58:19.243085Z"
+    },
+    {
+      "id": "2019-03-06_08_17_15-4323800855857262603",
+      "projectId": "sigint",
+      "name": "beats",
+      "type": "JOB_TYPE_STREAMING",
+      "currentState": "JOB_STATE_RUNNING",
+      "currentStateTime": "2019-03-06T16:17:23.601722Z",
+      "createTime": "2019-03-06T16:17:16.404517Z",
+      "location": "europe-west1",
+      "jobMetadata": {
+        "sdkVersion": {
+          "version": "2.8.0",
+          "versionDisplayName": "Apache Beam SDK for Python",
+          "sdkSupportStatus": "STALE"
+        }
+      },
+      "startTime": "2019-03-06T16:17:16.404517Z"
+    },
+    {
+      "id": "2019-03-06_08_10_33-16878732208857324989",
+      "projectId": "sigint",
+      "name": "audio-download",
+      "type": "JOB_TYPE_STREAMING",
+      "currentState": "JOB_STATE_RUNNING",
+      "currentStateTime": "2019-03-06T16:10:41.077459Z",
+      "createTime": "2019-03-06T16:10:34.054444Z",
+      "location": "europe-west1",
+      "jobMetadata": {
+        "sdkVersion": {
+          "version": "2.8.0",
+          "versionDisplayName": "Apache Beam SDK for Python",
+          "sdkSupportStatus": "STALE"
+        }
+      },
+      "startTime": "2019-03-06T16:10:34.054444Z"
+    },
+    {
+      "id": "2019-03-05_07_13_37-13979317977607473665",
+      "projectId": "sigint",
+      "name": "benchmark-audio-download",
+      "type": "JOB_TYPE_STREAMING",
+      "currentState": "JOB_STATE_RUNNING",
+      "currentStateTime": "2019-03-05T15:13:45.459994Z",
+      "createTime": "2019-03-05T15:13:37.945895Z",
+      "location": "europe-west1",
+      "jobMetadata": {
+        "sdkVersion": {
+          "version": "2.8.0",
+          "versionDisplayName": "Apache Beam SDK for Python",
+          "sdkSupportStatus": "STALE"
+        }
+      },
+      "startTime": "2019-03-05T15:13:37.945895Z"
+    }
+  ]
+}

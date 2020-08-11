@@ -31,6 +31,8 @@ jobs:
       matrix:
         # TODO: add 3.8 testing (change req in all tox.ini's too)
         python-version: ["3.5", "3.6", "3.7"]
+      # do not cancel other jobs in matrix if one fails
+      fail-fast: false
     steps:
       - uses: "actions/checkout@v2"
       - uses: "actions/setup-python@v1"

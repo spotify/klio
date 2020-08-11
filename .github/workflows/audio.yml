@@ -16,7 +16,6 @@ on:
     paths:
       - 'audio/**'
 
-
 defaults:
   run:
     working-directory: audio
@@ -53,3 +52,34 @@ jobs:
       #   with:
       #     file: ./coverage.xml
       #     fail_ci_if_error: true
+
+  package:
+    name: "klio-audio: verify packaging (ubuntu)"
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v2"
+      - uses: "actions/setup-python@v1"
+        with:
+          python-version: "3.7"
+      - name: "Install setuptools, wheel, & twine"
+        run: "python -m pip install -U setuptools wheel twine"
+      - name: "Build package"
+        run: "python setup.py build sdist bdist_wheel"
+      - name: "List result"
+        run: "ls -l dist"
+      - name: "Check long_description"
+        run: "python -m twine check dist/*"
+
+  # TODO: uncomment when klio deps are available on public PyPI
+  # install-dev:
+  #   name: "klio-audio: verify dev env (ubuntu)"
+  #   runs-on: "ubuntu-latest"
+  #   steps:
+  #     - uses: "actions/checkout@v2"
+  #     - uses: "actions/setup-python@v1"
+  #       with:
+  #         python-version: "3.7"
+  #     - name: "Install in dev mode"
+  #       run: "python -m pip install -e .[dev]"
+  #     - name: "Import package"
+  #       run: "python -c 'import klio_audio; print(klio_audio.__version__)'"

@@ -62,8 +62,8 @@ META_FILE = read(META_PATH)
 INSTALL_REQUIRES = [
     "attrs",
     "click",
-    "klio-core>0.0.12.dev4,<0.0.12.beta",  # dev is less than beta
-    "klio>=0.0.21.dev3",
+    "klio-core",
+    "klio",
     "pyyaml",
     "apache-beam[gcp]",
     "setuptools",  # for loading entry points w pkg_resources

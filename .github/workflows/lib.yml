@@ -1,0 +1,54 @@
+name: klio unit tests
+
+# May want to add this to a cron, in addition to on push & PRs, to make sure we can
+# still build if our unpinned transitive dependencies update
+on:
+  push:
+    branches:
+      - master
+      - develop
+    paths:
+      - 'lib/**'
+  pull_request:
+    branches:
+      - master
+      - develop
+    paths:
+      - 'lib/**'
+
+defaults:
+  run:
+    working-directory: lib
+
+jobs:
+  tests:
+    name: "klio: py${{ matrix.python-version }} (ubuntu)"
+    runs-on: "ubuntu-latest"
+    # TODO: uncomment once we setup Codecov (see below's TODO)
+    # env:
+    #   USING_COVERAGE: '3.7'
+    strategy:
+      matrix:
+        # TODO: add 3.8 testing (change req in all tox.ini's too)
+        python-version: ["3.5", "3.6", "3.7"]
+    steps:
+      - uses: "actions/checkout@v2"
+      - uses: "actions/setup-python@v1"
+        with:
+          python-version: "${{ matrix.python-version }}"
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python -VV
+          python -m site
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade virtualenv tox tox-gh-actions
+      - name: "Run tox with ${{ matrix.python-version }}"
+        run: "python -m tox -c tox.ini"
+      # TODO: uncomment once we setup Codecov
+      # - name: "Upload coverage to Codecov"
+      #   if: "contains(env.USING_COVERAGE, matrix.python-version)"
+      #   uses: "codecov/codecov-action@v1"
+      #   with:
+      #     file: ./coverage.xml
+      #     fail_ci_if_error: true

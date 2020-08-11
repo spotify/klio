@@ -1,0 +1,36 @@
+name: Manual Trigger of Unit Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      python-version:
+        description: 'Python Version (3.5, 3.6, or 3.7)'
+        required: true
+        default: '3.6'
+      package:
+        description: 'Target Klio Package (audio, cli, core, devtools, exec, or lib)'
+        required: true
+        default: 'cli'
+
+defaults:
+  run:
+    working-directory: ${{ github.event.inputs.package }}
+
+jobs:
+  tests:
+    name: "${{ github.event.inputs.package }}: py${{ github.event.inputs.python-version }} (ubuntu)"
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v2"
+      - uses: "actions/setup-python@v1"
+        with:
+          python-version: "${{ github.event.inputs.python-version }}"
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python -VV
+          python -m site
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade virtualenv tox tox-gh-actions
+      - name: "Run tox for ${{ github.event.inputs.package }} on ${{ github.event.inputs.python-version }}"
+        run: "python -m tox -c tox.ini"

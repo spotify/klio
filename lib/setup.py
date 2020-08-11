@@ -62,7 +62,7 @@ META_FILE = read(META_PATH)
 INSTALL_REQUIRES = [
     "apache-beam[gcp]",
     "google-api-python-client",
-    "klio-core>0.0.12.dev4,<0.0.12.beta",  # dev is less than beta
+    "klio-core",
     "protobuf",
     "psutil",
     "pyyaml",

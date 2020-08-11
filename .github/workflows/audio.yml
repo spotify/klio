@@ -1,0 +1,87 @@
+name: klio-audio unit tests
+
+# May want to add this to a cron, in addition to on push & PRs, to make sure we can
+# still build if our unpinned transitive dependencies update
+on:
+  push:
+    branches:
+      - master
+      - develop
+    paths:
+      - 'audio/**'
+  pull_request:
+    branches:
+      - master
+      - develop
+    paths:
+      - 'audio/**'
+
+defaults:
+  run:
+    working-directory: audio
+
+jobs:
+  tests:
+    name: "klio-audio: py${{ matrix.python-version }} (ubuntu)"
+    runs-on: "ubuntu-latest"
+    # TODO: uncomment once we setup Codecov (see below's TODO)
+    # env:
+    #   USING_COVERAGE: '3.7'
+    strategy:
+      matrix:
+        # TODO: add 3.8 testing (change req in all tox.ini's too)
+        python-version: ["3.5", "3.6", "3.7"]
+      # do not cancel other jobs in matrix if one fails
+      fail-fast: false
+    steps:
+      - uses: "actions/checkout@v2"
+      - uses: "actions/setup-python@v1"
+        with:
+          python-version: "${{ matrix.python-version }}"
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python -VV
+          python -m site
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade virtualenv tox tox-gh-actions
+      - name: "Run tox with ${{ matrix.python-version }}"
+        run: "python -m tox -c tox.ini"
+      # TODO: uncomment once we setup Codecov
+      # - name: "Upload coverage to Codecov"
+      #   if: "contains(env.USING_COVERAGE, matrix.python-version)"
+      #   uses: "codecov/codecov-action@v1"
+      #   with:
+      #     file: ./coverage.xml
+      #     fail_ci_if_error: true
+
+  package:
+    name: "klio-audio: verify packaging (ubuntu)"
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v2"
+      - uses: "actions/setup-python@v1"
+        with:
+          python-version: "3.7"
+      - name: "Install setuptools, wheel, & twine"
+        run: "python -m pip install -U setuptools wheel twine"
+      - name: "Build package"
+        run: "python setup.py build sdist bdist_wheel"
+      - name: "List result"
+        run: "ls -l dist"
+      - name: "Check long_description"
+        run: "python -m twine check dist/*"
+
+  # TODO: uncomment when klio deps are available on public PyPI
+  # install-dev:
+  #   name: "klio-audio: verify dev env (ubuntu)"
+  #   runs-on: "ubuntu-latest"
+  #   steps:
+  #     - uses: "actions/checkout@v2"
+  #     - uses: "actions/setup-python@v1"
+  #       with:
+  #         python-version: "3.7"
+  #     - name: "Install in dev mode"
+  #       run: "python -m pip install -e .[dev]"
+  #     - name: "Import package"
+  #       run: "python -c 'import klio_audio; print(klio_audio.__version__)'"

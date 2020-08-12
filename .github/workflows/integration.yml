@@ -1,0 +1,47 @@
+name: klio integration tests
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+    paths-ignore:
+      - 'docs/**'
+      - 'devtools/**'
+      - 'examples/**'
+  pull_request:
+    branches:
+      - master
+      - develop
+    paths-ignore:
+      - 'docs/**'
+      - 'devtools/**'
+      - 'examples/**'
+
+defaults:
+  run:
+    working-directory: integration
+
+jobs:
+  tests:
+    name: "Integration Tests"
+    runs-on: "ubuntu-latest"
+    strategy:
+      matrix:
+        test-dir: ["read-file-write-file"]
+      # do not cancel other jobs in matrix if one fails
+      fail-fast: false
+    steps:
+      - uses: "actions/checkout@v2"
+      - uses: "actions/setup-python@v1"
+        with:
+          python-version: "3.6"
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python -VV
+          python -m site
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade virtualenv tox tox-gh-actions
+      - name: "Run Integration Test ${{ matrix.test-dir }} with python 3.6"
+        run: "KLIO_TEST_DIR=${{ matrix.test-dir }} python -m tox -c tox.ini"

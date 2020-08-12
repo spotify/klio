@@ -1,0 +1,43 @@
+name: build docs
+
+# TODO: If we have `docs` directories within each package, we should then
+# add them here under `paths` to listen for changes
+on:
+  push:
+    branches:
+      - master
+      - develop
+    paths:
+      - 'docs/**'
+  pull_request:
+    branches:
+      - master
+      - develop
+    paths:
+      - 'docs/**'
+
+defaults:
+  run:
+    working-directory: docs
+
+jobs:
+  tests:
+    name: "build & check docs"
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v2"
+      - uses: "actions/setup-python@v1"
+        with:
+          # TODO: update 3.8 when we add support
+          python-version: "3.7"
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python -VV
+          python -m site
+          python -m pip install --upgrade pip setuptools
+          python -m pip install --upgrade -r requirements.txt
+      - name: "Build docs"
+        run: "sphinx-build -n -T -W -b html -d build/doctrees src src/html"
+      - name: "Check broken links"
+        run: "sphinx-build -n -T -W -b linkcheck -d build/docstrees src src/linkcheck"

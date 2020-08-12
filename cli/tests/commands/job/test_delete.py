@@ -16,19 +16,22 @@ def config_data():
         "version": 1,
         "pipeline_options": {"project": "foo"},
         "job_config": {
-            "inputs": [
-                {
-                    "topic": "foo-topic",
-                    "subscription": "foo-sub",
-                    "data_location": "foo-input-location",
-                }
-            ],
-            "outputs": [
-                {
-                    "topic": "foo-topic-output",
-                    "data_location": "foo-output-location",
-                }
-            ],
+            "events": {
+                "inputs": [
+                    {
+                        "type": "pubsub",
+                        "topic": "foo-topic",
+                        "subscription": "foo-sub",
+                    }
+                ],
+                "outputs": [{"type": "pubsub", "topic": "foo-topic-output"}],
+            },
+            "data": {
+                "inputs": [{"type": "gcs", "location": "foo-input-location"}],
+                "outputs": [
+                    {"type": "gcs", "location": "foo-output-location"}
+                ],
+            },
         },
     }
 

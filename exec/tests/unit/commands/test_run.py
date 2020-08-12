@@ -76,6 +76,7 @@ def _config():
     mock_config.job_name = "my-job"
     mock_output = mock.Mock()
     mock_output.topic = "my-topic"
+    mock_config.version = 2
 
     mock_input = mock.Mock()
     mock_input.subscription = "my-subscription"

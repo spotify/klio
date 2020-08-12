@@ -548,13 +548,25 @@ def test_verify_inputs(
     job._subscriber_client = mock_sub
     job.klio_config.pipeline_options.project = "sigint"
 
-    conf_kwargs = {
-        "data_location": "test",
+    event_config = {
+        "type": "pubsub",
         "topic": "test",
         "subscription": "test",
+        "io_type": kconfig._io.KlioIOType.EVENT,
+        "io_direction": kconfig._io.KlioIODirection.INPUT,
     }
-    job.klio_config.job_config.inputs = [
-        kconfig._io.KlioJobInput(**conf_kwargs)
+    job.klio_config.job_config.event_inputs = [
+        kconfig._io.KlioPubSubEventInput.from_dict(event_config)
+    ]
+
+    data_config = {
+        "type": "gcs",
+        "location": "test",
+        "io_type": kconfig._io.KlioIOType.DATA,
+        "io_direction": kconfig._io.KlioIODirection.INPUT,
+    }
+    job.klio_config.job_config.data_inputs = [
+        kconfig._io.KlioGCSInputDataConfig.from_dict(data_config)
     ]
 
     if unverified_topic and unverified_sub and unverified_bucket:
@@ -596,20 +608,18 @@ def test_verify_inputs(
 
 
 @pytest.mark.parametrize(
-    "input_dict, expected_log_count",
+    "data_dict, event_dict, expected_log_count",
     (
-        (
-            {"data_location": "test", "topic": "test", "subscription": "test"},
-            2,
-        ),
-        ({"data_location": None, "topic": "test", "subscription": "test"}, 3),
-        ({"data_location": "test", "topic": "test", "subscription": None}, 3),
-        ({"data_location": None, "topic": "test", "subscription": None}, 4),
-        (None, 3),
+        ({"location": "test"}, {"topic": "test", "subscription": "test"}, 3),
+        ({"location": None}, {"topic": "test", "subscription": "test"}, 4),
+        ({"location": "test"}, {"topic": "test", "subscription": None}, 4),
+        ({"location": None}, {"topic": "test", "subscription": None}, 5),
+        (None, None, 5),
     ),
 )
 def test_verify_inputs_logs(
-    input_dict,
+    data_dict,
+    event_dict,
     expected_log_count,
     klio_config,
     mock_storage,
@@ -629,12 +639,27 @@ def test_verify_inputs_logs(
     job._storage_client = mock_storage
     job._subscriber_client = mock_sub
     job.klio_config.pipeline_options.project = "sigint"
-    if input_dict:
-        job.klio_config.job_config.inputs = [
-            kconfig._io.KlioJobInput(**input_dict)
+
+    if event_dict:
+        event_dict["type"] = "pubsub"
+        event_dict["io_type"] = kconfig._io.KlioIOType.EVENT
+        event_dict["io_direction"] = kconfig._io.KlioIODirection.OUTPUT
+        job.klio_config.job_config.event_inputs = [
+            kconfig._io.KlioPubSubEventInput.from_dict(event_dict)
         ]
     else:
-        job.klio_config.job_config.inputs = []
+        job.klio_config.job_config.event_inputs = []
+
+    if data_dict:
+        data_dict["type"] = "gcs"
+        data_dict["io_type"] = kconfig._io.KlioIOType.DATA
+        data_dict["io_direction"] = kconfig._io.KlioIODirection.OUTPUT
+        job.klio_config.job_config.data_inputs = [
+            kconfig._io.KlioGCSOutputDataConfig.from_dict(data_dict)
+        ]
+    else:
+        job.klio_config.job_config.data_inputs = []
+
     job._verify_inputs()
     assert expected_log_count == len(caplog.records)
 
@@ -661,9 +686,24 @@ def test_verify_outputs(
     job._publisher_client = mock_publisher
     job._storage_client = mock_storage
 
-    output_dict = {"data_location": "test", "topic": "test"}
-    job.klio_config.job_config.outputs = [
-        kconfig._io.KlioJobOutput(**output_dict)
+    event_config = {
+        "type": "pubsub",
+        "topic": "test",
+        "io_type": kconfig._io.KlioIOType.EVENT,
+        "io_direction": kconfig._io.KlioIODirection.OUTPUT,
+    }
+    job.klio_config.job_config.event_outputs = [
+        kconfig._io.KlioPubSubEventOutput.from_dict(event_config)
+    ]
+
+    data_config = {
+        "type": "gcs",
+        "location": "test",
+        "io_type": kconfig._io.KlioIOType.DATA,
+        "io_direction": kconfig._io.KlioIODirection.OUTPUT,
+    }
+    job.klio_config.job_config.data_outputs = [
+        kconfig._io.KlioGCSOutputDataConfig.from_dict(data_config)
     ]
 
     if unverified_gcs and unverified_topic:
@@ -696,16 +736,17 @@ def test_verify_outputs(
 
 
 @pytest.mark.parametrize(
-    "output_dict, expected_log_count",
+    "event_topic, data_location, expected_log_count",
     (
-        ({"data_location": "test", "topic": "test"}, 2),
-        ({"data_location": None, "topic": "test"}, 3),
-        ({"data_location": "test", "topic": None}, 3),
-        ({"data_location": None, "topic": None}, 4),
+        ("test", "test", 3),
+        (None, "test", 4),
+        ("test", None, 4),
+        (None, None, 5),
     ),
 )
 def test_verify_outputs_logs(
-    output_dict,
+    event_topic,
+    data_location,
     expected_log_count,
     mocker,
     klio_config,
@@ -723,19 +764,36 @@ def test_verify_outputs_logs(
     job = verify.VerifyJob(klio_config, False)
     job._publisher_client = mock_publisher
     job._storage_client = mock_storage
-    job.klio_config.job_config.outputs = [
-        kconfig._io.KlioJobOutput(**output_dict)
+
+    event_config = {
+        "type": "pubsub",
+        "topic": event_topic,
+        "io_type": kconfig._io.KlioIOType.EVENT,
+        "io_direction": kconfig._io.KlioIODirection.OUTPUT,
+    }
+    job.klio_config.job_config.event_outputs = [
+        kconfig._io.KlioPubSubEventOutput.from_dict(event_config)
+    ]
+
+    data_config = {
+        "type": "gcs",
+        "location": data_location,
+        "io_type": kconfig._io.KlioIOType.DATA,
+        "io_direction": kconfig._io.KlioIODirection.OUTPUT,
+    }
+    job.klio_config.job_config.data_outputs = [
+        kconfig._io.KlioGCSOutputDataConfig.from_dict(data_config)
     ]
 
     job._verify_outputs()
 
     assert expected_log_count == len(caplog.records)
 
-    if output_dict["data_location"] is not None:
-        mock_verify_gcs.assert_called_with(output_dict["data_location"])
+    if data_location is not None:
+        mock_verify_gcs.assert_called_with(data_location)
 
-    if output_dict["topic"] is not None:
-        mock_verify_pub.assert_called_with(output_dict["topic"], "output")
+    if event_topic is not None:
+        mock_verify_pub.assert_called_with(event_topic, "output")
 
 
 @pytest.mark.parametrize(

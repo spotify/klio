@@ -149,19 +149,22 @@ def minimal_config_data():
             "worker_harness_container_image": "gcr.register.io/squad/feature"
         },
         "job_config": {
-            "inputs": [
-                {
-                    "topic": "foo-topic",
-                    "subscription": "foo-sub",
-                    "data_location": "foo-input-location",
-                }
-            ],
-            "outputs": [
-                {
-                    "topic": "foo-topic-output",
-                    "data_location": "foo-output-location",
-                }
-            ],
+            "events": {
+                "inputs": [
+                    {
+                        "type": "pubsub",
+                        "topic": "foo-topic",
+                        "subscription": "foo-sub",
+                    }
+                ],
+                "outputs": [{"type": "pubsub", "topic": "foo-topic-output"}],
+            },
+            "data": {
+                "inputs": [{"type": "gcs", "location": "foo-input-location"}],
+                "outputs": [
+                    {"type": "gcs", "location": "foo-output-location"}
+                ],
+            },
         },
     }
 
@@ -1282,11 +1285,10 @@ def test_publish(
 
     conf = mock_klio_config.setup(config, config_file)
 
-    with pytest.warns(DeprecationWarning):  # msg/conf version deprecated
-        result = runner.invoke(cli.main, cli_inputs)
+    result = runner.invoke(cli.main, cli_inputs)
 
-        assert_execution_success(result)
-        assert "" == result.output
+    assert_execution_success(result)
+    assert "" == result.output
 
     mock_publish.assert_called_once_with(
         conf, ("deadb33f",), force, ping, top_down, non_klio,
@@ -1384,8 +1386,7 @@ def test_publish_raises_non_klio(
     if bottom_up:
         cli_inputs.append("--bottom-up")
 
-    with pytest.warns(DeprecationWarning):  # msg/conf version deprecated
-        result = runner.invoke(cli.main, cli_inputs)
+    result = runner.invoke(cli.main, cli_inputs)
 
     assert 0 != result.exit_code
     assert (
@@ -1404,6 +1405,7 @@ def test_publish_raises_non_klio_config(
     patch_os_getcwd,
     allow_non_klio_messages,
     mock_warn_if_py2_job,
+    minimal_config_data,
 ):
     mock_publish = mocker.patch.object(
         cli.message_commands.publish, "publish_messages"
@@ -1412,36 +1414,13 @@ def test_publish_raises_non_klio_config(
 
     cli_inputs = ["message", "publish", "deadb33f", "--non-klio"]
 
-    config = {
-        "job_name": "test-job",
-        "pipeline_options": {
-            "worker_harness_container_image": "gcr.register.io/squad/feature"
-        },
-        "job_config": {
-            "inputs": [
-                {
-                    "topic": "foo-topic",
-                    "subscription": "foo-sub",
-                    "data_location": "foo-input-location",
-                }
-            ],
-            "outputs": [
-                {
-                    "topic": "foo-topic-output",
-                    "data_location": "foo-output-location",
-                }
-            ],
-        },
-    }
     if allow_non_klio_messages is not None:
-        config["job_config"][
+        minimal_config_data["job_config"][
             "allow_non_klio_messages"
         ] = allow_non_klio_messages
 
-    mock_get_config.return_value = config
-
-    with pytest.warns(DeprecationWarning):  # msg/conf version deprecated
-        result = runner.invoke(cli.main, cli_inputs)
+    mock_get_config.return_value = minimal_config_data
+    result = runner.invoke(cli.main, cli_inputs)
 
     assert 1 == result.exit_code
 

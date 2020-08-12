@@ -216,22 +216,21 @@ class VerifyJob(object):
 
         return verified_topic, verified_sub
 
+    # TODO: This needs to be overhauled for v2.  Don't assume GCS, pubsub.
     def _verify_inputs(self):
-        inputs = self.klio_config.job_config.inputs
-
-        if not inputs:
-            logging.warning("Your job has no inputs, is that expected?")
-
-        logging.info("Verifying your GCS inputs...")
-
         unverified_bucket_count = 0
         unverified_topic_count = 0
         unverified_sub_count = 0
 
-        for _input in inputs:
-            input_gcs = _input.data_location
-            input_topic = _input.topic
-            input_subscription = _input.subscription
+        data_inputs = self.klio_config.job_config.data_inputs
+
+        if not data_inputs:
+            logging.warning("Your job has no data inputs, is that expected?")
+
+        logging.info("Verifying your data inputs...")
+
+        for _input in data_inputs:
+            input_gcs = _input.location
 
             if input_gcs is not None:
                 verified_bucket = self._verify_gcs_bucket(input_gcs)
@@ -240,6 +239,17 @@ class VerifyJob(object):
             else:
                 message = "There is no data_location for {}".format(_input)
                 logging.error(message)
+
+        event_inputs = self.klio_config.job_config.event_inputs
+
+        if not event_inputs:
+            logging.warning("Your job has no event inputs, is that expected?")
+
+        logging.info("Verifying your event inputs...")
+
+        for _input in event_inputs:
+            input_topic = _input.topic
+            input_subscription = _input.subscription
 
             if input_subscription is not None:
                 (
@@ -278,15 +288,15 @@ class VerifyJob(object):
         return False
 
     def _verify_outputs(self):
-        outputs = self.klio_config.job_config.outputs
-
-        logging.info("Verifying your GCS outputs...")
         unverified_bucket_count = 0
         unverified_topic_count = 0
 
-        for output in outputs:
-            output_bucket = output.data_location
-            output_topic = output.topic
+        data_outputs = self.klio_config.job_config.data_outputs
+
+        logging.info("Verifying your data outputs...")
+
+        for output in data_outputs:
+            output_bucket = output.location
 
             if output_bucket is not None:
                 verified_bucket = self._verify_gcs_bucket(output_bucket)
@@ -296,6 +306,13 @@ class VerifyJob(object):
                 logging.error(
                     "There is no data_location for {}".format(output)
                 )
+
+        event_outputs = self.klio_config.job_config.event_outputs
+
+        logging.info("Verifying your event outputs...")
+
+        for output in event_outputs:
+            output_topic = output.topic
 
             if output_topic is not None:
                 verified_topic = self._verify_pub_topic(output_topic, "output")

@@ -213,7 +213,25 @@ class KlioPubSubEventInput(KlioEventInput, KlioPubSubConfig):
         # it already in their config
         if "topic" not in config_dict:
             config_dict["topic"] = None
+        if "subscription" not in config_dict:
+            config_dict["subscription"] = None
         return super().from_dict(config_dict, *args, **kwargs)
+
+    @subscription.validator
+    def __assert_topic_subscription(self, attribute, value):
+        # either topic or subscription is required
+        if not self.topic and not self.subscription:
+            raise ValueError("One of 'topic', 'subscription' required")
+
+    def to_io_kwargs(self):
+        kwargs = super().to_io_kwargs()
+        # pubsub only allows either topic or subscription, not both.  We'll
+        # prioritize subscription
+        if kwargs["topic"] is not None and kwargs["subscription"] is None:
+            kwargs.pop("subscription", None)
+        else:
+            kwargs.pop("topic", None)
+        return kwargs
 
 
 @supports(KlioIODirection.OUTPUT, KlioIOType.EVENT)

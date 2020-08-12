@@ -231,15 +231,14 @@ def test_check_gcp_credentials_exists_raises(
     mock_is_file = mocker.Mock(return_value=False)
     monkeypatch.setattr(base.os.path, "isfile", mock_is_file)
 
-    with pytest.raises(SystemExit):
-        base_pipeline._check_gcp_credentials_exist()
+    base_pipeline._check_gcp_credentials_exist()
 
     exp_creds_path = (
         "/home/.config/gcloud/application_default_credentials.json"
     )
     mock_is_file.assert_called_once_with(exp_creds_path)
     assert 1 == len(caplog.records)
-    assert "ERROR" == caplog.records[0].levelname
+    assert "WARNING" == caplog.records[0].levelname
 
 
 def test_run(base_pipeline, mocker, monkeypatch):

@@ -105,7 +105,8 @@ def mock_delete(mocker):
 
 @pytest.fixture
 def mock_stop(mocker):
-    return mocker.patch.object(cli.job_commands.stop.StopJob, "stop")
+    stop_job = mocker.patch.object(cli.job_commands.stop, "StopJob")
+    return stop_job.return_value.stop
 
 
 @pytest.fixture

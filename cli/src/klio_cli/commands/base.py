@@ -126,14 +126,15 @@ class BaseDockerizedPipeline(object):
             os.environ.get("HOME"), BaseDockerizedPipeline.HOST_GCP_CRED_PATH
         )
         if not os.path.isfile(host_cred_path):
-            logging.error(
-                "Error reading gcloud credentials. This may be because "
-                "your credentials are not configured correctly. Try "
-                "running `gcloud auth application-default login`. See "
-                "here for more information: https://cloud.google.com/"
-                "sdk/gcloud/reference/auth/application-default/login"
+            logging.warning(
+                "Could not read gcloud credentials at {}, which may cause"
+                "your job to fail to run if it uses GCP resources. "
+                "Try running `gcloud auth application-default login`"
+                ". See here for more information: https://cloud.google.com/"
+                "sdk/gcloud/reference/auth/application-default/login".format(
+                    host_cred_path
+                )
             )
-            raise SystemExit(1)
 
     def run(self, *args, **kwargs):
         # bail early

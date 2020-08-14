@@ -105,7 +105,7 @@ def __from_klio_message_generator(self, kmsg, payload, orig_item):
         tag = payload.tag
         payload = payload.value
     try:
-        kmsg = serializer._from_klio_message(kmsg, payload)
+        kmsg = serializer.from_klio_message(kmsg, payload)
 
     except Exception as err:
         self._klio.logger.error(
@@ -139,7 +139,7 @@ def __serialize_klio_message_generator(
     self, meth, incoming_item, *args, **kwargs
 ):
     try:
-        kmsg = serializer._to_klio_message(
+        kmsg = serializer.to_klio_message(
             incoming_item, self._klio.config, self._klio.logger
         )
     except Exception as err:
@@ -199,7 +199,7 @@ def __serialize_klio_message(ctx, func, incoming_item, *args, **kwargs):
     if not isinstance(ctx, core.KlioContext):
         ctx = _self._klio
     try:
-        kmsg = serializer._to_klio_message(
+        kmsg = serializer.to_klio_message(
             incoming_item, ctx.config, ctx.logger
         )
     except Exception as err:
@@ -247,7 +247,7 @@ def __serialize_klio_message(ctx, func, incoming_item, *args, **kwargs):
         tag = ret.tag
         ret = ret.value
     try:
-        kmsg = serializer._from_klio_message(kmsg, ret)
+        kmsg = serializer.from_klio_message(kmsg, ret)
 
     except Exception as err:
         ctx.logger.error(

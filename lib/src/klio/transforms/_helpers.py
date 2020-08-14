@@ -47,7 +47,7 @@ def _wrap_process(meth):
     @functools.wraps(meth)
     def wrapper(self, incoming_item, *args, **kwargs):
         try:
-            kmsg = serializer._to_klio_message(
+            kmsg = serializer.to_klio_message(
                 incoming_item, self._klio.config, self._klio.logger
             )
             yield from meth(self, kmsg, *args, **kwargs)

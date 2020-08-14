@@ -49,7 +49,7 @@ def logger(mocker):
 
 
 def test_to_klio_message(klio_message, klio_message_str, klio_config, logger):
-    actual_message = serializer._to_klio_message(
+    actual_message = serializer.to_klio_message(
         klio_message_str, klio_config, logger
     )
 
@@ -65,7 +65,7 @@ def test_to_klio_message_allow_non_kmsg(klio_config, logger, monkeypatch):
     expected = klio_pb2.KlioMessage()
     expected.data.element = incoming
 
-    actual_message = serializer._to_klio_message(incoming, klio_config, logger)
+    actual_message = serializer.to_klio_message(incoming, klio_config, logger)
 
     assert expected == actual_message
     logger.error.assert_not_called()
@@ -75,7 +75,7 @@ def test_to_klio_message_raises(klio_config, logger, monkeypatch):
     incoming = b"Not a klio message"
 
     with pytest.raises(gproto_message.DecodeError):
-        serializer._to_klio_message(incoming, klio_config, logger)
+        serializer.to_klio_message(incoming, klio_config, logger)
 
     # Just asserting it's called - not testing the error string itself
     # to avoid making brittle tests
@@ -96,7 +96,7 @@ def test_from_klio_message(klio_message, payload, exp_payload):
     if exp_payload:
         expected.data.payload = exp_payload
 
-    actual_message = serializer._from_klio_message(klio_message, payload)
+    actual_message = serializer.from_klio_message(klio_message, payload)
     assert expected == actual_message
 
 
@@ -106,4 +106,4 @@ def test_from_klio_message_raises(klio_message):
     with pytest.raises(
         exceptions.KlioMessagePayloadException, match="Returned payload"
     ):
-        serializer._from_klio_message(klio_message, payload)
+        serializer.from_klio_message(klio_message, payload)

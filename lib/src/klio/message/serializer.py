@@ -7,7 +7,7 @@ from klio.message import exceptions
 
 # [batch dev] attemping to make this a little generic so it can (eventually)
 # be used with transforms other than DoFns
-def _to_klio_message(incoming_message, kconfig=None, logger=None):
+def to_klio_message(incoming_message, kconfig=None, logger=None):
     # TODO: when making a generic de/ser func, be sure to assert
     # kconfig and logger exists
     parsed_message = klio_pb2.KlioMessage()
@@ -32,7 +32,7 @@ def _to_klio_message(incoming_message, kconfig=None, logger=None):
 
 
 # TODO: maybe figure out a wa to include a SerializeToString call
-def _from_klio_message(klio_message, payload=None):
+def from_klio_message(klio_message, payload=None):
     if payload:
         # if the user just returned exactly what they received in the
         # process method; let's avoid recursive payloads

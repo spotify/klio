@@ -521,3 +521,44 @@ def test_klio_write_bigquery_config_raises(schema):
         io.KlioBigQueryEventOutput.from_dict(
             config_dict, io.KlioIOType.EVENT, io.KlioIODirection.OUTPUT
         )
+
+
+@pytest.mark.parametrize(
+    "include_topic,include_subscription",
+    ((False, True), (True, False), (True, True),),
+)
+def test_pubsub_event_input_kwargs(include_topic, include_subscription):
+    config_dict = {
+        "type": "pubsub",
+        "topic": "a-topic",
+        "subscription": "a-subscription",
+    }
+
+    if not include_topic:
+        config_dict.pop("topic")
+    if not include_subscription:
+        config_dict.pop("subscription")
+
+    pubsub = io.KlioPubSubEventInput.from_dict(
+        config_dict, io.KlioIOType.EVENT, io.KlioIODirection.INPUT
+    )
+
+    if include_subscription:
+        expected = {
+            "subscription": "a-subscription",
+        }
+    else:
+        expected = {
+            "topic": "a-topic",
+        }
+
+    assert expected == pubsub.to_io_kwargs()
+
+
+def test_pubsub_event_input_topic_subscription():
+    config_dict = {"type": "pubsub"}
+
+    with pytest.raises(ValueError):
+        io.KlioPubSubEventInput.from_dict(
+            config_dict, io.KlioIOType.EVENT, io.KlioIODirection.INPUT
+        )

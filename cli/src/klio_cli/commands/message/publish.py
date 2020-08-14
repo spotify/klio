@@ -40,7 +40,8 @@ def _get_current_klio_job(config):
     for input_ in inputs:
         job_input = klio_job.JobInput()
         job_input.topic = input_.topic
-        job_input.subscription = input_.subscription
+        if input_.subscription:
+            job_input.subscription = input_.subscription
         # [batch dev] TODO: hardcoding mapping between data and event
         # inputs for now (same behavior as v1)
         job_input.data_location = config.job_config.data_inputs[0].location

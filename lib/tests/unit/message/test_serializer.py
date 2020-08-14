@@ -2,6 +2,7 @@
 
 import pytest
 
+from apache_beam import pvalue
 from google.protobuf import message as gproto_message
 
 from klio_core.proto.v1beta1 import klio_pb2
@@ -96,8 +97,26 @@ def test_from_klio_message(klio_message, payload, exp_payload):
     if exp_payload:
         expected.data.payload = exp_payload
 
+    expected_str = expected.SerializeToString()
+
     actual_message = serializer.from_klio_message(klio_message, payload)
-    assert expected == actual_message
+    assert expected_str == actual_message
+
+
+def test_from_klio_message_tagged_output(klio_message):
+    payload = b"some payload"
+    expected_msg = _get_klio_message()
+    expected_msg.data.payload = payload
+
+    expected = pvalue.TaggedOutput("a-tag", expected_msg.SerializeToString())
+
+    tagged_payload = pvalue.TaggedOutput("a-tag", payload)
+    actual_message = serializer.from_klio_message(klio_message, tagged_payload)
+
+    # can't compare expected vs actual directly since pvalue.TaggedOutput
+    # hasn't implemented the comparison operators
+    assert expected.tag == actual_message.tag
+    assert expected.value == actual_message.value
 
 
 def test_from_klio_message_raises(klio_message):

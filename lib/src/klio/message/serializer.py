@@ -1,5 +1,7 @@
 # Copyright 2020 Spotify AB
 
+from apache_beam import pvalue
+
 from klio_core.proto import klio_pb2
 
 from klio.message import exceptions
@@ -31,8 +33,13 @@ def to_klio_message(incoming_message, kconfig=None, logger=None):
     return parsed_message
 
 
-# TODO: maybe figure out a wa to include a SerializeToString call
 def from_klio_message(klio_message, payload=None):
+    tagged, tag = False, None
+    if isinstance(payload, pvalue.TaggedOutput):
+        tagged = True
+        tag = payload.tag
+        payload = payload.value
+
     if payload:
         # if the user just returned exactly what they received in the
         # process method; let's avoid recursive payloads
@@ -60,4 +67,7 @@ def from_klio_message(klio_message, payload=None):
     # when publishing to pubsub (and potentially other output transforms)
     klio_message.data.payload = payload
 
-    return klio_message
+    if tagged:
+        return pvalue.TaggedOutput(tag, klio_message.SerializeToString())
+
+    return klio_message.SerializeToString()

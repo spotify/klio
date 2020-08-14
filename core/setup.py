@@ -62,7 +62,7 @@ META_FILE = read(META_PATH)
 INSTALL_REQUIRES = [
     "glom",
     "google-api-python-client",
-    "google-api-core",  # TODO: try and remove
+    "google-api-core<=1.16.0",  # TODO: try and remove
     "google-cloud-pubsub<=1.4.0",  # TODO: try and remove
     "protobuf",
     "pyyaml",

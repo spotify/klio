@@ -12,38 +12,6 @@ from klio_core.config import _io as io
 def job_config_dict():
     return {
         "metrics": {"logger": {}},
-        "inputs": [
-            {
-                "topic": "test-parent-job-out",
-                "subscription": "test-parent-job-out-sub",
-                "data_location": "gs://sigint-output/test-parent-job-out",
-            }
-        ],
-        "outputs": [
-            {
-                "topic": "test-job-out",
-                "data_location": "gs://sigint-output/test-job-out",
-            }
-        ],
-        "dependencies": [
-            {"gcp_project": "sigint", "job_name": "test-parent-job"}
-        ],
-        "thread_pool_processes": 3,
-        "number_of_retries": 3,
-        "more": "config",
-        "that": {"the": "user"},
-        "might": ["include"],
-        "blocking": False,
-        "timeout_threshold": 0,
-        "allow_non_klio_messages": False,
-        "binary_non_klio_messages": False,
-    }
-
-
-@pytest.fixture
-def job_v2_config_dict():
-    return {
-        "metrics": {"logger": {}},
         "events": {
             "inputs": [
                 {
@@ -74,6 +42,62 @@ def job_v2_config_dict():
         "that": {"the": "user"},
         "might": ["include"],
         "blocking": False,
+    }
+
+
+@pytest.fixture
+def final_job_config_dict():
+    return {
+        "metrics": {"logger": {}},
+        "events": {
+            "inputs": [
+                {
+                    "type": "pubsub",
+                    "topic": "test-parent-job-out",
+                    "subscription": "test-parent-job-out-sub",
+                    "skip_klio_read": False,
+                },
+            ],
+            "outputs": [
+                {
+                    "type": "pubsub",
+                    "topic": "test-job-out",
+                    "skip_klio_write": False,
+                }
+            ],
+        },
+        "data": {
+            "inputs": [
+                {
+                    "type": "gcs",
+                    "location": "gs://sigint-output/test-parent-job-out",
+                    "skip_klio_existence_check": False,
+                    "file_suffix": "",
+                    "ping": False,
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "gcs",
+                    "file_suffix": "",
+                    "force": False,
+                    "location": "gs://sigint-output/test-job-out",
+                    "skip_klio_existence_check": False,
+                }
+            ],
+        },
+        "dependencies": [
+            {"gcp_project": "sigint", "job_name": "test-parent-job"}
+        ],
+        "thread_pool_processes": 3,
+        "timeout_threshold": 0,
+        "number_of_retries": 3,
+        "more": "config",
+        "that": {"the": "user"},
+        "might": ["include"],
+        "blocking": False,
+        "allow_non_klio_messages": False,
+        "binary_non_klio_messages": False,
     }
 
 
@@ -195,12 +219,12 @@ def config_dict(job_config_dict, pipeline_config_dict):
 
 
 @pytest.fixture
-def final_config_dict(final_pipeline_config_dict, job_config_dict):
+def final_config_dict(final_pipeline_config_dict, final_job_config_dict):
     return {
-        "version": 1,
+        "version": 2,
         "job_name": "test-job",
         "pipeline_options": final_pipeline_config_dict,
-        "job_config": job_config_dict,
+        "job_config": final_job_config_dict,
     }
 
 
@@ -226,23 +250,30 @@ def no_gcp_config_dict(job_config_dict, empty_pipeline_config_dict):
     ),
 )
 def test_klio_job_config(
-    job_config_dict, dependencies, timeout_threshold, blocking
+    job_config_dict,
+    dependencies,
+    timeout_threshold,
+    blocking,
+    final_job_config_dict,
 ):
     if blocking is None:
         job_config_dict.pop("blocking")
     else:
         job_config_dict["blocking"] = blocking
+        final_job_config_dict["blocking"] = blocking
 
     if not dependencies:
         job_config_dict.pop("dependencies")
+        final_job_config_dict["dependencies"] = []
 
     if not timeout_threshold:
         timeout_threshold = 0
     else:
         job_config_dict["timeout_threshold"] = timeout_threshold
+        final_job_config_dict["timeout_threshold"] = timeout_threshold
 
     config_obj = config.KlioJobConfig(
-        job_config_dict, job_name="test-job", version=1
+        job_config_dict, job_name="test-job", version=2
     )
 
     assert {"logger": {}} == config_obj.metrics
@@ -252,16 +283,12 @@ def test_klio_job_config(
 
     ret_input_topics = [i.topic for i in config_obj.event_inputs]
     ret_output_topics = [o.topic for o in config_obj.event_outputs]
-    ret_input_topics = [i.topic for i in config_obj.inputs]
-    ret_output_topics = [o.topic for o in config_obj.outputs]
 
     assert ["test-parent-job-out"] == ret_input_topics
     assert ["test-job-out"] == ret_output_topics
 
     ret_input_data = [i.location for i in config_obj.data_inputs]
     ret_output_data = [o.location for o in config_obj.data_outputs]
-    ret_input_data = [i.data_location for i in config_obj.inputs]
-    ret_output_data = [o.data_location for o in config_obj.outputs]
 
     assert ["gs://sigint-output/test-parent-job-out"] == ret_input_data
     assert ["gs://sigint-output/test-job-out"] == ret_output_data
@@ -280,33 +307,7 @@ def test_klio_job_config(
     if blocking is None:
         job_config_dict["blocking"] = False
 
-    assert job_config_dict == config_obj.as_dict()
-
-    repr_actual = repr(config_obj)
-    assert "KlioJobConfig(job_name='test-job')" == repr_actual
-
-
-def test_v2_job_config(job_v2_config_dict):
-    config_obj = config.KlioJobConfig(
-        job_v2_config_dict, job_name="test-job", version=2
-    )
-
-    assert {"logger": {}} == config_obj.metrics
-    assert 3 == config_obj.thread_pool_processes
-    assert 0 == config_obj.timeout_threshold
-    assert 3 == config_obj.number_of_retries
-
-    ret_input_topics = [i.topic for i in config_obj.event_inputs]
-    ret_output_topics = [o.topic for o in config_obj.event_outputs]
-
-    assert ["test-parent-job-out"] == ret_input_topics
-    assert ["test-job-out"] == ret_output_topics
-
-    ret_input_data = [i.location for i in config_obj.data_inputs]
-    ret_output_data = [o.location for o in config_obj.data_outputs]
-
-    assert ["gs://sigint-output/test-parent-job-out"] == ret_input_data
-    assert ["gs://sigint-output/test-job-out"] == ret_output_data
+    assert final_job_config_dict == config_obj.as_dict()
 
     repr_actual = repr(config_obj)
     assert "KlioJobConfig(job_name='test-job')" == repr_actual

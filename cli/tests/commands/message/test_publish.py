@@ -29,19 +29,24 @@ def klio_job_config():
         "version": 1,
         "pipeline_options": {"project": "test-gcp-project"},
         "job_config": {
-            "inputs": [
-                {
-                    "topic": "an-input-topic",
-                    "data_location": "gs://a-test-input/location",
-                    "subscription": "a-subscription",
-                }
-            ],
-            "outputs": [
-                {
-                    "topic": "foo-topic-output",
-                    "data_location": "foo-output-location",
-                }
-            ],
+            "events": {
+                "inputs": [
+                    {
+                        "type": "pubsub",
+                        "topic": "an-input-topic",
+                        "subscription": "a-subscription",
+                    }
+                ],
+                "outputs": [{"type": "pubsub", "topic": "foo-topic-output"}],
+            },
+            "data": {
+                "inputs": [
+                    {"type": "gcs", "location": "gs://a-test-input/location"}
+                ],
+                "outputs": [
+                    {"type": "gcs", "location": "foo-output-location"}
+                ],
+            },
         },
     }
     return config.KlioConfig(conf)

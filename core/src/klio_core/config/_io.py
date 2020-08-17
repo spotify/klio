@@ -474,18 +474,3 @@ class KlioGCSOutputDataConfig(KlioDataIOConfig, KlioGCSConfig):
     def from_dict(cls, config_dict, *args, **kwargs):
         config_dict = super()._from_dict(config_dict)
         return super().from_dict(config_dict, *args, **kwargs)
-
-
-# legacy config for v1
-@attr.attrs(frozen=True)
-class KlioJobInput(object):
-    topic = attr.attrib(type=str)
-    subscription = attr.attrib(type=str)
-    data_location = attr.attrib(type=str)
-
-
-# legacy config for v1
-@attr.attrs(frozen=True)
-class KlioJobOutput(object):
-    topic = attr.attrib(type=str)
-    data_location = attr.attrib(type=str)

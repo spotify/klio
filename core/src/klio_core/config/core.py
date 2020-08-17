@@ -34,8 +34,7 @@ class BaseKlioConfig(object):
     job_config = attr.attrib(repr=False)
     pipeline_options = attr.attrib(repr=False, default={})
 
-    # TODO: set default to version 2!
-    version = attr.attrib(type=int, default=1, repr=False)
+    version = attr.attrib(type=int, default=2, repr=False)
 
     def __config_post_init__(self, config_dict):
         self._raw = config_dict
@@ -100,10 +99,7 @@ class KlioJobConfig(object):
         self._raw = config_dict
         self._scanned_io_subclasses = None
 
-        if self.version == 1:
-            self._parse_v1_io(config_dict)
-        else:
-            self._parse_v2_io(config_dict)
+        self._parse_io(config_dict)
 
         declared_config = self._as_dict()
         for key, value in self._raw.items():
@@ -123,49 +119,7 @@ class KlioJobConfig(object):
                 # is called, we re-add it to what _as_dict() returns
                 self.USER_ATTRIBS.append({key: value})
 
-    def _parse_v1_io(self, config_dict):
-        self.event_inputs = [
-            io.KlioPubSubEventInput.from_dict(
-                c, io.KlioIOType.EVENT, io.KlioIODirection.INPUT
-            )
-            for c in config_dict.get("inputs", [])
-        ]
-        self.event_outputs = [
-            io.KlioPubSubEventOutput.from_dict(
-                c, io.KlioIOType.EVENT, io.KlioIODirection.OUTPUT
-            )
-            for c in config_dict.get("outputs", [])
-        ]
-        self.data_inputs = [
-            io.KlioGCSInputDataConfig.from_dict(
-                c, io.KlioIOType.DATA, io.KlioIODirection.INPUT
-            )
-            for c in config_dict.get("inputs", [])
-        ]
-        self.data_outputs = [
-            io.KlioGCSOutputDataConfig.from_dict(
-                c, io.KlioIOType.DATA, io.KlioIODirection.OUTPUT
-            )
-            for c in config_dict.get("outputs", [])
-        ]
-        # also generate legacy attributes.
-        # notice that v1 only supports PubSub for events, GCS for data, and
-        # only 1 each for input and output
-        self.inputs = [
-            io.KlioJobInput(
-                topic=self.event_inputs[0].topic,
-                subscription=self.event_inputs[0].subscription,
-                data_location=self.data_inputs[0].location,
-            )
-        ]
-        self.outputs = [
-            io.KlioJobOutput(
-                topic=self.event_outputs[0].topic,
-                data_location=self.data_outputs[0].location,
-            )
-        ]
-
-    def _parse_v2_io(self, config_dict):
+    def _parse_io(self, config_dict):
         self.event_inputs = self._create_config_objects(
             config_dict.get("events", {}).get("inputs", []),
             io.KlioIOType.EVENT,
@@ -227,12 +181,10 @@ class KlioJobConfig(object):
             objs.append(subclass.from_dict(config, io_type, io_direction))
         return objs
 
-    def _as_dict_v1(self, config_dict):
-        config_dict["inputs"] = [attr.asdict(i) for i in self.inputs]
-        config_dict["outputs"] = [attr.asdict(o) for o in self.outputs]
-        return config_dict
-
-    def _as_dict_v2(self, config_dict):
+    def _as_dict(self):
+        config_dict = attr.asdict(
+            self, filter=lambda x, _: x.name not in self.ATTRIBS_TO_SKIP
+        )
         config_dict["events"] = {}
         config_dict["events"]["inputs"] = [
             ei.as_dict() for ei in self.event_inputs
@@ -248,17 +200,6 @@ class KlioJobConfig(object):
         config_dict["data"]["outputs"] = [
             do.as_dict() for do in self.data_outputs
         ]
-        return config_dict
-
-    def _as_dict(self):
-        config_dict = attr.asdict(
-            self, filter=lambda x, _: x.name not in self.ATTRIBS_TO_SKIP
-        )
-        if self.version == 1:
-            config_dict = self._as_dict_v1(config_dict)
-        else:
-            config_dict = self._as_dict_v2(config_dict)
-
         return config_dict
 
     def as_dict(self):

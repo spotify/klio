@@ -4,6 +4,7 @@
 from __future__ import absolute_import
 
 import os
+from unittest import mock
 
 import click
 import pytest
@@ -12,9 +13,6 @@ import yaml
 from click import testing
 
 from klio_core import config as kconfig
-
-from klio_exec import cli
-from klio_exec.commands import profile
 
 
 @pytest.fixture
@@ -29,8 +27,7 @@ def cli_runner():
     return testing.CliRunner()
 
 
-@pytest.fixture
-def config():
+def _config():
     return {
         "job_name": "klio-job-name",
         "job_config": {
@@ -68,8 +65,30 @@ def config():
 
 
 @pytest.fixture
+def config():
+    return _config()
+
+
+@pytest.fixture
 def klio_config(config):
     return kconfig.KlioConfig(config)
+
+
+# NOTE: Python decorators are evaluated on import, and so importing
+# `klio_exec.commands.profile` (which imports `klio.transforms.helpers`, which
+# imports `klio.transforms.decorators`) and `klio_exec.cli` triggers the  code
+# in those decorators to get evaluated. Therefore, we must patch this part in
+# order to import it, otherwise it will try to load the non-existant
+# `/usr/src/config/.effective-klio-job.yaml`
+mock_config = kconfig.KlioConfig(_config())
+patcher = mock.patch(
+    "klio.transforms.core.KlioContext._load_config_from_file",
+    lambda x: mock_config,
+)
+patcher.start()
+
+from klio_exec.commands import profile  # noqa E402
+from klio_exec import cli  # noqa E402
 
 
 @pytest.fixture

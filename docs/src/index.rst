@@ -1,19 +1,33 @@
-.. klio documentation master file, created by
-   sphinx-quickstart on Wed Aug 12 13:31:35 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+klio: some clever tagline
+=========================
 
-Welcome to klio's documentation!
-================================
+.. todo::
 
+   This is the landing page. Let's add some landing page documentation! This can actually be pulled in from our repo's README.
+
+
+.. the `todolist` directive below collects all todos in our docs and lists them here to make them super obvious
+
+.. todolist::
+
+
+.. toctree is "hidden" from rendering in the body, but still shows in the sidebar
+   navigation.
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
+   :hidden:
 
+   quickstart
+   io/index
+   pipeline/index
+   ecosystem/index
+   faqs
+   internals
+   contributors
 
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`

@@ -17,9 +17,9 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'klio'
-copyright = '2020, The klio developers'
-author = 'The klio developers'
+project = "klio"
+copyright = "2020, Spotify AB"
+author = "The klio developers"
 
 
 # -- General configuration ---------------------------------------------------
@@ -28,10 +28,13 @@ author = 'The klio developers'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "sphinx.ext.todo",  # highlight TODO items
+    "sphinx.ext.intersphinx",  # interlink between other projects w/ sphinx docs
+    "sphinx.ext.autodoc",  # auto-generate docs from docstrings
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -44,9 +47,23 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = "alabaster"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
+html_css_files = ["css/custom.css"]  # relative to _static
+html_favicon = "_static/images/favicon.ico"
+html_theme_options = {
+    "description": "klio: some clever tagline",
+    "logo": "images/logo.png",  # relative to _static
+}
+
+
+# -- Extention configuration
+
+# TODO ext: https://www.sphinx-doc.org/en/master/usage/extensions/todo.html
+todo_include_todos = True
+todo_emit_warnings = False
+todo_link_only = False

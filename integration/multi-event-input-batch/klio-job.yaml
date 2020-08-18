@@ -1,0 +1,31 @@
+version: 2
+job_name: multi-event-input-batch
+pipeline_options:
+  streaming: False
+  update: False
+  worker_harness_container_image: integration-multi-event-input-batch
+  experiments:
+    - enable_stackdriver_agent_metrics
+  project: fluffy-zelda-glitch-toki-kobe
+  runner: DirectRunner
+  setup_file: setup.py
+job_config:
+  allow_non_klio_messages: False
+  events:
+    inputs:
+      - type: file
+        location: ./batch_track_ids_1.txt
+      - type: file
+        location: ./batch_track_ids_2.txt
+    outputs:
+      - type: file
+        location: ./batch_track_ids_output
+  data:
+    inputs:
+      - type: gcs
+        location: gs://klio-integration/multi-event-input-batch-input
+        skip_klio_existence_check: True
+    outputs:
+      - type: gcs
+        location: gs://klio-integration/multi-event-input-batch-output
+        skip_klio_existence_check: False

@@ -28,11 +28,18 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        test-dir: ["read-file-write-file"]
+        test-dir:
+          - "read-file-write-file"
+          - "multi-event-input-batch"
       # do not cancel other jobs in matrix if one fails
       fail-fast: false
     steps:
       - uses: "actions/checkout@v2"
+      - name: Decrypt GCP credentials
+        working-directory: .github/scripts
+        run: ./decrypt_it_creds.sh
+        env:
+          IT_GCP_CREDS_KEY: ${{ secrets.IT_GCP_CREDS_KEY }}
       - uses: "actions/setup-python@v1"
         with:
           python-version: "3.6"

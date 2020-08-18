@@ -1,0 +1,25 @@
+INFO:root:Found worker image: integration-multi-event-input-batch:multi-event-input-batch-klio-job.yaml
+INFO:klio:Output not found at gs://klio-integration/multi-event-input-batch-output/source1-abcd
+INFO:klio:Output not found at gs://klio-integration/multi-event-input-batch-output/source1-efgh
+INFO:klio:Output not found at gs://klio-integration/multi-event-input-batch-output/source1-ijkl
+INFO:klio:Output not found at gs://klio-integration/multi-event-input-batch-output/source1-mnop
+INFO:klio:[first_func]: b'source1-abcd'
+INFO:klio:[first_func]: b'source1-efgh'
+INFO:klio:[first_func]: b'source1-ijkl'
+INFO:klio:[first_func]: b'source1-mnop'
+INFO:klio:Output not found at gs://klio-integration/multi-event-input-batch-output/source2-abcd
+INFO:klio:Output not found at gs://klio-integration/multi-event-input-batch-output/source2-efgh
+INFO:klio:Output not found at gs://klio-integration/multi-event-input-batch-output/source2-ijkl
+INFO:klio:Output not found at gs://klio-integration/multi-event-input-batch-output/source2-mnop
+INFO:klio:[second_func]: b'source2-abcd'
+INFO:klio:[second_func]: b'source2-efgh'
+INFO:klio:[second_func]: b'source2-ijkl'
+INFO:klio:[second_func]: b'source2-mnop'
+INFO:klio:[combined_func]: b'source1-abcd'
+INFO:klio:[combined_func]: b'source1-efgh'
+INFO:klio:[combined_func]: b'source1-ijkl'
+INFO:klio:[combined_func]: b'source1-mnop'
+INFO:klio:[combined_func]: b'source2-abcd'
+INFO:klio:[combined_func]: b'source2-efgh'
+INFO:klio:[combined_func]: b'source2-ijkl'
+INFO:klio:[combined_func]: b'source2-mnop'

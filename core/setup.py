@@ -61,7 +61,7 @@ CLASSIFIERS = [
 META_FILE = read(META_PATH)
 INSTALL_REQUIRES = [
     "glom",
-    "google-api-python-client",
+    "google-api-python-client<=1.9.0",
     "google-api-core<=1.16.0",  # TODO: try and remove
     "google-cloud-pubsub<=1.4.0",  # TODO: try and remove
     "protobuf",

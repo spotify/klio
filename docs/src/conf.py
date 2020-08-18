@@ -28,6 +28,9 @@ author = "The klio developers"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "sphinx.ext.todo",  # highlight TODO items
+    "sphinx.ext.intersphinx",  # interlink between other projects w/ sphinx docs
+    "sphinx.ext.autodoc",  # auto-generate docs from docstrings
 ]
 
 # Add any paths that contain templates here, relative to this directory.

@@ -53,3 +53,9 @@ html_theme = "alabaster"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+html_css_files = ["css/custom.css"]  # relative to _static
+html_favicon = "_static/images/favicon.ico"
+html_theme_options = {
+    "description": "klio: some clever tagline",
+    "logo": "images/logo.png",  # relative to _static
+}

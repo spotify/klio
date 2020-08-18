@@ -1,7 +1,9 @@
 I/O
 ===
 
-TODO: intro documentation to the available IOs in Klio.  This can include links to the ``klio`` library API docs, but should also have examples.
+.. todo::
+
+    Write intro documentation to the available IOs in Klio.  This can include links to the ``klio`` library API docs, but should also have examples.
 
 
 Streaming
@@ -10,7 +12,9 @@ Streaming
 Google Pub/Sub
 ^^^^^^^^^^^^^^
 
-TODO
+.. todo::
+
+    write me!
 
 Batch
 -----
@@ -18,9 +22,13 @@ Batch
 File
 ^^^^
 
-TODO
+.. todo::
+
+    write me!
 
 BigQuery
 ^^^^^^^^
 
-TODO
+.. todo::
+
+    write me!

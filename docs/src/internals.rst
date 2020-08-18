@@ -1,7 +1,9 @@
 Internals
 =========
 
-TODO: intro docs to klio internals
+.. todo::
+
+    intro docs to klio internals
 
 
 .. toctree::

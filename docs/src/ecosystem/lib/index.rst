@@ -1,7 +1,9 @@
 Klio Library
 =============
 
-TODO: intro documentation the ``klio`` package.
+.. todo::
+
+    Write intro documentation the ``klio`` package.
 
 
 .. toctree::

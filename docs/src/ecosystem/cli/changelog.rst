@@ -1,4 +1,6 @@
 CLI Changelog
 =============
 
-TODO: changelog for the ``klio-cli`` package.
+.. todo::
+
+    Write a changelog for the ``klio-cli`` package.

@@ -1,10 +1,14 @@
 FAQs
 ====
 
-TODO
+.. todo::
+
+    Write some initial FAQs!
 
 
 Can I use my own protobuf definition for the ``KlioMessage``?
 -------------------------------------------------------------
 
-TODO
+.. todo::
+
+    Let's answer this question!

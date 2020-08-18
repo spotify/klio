@@ -1,7 +1,9 @@
 Klio Executor
 =============
 
-TODO: intro documentation the ``klio-exec`` package.
+.. todo::
+
+    Write intro documentation for the ``klio-exec`` package.
 
 
 .. toctree::

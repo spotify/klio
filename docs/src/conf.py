@@ -59,3 +59,11 @@ html_theme_options = {
     "description": "klio: some clever tagline",
     "logo": "images/logo.png",  # relative to _static
 }
+
+
+# -- Extention configuration
+
+# TODO ext: https://www.sphinx-doc.org/en/master/usage/extensions/todo.html
+todo_include_todos = True
+todo_emit_warnings = False
+todo_link_only = False

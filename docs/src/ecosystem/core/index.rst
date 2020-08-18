@@ -1,7 +1,9 @@
 Klio Core
 =========
 
-TODO: intro documentation the ``klio-core`` package.
+.. todo::
+
+    Write intro documentation to the ``klio-core`` package.
 
 
 .. toctree::

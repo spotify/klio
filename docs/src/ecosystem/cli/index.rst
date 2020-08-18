@@ -1,7 +1,9 @@
 Klio CLI
 ========
 
-TODO: intro documentation the ``klio-cli`` package.
+.. todo::
+
+    Write intro documentation to the ``klio-cli`` package.
 
 
 .. toctree::

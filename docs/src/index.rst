@@ -1,7 +1,14 @@
 klio: some clever tagline
 =========================
 
-TODO: this is the landing page. Let's add some landing page documentation! This can actually be pulled in from our repo's README.
+.. todo::
+
+   This is the landing page. Let's add some landing page documentation! This can actually be pulled in from our repo's README.
+
+
+.. the `todolist` directive below collects all todos in our docs and lists them here to make them super obvious
+
+.. todolist::
 
 
 .. toctree is "hidden" from rendering in the body, but still shows in the sidebar

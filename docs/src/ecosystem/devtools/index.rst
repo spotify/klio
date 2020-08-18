@@ -1,7 +1,9 @@
 Klio Development Tools
 ======================
 
-TODO: intro documentation the ``klio-devtools`` package.
+.. todo::
+
+    Write intro documentation for the ``klio-devtools`` package.
 
 
 .. toctree::

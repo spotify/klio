@@ -1,7 +1,9 @@
 Ecosystem
 =========
 
-TODO: intro the klio ecosystem, and how each package interacts with each other.
+.. todo::
+
+    Write an intro to the klio ecosystem, and how each package interacts with each other.
 
 
 .. toctree::

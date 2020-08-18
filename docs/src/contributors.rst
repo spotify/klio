@@ -1,4 +1,6 @@
 Contributing
 ============
 
-TODO: add our contributing docs
+.. todo::
+
+    add our contributing docs!

@@ -1,4 +1,6 @@
 Changelog
 =========
 
-TODO: changelog for the ``klio-devtools`` package.
+.. todo::
+
+    Write a changelog for the ``klio-devtools`` package.

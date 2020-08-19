@@ -44,7 +44,8 @@ def _get_current_klio_job(config):
             job_input.subscription = input_.subscription
         # [batch dev] TODO: hardcoding mapping between data and event
         # inputs for now (same behavior as v1)
-        job_input.data_location = config.job_config.data.inputs[0].location
+        if len(config.job_config.data.inputs):
+            job_input.data_location = config.job_config.data.inputs[0].location
         klio_job.inputs.extend([job_input])
 
     return klio_job

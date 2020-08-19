@@ -78,6 +78,22 @@ class KlioPipeline(object):
         return len(self.config.job_config.events.outputs) > 0
 
     @property
+    def _has_data_inputs(self):
+        return len(self.config.job_config.data.inputs) > 0
+
+    @property
+    def _has_multi_data_inputs(self):
+        return len(self.config.job_config.data.inputs) > 1
+
+    @property
+    def _has_data_outputs(self):
+        return len(self.config.job_config.data.outputs) > 0
+
+    @property
+    def _has_multi_data_outputs(self):
+        return len(self.config.job_config.data.outputs) > 1
+
+    @property
     def _io_mapper(self):
         if not self.config.pipeline_options.streaming:
             return EventIOMapper.batch
@@ -242,17 +258,17 @@ class KlioPipeline(object):
     def _setup_data_io_filters(self, in_pcol, label_prefix=None):
         # label prefixes are required for multiple inputs (to avoid label
         # name collisions in Beam)
-        if (
-            len(self.config.job_config.data.inputs) > 1
-            or len(self.config.job_config.data.outputs) > 1
-        ):
+        if self._has_multi_data_inputs or self._has_multi_data_outputs:
             logging.error(
                 "Klio does not (yet) support multiple data inputs and outputs."
             )
             raise SystemExit(1)
 
-        data_input_config = self.config.job_config.data.inputs[0]
-        data_output_config = self.config.job_config.data.outputs[0]
+        data_in_config, data_out_config = None, None
+        if self._has_data_inputs:
+            data_in_config = self.config.job_config.data.inputs[0]
+        if self._has_data_outputs:
+            data_out_config = self.config.job_config.data.outputs[0]
 
         pfx = ""
         if label_prefix is not None:
@@ -261,11 +277,16 @@ class KlioPipeline(object):
         def lbl(label):
             return "{}{}".format(pfx, label)
 
-        pings = in_pcol | lbl("Ping Filter") >> helpers.KlioFilterPing()
+        to_process_output = in_pcol
+        pass_thru = None
+        if data_in_config:
+            pings = in_pcol | lbl("Ping Filter") >> helpers.KlioFilterPing()
+            to_process_output = pings.process
+            pass_thru = pings.pass_thru
 
-        if not data_output_config.skip_klio_existence_check:
+        if data_out_config and not data_out_config.skip_klio_existence_check:
             output_exists = (
-                pings.process
+                to_process_output
                 | lbl("Output Exists Filter")
                 >> helpers.KlioGcsCheckOutputExists()
             )
@@ -273,7 +294,7 @@ class KlioPipeline(object):
                 output_exists.found
                 | lbl("Output Force Filter") >> helpers.KlioFilterForce()
             )
-            to_pass_thru_tuple = (pings.pass_thru, output_force.pass_thru)
+            to_pass_thru_tuple = (pass_thru, output_force.pass_thru)
             to_pass_thru = (
                 to_pass_thru_tuple
                 | lbl("Flatten to Pass Thru") >> beam.Flatten()
@@ -288,10 +309,10 @@ class KlioPipeline(object):
                 | lbl("Flatten to Process") >> beam.Flatten()
             )
         else:
-            to_pass_thru = pings.pass_thru
-            to_filter_input = pings.process
+            to_pass_thru = pass_thru
+            to_filter_input = to_process_output
 
-        if not data_input_config.skip_klio_existence_check:
+        if data_in_config and not data_in_config.skip_klio_existence_check:
             input_exists = (
                 to_filter_input
                 | lbl("Input Exists Filter")

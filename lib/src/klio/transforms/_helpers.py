@@ -144,6 +144,28 @@ class _KlioInputDataMixin(object):
     @property
     def _data_config(self):
         # TODO: figure out how to support multiple inputs
+
+        # If folks use the default existence checks that klio does, we
+        # shouldn't get here. But we could if the user implements their
+        # own and misconfigures their data inputs.
+        if len(self._klio.config.job_config.data.inputs) > 1:
+            # raise a runtime error so it actually crashes klio/beam rather than
+            # just continue processing elements
+            raise RuntimeError(
+                "Multiple inputs configured in "
+                "`klio-job.yaml::job_config.data.inputs` are not supported "
+                "for data existence checks."
+            )
+        # If folks use the default existence checks that klio does, we
+        # shouldn't get here. But we could if the user implements their
+        # own and misconfigures their data inputs.
+        if len(self._klio.config.job_config.data.inputs) == 0:
+            # raise a runtime error so it actually crashes klio/beam rather than
+            # just continue processing elements
+            raise RuntimeError(
+                "Input data existence checks require input data to be "
+                "configured in `klio-job.yaml::job_config.data.inputs`."
+            )
         return self._klio.config.job_config.data.inputs[0]
 
 
@@ -158,6 +180,29 @@ class _KlioOutputDataMixin(object):
     @property
     def _data_config(self):
         # TODO: figure out how to support multiple outputs
+
+        # If folks use the default existence checks that klio does, we
+        # shouldn't get here. But we could if the user implements their
+        # own and misconfigures their data outputs.
+        if len(self._klio.config.job_config.data.outputs) > 1:
+            # raise a runtime error so it actually crashes klio/beam rather than
+            # just continue processing elements
+            raise RuntimeError(
+                "Multiple outputs configured in "
+                "`klio-job.yaml::job_config.data.outputs` are not supported "
+                "for data existence checks."
+            )
+
+        # If folks use the default existence checks that klio does, we
+        # shouldn't get here. But we could if the user implements their
+        # own and misconfigures their data outputs.
+        if len(self._klio.config.job_config.data.outputs) == 0:
+            # raise a runtime error so it actually crashes klio/beam rather than
+            # just continue processing elements
+            raise RuntimeError(
+                "Output data existence checks require output data to be "
+                "configured in `klio-job.yaml::job_config.data.outputs`."
+            )
         return self._klio.config.job_config.data.outputs[0]
 
 

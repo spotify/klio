@@ -97,6 +97,24 @@ class KlioWriteToEventOutput(beam.PTransform):
     @decorators._set_klio_context
     def _event_config(self):
         # TODO: figure out how to support multiple outputs
+
+        if len(self._klio.config.job_config.events.outputs) > 1:
+            # raise a runtime error so it actually crashes klio/beam rather than
+            # just continue processing elements
+            raise RuntimeError(
+                "The `klio.transforms.helpers.KlioWriteToEventOutput` "
+                "transform does not support multiple outputs configured in "
+                "`klio-job.yaml::job_config.events.outputs`."
+            )
+
+        if len(self._klio.config.job_config.events.outputs) == 0:
+            # raise a runtime error so it actually crashes klio/beam rather than
+            # just continue processing elements
+            raise RuntimeError(
+                "The `klio.transforms.helpers.KlioWriteToEventOutput` "
+                "requires an event output to be configured in "
+                "`klio-job.yaml::job_config.events.outputs`."
+            )
         return self._klio.config.job_config.events.outputs[0]
 
     def expand(self, pcoll):

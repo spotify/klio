@@ -72,6 +72,7 @@ class KlioIOConfig(object):
     # `as_dict`, leaving only `attr.attrib`s related to the specific
     # config instance
     ATTRIBS_TO_SKIP = ["io_type", "io_direction"]
+    USER_ATTRIBS = []
 
     @classmethod
     def supports_type(cls, io_type):
@@ -86,6 +87,25 @@ class KlioIOConfig(object):
         copy = config_dict.copy()
         if "type" in copy:
             del copy["type"]
+
+        allow_custom_config = kwargs.pop("_allow_custom_config", False)
+        if allow_custom_config is True:
+            declared_attrs = [a.name for a in cls.__attrs_attrs__]
+            custom_config, declared_config = {}, {}
+            for key, value in copy.items():
+                if key not in declared_attrs:
+                    custom_config[key] = value
+                else:
+                    declared_config[key] = value
+
+            inst = cls(*args, **declared_config, **kwargs)
+            # clear out before adding to it; otherwise it'll get carried over
+            # to the next instance
+            inst.USER_ATTRIBS = []
+            for key, value in custom_config.items():
+                setattr(inst, key, value)
+                inst.USER_ATTRIBS.append({key: value})
+            return inst
         return cls(*args, **copy, **kwargs)
 
     def _as_dict(self):
@@ -121,7 +141,6 @@ class IOFlags(object):
     job_mode = attr.attrib(type=KlioJobMode)
 
 
-@attr.attrs(frozen=True)
 class KlioEventInput(KlioIOConfig):
     skip_klio_read = attr.attrib(type=bool)
 
@@ -143,7 +162,6 @@ class KlioEventInput(KlioIOConfig):
         return kwargs
 
 
-@attr.attrs(frozen=True)
 class KlioEventOutput(KlioIOConfig):
     skip_klio_write = attr.attrib(type=bool)
 
@@ -165,7 +183,6 @@ class KlioEventOutput(KlioIOConfig):
         return kwargs
 
 
-@attr.attrs(frozen=True)
 class KlioDataIOConfig(KlioIOConfig):
     skip_klio_existence_check = attr.attrib(type=bool)
 
@@ -474,3 +491,66 @@ class KlioGCSOutputDataConfig(KlioDataIOConfig, KlioGCSConfig):
     def from_dict(cls, config_dict, *args, **kwargs):
         config_dict = super()._from_dict(config_dict)
         return super().from_dict(config_dict, *args, **kwargs)
+
+
+class KlioCustomConfig(KlioIOConfig):
+    name = "custom"
+
+    def as_dict(self):
+        config_dict = super().as_dict().copy()
+        for attrib in self.USER_ATTRIBS:
+            for key, value in attrib.items():
+                config_dict[key] = value
+        return config_dict
+
+
+@supports(KlioIODirection.INPUT, KlioIOType.EVENT)
+class KlioCustomEventInputConfig(KlioEventInput, KlioCustomConfig):
+    @classmethod
+    def from_dict(cls, config_dict, *args, **kwargs):
+        copy = config_dict.copy()
+        # since this is a "generic" event config IO, klio won't know
+        # how to handle reading
+        copy["skip_klio_read"] = True
+        kwargs["_allow_custom_config"] = True
+        return super().from_dict(copy, *args, **kwargs)
+
+    def as_dict(self):
+        config_dict = super().as_dict()
+        config_dict.pop("skip_klio_read", None)
+        return config_dict
+
+
+@supports(KlioIODirection.OUTPUT, KlioIOType.EVENT)
+class KlioCustomEventOutputConfig(KlioEventOutput, KlioCustomConfig):
+    @classmethod
+    def from_dict(cls, config_dict, *args, **kwargs):
+        copy = config_dict.copy()
+        # since this is a "generic" event config IO, klio won't know
+        # how to handle writing
+        copy["skip_klio_write"] = True
+        kwargs["_allow_custom_config"] = True
+        return super().from_dict(copy, *args, **kwargs)
+
+    def as_dict(self):
+        config_dict = super().as_dict()
+        config_dict.pop("skip_klio_write", None)
+        return config_dict
+
+
+@supports(KlioIODirection.OUTPUT, KlioIODirection.INPUT, KlioIOType.DATA)
+class KlioCustomDataConfig(KlioDataIOConfig, KlioCustomConfig):
+    @classmethod
+    def from_dict(cls, config_dict, *args, **kwargs):
+        copy = config_dict.copy()
+        # since this is a "generic" data config IO, klio won't know
+        # how to handle the existence checks so we'll set this to True by
+        # default
+        copy["skip_klio_existence_check"] = True
+        kwargs["_allow_custom_config"] = True
+        return super().from_dict(copy, *args, **kwargs)
+
+    def as_dict(self):
+        config_dict = super().as_dict()
+        config_dict.pop("skip_klio_existence_check", None)
+        return config_dict

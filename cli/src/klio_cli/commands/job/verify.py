@@ -222,7 +222,7 @@ class VerifyJob(object):
         unverified_topic_count = 0
         unverified_sub_count = 0
 
-        data_inputs = self.klio_config.job_config.data_inputs
+        data_inputs = self.klio_config.job_config.data.inputs
 
         if not data_inputs:
             logging.warning("Your job has no data inputs, is that expected?")
@@ -240,7 +240,7 @@ class VerifyJob(object):
                 message = "There is no data_location for {}".format(_input)
                 logging.error(message)
 
-        event_inputs = self.klio_config.job_config.event_inputs
+        event_inputs = self.klio_config.job_config.events.inputs
 
         if not event_inputs:
             logging.warning("Your job has no event inputs, is that expected?")
@@ -291,7 +291,7 @@ class VerifyJob(object):
         unverified_bucket_count = 0
         unverified_topic_count = 0
 
-        data_outputs = self.klio_config.job_config.data_outputs
+        data_outputs = self.klio_config.job_config.data.outputs
 
         logging.info("Verifying your data outputs...")
 
@@ -307,7 +307,7 @@ class VerifyJob(object):
                     "There is no data_location for {}".format(output)
                 )
 
-        event_outputs = self.klio_config.job_config.event_outputs
+        event_outputs = self.klio_config.job_config.events.outputs
 
         logging.info("Verifying your event outputs...")
 

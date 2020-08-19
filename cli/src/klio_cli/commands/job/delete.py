@@ -53,8 +53,8 @@ class DeleteJob(object):
         }
         to_delete["stackdriver_group"] = False
 
-        ev_inputs = self._job_config.event_inputs
-        ev_outputs = self._job_config.event_outputs
+        ev_inputs = self._job_config.events.inputs
+        ev_outputs = self._job_config.events.outputs
         for resource in ev_inputs + ev_outputs:
             if "pubsub" == resource.name:
                 if self._confirmation_dialog("topic", resource.topic):
@@ -67,8 +67,8 @@ class DeleteJob(object):
                 ):
                     to_delete["subscription"].append(resource.subscription)
 
-        data_inputs = self._job_config.data_inputs
-        data_outputs = self._job_config.data_outputs
+        data_inputs = self._job_config.data.inputs
+        data_outputs = self._job_config.data.outputs
         for resource in data_inputs + data_outputs:
             if "gcs" == resource.name:
                 if self._confirmation_dialog("location", resource.location):

@@ -92,10 +92,10 @@ def _config():
         "location": "gs://sigint/",
     }
     mock_job_config = mock.Mock()
-    mock_job_config.event_inputs = [mock_input]
-    mock_job_config.event_outputs = [mock_output]
-    mock_job_config.data_inputs = [mock_input]
-    mock_job_config.data_outputs = [mock_output]
+    mock_job_config.events.inputs = [mock_input]
+    mock_job_config.events.outputs = [mock_output]
+    mock_job_config.data.inputs = [mock_input]
+    mock_job_config.data.outputs = [mock_output]
 
     mock_pipeline_options = mock.Mock()
 
@@ -652,8 +652,8 @@ def test_run_pipeline(
         mock_output.to_io_kwargs.return_value = {
             "topic": "projects/foo/topics/bar",
         }
-        config.job_config.event_inputs = [mock_input]
-        config.job_config.event_outputs = [mock_output]
+        config.job_config.events.inputs = [mock_input]
+        config.job_config.events.outputs = [mock_output]
 
     if run_error:
         mock_pipeline.return_value.run.side_effect = [

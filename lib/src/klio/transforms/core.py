@@ -51,7 +51,7 @@ class _KlioNamespace(object):
         klio_job.job_name = self.config.job_name
         klio_job.gcp_project = self.config.pipeline_options.project
 
-        inputs = self.config.job_config.event_inputs
+        inputs = self.config.job_config.events.inputs
         # [batch dev] we're essentially zipping together event inputs with
         #             data inputs. not sure if this is a good assumption
         # [batch dev] TODO: this should be updated once we update the proto
@@ -63,7 +63,7 @@ class _KlioNamespace(object):
                 job_input.topic = input_.topic
                 job_input.subscription = input_.subscription
 
-            data_input = self.config.job_config.data_inputs[index]
+            data_input = self.config.job_config.data.inputs[index]
             if data_input and data_input.name == "gcs":
                 job_input.data_location = data_input.location
             klio_job.inputs.extend([job_input])
@@ -340,7 +340,7 @@ class KlioContext(object):
         klio_job.job_name = self.config.job_name
         klio_job.gcp_project = self.config.pipeline_options.project
 
-        inputs = self.config.job_config.event_inputs
+        inputs = self.config.job_config.events.inputs
         # [batch dev] we're essentially zipping together event inputs with
         #             data inputs. not sure if this is a good assumption
         # [batch dev] TODO: this should be updated once we update the proto
@@ -352,7 +352,7 @@ class KlioContext(object):
                 job_input.topic = input_.topic
                 job_input.subscription = input_.subscription
 
-            data_input = self.config.job_config.data_inputs[index]
+            data_input = self.config.job_config.data.inputs[index]
             if data_input and data_input.name == "gcs":
                 job_input.data_location = data_input.location
             klio_job.inputs.extend([job_input])

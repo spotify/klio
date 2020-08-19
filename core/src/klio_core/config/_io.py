@@ -93,7 +93,7 @@ class KlioIOConfig(object):
 
         Useful for instantiating objects where the config keys map 1:1
         to the object init arguments/keyword arguments, i.e.
-        KlioReadFromBigQuery(**config.job_config.event_inputs[0].as_dict())
+        KlioReadFromBigQuery(**config.job_config.events.inputs[0].as_dict())
         """
         # filter parameter is used as "to include"/"filter-in",
         # not "to exclude"/"filter-out"

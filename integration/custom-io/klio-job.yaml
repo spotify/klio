@@ -1,0 +1,27 @@
+version: 2
+job_name: custom-ios
+pipeline_options:
+  project: not-a-real-project
+  streaming: False
+  update: False
+  worker_harness_container_image: integration-test-klio-read-file-write-file
+  experiments:
+    - enable_stackdriver_agent_metrics
+  runner: DirectRunner
+  setup_file: setup.py
+job_config:
+  allow_non_klio_messages: False
+  events:
+    inputs:
+      - type: custom
+        my_custom_event_input_key: ./batch_track_ids.txt
+    outputs:
+      - type: custom
+        my_custom_event_output_key: ./batch_track_ids_output
+  data:
+    inputs:
+      - type: custom
+        my_custom_data_input_key: /not/a/real/file
+    outputs:
+      - type: custom
+        my_custom_data_output_key: /not/a/real/file

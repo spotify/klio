@@ -144,7 +144,7 @@ class _KlioInputDataMixin(object):
     @property
     def _data_config(self):
         # TODO: figure out how to support multiple inputs
-        return self._klio.config.job_config.data_inputs[0]
+        return self._klio.config.job_config.data.inputs[0]
 
 
 class _KlioOutputDataMixin(object):
@@ -158,7 +158,7 @@ class _KlioOutputDataMixin(object):
     @property
     def _data_config(self):
         # TODO: figure out how to support multiple outputs
-        return self._klio.config.job_config.data_outputs[0]
+        return self._klio.config.job_config.data.outputs[0]
 
 
 class _KlioGcsDataExistsMixin(object):

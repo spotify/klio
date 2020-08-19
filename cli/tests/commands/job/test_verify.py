@@ -555,7 +555,7 @@ def test_verify_inputs(
         "io_type": kconfig._io.KlioIOType.EVENT,
         "io_direction": kconfig._io.KlioIODirection.INPUT,
     }
-    job.klio_config.job_config.event_inputs = [
+    job.klio_config.job_config.events.inputs = [
         kconfig._io.KlioPubSubEventInput.from_dict(event_config)
     ]
 
@@ -565,7 +565,7 @@ def test_verify_inputs(
         "io_type": kconfig._io.KlioIOType.DATA,
         "io_direction": kconfig._io.KlioIODirection.INPUT,
     }
-    job.klio_config.job_config.data_inputs = [
+    job.klio_config.job_config.data.inputs = [
         kconfig._io.KlioGCSInputDataConfig.from_dict(data_config)
     ]
 
@@ -644,21 +644,21 @@ def test_verify_inputs_logs(
         event_dict["type"] = "pubsub"
         event_dict["io_type"] = kconfig._io.KlioIOType.EVENT
         event_dict["io_direction"] = kconfig._io.KlioIODirection.OUTPUT
-        job.klio_config.job_config.event_inputs = [
+        job.klio_config.job_config.events.inputs = [
             kconfig._io.KlioPubSubEventInput.from_dict(event_dict)
         ]
     else:
-        job.klio_config.job_config.event_inputs = []
+        job.klio_config.job_config.events.inputs = []
 
     if data_dict:
         data_dict["type"] = "gcs"
         data_dict["io_type"] = kconfig._io.KlioIOType.DATA
         data_dict["io_direction"] = kconfig._io.KlioIODirection.OUTPUT
-        job.klio_config.job_config.data_inputs = [
+        job.klio_config.job_config.data.inputs = [
             kconfig._io.KlioGCSOutputDataConfig.from_dict(data_dict)
         ]
     else:
-        job.klio_config.job_config.data_inputs = []
+        job.klio_config.job_config.data.inputs = []
 
     job._verify_inputs()
     assert expected_log_count == len(caplog.records)
@@ -692,7 +692,7 @@ def test_verify_outputs(
         "io_type": kconfig._io.KlioIOType.EVENT,
         "io_direction": kconfig._io.KlioIODirection.OUTPUT,
     }
-    job.klio_config.job_config.event_outputs = [
+    job.klio_config.job_config.events.outputs = [
         kconfig._io.KlioPubSubEventOutput.from_dict(event_config)
     ]
 
@@ -702,7 +702,7 @@ def test_verify_outputs(
         "io_type": kconfig._io.KlioIOType.DATA,
         "io_direction": kconfig._io.KlioIODirection.OUTPUT,
     }
-    job.klio_config.job_config.data_outputs = [
+    job.klio_config.job_config.data.outputs = [
         kconfig._io.KlioGCSOutputDataConfig.from_dict(data_config)
     ]
 
@@ -771,7 +771,7 @@ def test_verify_outputs_logs(
         "io_type": kconfig._io.KlioIOType.EVENT,
         "io_direction": kconfig._io.KlioIODirection.OUTPUT,
     }
-    job.klio_config.job_config.event_outputs = [
+    job.klio_config.job_config.events.outputs = [
         kconfig._io.KlioPubSubEventOutput.from_dict(event_config)
     ]
 
@@ -781,7 +781,7 @@ def test_verify_outputs_logs(
         "io_type": kconfig._io.KlioIOType.DATA,
         "io_direction": kconfig._io.KlioIODirection.OUTPUT,
     }
-    job.klio_config.job_config.data_outputs = [
+    job.klio_config.job_config.data.outputs = [
         kconfig._io.KlioGCSOutputDataConfig.from_dict(data_config)
     ]
 

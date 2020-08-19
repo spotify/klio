@@ -67,15 +67,15 @@ class KlioPipeline(object):
 
     @property
     def _has_event_inputs(self):
-        return len(self.config.job_config.event_inputs) > 0
+        return len(self.config.job_config.events.inputs) > 0
 
     @property
     def _has_multi_event_inputs(self):
-        return len(self.config.job_config.event_inputs) > 1
+        return len(self.config.job_config.events.inputs) > 1
 
     @property
     def _has_event_outputs(self):
-        return len(self.config.job_config.event_outputs) > 0
+        return len(self.config.job_config.events.outputs) > 0
 
     @property
     def _io_mapper(self):
@@ -243,16 +243,16 @@ class KlioPipeline(object):
         # label prefixes are required for multiple inputs (to avoid label
         # name collisions in Beam)
         if (
-            len(self.config.job_config.data_inputs) > 1
-            or len(self.config.job_config.data_outputs) > 1
+            len(self.config.job_config.data.inputs) > 1
+            or len(self.config.job_config.data.outputs) > 1
         ):
             logging.error(
                 "Klio does not (yet) support multiple data inputs and outputs."
             )
             raise SystemExit(1)
 
-        data_input_config = self.config.job_config.data_inputs[0]
-        data_output_config = self.config.job_config.data_outputs[0]
+        data_input_config = self.config.job_config.data.inputs[0]
+        data_output_config = self.config.job_config.data.outputs[0]
 
         pfx = ""
         if label_prefix is not None:
@@ -310,7 +310,7 @@ class KlioPipeline(object):
     # TODO this can prob go away if/when we make event_inputs a
     # dictionary rather than a list of dicts (@lynn)
     def _generate_input_conf_names(self):
-        ev_inputs = self.config.job_config.event_inputs
+        ev_inputs = self.config.job_config.events.inputs
         input_dict = {}
         for index, ev in enumerate(ev_inputs):
             name = "{}{}".format(ev.name, index)
@@ -368,7 +368,7 @@ class KlioPipeline(object):
         # sanity check - I think klio config forces event input
         if self._has_event_inputs:
             if not self._has_multi_event_inputs:
-                input_config = self.config.job_config.event_inputs[0]
+                input_config = self.config.job_config.events.inputs[0]
                 to_process, to_pass_thru = self._generate_pcoll(
                     pipeline, input_config
                 )
@@ -380,7 +380,7 @@ class KlioPipeline(object):
         out_pcol = run_callable(to_process, self.config)
 
         if self._has_event_outputs:
-            output_config = self.config.job_config.event_outputs[0]
+            output_config = self.config.job_config.events.outputs[0]
             if not output_config.skip_klio_write:
                 transform_cls_out = self._io_mapper.output[output_config.name]
                 to_output = out_pcol

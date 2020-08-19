@@ -64,6 +64,12 @@ class KlioConfig(BaseKlioConfig):
     pass
 
 
+@attr.attrs
+class KlioIOConfigContainer(object):
+    inputs = attr.attrib()
+    outputs = attr.attrib()
+
+
 @utils.config_object(key_prefix="job_config", allow_unknown_keys=True)
 class KlioJobConfig(object):
     """Job-specific config representing the "job_config" key of klio-job.yaml.
@@ -120,25 +126,32 @@ class KlioJobConfig(object):
                 self.USER_ATTRIBS.append({key: value})
 
     def _parse_io(self, config_dict):
-        self.event_inputs = self._create_config_objects(
+        event_inputs = self._create_config_objects(
             config_dict.get("events", {}).get("inputs", []),
             io.KlioIOType.EVENT,
             io.KlioIODirection.INPUT,
         )
-        self.event_outputs = self._create_config_objects(
+        event_outputs = self._create_config_objects(
             config_dict.get("events", {}).get("outputs", []),
             io.KlioIOType.EVENT,
             io.KlioIODirection.OUTPUT,
         )
-        self.data_inputs = self._create_config_objects(
+        self.events = KlioIOConfigContainer(
+            inputs=event_inputs, outputs=event_outputs
+        )
+
+        data_inputs = self._create_config_objects(
             config_dict.get("data", {}).get("inputs", []),
             io.KlioIOType.DATA,
             io.KlioIODirection.INPUT,
         )
-        self.data_outputs = self._create_config_objects(
+        data_outputs = self._create_config_objects(
             config_dict.get("data", {}).get("outputs", []),
             io.KlioIOType.DATA,
             io.KlioIODirection.OUTPUT,
+        )
+        self.data = KlioIOConfigContainer(
+            inputs=data_inputs, outputs=data_outputs
         )
 
     def _get_all_config_subclasses(self):
@@ -187,18 +200,18 @@ class KlioJobConfig(object):
         )
         config_dict["events"] = {}
         config_dict["events"]["inputs"] = [
-            ei.as_dict() for ei in self.event_inputs
+            ei.as_dict() for ei in self.events.inputs
         ]
         config_dict["events"]["outputs"] = [
-            eo.as_dict() for eo in self.event_outputs
+            eo.as_dict() for eo in self.events.outputs
         ]
 
         config_dict["data"] = {}
         config_dict["data"]["inputs"] = [
-            di.as_dict() for di in self.data_inputs
+            di.as_dict() for di in self.data.inputs
         ]
         config_dict["data"]["outputs"] = [
-            do.as_dict() for do in self.data_outputs
+            do.as_dict() for do in self.data.outputs
         ]
         return config_dict
 

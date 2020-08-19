@@ -28,7 +28,7 @@ class GcsLoadBinary(_base.KlioAudioBaseDoFn):
     @decorators.handle_binary(skip_load=True)
     def process(self, item):
         element = item.element.decode("utf-8")
-        input_data = self._klio.config.job_config.data_inputs[0]
+        input_data = self._klio.config.job_config.data.inputs[0]
         file_suffix = input_data.file_suffix
         if not file_suffix.startswith("."):
             file_suffix = "." + file_suffix
@@ -70,7 +70,7 @@ class GcsUploadPlot(_base.KlioAudioBaseDoFn):
     @decorators.handle_binary(skip_dump=True)
     def process(self, item):
         element = item.element.decode("utf-8")
-        output_data = self._klio.config.job_config.data_outputs[0]
+        output_data = self._klio.config.job_config.data.outputs[0]
         file_suffix = output_data.file_suffix
         if not file_suffix.startswith("."):
             file_suffix = "." + file_suffix

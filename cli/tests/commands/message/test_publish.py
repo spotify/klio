@@ -252,7 +252,7 @@ def test_publish_messages_fails(
 
 
 def test_publish_messages_raises(klio_job_config, monkeypatch, caplog):
-    monkeypatch.setattr(klio_job_config.job_config, "event_inputs", None)
+    monkeypatch.setattr(klio_job_config.job_config.events, "inputs", None)
 
     with pytest.raises(SystemExit):
         publish.publish_messages(klio_job_config, ["s0m3-ent1ty-1D"])

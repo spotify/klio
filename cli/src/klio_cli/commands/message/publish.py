@@ -36,7 +36,7 @@ def _get_current_klio_job(config):
     klio_job.job_name = config.job_name
     klio_job.gcp_project = config.pipeline_options.project
 
-    inputs = config.job_config.event_inputs
+    inputs = config.job_config.events.inputs
     for input_ in inputs:
         job_input = klio_job.JobInput()
         job_input.topic = input_.topic
@@ -44,7 +44,7 @@ def _get_current_klio_job(config):
             job_input.subscription = input_.subscription
         # [batch dev] TODO: hardcoding mapping between data and event
         # inputs for now (same behavior as v1)
-        job_input.data_location = config.job_config.data_inputs[0].location
+        job_input.data_location = config.job_config.data.inputs[0].location
         klio_job.inputs.extend([job_input])
 
     return klio_job
@@ -72,7 +72,7 @@ def _publish_messages(
     config, entity_ids, ping, force, top_down, allow_non_klio, msg_version
 ):
     current_job = _get_current_klio_job(config)
-    publish = _create_publisher(config.job_config.event_inputs[0].topic)
+    publish = _create_publisher(config.job_config.events.inputs[0].topic)
 
     success_ids = []
     fail_ids = []
@@ -116,7 +116,7 @@ def publish_messages(
     if msg_version is None:
         msg_version = config.version
 
-    if not config.job_config.event_inputs:
+    if not config.job_config.events.inputs:
         msg = "No input topics configured for {} :-1:".format(config.job_name)
         logging.error(emoji.emojize(msg, use_aliases=True))
         raise SystemExit(1)
@@ -126,7 +126,7 @@ def publish_messages(
             len(entity_ids),
             config.job_name,
             # [batch dev] should we support multiple inputs in the future?
-            config.job_config.event_inputs[0].topic,
+            config.job_config.events.inputs[0].topic,
         )
     )
     success, fail = _publish_messages(

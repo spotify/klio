@@ -281,14 +281,14 @@ def test_klio_job_config(
     assert timeout_threshold == config_obj.timeout_threshold
     assert 3 == config_obj.number_of_retries
 
-    ret_input_topics = [i.topic for i in config_obj.event_inputs]
-    ret_output_topics = [o.topic for o in config_obj.event_outputs]
+    ret_input_topics = [i.topic for i in config_obj.events.inputs]
+    ret_output_topics = [o.topic for o in config_obj.events.outputs]
 
     assert ["test-parent-job-out"] == ret_input_topics
     assert ["test-job-out"] == ret_output_topics
 
-    ret_input_data = [i.location for i in config_obj.data_inputs]
-    ret_output_data = [o.location for o in config_obj.data_outputs]
+    ret_input_data = [i.location for i in config_obj.data.inputs]
+    ret_output_data = [o.location for o in config_obj.data.outputs]
 
     assert ["gs://sigint-output/test-parent-job-out"] == ret_input_data
     assert ["gs://sigint-output/test-job-out"] == ret_output_data

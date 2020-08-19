@@ -199,7 +199,7 @@ def handle_binary(*decorator_args, **decorator_kwargs):
         def process(self, item):
             self._klio.logger.info(f"Downloading {item.element}")
             filename = item.payload.decode("utf-8")
-            location = self._klio.config.job_config.data_inputs[0].location
+            location = self._klio.config.job_config.data.inputs[0].location
             source_path = os.path.join(location, filename)
             with self.client.open(source_path, "rb") as source:
                 out = io.BytesIO(source.read())

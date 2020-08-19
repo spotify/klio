@@ -97,7 +97,7 @@ class KlioWriteToEventOutput(beam.PTransform):
     @decorators._set_klio_context
     def _event_config(self):
         # TODO: figure out how to support multiple outputs
-        return self._klio.config.job_config.event_outputs[0]
+        return self._klio.config.job_config.events.outputs[0]
 
     def expand(self, pcoll):
         transform_kls = self.CONFNAME_TO_OUT_TRANSFORM[self._event_config.name]

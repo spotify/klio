@@ -1,0 +1,17 @@
+version: 2
+job_name: klio-read-file-write-file
+pipeline_options:
+  project: not-a-real-project
+  streaming: False
+  update: False
+  worker_harness_container_image: integration-test-klio-read-file-write-file
+  experiments:
+    - enable_stackdriver_agent_metrics
+  runner: DirectRunner
+  setup_file: setup.py
+job_config:
+  allow_non_klio_messages: False
+  events:
+    inputs:
+      - type: file
+        location: ./batch_track_ids.txt

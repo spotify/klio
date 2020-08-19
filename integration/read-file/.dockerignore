@@ -1,0 +1,7 @@
+**/.git
+**/.cache
+**/.DS_Store
+**/__pycache__
+**/*.pyc
+**/.mypy_cache
+**/.pytest_cache

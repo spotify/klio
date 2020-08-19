@@ -28,7 +28,27 @@ class GcsLoadBinary(_base.KlioAudioBaseDoFn):
     @decorators.handle_binary(skip_load=True)
     def process(self, item):
         element = item.element.decode("utf-8")
-        input_data = self._klio.config.job_config.data.inputs[0]
+        input_data_config = self._klio.config.job_config.data.inputs
+
+        # raise a runtime error so it actually crashes klio/beam rather than
+        # just continue processing elements
+        if len(input_data_config) == 0:
+            raise RuntimeError(
+                "The `klio_audio.transforms.io.GcsLoadBinary` transform "
+                "requires a data input to be configured in "
+                "`klio-job.yaml::job_config.data.inputs`."
+            )
+
+        # raise a runtime error so it actually crashes klio/beam rather than
+        # just continue processing elements
+        if len(input_data_config) > 1:
+            raise RuntimeError(
+                "The `klio_audio.transforms.io.GcsLoadBinary` transform "
+                "does not support multiple configured inputs in "
+                "`klio-job.yaml::job_config.data.inputs`."
+            )
+        input_data = input_data_config[0]
+
         file_suffix = input_data.file_suffix
         if not file_suffix.startswith("."):
             file_suffix = "." + file_suffix
@@ -70,7 +90,28 @@ class GcsUploadPlot(_base.KlioAudioBaseDoFn):
     @decorators.handle_binary(skip_dump=True)
     def process(self, item):
         element = item.element.decode("utf-8")
-        output_data = self._klio.config.job_config.data.outputs[0]
+        output_data_config = self._klio.config.job_config.data.outputs
+
+        # raise a runtime error so it actually crashes klio/beam rather than
+        # just continue processing elements
+        if len(output_data_config) == 0:
+            raise RuntimeError(
+                "The `klio_audio.transforms.io.GcsUploadPlot` transform "
+                "requires a data output to be configured in "
+                "`klio-job.yaml::job_config.data.outputs`."
+            )
+
+        # raise a runtime error so it actually crashes klio/beam rather than
+        # just continue processing elements
+        if len(output_data_config) > 1:
+            raise RuntimeError(
+                "The `klio_audio.transforms.io.GcsUploadPlot` transform "
+                "does not support multiple configured outputs in "
+                "`klio-job.yaml::job_config.data.outputs`."
+            )
+
+        output_data = output_data_config[0]
+
         file_suffix = output_data.file_suffix
         if not file_suffix.startswith("."):
             file_suffix = "." + file_suffix

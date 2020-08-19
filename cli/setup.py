@@ -71,7 +71,7 @@ INSTALL_REQUIRES = [
     "google-cloud-monitoring",
     # API breaking change w google-api-core
     "google-cloud-pubsub<=1.4.0",
-    "google-cloud-storage",
+    "google-cloud-storage<1.30.0",
     # API breaking change w google-cloud-monitoring
     "googleapis-common-protos<1.50.0",
     "klio-core",

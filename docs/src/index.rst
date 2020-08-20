@@ -14,7 +14,7 @@ klio: some clever tagline
 .. toctree is "hidden" from rendering in the body, but still shows in the sidebar
    navigation.
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :hidden:
 
    quickstart

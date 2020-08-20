@@ -11,3 +11,4 @@ Pipelines
 
    transforms
    message
+   decorators

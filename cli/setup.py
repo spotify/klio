@@ -66,8 +66,8 @@ INSTALL_REQUIRES = [
     "emoji",
     "jinja2",
     "glom",
-    "google-api-core<=1.16.0",
-    "google-api-python-client<=1.9.0",
+    "google-api-core<=1.22.0",
+    "google-api-python-client<=1.10.0",
     "google-cloud-monitoring",
     # API breaking change w google-api-core
     "google-cloud-pubsub<=1.4.0",

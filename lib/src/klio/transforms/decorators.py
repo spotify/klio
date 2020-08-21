@@ -159,7 +159,7 @@ def __serialize_klio_message_generator(
         return
 
     try:
-        payload = meth(self, kmsg.data.v2, *args, **kwargs)
+        payload = meth(self, kmsg.data, *args, **kwargs)
 
     except Exception as err:
         func_path = self.__class__.__name__ + "." + meth.__name__
@@ -216,7 +216,7 @@ def __serialize_klio_message(ctx, func, incoming_item, *args, **kwargs):
         return pvalue.TaggedOutput("drop", incoming_item)
 
     try:
-        ret = func(_self, kmsg.data.v2, *args, **kwargs)
+        ret = func(_self, kmsg.data, *args, **kwargs)
         if isinstance(ret, types.GeneratorType):
             raise TypeError(
                 "can't pickle generator object: '{}'".format(func.__name__)

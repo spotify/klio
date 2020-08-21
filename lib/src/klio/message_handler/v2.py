@@ -23,7 +23,7 @@ def _to_klio_message(incoming_message, kconfig=None, logger=None):
         if kconfig.job_config.allow_non_klio_messages:
             # We are assuming that we have been given "raw" data that is not in
             # the form of a serialized KlioMessage.
-            parsed_message.data.v2.element = incoming_message
+            parsed_message.data.element = incoming_message
         else:
             logger.error(
                 "Can not parse incoming message. To support non-Klio "
@@ -50,7 +50,7 @@ def _from_klio_message(klio_message, payload=None):
     if payload:
         # if the user just returned exactly what they received in the
         # process method; let's avoid recursive payloads
-        if payload == klio_message.data.v2:
+        if payload == klio_message.data:
             payload = b""
 
     if not payload:
@@ -72,7 +72,7 @@ def _from_klio_message(klio_message, payload=None):
 
     # [batch dev] TODO: figure out how/where to clear out this payload
     # when publishing to pubsub (and potentially other output transforms)
-    klio_message.data.v2.payload = payload
+    klio_message.data.payload = payload
 
     return klio_message
 
@@ -108,11 +108,11 @@ def check_input_data_exists(dofn_inst, parsed_message, current_job):
     #             so that it's easier to filter/make metrics
     # [batch dev] QUESTION/TODO: should this data existence checks pass in all
     #             of data or not? probably all of data (incl payloads)
-    input_exists = dofn_inst.input_data_exists(parsed_message.data.v2.element)
+    input_exists = dofn_inst.input_data_exists(parsed_message.data.element)
     if not input_exists:
         dofn_inst._klio.logger.info(
             "Dropping KlioMessage - Input data for does not yet exist for "
-            " element '%s'." % parsed_message.data.v2.element
+            " element '%s'." % parsed_message.data.element
         )
         # [batch dev] unlike v1, we're not triggering any parents. but
         # we will probably have to add a conditional (if streaming, trigger,
@@ -134,13 +134,11 @@ def check_output_data_exists(dofn_inst, parsed_message):
     #             so that it's easier to filter/make metrics
     # [batch dev] QUESTION/TODO: should this data existence checks pass in all
     #             of data or not? probably all of data (incl payloads)
-    output_exists = dofn_inst.output_data_exists(
-        parsed_message.data.v2.element
-    )
+    output_exists = dofn_inst.output_data_exists(parsed_message.data.element)
     if output_exists:
         dofn_inst._klio.logger.debug(
             "Skipping element %s: output data already exists."
-            % parsed_message.data.v2.element
+            % parsed_message.data.element
         )
         return True
 
@@ -206,7 +204,7 @@ def parse_klio_message(process_method):
             try:
                 # [batch dev] unlike v1, we're ignoring timeouts and retries
                 # just for now (TODO - add back in!)
-                ret = process_method(self, parsed_msg.data.v2)
+                ret = process_method(self, parsed_msg.data)
                 # if DoFn.process method `yield`s instead of `return`s
                 if isinstance(ret, types.GeneratorType):
                     ret = next(ret)

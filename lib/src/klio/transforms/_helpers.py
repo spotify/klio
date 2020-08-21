@@ -226,7 +226,7 @@ class _KlioGcsCheckExistsBase(
     """Must be used with either _KlioInputDataMixin or _KlioOutputDataMixin"""
 
     def process(self, kmsg):
-        item = kmsg.data.v2.element
+        item = kmsg.data.element
         item_path = self._get_absolute_path(item)
         item_exists = self.exists(item_path)
 

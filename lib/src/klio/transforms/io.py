@@ -91,7 +91,7 @@ class _KlioReadFromTextSource(beam.io.textio._TextSource):
         for record in records:
             record_as_bytes = record.encode("utf-8")
             message = klio_pb2.KlioMessage()
-            message.data.v2.element = record_as_bytes
+            message.data.element = record_as_bytes
             yield message.SerializeToString()
 
 
@@ -148,7 +148,7 @@ class _KlioBigQueryReader(beam_bq_tools.BigQueryReader):
             else:
                 data = json.dumps(row)
 
-            message.data.v2.element = bytes(data, "utf-8")
+            message.data.element = bytes(data, "utf-8")
             yield message.SerializeToString()
 
 
@@ -186,7 +186,7 @@ class KlioWriteToBigQuery(beam.io.WriteToBigQuery, _KlioTransformMixin):
     def __unwrap(self, encoded_element):
         message = klio_pb2.KlioMessage()
         message.ParseFromString(encoded_element)
-        data = json.loads(message.data.v2.payload)
+        data = json.loads(message.data.payload)
 
         return data
 
@@ -209,7 +209,7 @@ class _KlioTextSink(beam.io.textio._TextSink):
         """
         message = klio_pb2.KlioMessage()
         message.ParseFromString(encoded_element)
-        record = message.data.v2.element
+        record = message.data.element
         super(_KlioTextSink, self).write_encoded_record(file_handle, record)
 
 
@@ -227,7 +227,7 @@ class _KlioFastAvroSource(beam_avroio._FastAvroSource):
         for record in records:
             message = klio_pb2.KlioMessage()
             message.version = klio_pb2.Version.V2
-            message.data.v2.element = bytes(json.dumps(record).encode("utf-8"))
+            message.data.element = bytes(json.dumps(record).encode("utf-8"))
             yield message.SerializeToString()
 
 

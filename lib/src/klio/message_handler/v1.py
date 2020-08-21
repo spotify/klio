@@ -77,7 +77,7 @@ def postprocess_klio_message(dofn_inst, parsed_message):
         base_log_msg = "KlioMessage received in 'ping' mode"
         log_msg = "%s - Entity ID: %s - Path: %s" % (
             base_log_msg,
-            parsed_message.data.v1.entity_id,
+            parsed_message.data.entity_id,
             traversed_dag,
         )
         dofn_inst._klio.logger.info(log_msg)
@@ -108,7 +108,7 @@ def trigger_parent_jobs(dofn_inst, parsed_message):
             "to trigger to create required input data.\n"
             "If there should be parent jobs, be sure there in the job's "
             "'klio-job.yaml' config file, and try restarting the job."
-            % parsed_message.data.v1.entity_id
+            % parsed_message.data.entity_id
         )
         warnings.warn(warn_msg, RuntimeWarning)
         return
@@ -125,7 +125,7 @@ def trigger_parent_jobs(dofn_inst, parsed_message):
 
         for job_input in parent_job.inputs:
             topic = str(job_input.topic)
-            entity_id = parsed_message.data.v1.entity_id
+            entity_id = parsed_message.data.entity_id
             try:
                 publisher_client = utils.get_publisher(topic)
             except gapi_exceptions.GoogleAPIError as e:
@@ -173,9 +173,7 @@ def check_input_data_exists(dofn_inst, parsed_message, current_job):
         MESSAGE_STATE.DROP if data doesn't exist, else
         MESSAGE_STATE.PROCESS
     """
-    input_exists = dofn_inst.input_data_exists(
-        parsed_message.data.v1.entity_id
-    )
+    input_exists = dofn_inst.input_data_exists(parsed_message.data.entity_id)
     if not input_exists:
         dofn_inst._klio.logger.info(
             "Input data does not yet exist. Triggering parent jobs to "
@@ -208,13 +206,11 @@ def check_output_data_exists(dofn_inst, parsed_message):
     if parsed_message.metadata.force is True:
         return False
 
-    output_exists = dofn_inst.output_data_exists(
-        parsed_message.data.v1.entity_id
-    )
+    output_exists = dofn_inst.output_data_exists(parsed_message.data.entity_id)
     if output_exists:
         dofn_inst._klio.logger.debug(
             "Skipping entity ID %s: output data already exists."
-            % parsed_message.data.v1.entity_id
+            % parsed_message.data.entity_id
         )
         return True
 
@@ -246,7 +242,7 @@ def update_audit_log(dofn_inst, parsed_message, current_job):
     base_log_msg = "KlioMessage full audit log"
     log_msg = "%s - Entity ID: %s - Path: %s" % (
         base_log_msg,
-        parsed_message.data.v1.entity_id,
+        parsed_message.data.entity_id,
         traversed_dag,
     )
     dofn_inst._klio.logger.debug(log_msg)
@@ -286,9 +282,9 @@ def preprocess_klio_message(dofn_inst, incoming_message):
             # the form of a serialized KlioMessage. We're just going to treat it
             # as "data" (losing the benefits of top-down/bottom-up execution)
             if dofn_inst._klio.config.job_config.binary_non_klio_messages:
-                parsed_message.data.v1.payload = incoming_message
+                parsed_message.data.payload = incoming_message
             else:
-                parsed_message.data.v1.entity_id = incoming_message
+                parsed_message.data.entity_id = incoming_message
         else:
             dofn_inst._klio.logger.error(
                 "Can not parse incoming message. To support non-Klio "
@@ -309,7 +305,7 @@ def preprocess_klio_message(dofn_inst, incoming_message):
 
     # coerce older messages into versioned messages
     if parsed_message.data.entity_id:
-        parsed_message.data.v1.entity_id = parsed_message.data.entity_id
+        parsed_message.data.entity_id = parsed_message.data.entity_id
 
     downstream = parsed_message.metadata.downstream
     current_job = klio_pb2.KlioJob()
@@ -472,13 +468,10 @@ def parse_klio_message(process_method):
         if msg_state is MESSAGE_STATE.PROCESS:
 
             payload = None
-            if parsed_msg.data.v1.entity_id:
-                payload = parsed_msg.data.v1.entity_id
-            # data.entity_id shouldn't be set, but we're playing it safe
-            elif parsed_msg.data.entity_id:
+            if parsed_msg.data.entity_id:
                 payload = parsed_msg.data.entity_id
             else:
-                payload = parsed_msg.data.v1.payload
+                payload = parsed_msg.data.payload
 
             n_retries = self._klio.config.job_config.number_of_retries
             timeout_threshold = self._klio.config.job_config.timeout_threshold
@@ -495,7 +488,7 @@ def parse_klio_message(process_method):
                         self._klio.logger.error(
                             "Dropping KlioMessage - process reached number of "
                             "possible retries with a timeout for entity ID %s."
-                            % (parsed_msg.data.v1.entity_id)
+                            % (parsed_msg.data.entity_id)
                         )
                         to_yield = False
                 elif n_retries:
@@ -516,7 +509,7 @@ def parse_klio_message(process_method):
             except Exception as e:
                 self._klio.logger.error(
                     "Dropping KlioMessage - exception occurred when processing"
-                    " entity ID %s: %s" % (parsed_msg.data.v1.entity_id, e),
+                    " entity ID %s: %s" % (parsed_msg.data.entity_id, e),
                     exc_info=True,
                 )
                 to_yield = False

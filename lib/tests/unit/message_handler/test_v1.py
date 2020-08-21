@@ -86,7 +86,7 @@ def klio_message(klio_job, parent_klio_job):
     msg.metadata.visited.extend([parent_klio_job])
     msg.metadata.force = True
     msg.metadata.ping = True
-    msg.data.v1.entity_id = "1234567890"
+    msg.data.entity_id = "1234567890"
 
     return msg
 
@@ -494,9 +494,7 @@ def test_check_input_data_exists(
         dofn_inst, klio_message, klio_job
     )
 
-    mock_input_data_exists.assert_called_once_with(
-        klio_message.data.v1.entity_id
-    )
+    mock_input_data_exists.assert_called_once_with(klio_message.data.entity_id)
     if not data_exists:
         assert 1 == len(caplog.records)
         mock_trigger_parent_jobs.assert_called_once_with(
@@ -542,7 +540,7 @@ def test_check_output_data_exists(
 
     if not force:
         mock_output_data_exists.assert_called_once_with(
-            klio_message.data.v1.entity_id
+            klio_message.data.entity_id
         )
 
 
@@ -715,14 +713,14 @@ def test_preprocess_klio_message_non_klio(
         dofn_inst, message
     )
     if message_type == "KLIO_MESSAGE":
-        assert klio_message.data.v1.entity_id == ret_message.data.v1.entity_id
-        assert b"" == ret_message.data.v1.payload
+        assert klio_message.data.entity_id == ret_message.data.entity_id
+        assert b"" == ret_message.data.payload
     elif binary:
-        assert message == ret_message.data.v1.payload
-        assert "" == ret_message.data.v1.entity_id
+        assert message == ret_message.data.payload
+        assert "" == ret_message.data.entity_id
     else:
-        assert "I am a String" == ret_message.data.v1.entity_id
-        assert b"" == ret_message.data.v1.payload
+        assert "I am a String" == ret_message.data.entity_id
+        assert b"" == ret_message.data.payload
 
 
 @pytest.mark.parametrize(
@@ -852,7 +850,7 @@ def test_parse_klio_message(
     wrapped_process = message_handler.parse_klio_message(process)
 
     # calling `next` since message_handler.parse_klio_message is a generator
-    mock_entity_id = mock_parsed_msg.data.v1.entity_id
+    mock_entity_id = mock_parsed_msg.data.entity_id
     next(wrapped_process(dofn_inst, mock_entity_id))
 
     if msg_state is message_handler.MESSAGE_STATE.PROCESS:
@@ -949,7 +947,7 @@ def test_parse_klio_message_raises(
     wrapped_process = message_handler.parse_klio_message(process)
 
     # calling `next` since message_handler.parse_klio_message is a generator
-    mock_entity_id = mock_parsed_msg.data.v1.entity_id
+    mock_entity_id = mock_parsed_msg.data.entity_id
     try:
         next(wrapped_process(dofn_inst, mock_entity_id))
     except StopIteration:
@@ -1096,7 +1094,7 @@ def test_parse_klio_message_yields_returns(
         actual_msg.ParseFromString(actual_ret_value[0])
         assert klio_message == actual_msg
         mock_process.assert_called_once_with(
-            dofn_inst, klio_message.data.v1.entity_id
+            dofn_inst, klio_message.data.entity_id
         )
         mock_postprocess_klio_message.assert_called_once_with(
             dofn_inst, klio_message

@@ -21,7 +21,7 @@ def caplog(caplog):
 @pytest.fixture
 def klio_msg():
     msg = klio_pb2.KlioMessage()
-    msg.data.v2.element = b"s0m3_tr4ck_1d"
+    msg.data.element = b"s0m3_tr4ck_1d"
     return msg
 
 
@@ -29,8 +29,8 @@ def klio_msg():
 def expected_log_messages(klio_msg):
     return [
         "Hello, Klio!",
-        "Received element {}".format(klio_msg.data.v2.element),
-        "Received payload {}".format(klio_msg.data.v2.payload),
+        "Received element {}".format(klio_msg.data.element),
+        "Received payload {}".format(klio_msg.data.payload),
     ]
 
 

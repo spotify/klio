@@ -57,9 +57,9 @@ def _create_pubsub_message(entity_id, job, force, ping, top_down, msg_version):
     message.version = msg_version
 
     if msg_version == 1:
-        message.data.v1.entity_id = entity_id
+        message.data.entity_id = entity_id
     elif msg_version == 2:
-        message.data.v2.element = bytes(entity_id, "utf-8")
+        message.data.element = bytes(entity_id, "utf-8")
 
     message.metadata.ping = ping
     message.metadata.force = force

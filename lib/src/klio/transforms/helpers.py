@@ -37,7 +37,7 @@ class KlioFilterPing(
 
     def process(self, kmsg):
         tagged_state = _helpers.TaggedStates.DEFAULT
-        item = kmsg.data.v2.element.decode("utf-8")
+        item = kmsg.data.element.decode("utf-8")
 
         if self.ping(kmsg):
             self._klio.logger.info("Pass through '%s': Ping mode ON." % item)
@@ -62,8 +62,8 @@ class KlioFilterForce(
 
     def process(self, kmsg):
         tagged_state = _helpers.TaggedStates.DEFAULT
-        item_path = self._get_absolute_path(kmsg.data.v2.element)
-        item = kmsg.data.v2.element.decode("utf-8")
+        item_path = self._get_absolute_path(kmsg.data.element)
+        item = kmsg.data.element.decode("utf-8")
 
         if not self.force(kmsg):
             self._klio.logger.info(

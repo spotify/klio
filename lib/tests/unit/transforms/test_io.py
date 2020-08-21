@@ -21,8 +21,8 @@ FIXTURE_PATH = os.path.join(HERE, os.path.pardir, "fixtures")
 def assert_expected_klio_msg_from_file(element):
     message = klio_pb2.KlioMessage()
     message.ParseFromString(element)
-    assert message.data.v2.element is not None
-    assert isinstance(message.data.v2.element, bytes)
+    assert message.data.element is not None
+    assert isinstance(message.data.element, bytes)
 
 
 def test_read_from_file():
@@ -79,7 +79,7 @@ def _expected_avro_kmsgs():
     for record in expected_records:
         message = klio_pb2.KlioMessage()
         message.version = klio_pb2.Version.V2
-        message.data.v2.element = bytes(json.dumps(record).encode("utf-8"))
+        message.data.element = bytes(json.dumps(record).encode("utf-8"))
         expected_kmsgs.append(message)
     return expected_kmsgs
 

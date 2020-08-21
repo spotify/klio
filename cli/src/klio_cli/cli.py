@@ -48,57 +48,10 @@ ProfileConfig = collections.namedtuple(
 )
 
 
-class AliasedCommands(click.Group):
-    """Alias old commands for backwards compatability."""
-
-    WARNING_MSG = (
-        "Warning: command is deprecated. Please use `klio {cmd} {sub_cmd}`."
-    )
-
-    def get_command(self, ctx, cmd_name):
-        cmd = click.Group.get_command(self, ctx, cmd_name)
-        if cmd is not None:
-            return cmd
-
-        if cmd_name.endswith("-job"):
-            subcommand_name = cmd_name.split("-")[0]
-            cmd = click.Group.get_command(self, ctx, "job")
-            if cmd is not None:
-                click.secho(
-                    AliasedCommands.WARNING_MSG.format(
-                        cmd="job", sub_cmd=subcommand_name
-                    ),
-                    fg="yellow",
-                )
-                return cmd.get_command(ctx, subcommand_name)
-
-        elif cmd_name == "publish":
-            cmd = click.Group.get_command(self, ctx, "message")
-            click.secho(
-                AliasedCommands.WARNING_MSG.format(
-                    cmd="message", sub_cmd="publish"
-                ),
-                fg="yellow",
-            )
-            return cmd.get_command(ctx, "publish")
-
-        elif cmd_name == "build-image":
-            cmd = click.Group.get_command(self, ctx, "image")
-            click.secho(
-                AliasedCommands.WARNING_MSG.format(
-                    cmd="image", sub_cmd="build"
-                ),
-                fg="yellow",
-            )
-            return cmd.get_command(ctx, "build")
-
-        return None
-
-
 #####
 # CLI groupings/top-level commands (`klio`, `klio job`, `klio image` etc)
 #####
-@click.group(cls=AliasedCommands)
+@click.group()
 @click.version_option(version, prog_name="klio-cli")  # instead of "klio"
 def main():
     pass

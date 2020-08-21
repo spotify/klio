@@ -7,8 +7,8 @@ import "google/protobuf/timestamp.proto";
 // handling/parsing klio messages
 enum Version {
     UNKNOWN = 0;  // default (per proto3 requirements)
-    V1 = 1;  // maps to V1Data
-    V2 = 2;  // maps to V2Data
+    V1 = 1;  // for entity_id+payload
+    V2 = 2;  // for element+payload
 }
 
 
@@ -26,36 +26,18 @@ message KlioMessage {
         bool ping = 5;
     }
 
-    // maps to klio config version 1
-    message V1Data {
-        // required
-        string entity_id = 1;
-        // optional - non-klio binary message
-        bytes payload = 2;
-    }
-
-    // maps to klio config version 2
-    message V2Data {
-        // required  (FKA entity_id from V1)
-        bytes element = 1;
-        // optional - inter-pipeline state/payload
-        bytes payload = 2;
-    }
-
     message Data {
-        // required
-        oneof data_version {
-            string entity_id = 1;  // backwards-compatibility - maybe move to reserved in the future
-            V1Data v1 = 3;
-            V2Data v2 = 4;
-        }
-        reserved 2;  // moved to v1.payload
-        reserved "payload";
+        // required for v1 messages
+        string entity_id = 1;
+        // optional - (v1) used for non-klio messages, (v2) used for intra-pipeline state
+        bytes payload = 2;
+        // required for v2 messages
+        bytes element = 3;
     }
 
     Metadata metadata = 1;
     Data data = 2;
-    // map klio config version to message version
+    // message version
     Version version = 3;
 }
 

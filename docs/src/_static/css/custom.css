@@ -29,3 +29,9 @@ div dl {
 div dt {
   margin-bottom: 15px;
 }
+
+/* Make the TODO admonition a bit more menacing */
+div .admonition-todo {
+  background-color: red;
+  color: white;
+}

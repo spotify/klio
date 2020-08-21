@@ -1,0 +1,28 @@
+version: 2
+job_name: streaming-example
+pipeline_options:
+  streaming: True
+  project: my-gcp-project
+  worker_harness_container_image: streaming-example-job-image
+  runner: DirectRunner
+job_config:
+  events:
+    inputs:
+      - type: pubsub
+        subscription: projects/my-gcp-project/subscriptions/my-input-subscription
+        skip_klio_read: False
+    outputs:
+      - type: pubsub
+        topic: projects/my-gcp-project/topics/my-output-topics
+        skip_klio_write: False
+  data:
+    inputs:
+      - type: gcs
+        location: gs://my-input-bucket
+        file_suffix: .ogg
+        skip_klio_existence_check: False
+    outputs:
+      - type: gcs
+        location: gs://my-output-bucket
+        file_suffix: .wav
+        skip_klio_existence_check: False

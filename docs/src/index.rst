@@ -22,12 +22,13 @@ Releases
 .. toctree is "hidden" from rendering in the body, but still shows in the sidebar
    navigation.
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :hidden:
 
    quickstart
    io/index
    pipeline/index
+   config/index
    ecosystem/index
    faqs
    internals

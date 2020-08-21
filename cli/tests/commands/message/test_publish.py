@@ -126,7 +126,7 @@ def test_create_pubsub_message(force, ping, top_down, expected_klio_job):
     expected_klio_message = klio_pb2.KlioMessage()
     expected_klio_message.metadata.force = force
     expected_klio_message.metadata.ping = ping
-    expected_klio_message.data.v1.entity_id = entity_id
+    expected_klio_message.data.entity_id = entity_id
     expected_klio_message.version = msg_version
     if not top_down:
         expected_klio_message.metadata.downstream.extend([expected_klio_job])
@@ -165,7 +165,7 @@ def test_private_publish_messages(
         expected_klio_message = klio_pb2.KlioMessage()
         expected_klio_message.metadata.force = force
         expected_klio_message.metadata.ping = ping
-        expected_klio_message.data.v1.entity_id = entity_id
+        expected_klio_message.data.entity_id = entity_id
         expected_klio_message.version = msg_version
         if not top_down:
             expected_klio_message.metadata.downstream.extend(
@@ -213,7 +213,7 @@ def test_publish_messages(
     msg_version = 1
     expected_klio_message.metadata.force = False
     expected_klio_message.metadata.ping = False
-    expected_klio_message.data.v1.entity_id = entity_id
+    expected_klio_message.data.entity_id = entity_id
     expected_klio_message.version = msg_version
 
     publish.publish_messages(klio_job_config, [entity_id])
@@ -237,7 +237,7 @@ def test_publish_messages_fails(
     msg_version = 1
     expected_klio_message.metadata.force = False
     expected_klio_message.metadata.ping = False
-    expected_klio_message.data.v1.entity_id = entity_id
+    expected_klio_message.data.entity_id = entity_id
     expected_klio_message.version = msg_version
 
     publish.publish_messages(klio_job_config, [entity_id])

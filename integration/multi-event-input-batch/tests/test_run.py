@@ -20,7 +20,7 @@ def caplog(caplog):
 def klio_msg():
     element = b"s0m3_tr4ck_1d"
     msg = klio_pb2.KlioMessage()
-    msg.data.v2.element = element
+    msg.data.element = element
     return msg
 
 @pytest.mark.parametrize(
@@ -36,6 +36,6 @@ def test_process_funcs(func_to_test, exp_log_prefix, klio_msg, caplog):
 
     assert klio_msg.SerializeToString() == ret
     assert 1 == len(caplog.records)
-    exp_log_msg = f"{exp_log_prefix} {klio_msg.data.v2.element}"
+    exp_log_msg = f"{exp_log_prefix} {klio_msg.data.element}"
     assert exp_log_msg == caplog.records[0].message
     assert "INFO" == caplog.records[0].levelname

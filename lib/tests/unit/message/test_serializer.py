@@ -30,6 +30,7 @@ def _get_klio_message():
     msg.metadata.force = True
     msg.metadata.ping = True
     msg.data.element = b"1234567890"
+    msg.version = klio_pb2.Version.V2
 
     return msg
 
@@ -49,6 +50,38 @@ def logger(mocker):
     return mocker.Mock()
 
 
+@pytest.mark.parametrize(
+    "version",
+    (klio_pb2.Version.UNKNOWN, klio_pb2.Version.V1, klio_pb2.Version.V2),
+)
+@pytest.mark.parametrize(
+    "element,entity_id,payload",
+    (
+        (b"an-element", None, None),
+        (None, "an-entity-id", None),
+        (None, "an-entity-id", b"some-payload"),
+        (b"an-element", None, b"some-payload"),
+        (None, None, b"some-payload"),
+    ),
+)
+def test_handle_msg_compat(version, element, entity_id, payload):
+    msg = klio_pb2.KlioMessage()
+    msg.version = version
+    if element:
+        msg.data.element = element
+    if payload:
+        msg.data.payload = payload
+    if entity_id:
+        msg.data.entity_id = entity_id
+
+    actual_msg = serializer._handle_msg_compat(msg)
+    assert actual_msg.version is not klio_pb2.Version.UNKNOWN
+    # we assume in the function's logic that v2 messages are already parsed
+    # correctly
+    if entity_id and not klio_pb2.Version.V2:
+        assert entity_id == actual_msg.data.element.decode("utf-8")
+
+
 def test_to_klio_message(klio_message, klio_message_str, klio_config, logger):
     actual_message = serializer.to_klio_message(
         klio_message_str, klio_config, logger
@@ -65,6 +98,7 @@ def test_to_klio_message_allow_non_kmsg(klio_config, logger, monkeypatch):
     incoming = b"Not a klio message"
     expected = klio_pb2.KlioMessage()
     expected.data.element = incoming
+    expected.version = klio_pb2.Version.V2
 
     actual_message = serializer.to_klio_message(incoming, klio_config, logger)
 
@@ -100,6 +134,18 @@ def test_from_klio_message(klio_message, payload, exp_payload):
     expected_str = expected.SerializeToString()
 
     actual_message = serializer.from_klio_message(klio_message, payload)
+    assert expected_str == actual_message
+
+
+def test_from_klio_message_v1():
+    payload = b"some-payload"
+    msg = klio_pb2.KlioMessage()
+    msg.version = klio_pb2.Version.V1
+    msg.data.payload = payload
+
+    expected_str = msg.SerializeToString()
+
+    actual_message = serializer.from_klio_message(msg, payload)
     assert expected_str == actual_message
 
 

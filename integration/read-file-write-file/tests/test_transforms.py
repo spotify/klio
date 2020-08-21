@@ -22,6 +22,7 @@ def caplog(caplog):
 def klio_msg():
     msg = klio_pb2.KlioMessage()
     msg.data.element = b"s0m3_tr4ck_1d"
+    msg.version = klio_pb2.Version.V2
     return msg
 
 

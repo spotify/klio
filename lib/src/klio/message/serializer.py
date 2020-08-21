@@ -7,6 +7,39 @@ from klio_core.proto import klio_pb2
 from klio.message import exceptions
 
 
+def _handle_msg_compat(parsed_message):
+    if parsed_message.version is klio_pb2.Version.V1:
+        if parsed_message.data.entity_id and not parsed_message.data.element:
+            # make v1 messages compatible with v2
+            parsed_message.data.element = bytes(
+                parsed_message.data.entity_id, "utf-8"
+            )
+        return parsed_message
+
+    if parsed_message.version is klio_pb2.Version.V2:
+        # is it safe to assume if a message is already labeled as v2, it should
+        # have an element or payload? i.e. not just entity_id?
+        return parsed_message
+
+    if parsed_message.data.entity_id and not parsed_message.data.element:
+        # assume v1 message
+        parsed_message.version = klio_pb2.Version.V1
+        # make v1 messages compatible with v2
+        parsed_message.data.element = bytes(
+            parsed_message.data.entity_id, "utf-8"
+        )
+
+    elif not parsed_message.data.entity_id and not parsed_message.data.element:
+        # assume v1 message
+        parsed_message.version = klio_pb2.Version.V1
+
+    elif parsed_message.data.element and not parsed_message.data.entity_id:
+        # assume v2 message
+        parsed_message.version = klio_pb2.Version.V2
+
+    return parsed_message
+
+
 # [batch dev] attemping to make this a little generic so it can (eventually)
 # be used with transforms other than DoFns
 def to_klio_message(incoming_message, kconfig=None, logger=None):
@@ -30,16 +63,11 @@ def to_klio_message(incoming_message, kconfig=None, logger=None):
             )
             raise e
 
+    parsed_message = _handle_msg_compat(parsed_message)
     return parsed_message
 
 
-def from_klio_message(klio_message, payload=None):
-    tagged, tag = False, None
-    if isinstance(payload, pvalue.TaggedOutput):
-        tagged = True
-        tag = payload.tag
-        payload = payload.value
-
+def _handle_v2_payload(klio_message, payload):
     if payload:
         # if the user just returned exactly what they received in the
         # process method; let's avoid recursive payloads
@@ -62,10 +90,22 @@ def from_klio_message(klio_message, payload=None):
                     )
                 )
                 raise exceptions.KlioMessagePayloadException(msg)
+    return payload
 
-    # [batch dev] TODO: figure out how/where to clear out this payload
-    # when publishing to pubsub (and potentially other output transforms)
-    klio_message.data.payload = payload
+
+def from_klio_message(klio_message, payload=None):
+    tagged, tag = False, None
+    if isinstance(payload, pvalue.TaggedOutput):
+        tagged = True
+        tag = payload.tag
+        payload = payload.value
+
+    # only update payload if it's a v2 message.
+    if klio_message.version == klio_pb2.Version.V2:
+        payload = _handle_v2_payload(klio_message, payload)
+        # [batch dev] TODO: figure out how/where to clear out this payload
+        # when publishing to pubsub (and potentially other output transforms)
+        klio_message.data.payload = payload
 
     if tagged:
         return pvalue.TaggedOutput(tag, klio_message.SerializeToString())

@@ -10,7 +10,7 @@ import types
 import apache_beam as beam
 from apache_beam import pvalue
 
-from klio.message_handler import v2 as v2_msg_handler
+from klio.message import serializer
 from klio.transforms import _timeout as ktimeout
 from klio.transforms import _utils
 from klio.transforms import core
@@ -105,7 +105,7 @@ def __from_klio_message_generator(self, kmsg, payload, orig_item):
         tag = payload.tag
         payload = payload.value
     try:
-        kmsg = v2_msg_handler._from_klio_message(kmsg, payload)
+        kmsg = serializer._from_klio_message(kmsg, payload)
 
     except Exception as err:
         self._klio.logger.error(
@@ -139,7 +139,7 @@ def __serialize_klio_message_generator(
     self, meth, incoming_item, *args, **kwargs
 ):
     try:
-        kmsg = v2_msg_handler._to_klio_message(
+        kmsg = serializer._to_klio_message(
             incoming_item, self._klio.config, self._klio.logger
         )
     except Exception as err:
@@ -199,7 +199,7 @@ def __serialize_klio_message(ctx, func, incoming_item, *args, **kwargs):
     if not isinstance(ctx, core.KlioContext):
         ctx = _self._klio
     try:
-        kmsg = v2_msg_handler._to_klio_message(
+        kmsg = serializer._to_klio_message(
             incoming_item, ctx.config, ctx.logger
         )
     except Exception as err:
@@ -247,7 +247,7 @@ def __serialize_klio_message(ctx, func, incoming_item, *args, **kwargs):
         tag = ret.tag
         ret = ret.value
     try:
-        kmsg = v2_msg_handler._from_klio_message(kmsg, ret)
+        kmsg = serializer._from_klio_message(kmsg, ret)
 
     except Exception as err:
         ctx.logger.error(

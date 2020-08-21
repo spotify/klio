@@ -2,12 +2,12 @@
 
 import pytest
 
+from klio.transforms import _helpers
 from klio.transforms import _utils
-from klio.transforms import core as core_transforms
 
 
 class BaseKlassMeta(object):
-    __metaclass__ = core_transforms.KlioDoFnMetaclass
+    __metaclass__ = _helpers._KlioBaseDataExistenceCheck
 
 
 class KlassMeta(BaseKlassMeta):
@@ -23,17 +23,17 @@ class KlassMeta(BaseKlassMeta):
     (
         (
             {"process": KlassMeta.process},
-            (core_transforms.KlioBaseDoFn,),
+            (_helpers._KlioBaseDataExistenceCheck,),
             True,
         ),
         (
             {"process": KlassMeta.not_process},
-            (core_transforms.KlioBaseDoFn,),
+            (_helpers._KlioBaseDataExistenceCheck,),
             False,
         ),
         (
             {"process": "not a callable"},
-            (core_transforms.KlioBaseDoFn,),
+            (_helpers._KlioBaseDataExistenceCheck,),
             False,
         ),
         ({"process": KlassMeta.process}, (BaseKlassMeta,), False),
@@ -42,7 +42,7 @@ class KlassMeta(BaseKlassMeta):
 )
 def test_is_original_process_func(clsdict, bases, expected):
     actual = _utils.is_original_process_func(
-        clsdict, bases, base_class="KlioBaseDoFn"
+        clsdict, bases, base_class="_KlioBaseDataExistenceCheck"
     )
 
     assert expected == actual

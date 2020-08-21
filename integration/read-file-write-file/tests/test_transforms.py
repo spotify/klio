@@ -19,34 +19,27 @@ def caplog(caplog):
 
 
 @pytest.fixture
-def mock_item(mocker):
-    return mocker.Mock()
+def klio_msg():
+    msg = klio_pb2.KlioMessage()
+    msg.data.element = b"s0m3_tr4ck_1d"
+    return msg
 
 
 @pytest.fixture
-def expected_log_messages(mock_item):
+def expected_log_messages(klio_msg):
     return [
         "Hello, Klio!",
-        "Received element {}".format(mock_item.element),
-        "Received payload {}".format(mock_item.payload),
+        "Received element {}".format(klio_msg.data.element),
+        "Received payload {}".format(klio_msg.data.payload),
     ]
 
 
-def test_process(mock_item, expected_log_messages, caplog):
+def test_process(klio_msg, expected_log_messages, caplog):
     helloklio_fn = transforms.LogKlioMessage()
-    output = helloklio_fn.process(mock_item)
-    assert mock_item == list(output)[0]
+    output = helloklio_fn.process(klio_msg.SerializeToString())
+    assert klio_msg.SerializeToString() == list(output)[0]
 
     for index, record in enumerate(caplog.records):
         assert "INFO" == record.levelname
         assert expected_log_messages[index] == record.message
 
-
-def test_input_exists(mock_item):
-    helloklio_fn = transforms.LogKlioMessage()
-    assert helloklio_fn.input_data_exists(mock_item.element) is True
-
-
-def test_output_exists(mock_item):
-    helloklio_fn = transforms.LogKlioMessage()
-    assert helloklio_fn.output_data_exists(mock_item.element) is False

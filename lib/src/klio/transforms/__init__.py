@@ -1,6 +1,5 @@
 # Copyright 2020 Spotify AB
 
-from klio.transforms.core import KlioBaseDoFn
 from klio.transforms.io import (
     KlioReadFromAvro,
     KlioReadFromBigQuery,
@@ -11,7 +10,6 @@ from klio.transforms.io import (
 
 
 __all__ = (
-    KlioBaseDoFn,
     KlioReadFromAvro,
     KlioReadFromBigQuery,
     KlioReadFromText,

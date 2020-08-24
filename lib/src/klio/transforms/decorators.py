@@ -10,7 +10,7 @@ import types
 import apache_beam as beam
 from apache_beam import pvalue
 
-from klio.message_handler import v2 as v2_msg_handler
+from klio.message import serializer
 from klio.transforms import _timeout as ktimeout
 from klio.transforms import _utils
 from klio.transforms import core
@@ -99,13 +99,8 @@ def __get_user_error_message(err, func_path, kmsg):
 # specifically `yield from` it (and exhaust transforms that have multiple
 # yields)
 def __from_klio_message_generator(self, kmsg, payload, orig_item):
-    tagged, tag = False, None
-    if isinstance(payload, pvalue.TaggedOutput):
-        tagged = True
-        tag = payload.tag
-        payload = payload.value
     try:
-        kmsg = v2_msg_handler._from_klio_message(kmsg, payload)
+        yield serializer.from_klio_message(kmsg, payload)
 
     except Exception as err:
         self._klio.logger.error(
@@ -124,12 +119,6 @@ def __from_klio_message_generator(self, kmsg, payload, orig_item):
         # executes the next `yield`
         return
 
-    else:
-        if tagged:
-            yield pvalue.TaggedOutput(tag, kmsg.SerializeToString())
-        else:
-            yield kmsg.SerializeToString()
-
 
 # meant for DoFn.process generator methods; very similar to the
 # '__serialize_klio_message' function, but needs to be its own function
@@ -139,7 +128,7 @@ def __serialize_klio_message_generator(
     self, meth, incoming_item, *args, **kwargs
 ):
     try:
-        kmsg = v2_msg_handler._to_klio_message(
+        kmsg = serializer.to_klio_message(
             incoming_item, self._klio.config, self._klio.logger
         )
     except Exception as err:
@@ -199,7 +188,7 @@ def __serialize_klio_message(ctx, func, incoming_item, *args, **kwargs):
     if not isinstance(ctx, core.KlioContext):
         ctx = _self._klio
     try:
-        kmsg = v2_msg_handler._to_klio_message(
+        kmsg = serializer.to_klio_message(
             incoming_item, ctx.config, ctx.logger
         )
     except Exception as err:
@@ -241,13 +230,8 @@ def __serialize_klio_message(ctx, func, incoming_item, *args, **kwargs):
         # went wrong.
         return pvalue.TaggedOutput("drop", incoming_item)
 
-    tagged, tag = False, None
-    if isinstance(ret, pvalue.TaggedOutput):
-        tagged = True
-        tag = ret.tag
-        ret = ret.value
     try:
-        kmsg = v2_msg_handler._from_klio_message(kmsg, ret)
+        return serializer.from_klio_message(kmsg, ret)
 
     except Exception as err:
         ctx.logger.error(
@@ -262,11 +246,6 @@ def __serialize_klio_message(ctx, func, incoming_item, *args, **kwargs):
         # We won't try to serialize kmsg to bytes since something already
         # went wrong.
         return pvalue.TaggedOutput("drop", incoming_item)
-
-    else:
-        if tagged:
-            return pvalue.TaggedOutput(tag, kmsg.SerializeToString())
-        return kmsg.SerializeToString()
 
 
 def _serialize_klio_message(func_or_meth):

@@ -9,7 +9,7 @@ import apache_beam as beam
 from apache_beam import pvalue
 from apache_beam.io.gcp import gcsio
 
-from klio.message_handler import v2 as v2_msg_handler
+from klio.message import serializer
 from klio.transforms import _utils
 from klio.transforms import core
 
@@ -47,7 +47,7 @@ def _wrap_process(meth):
     @functools.wraps(meth)
     def wrapper(self, incoming_item, *args, **kwargs):
         try:
-            kmsg = v2_msg_handler._to_klio_message(
+            kmsg = serializer.to_klio_message(
                 incoming_item, self._klio.config, self._klio.logger
             )
             yield from meth(self, kmsg, *args, **kwargs)
@@ -78,14 +78,6 @@ class _KlioBaseDoFnMetaclass(type):
         if _utils.is_original_process_func(
             clsdict, bases, base_class="_KlioBaseDataExistenceCheck"
         ):
-            # TODO: remove me when we no longer support config v1
-            if cls._klio.config.version != 2:
-                raise RuntimeError(
-                    "Transform {} does not support 'version' declared in "
-                    "'klio-job.yaml': {}".format(
-                        name, cls._klio.config.version
-                    )
-                )
 
             setattr(cls, "process", _wrap_process(clsdict["process"]))
 

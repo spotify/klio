@@ -21,6 +21,7 @@ def klio_msg():
     element = b"s0m3_tr4ck_1d"
     msg = klio_pb2.KlioMessage()
     msg.data.element = element
+    msg.version = klio_pb2.Version.V2
     return msg
 
 @pytest.mark.parametrize(

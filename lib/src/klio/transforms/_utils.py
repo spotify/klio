@@ -26,40 +26,6 @@ class KlioFutureWarning(FutureWarning):
 warnings.simplefilter("once", KlioDeprecationWarning)
 
 
-def has_abstract_methods_implemented(cls, name, bases):
-    """Verify a given class has its abstract methods implemented."""
-    for base in bases:
-        abstract_methods = getattr(base, "_klio_abstract_methods", [])
-        class_methods = getattr(cls, "_klio_all_methods", [])
-        for method in abstract_methods:
-            if method not in class_methods:
-                err_str = (
-                    "Error instantiating class '{0}'. Implementation of "
-                    "abstract method '{1}' from base class '{2}' is "
-                    "required.".format(name, method, base.__name__)
-                )
-                raise NotImplementedError(err_str)
-
-
-def get_all_methods(clsdict):
-    return [name for name, val in clsdict.items() if callable(val)]
-
-
-def get_abstract_methods(clsdict):
-    return [
-        name
-        for name, val in clsdict.items()
-        if callable(val) and getattr(val, "__isabstractklio__", False)
-    ]
-
-
-def abstract(meth):
-    """Set a method as abstract."""
-    # differentiating from abc.abstractmethod which sets __isabstractmethod__
-    meth.__isabstractklio__ = True
-    return meth
-
-
 def is_original_process_func(clsdict, bases, base_class=None):
     """Only wrap the original `process` function.
 

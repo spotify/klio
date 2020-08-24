@@ -8,8 +8,6 @@ import pytest
 
 from klio_core import config
 
-from klio import transforms
-
 
 @pytest.fixture
 def caplog(caplog):
@@ -80,23 +78,3 @@ def config_dict(job_config_dict, pipeline_config_dict):
 @pytest.fixture
 def klio_config(config_dict):
     return config.KlioConfig(config_dict)
-
-
-@pytest.fixture
-def user_dofn(mocker, monkeypatch, klio_config):
-    mocker.patch.object(
-        transforms.core._KlioNamespace, "_load_config_from_file"
-    )
-    monkeypatch.setattr(transforms.core._KlioNamespace, "config", klio_config)
-
-    class MyDoFn(transforms.KlioBaseDoFn):
-        def process(self, element):
-            yield element
-
-        def input_data_exists(self, element):
-            return True
-
-        def output_data_exists(self, element):
-            return True
-
-    return MyDoFn

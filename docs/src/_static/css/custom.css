@@ -20,3 +20,12 @@ div.document {
   margin-top: 100px;
 }
 /* TODO: Remove me once general releases are made --> */
+
+/* give a little breathing room between `.. options`, particularly for config/*.html */
+div dl {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+div dt {
+  margin-bottom: 15px;
+}

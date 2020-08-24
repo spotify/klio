@@ -1,6 +1,8 @@
 Klio Development Tools
 ======================
 
+*latest release*: |klio-devtools-version| (:doc:`What's new? <changelog>`)
+
 .. todo::
 
     Write intro documentation for the ``klio-devtools`` package.

@@ -10,9 +10,38 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
+import codecs
+import os
+import re
+
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
+
+# -- Helper funcs
+
+def read(*parts):
+    """
+    Build an absolute path from *parts* and and return the contents of the
+    resulting file.  Assume UTF-8 encoding.
+    """
+    here = os.path.abspath(os.path.dirname(__file__))
+    with codecs.open(os.path.join(here, *parts), "rb", "utf-8") as f:
+        return f.read()
+
+
+def find_version(*file_paths):
+    """
+    Build a path from *file_paths* and search for a ``__version__``
+    string inside.
+    """
+    version_file = read(*file_paths)
+    version_match = re.search(
+        r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M
+    )
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
+
 
 
 # -- Project information -----------------------------------------------------
@@ -21,6 +50,22 @@ project = "klio"
 copyright = "2020, Spotify AB"
 author = "The klio developers"
 
+versions = {
+    "klio_cli_release": find_version("../../cli/src/klio_cli/__init__.py"),
+    "klio_core_release": find_version("../../core/src/klio_core/__init__.py"),
+    "klio_devtools_release": find_version("../../devtools/src/klio_devtools/__init__.py"),
+    "klio_exec_release": find_version("../../exec/src/klio_exec/__init__.py"),
+    "klio_release": find_version("../../lib/src/klio/__init__.py"),
+}
+
+# Define ``rst_epilog`` to make variables globally-available to compiled .rst files
+rst_epilog = """
+.. |klio-cli-version| replace:: {klio_cli_release}
+.. |klio-version| replace:: {klio_release}
+.. |klio-exec-version| replace:: {klio_exec_release}
+.. |klio-core-version| replace:: {klio_core_release}
+.. |klio-devtools-version| replace:: {klio_devtools_release}
+""".format(**versions)
 
 # -- General configuration ---------------------------------------------------
 

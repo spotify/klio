@@ -103,6 +103,7 @@ html_favicon = "_static/images/favicon.ico"
 html_theme_options = {
     "description": "klio: some clever tagline",
     "logo": "images/logo.png",  # relative to _static
+    "fixed_sidebar": True,
 }
 
 

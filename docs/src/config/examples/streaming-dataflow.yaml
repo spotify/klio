@@ -1,0 +1,38 @@
+version: 2
+job_name: streaming-dataflow-example
+pipeline_options:
+  streaming: True
+  project: my-gcp-project
+  worker_harness_container_image: streaming-dataflow-example-job-image
+  experiments:
+    - enable_stackdriver_agent_metrics
+    - beam_fn_api
+  region: europe-west1
+  staging_location: gs://streaming-dataflow-example-bucket/staging
+  num_workers: 2
+  autoscaling_algorithm: NONE
+  disk_size_gb: 50
+  worker_disk_type: pd-ssd
+  worker_machine_type: n1-highmem-2
+  runner: DataflowRunner
+job_config:
+  events:
+    inputs:
+      - type: pubsub
+        subscription: projects/my-gcp-project/subscriptions/my-input-subscription
+        skip_klio_read: False
+    outputs:
+      - type: pubsub
+        topic: projects/my-gcp-project/topics/my-output-topics
+        skip_klio_write: False
+  data:
+    inputs:
+      - type: gcs
+        location: gs://streaming-dataflow-example-bucket/my-input-folder
+        file_suffix: .ogg
+        skip_klio_existence_check: False
+    outputs:
+      - type: gcs
+        location: gs://streaming-dataflow-example-bucket/my-output-folder
+        file_suffix: .wav
+        skip_klio_existence_check: False

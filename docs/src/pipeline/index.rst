@@ -12,3 +12,5 @@ Pipelines
    transforms
    message
    utilities
+   multiple_inputs
+   metrics

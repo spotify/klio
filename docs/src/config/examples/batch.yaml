@@ -1,0 +1,27 @@
+version: 2
+job_name: batch-example
+pipeline_options:
+  streaming: False
+  worker_harness_container_image: batch-example-job-image
+  runner: DirectRunner
+job_config:
+  events:
+    inputs:
+      - type: file
+        location: ./batch_track_ids.txt
+        skip_klio_read: False
+    outputs:
+      - type: file
+        location: ./batch_track_ids_output
+        skip_klio_write: False
+  data:
+    inputs:
+      - type: gcs
+        location: gs://batch-example-job/my-input-bucket
+        file_suffix: .ogg
+        skip_klio_existence_check: False
+    outputs:
+      - type: gcs
+        location: gs://batch-example-job/my-output-bucket
+        file_suffix: .wav
+        skip_klio_existence_check: False

@@ -5,7 +5,6 @@
 from __future__ import absolute_import
 
 import logging
-import multiprocessing
 
 import attr
 
@@ -90,15 +89,8 @@ class KlioJobConfig(object):
     version = utils.field(type=int)
 
     # optional attributes
-    timeout_threshold = utils.field(type=int, default=0)
-    thread_pool_processes = utils.field(
-        type=int, default=multiprocessing.cpu_count() - 1
-    )
-    number_of_retries = utils.field(type=int, default=0)
     allow_non_klio_messages = utils.field(type=bool, default=False)
-    binary_non_klio_messages = utils.field(type=bool, default=False)
     metrics = utils.field(default={})
-    dependencies = utils.field(default=[])
     blocking = utils.field(type=bool, default=False)
 
     def __config_post_init__(self, config_dict):

@@ -14,8 +14,6 @@ from google.cloud import storage
 from googleapiclient import discovery
 from googleapiclient import errors as google_errors
 
-from klio_core import dataflow
-
 from klio_cli.utils import stackdriver_utils as sd_utils
 
 
@@ -330,41 +328,6 @@ class VerifyJob(object):
             return True
         return False
 
-    def _verify_parent_jobs(self):
-        logging.info("Verifying dependencies.")
-        dataflow_client = dataflow.DataflowClient()
-        region = self.klio_config.pipeline_options.region
-        dependencies = self.klio_config.job_config.dependencies
-        if not dependencies:
-            logging.info(
-                "You have 0 dependencies. Please check if this is expected."
-            )
-            return True
-
-        verified_dependencies = []
-
-        for dependency in self.klio_config.job_config.dependencies:
-            project_id = dependency.get("gcp_project")
-            job_name = dependency.get("job_name")
-            jobs = dataflow_client.find_job_by_name(
-                job_name, project_id, region
-            )
-            if jobs:
-                logging.info(
-                    "The parent job {} in project {} is running".format(
-                        job_name, project_id
-                    )
-                )
-                verified_dependencies.append(True)
-            else:
-                logging.error(
-                    "Could not verify parent job '{}' in project '{}'".format(
-                        job_name, project_id
-                    )
-                )
-                verified_dependencies.append(False)
-        return all(verified_dependencies)
-
     def _verify_tmp_files(self):
         staging_location = self.klio_config.pipeline_options.staging_location
         temp_location = self.klio_config.pipeline_options.temp_location
@@ -451,7 +414,6 @@ class VerifyJob(object):
 
     def _verify_all(self):
         verified_tmp_files = self._verify_tmp_files()
-        verified_parent_jobs = self._verify_parent_jobs()
         verified_inputs = self._verify_inputs()
         verified_outputs = self._verify_outputs()
         verified_iam_roles = self._verify_iam_roles()
@@ -459,7 +421,6 @@ class VerifyJob(object):
 
         return (
             verified_tmp_files
-            and verified_parent_jobs
             and verified_inputs
             and verified_outputs
             and verified_dashboard

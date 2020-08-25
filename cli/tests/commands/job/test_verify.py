@@ -835,39 +835,6 @@ def test_verify_tmp_files(
     assert 2 == mock_verify_gcs.call_count
 
 
-@pytest.mark.parametrize(
-    "job_error, has_dependencies",
-    ((True, True), (True, False), (False, True), (False, False)),
-)
-def test_verify_parent_jobs(
-    mocker, klio_config, job_error, has_dependencies, caplog
-):
-    mock_dataflow_client = mocker.patch.object(
-        verify.dataflow, "DataflowClient"
-    )
-    mock_dataflow_client.return_value = mock_dataflow_client
-
-    job = verify.VerifyJob(klio_config, False)
-    job.klio_config.pipeline_options.region = "us"
-
-    if has_dependencies:
-        job.klio_config.job_config.dependencies = [
-            {"gcp_project": "test", "job_name": "test1"}
-        ]
-    else:
-        job.klio_config.job_config.dependencies = []
-
-    if job_error and has_dependencies:
-        mock_dataflow_client.find_job_by_name.return_value = False
-        actual = job._verify_parent_jobs()
-        assert actual is False
-    else:
-        mock_dataflow_client.find_job_by_name.return_value = True
-        actual = job._verify_parent_jobs()
-        assert actual is True
-    assert 2 == len(caplog.records)
-
-
 def test_verify(
     mocker, klio_config, mock_storage, mock_publisher, mock_sub, caplog
 ):
@@ -879,7 +846,6 @@ def test_verify(
     mock_verify_inputs = mocker.patch.object(job, "_verify_inputs")
     mock_verify_outputs = mocker.patch.object(job, "_verify_outputs")
     mock_verify_tmp = mocker.patch.object(job, "_verify_tmp_files")
-    mock_verify_parent = mocker.patch.object(job, "_verify_parent_jobs")
     mock_verify_iam_roles = mocker.patch.object(job, "_verify_iam_roles")
     mock_verify_dashboard = mocker.patch.object(
         job, "_verify_stackdriver_dashboard"
@@ -895,7 +861,6 @@ def test_verify(
 
     mock_verify_inputs.return_value = True
     mock_verify_outputs.return_value = True
-    mock_verify_parent.return_value = True
     mock_verify_tmp.return_value = True
     mock_verify_iam_roles.return_value = True
 
@@ -904,7 +869,6 @@ def test_verify(
     mock_verify_inputs.assert_called_once_with()
     mock_verify_outputs.assert_called_once_with()
     mock_verify_tmp.assert_called_once_with()
-    mock_verify_parent.assert_called_once_with()
     assert mock_verify_iam_roles.called
     mock_verify_dashboard.assert_called_once_with()
 
@@ -934,7 +898,6 @@ def test_verify_raises_system_exit(
     mock_verify_inputs = mocker.patch.object(job, "_verify_inputs")
     mock_verify_outputs = mocker.patch.object(job, "_verify_outputs")
     mock_verify_tmp = mocker.patch.object(job, "_verify_tmp_files")
-    mock_verify_parent = mocker.patch.object(job, "_verify_parent_jobs")
     mock_verify_iam_roles = mocker.patch.object(job, "_verify_iam_roles")
     mock_verify_dashboard = mocker.patch.object(
         job, "_verify_stackdriver_dashboard"
@@ -950,7 +913,6 @@ def test_verify_raises_system_exit(
 
     mock_verify_inputs.return_value = True
     mock_verify_outputs.return_value = False
-    mock_verify_parent.return_value = False
     mock_verify_iam_roles.return_value = True
     mock_verify_tmp.return_value = True
 
@@ -960,5 +922,4 @@ def test_verify_raises_system_exit(
     mock_verify_inputs.assert_called_once_with()
     mock_verify_outputs.assert_called_once_with()
     mock_verify_tmp.assert_called_once_with()
-    mock_verify_parent.assert_called_once_with()
     mock_verify_dashboard.assert_called_once_with()

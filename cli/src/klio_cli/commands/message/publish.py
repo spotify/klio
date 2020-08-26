@@ -35,38 +35,26 @@ def _get_current_klio_job(config):
     klio_job = klio_pb2.KlioJob()
     klio_job.job_name = config.job_name
     klio_job.gcp_project = config.pipeline_options.project
-
-    inputs = config.job_config.events.inputs
-    for input_ in inputs:
-        job_input = klio_job.JobInput()
-        job_input.topic = input_.topic
-        if input_.subscription:
-            job_input.subscription = input_.subscription
-        # [batch dev] TODO: hardcoding mapping between data and event
-        # inputs for now (same behavior as v1)
-        if len(config.job_config.data.inputs):
-            job_input.data_location = config.job_config.data.inputs[0].location
-        klio_job.inputs.extend([job_input])
-
     return klio_job
 
 
 # [batch dev] TODO: rename entity_id variable in this module
 def _create_pubsub_message(entity_id, job, force, ping, top_down, msg_version):
-    message = klio_pb2.KlioMessage()
-    message.version = msg_version
+    kmsg = klio_pb2.KlioMessage()
+    kmsg.version = msg_version
 
     if msg_version == 1:
-        message.data.entity_id = entity_id
+        kmsg.data.entity_id = entity_id
+        if not top_down:
+            kmsg.metadata.downstream.extend([job])
     elif msg_version == 2:
-        message.data.element = bytes(entity_id, "utf-8")
+        kmsg.data.element = bytes(entity_id, "utf-8")
+        if not top_down:
+            kmsg.metadata.intended_recipients.limited.recipients.extend([job])
 
-    message.metadata.ping = ping
-    message.metadata.force = force
-    if not top_down:
-        message.metadata.downstream.extend([job])
-
-    return message.SerializeToString()
+    kmsg.metadata.ping = ping
+    kmsg.metadata.force = force
+    return kmsg.SerializeToString()
 
 
 def _publish_messages(

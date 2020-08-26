@@ -44,24 +44,6 @@ class KlioContext(object):
         klio_job = klio_pb2.KlioJob()
         klio_job.job_name = self.config.job_name
         klio_job.gcp_project = self.config.pipeline_options.project
-
-        inputs = self.config.job_config.events.inputs
-        # [batch dev] we're essentially zipping together event inputs with
-        #             data inputs. not sure if this is a good assumption
-        # [batch dev] TODO: this should be updated once we update the proto
-        #             definition of JobInput (prob separate Event and Data
-        #             input definitions)
-        for index, input_ in enumerate(inputs):
-            job_input = klio_job.JobInput()
-            if input_.name == "pubsub":
-                job_input.topic = input_.topic
-                job_input.subscription = input_.subscription
-
-            data_input = self.config.job_config.data.inputs[index]
-            if data_input and data_input.name == "gcs":
-                job_input.data_location = data_input.location
-            klio_job.inputs.extend([job_input])
-
         klio_job_str = klio_job.SerializeToString()
         return klio_job_str
 

@@ -15,11 +15,6 @@ def _get_klio_job():
     job = klio_pb2.KlioJob()
     job.job_name = "klio-job"
     job.gcp_project = "test-project"
-    job_input = job.JobInput()
-    job_input.topic = "klio-job-input-topic"
-    job_input.subscription = "klio-job-input-subscription"
-    job_input.data_location = "klio-job-input-data"
-    job.inputs.extend([job_input])
     return job
 
 

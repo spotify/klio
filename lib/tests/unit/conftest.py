@@ -21,7 +21,6 @@ def job_config_dict():
     return {
         "metrics": {"logger": {}},
         "allow_non_klio_messages": False,
-        "timeout_threshold": 30,
         "number_of_retries": 3,
         "inputs": [
             {

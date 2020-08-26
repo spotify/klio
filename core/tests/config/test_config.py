@@ -33,11 +33,6 @@ def job_config_dict():
                 {"type": "GCS", "location": "gs://sigint-output/test-job-out"}
             ],
         },
-        "dependencies": [
-            {"gcp_project": "sigint", "job_name": "test-parent-job"}
-        ],
-        "thread_pool_processes": 3,
-        "number_of_retries": 3,
         "more": "config",
         "that": {"the": "user"},
         "might": ["include"],
@@ -86,18 +81,11 @@ def final_job_config_dict():
                 }
             ],
         },
-        "dependencies": [
-            {"gcp_project": "sigint", "job_name": "test-parent-job"}
-        ],
-        "thread_pool_processes": 3,
-        "timeout_threshold": 0,
-        "number_of_retries": 3,
         "more": "config",
         "that": {"the": "user"},
         "might": ["include"],
         "blocking": False,
         "allow_non_klio_messages": False,
-        "binary_non_klio_messages": False,
     }
 
 
@@ -238,23 +226,8 @@ def no_gcp_config_dict(job_config_dict, empty_pipeline_config_dict):
 
 
 @pytest.mark.parametrize("blocking", (True, False, None))
-@pytest.mark.parametrize(
-    "dependencies,timeout_threshold",
-    (
-        (True, 0),
-        (False, 0),
-        (True, 30),
-        (False, 30),
-        (True, None),
-        (False, None),
-    ),
-)
 def test_klio_job_config(
-    job_config_dict,
-    dependencies,
-    timeout_threshold,
-    blocking,
-    final_job_config_dict,
+    job_config_dict, blocking, final_job_config_dict,
 ):
     if blocking is None:
         job_config_dict.pop("blocking")
@@ -262,24 +235,11 @@ def test_klio_job_config(
         job_config_dict["blocking"] = blocking
         final_job_config_dict["blocking"] = blocking
 
-    if not dependencies:
-        job_config_dict.pop("dependencies")
-        final_job_config_dict["dependencies"] = []
-
-    if not timeout_threshold:
-        timeout_threshold = 0
-    else:
-        job_config_dict["timeout_threshold"] = timeout_threshold
-        final_job_config_dict["timeout_threshold"] = timeout_threshold
-
     config_obj = config.KlioJobConfig(
         job_config_dict, job_name="test-job", version=2
     )
 
     assert {"logger": {}} == config_obj.metrics
-    assert 3 == config_obj.thread_pool_processes
-    assert timeout_threshold == config_obj.timeout_threshold
-    assert 3 == config_obj.number_of_retries
 
     ret_input_topics = [i.topic for i in config_obj.events.inputs]
     ret_output_topics = [o.topic for o in config_obj.events.outputs]
@@ -292,18 +252,12 @@ def test_klio_job_config(
 
     assert ["gs://sigint-output/test-parent-job-out"] == ret_input_data
     assert ["gs://sigint-output/test-job-out"] == ret_output_data
-    if dependencies:
-        assert [
-            {"gcp_project": "sigint", "job_name": "test-parent-job"}
-        ] == config_obj.dependencies
 
     if blocking:
         assert config_obj.blocking is True
     else:
         assert config_obj.blocking is False
 
-    if not dependencies:
-        job_config_dict["dependencies"] = []
     if blocking is None:
         job_config_dict["blocking"] = False
 

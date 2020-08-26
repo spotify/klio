@@ -300,7 +300,9 @@ def test_stop(mocker, monkeypatch, mock_discovery_client, job, stop_job_inst):
     mock_watch_job_state.assert_called_once_with(job)
 
 
-def test_stop_no_running_job(mocker, monkeypatch, mock_discovery_client, stop_job_inst, job):
+def test_stop_no_running_job(
+    mocker, monkeypatch, mock_discovery_client, stop_job_inst, job
+):
     mock_set_dataflow_client = mocker.Mock()
     monkeypatch.setattr(
         stop_job_inst, "_set_dataflow_client", mock_set_dataflow_client

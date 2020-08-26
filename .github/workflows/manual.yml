@@ -12,10 +12,6 @@ on:
         required: true
         default: 'cli'
 
-defaults:
-  run:
-    working-directory: ${{ github.event.inputs.package }}
-
 jobs:
   tests:
     name: "${{ github.event.inputs.package }}: py${{ github.event.inputs.python-version }} (ubuntu)"
@@ -34,3 +30,4 @@ jobs:
           python -m pip install --upgrade virtualenv tox tox-gh-actions
       - name: "Run tox for ${{ github.event.inputs.package }} on ${{ github.event.inputs.python-version }}"
         run: "python -m tox -c tox.ini"
+        working-directory: ${{ github.event.inputs.package }}

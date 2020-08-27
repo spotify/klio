@@ -18,6 +18,21 @@ class KlioConfigPreprocessor(object):
     """This handles everything between parsing the config from YAML and passing
     the parsed dict to KlioConfig."""
 
+    # list of lambdas
+    PLUGIN_PREPROCESSORS = []
+
+    @classmethod
+    def add_plugin_preprocessor(cls, proc):
+        """proc should be a function that accepts the config_dict as a
+        parameter and returns a modified version of it"""
+        cls.PLUGIN_PREPROCESSORS.append(proc)
+
+    @classmethod
+    def _apply_plugin_preprocessors(cls, config_dict):
+        for pre_processor in cls.PLUGIN_PREPROCESSORS:
+            config_dict = pre_processor(config_dict)
+        return config_dict
+
     @staticmethod
     def _transform_io_list(io_subsection_list):
         """Transform lists of dicts into a nested dict of dicts, where the keys
@@ -215,6 +230,8 @@ class KlioConfigPreprocessor(object):
         )
 
         config_dict = yaml.safe_load(templated_config_data)
+
+        config_dict = cls._apply_plugin_preprocessors(config_dict)
 
         transformed_config = cls._transform_io_sections(config_dict)
         override_config = cls._apply_overrides(

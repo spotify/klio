@@ -43,6 +43,10 @@ class EffectiveJobConfig(object):
         conf = kconfig.KlioConfig(self.config_data)
 
         effective_config = conf.as_dict()
+        return self._order_config_keys(effective_config)
+
+    @staticmethod
+    def _order_config_keys(effective_config):
         key_order = ["version", "job_name", "pipeline_options", "job_config"]
         all_keys = list(effective_config.keys())
         other_top_level_keys = [k for k in all_keys if k not in key_order]

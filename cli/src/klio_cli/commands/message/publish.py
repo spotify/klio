@@ -51,6 +51,8 @@ def _create_pubsub_message(entity_id, job, force, ping, top_down, msg_version):
         kmsg.data.element = bytes(entity_id, "utf-8")
         if not top_down:
             kmsg.metadata.intended_recipients.limited.recipients.extend([job])
+        else:
+            kmsg.metadata.intended_recipients.anyone.SetInParent()
 
     kmsg.metadata.ping = ping
     kmsg.metadata.force = force

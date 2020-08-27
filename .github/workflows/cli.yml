@@ -8,12 +8,14 @@ on:
       - master
       - develop
     paths:
+      - 'core/**'  # since CLI depends on core, we should run tests when core changes
       - 'cli/**'
   pull_request:
     branches:
       - master
       - develop
     paths:
+      - 'core/**'  # since CLI depends on core, we should run tests when core changes
       - 'cli/**'
 
 defaults:

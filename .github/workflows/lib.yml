@@ -8,12 +8,14 @@ on:
       - master
       - develop
     paths:
+      - 'core/**'  # since lib depends on core, we should run tests when core changes
       - 'lib/**'
   pull_request:
     branches:
       - master
       - develop
     paths:
+      - 'core/**'  # since lib depends on core, we should run tests when core changes
       - 'lib/**'
 
 defaults:

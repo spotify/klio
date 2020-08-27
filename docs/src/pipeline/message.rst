@@ -12,6 +12,7 @@ The ``KlioMessage`` is found in ``klio.proto`` and can be imported via
     Link to ``klio.proto`` file once the repo is public. Otherwise the doc build will fail.
 
 
+.. _kliomessage:
 
 ``KlioMessage``
 ---------------
@@ -47,6 +48,8 @@ The ``KlioMessage`` is found in ``klio.proto`` and can be imported via
     Jobs by which the message must be processed. If empty, then all jobs that receive the message
     will process it. If not empty, then the job will check if itself is listed within
     ``downstream``. If it's not, the message will be ignored and no work will be processed.
+
+    *Deprecated.* Users should migrate to ``Metadata.intended_recipients``.
 
     | *type:* :ref:`KlioJob`
     | *repeated*
@@ -85,6 +88,74 @@ The ``KlioMessage`` is found in ``klio.proto`` and can be imported via
 
     | *Type:* ``bool``
     | *Optional, default:* ``False``
+
+.. option:: intended_recipients
+
+    Jobs by which the message must be processed. Used to detected between
+    :ref:`top-down <top-down>` and :ref:`bottom-up <bottom-up>` execution modes.
+
+    | *Type:* :ref:`recipients`
+    | *Required* for v2
+
+
+.. _recipients:
+
+``KlioMessage.Metadata.Recipients``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+One of the following attributes are required:
+
+.. option:: anyone
+
+    Current message is intended for any recipient, signifying :ref:`top-down <top-down>`
+    execution. Mutually exclusive with ``KlioMessage.Metadata.Recipients.limited``.
+
+    | *Type:* :ref:`anyone`
+
+
+.. option:: limited
+
+    Current message is intended for the included recipients, signifying
+    :ref:`bottom-up <bottom-up>` execution. Mutually exclusive with
+    ``KlioMessage.Metadata.Recipients.anyone``.
+
+    | *Type:* :ref:`limited`
+
+
+.. _anyone:
+
+``KlioMessage.Metadata.Recipients.Anyone``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This is an empty "stub" message. Its presence is used to simply signify :ref:`top-down <top-down>`
+execution.
+
+
+.. _limited:
+
+``KlioMessage.Metadata.Recipients.Limited``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. option:: recipients
+
+    An array of KlioJobs. Only jobs included in ``recipients`` should process the message.
+    Otherwise, the job should just drop the message to avoid further processing.
+
+    | *Type:* :ref:`kliojob`
+    | *Repeated*
+
+
+.. option:: trigger_children_of
+
+    When set to a particular job, it signifies that the message was *originally* in
+    :ref:`top-down <top-down>` execution mode across a :doc:`graph <../anatomy/graph>` of jobs,
+    but a dependency was missing for the job assigned to ``trigger_children_of``, therefore
+    triggering :ref:`bottom-up <bottom-up>` execution for a subset of the graph. Once
+    dependencies are made available, the job triggering bottom-up execution for that subset
+    should then return the message to top-down mode. This is done by re-assigning
+    ``KlioMessage.Metadata.intended_recipients`` to ``Anyone``.
+
+    | *Type:* :ref:`kliojob`
 
 
 .. _data:
@@ -144,11 +215,13 @@ The ``KlioMessage`` is found in ``klio.proto`` and can be imported via
     GCP project of job (as configured in ``klio-job.yaml::pipeline_options.project``).
 
     | *Type*: ``string``
-    | *Required*
+    | *Required for Dataflow*
 
 .. option:: inputs
 
     The job's event & data input(s)
+
+    *Marked for deprecation.*
 
     | *Type*: :ref:`job-input`.
     | *Repeated*
@@ -161,7 +234,7 @@ The ``KlioMessage`` is found in ``klio.proto`` and can be imported via
 
 .. warning::
 
-    ``KlioJob.JobInput`` will be undergoing API changes for v2 of Klio.
+    ``KlioJob.JobInput`` has been marked for deprecation for v2.
 
 
 .. option:: topic

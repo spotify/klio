@@ -26,6 +26,7 @@ Releases
    :hidden:
 
    quickstart
+   Anatomy <anatomy/index>
    io/index
    pipeline/index
    config/index

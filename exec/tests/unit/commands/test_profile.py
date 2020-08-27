@@ -37,11 +37,20 @@ def transforms():
     ]
 
 
-class AKlioClass(profile_cmd.klio_transforms.KlioBaseDoFn):
-    def input_data_exists(self, *args, **kwargs):
-        pass
+# TODO: temporary! remove me once profiling is supported for v2
+if hasattr(profile_cmd.klio_transforms, "KlioBaseDoFn"):
 
-    def output_data_exists(self, *args, **kwargs):
+    class AKlioClass(profile_cmd.klio_transforms.KlioBaseDoFn):
+        def input_data_exists(self, *args, **kwargs):
+            pass
+
+        def output_data_exists(self, *args, **kwargs):
+            pass
+
+
+else:
+
+    class AKlioClass(object):
         pass
 
 
@@ -368,6 +377,7 @@ def test_run_pipeline(
     mock_result.assert_called_once_with()
 
 
+@pytest.mark.skip("TODO: fixme once we support profiling for v2")
 def test_get_transforms(klio_pipeline, mocker, monkeypatch):
     transforms_module = mocker.Mock()
 
@@ -385,6 +395,17 @@ def test_get_transforms(klio_pipeline, mocker, monkeypatch):
     )
     assert 1 == len(transforms)
     assert AKlioClass == transforms[0]
+
+
+# TODO: temporary! remove me once profiling is supported for v2
+def test_get_transforms_raises(klio_pipeline, mocker, monkeypatch):
+    transforms_module = mocker.Mock()
+    mock_load_source = mocker.Mock()
+    mock_load_source.return_value = transforms_module
+    monkeypatch.setattr(profile_cmd.imp, "load_source", mock_load_source)
+
+    with pytest.raises(SystemExit):
+        list(klio_pipeline._get_transforms())
 
 
 @pytest.mark.parametrize(

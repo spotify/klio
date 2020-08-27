@@ -29,19 +29,7 @@ RuntimeConfig = collections.namedtuple(
 )
 
 
-class AliasedRun(click.Group):
-    """Alias run to run-basic for backwards compatibility."""
-
-    def get_command(self, ctx, cmd_name):
-        cmd = click.Group.get_command(self, ctx, cmd_name)
-        if cmd is not None:
-            return cmd
-        if cmd_name == "run-basic":
-            return click.Group.get_command(self, ctx, "run")
-        return None
-
-
-@click.command(cls=AliasedRun)
+@click.group()
 def main():
     pass  # pragma: no cover
 

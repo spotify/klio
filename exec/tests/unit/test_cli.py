@@ -115,40 +115,6 @@ def mock_compare_runtime_to_buildtime_config(mocker, monkeypatch):
     return mock
 
 
-@pytest.mark.parametrize(
-    "ret_command,command_name,exp_get_command_calls",
-    (
-        (True, "some-command", 1),
-        (False, "run-basic", 2),
-        (None, "some-command", 1),
-    ),
-)
-def test_aliased_run_get_command(
-    ret_command, command_name, exp_get_command_calls, mocker, monkeypatch
-):
-    mock_get_command = mocker.Mock()
-
-    ret_command_value = None
-    if ret_command:
-        ret_command_value = mocker.Mock()
-    mock_get_command.return_value = ret_command_value
-    monkeypatch.setattr(cli.click.Group, "get_command", mock_get_command)
-
-    ar = cli.AliasedRun()
-    actual_ret_command = ar.get_command({}, command_name)
-
-    assert ret_command_value == actual_ret_command
-    assert exp_get_command_calls == mock_get_command.call_count
-
-    if command_name == "run-basic":
-        assert [
-            mocker.call(ar, {}, "run-basic"),
-            mocker.call(ar, {}, "run"),
-        ] == mock_get_command.call_args_list
-    else:
-        assert mocker.call(ar, {}, command_name) == mock_get_command.call_args
-
-
 def test_get_config(tmpdir, config):
     tmp_config = tmpdir.mkdir("klio-exec-testing").join("klio-job.yaml")
     tmp_config.write(yaml.dump(config))

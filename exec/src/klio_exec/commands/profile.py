@@ -4,6 +4,7 @@ import contextlib
 import functools
 import imp
 import inspect
+import logging
 import os
 import subprocess
 import sys
@@ -15,8 +16,6 @@ import apache_beam as beam
 try:
     import memory_profiler
 except ImportError:  # pragma: no cover
-    import logging
-
     logging.error(
         "Failed to import profiling dependencies. Did you install "
         "`klio-exec[debug]` in your job's Docker image?"
@@ -245,6 +244,10 @@ class KlioPipeline(object):
         transforms_module = imp.load_source(
             "transforms", KlioPipeline.TRANSFORMS_PATH
         )
+        # TODO: temporary! remove me once profiling is supported for v2
+        if not hasattr(klio_transforms, "KlioBaseDoFn"):
+            logging.error("Profiling V2 klio jobs is not yet available.")
+            raise SystemExit(1)
 
         for attribute in dir(transforms_module):
             obj = getattr(transforms_module, attribute)

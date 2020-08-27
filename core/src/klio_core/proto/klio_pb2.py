@@ -21,7 +21,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\nklio.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xbf\x02\n\x0bKlioMessage\x12\'\n\x08metadata\x18\x01 \x01(\x0b\x32\x15.KlioMessage.Metadata\x12\x1f\n\x04\x64\x61ta\x18\x02 \x01(\x0b\x32\x11.KlioMessage.Data\x12\x19\n\x07version\x18\x03 \x01(\x0e\x32\x08.Version\x1a\x8d\x01\n\x08Metadata\x12\x1c\n\ndownstream\x18\x01 \x03(\x0b\x32\x08.KlioJob\x12\x19\n\x07visited\x18\x02 \x03(\x0b\x32\x08.KlioJob\x12+\n\rjob_audit_log\x18\x03 \x03(\x0b\x32\x14.KlioJobAuditLogItem\x12\r\n\x05\x66orce\x18\x04 \x01(\x08\x12\x0c\n\x04ping\x18\x05 \x01(\x08\x1a;\n\x04\x44\x61ta\x12\x11\n\tentity_id\x18\x01 \x01(\t\x12\x0f\n\x07payload\x18\x02 \x01(\x0c\x12\x0f\n\x07\x65lement\x18\x03 \x01(\x0c\"\x9b\x01\n\x07KlioJob\x12\x10\n\x08job_name\x18\x01 \x01(\t\x12\x13\n\x0bgcp_project\x18\x02 \x01(\t\x12!\n\x06inputs\x18\x03 \x03(\x0b\x32\x11.KlioJob.JobInput\x1a\x46\n\x08JobInput\x12\r\n\x05topic\x18\x01 \x01(\t\x12\x14\n\x0csubscription\x18\x02 \x01(\t\x12\x15\n\rdata_location\x18\x03 \x01(\t\"`\n\x13KlioJobAuditLogItem\x12-\n\ttimestamp\x18\x01 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x1a\n\x08klio_job\x18\x02 \x01(\x0b\x32\x08.KlioJob*&\n\x07Version\x12\x0b\n\x07UNKNOWN\x10\x00\x12\x06\n\x02V1\x10\x01\x12\x06\n\x02V2\x10\x02\x62\x06proto3'
+  serialized_pb=b'\n\nklio.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xed\x04\n\x0bKlioMessage\x12\'\n\x08metadata\x18\x01 \x01(\x0b\x32\x15.KlioMessage.Metadata\x12\x1f\n\x04\x64\x61ta\x18\x02 \x01(\x0b\x32\x11.KlioMessage.Data\x12\x19\n\x07version\x18\x03 \x01(\x0e\x32\x08.Version\x1a\xbb\x03\n\x08Metadata\x12\x1c\n\ndownstream\x18\x01 \x03(\x0b\x32\x08.KlioJob\x12\x19\n\x07visited\x18\x02 \x03(\x0b\x32\x08.KlioJob\x12+\n\rjob_audit_log\x18\x03 \x03(\x0b\x32\x14.KlioJobAuditLogItem\x12\r\n\x05\x66orce\x18\x04 \x01(\x08\x12\x0c\n\x04ping\x18\x05 \x01(\x08\x12=\n\x13intended_recipients\x18\x06 \x01(\x0b\x32 .KlioMessage.Metadata.Recipients\x1a\xec\x01\n\nRecipients\x12\x39\n\x06\x61nyone\x18\x01 \x01(\x0b\x32\'.KlioMessage.Metadata.Recipients.AnyoneH\x00\x12;\n\x07limited\x18\x02 \x01(\x0b\x32(.KlioMessage.Metadata.Recipients.LimitedH\x00\x1a\x08\n\x06\x41nyone\x1aN\n\x07Limited\x12\x1c\n\nrecipients\x18\x01 \x03(\x0b\x32\x08.KlioJob\x12%\n\x13trigger_children_of\x18\x02 \x01(\x0b\x32\x08.KlioJobB\x0c\n\nrecipients\x1a;\n\x04\x44\x61ta\x12\x11\n\tentity_id\x18\x01 \x01(\t\x12\x0f\n\x07payload\x18\x02 \x01(\x0c\x12\x0f\n\x07\x65lement\x18\x03 \x01(\x0c\"\x9b\x01\n\x07KlioJob\x12\x10\n\x08job_name\x18\x01 \x01(\t\x12\x13\n\x0bgcp_project\x18\x02 \x01(\t\x12!\n\x06inputs\x18\x03 \x03(\x0b\x32\x11.KlioJob.JobInput\x1a\x46\n\x08JobInput\x12\r\n\x05topic\x18\x01 \x01(\t\x12\x14\n\x0csubscription\x18\x02 \x01(\t\x12\x15\n\rdata_location\x18\x03 \x01(\t\"`\n\x13KlioJobAuditLogItem\x12-\n\ttimestamp\x18\x01 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x1a\n\x08klio_job\x18\x02 \x01(\x0b\x32\x08.KlioJob*&\n\x07Version\x12\x0b\n\x07UNKNOWN\x10\x00\x12\x06\n\x02V1\x10\x01\x12\x06\n\x02V2\x10\x02\x62\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,])
 
@@ -50,8 +50,8 @@ _VERSION = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=625,
-  serialized_end=663,
+  serialized_start=927,
+  serialized_end=965,
 )
 _sym_db.RegisterEnumDescriptor(_VERSION)
 
@@ -61,6 +61,111 @@ V1 = 1
 V2 = 2
 
 
+
+_KLIOMESSAGE_METADATA_RECIPIENTS_ANYONE = _descriptor.Descriptor(
+  name='Anyone',
+  full_name='KlioMessage.Metadata.Recipients.Anyone',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=506,
+  serialized_end=514,
+)
+
+_KLIOMESSAGE_METADATA_RECIPIENTS_LIMITED = _descriptor.Descriptor(
+  name='Limited',
+  full_name='KlioMessage.Metadata.Recipients.Limited',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='recipients', full_name='KlioMessage.Metadata.Recipients.Limited.recipients', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='trigger_children_of', full_name='KlioMessage.Metadata.Recipients.Limited.trigger_children_of', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=516,
+  serialized_end=594,
+)
+
+_KLIOMESSAGE_METADATA_RECIPIENTS = _descriptor.Descriptor(
+  name='Recipients',
+  full_name='KlioMessage.Metadata.Recipients',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='anyone', full_name='KlioMessage.Metadata.Recipients.anyone', index=0,
+      number=1, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='limited', full_name='KlioMessage.Metadata.Recipients.limited', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[_KLIOMESSAGE_METADATA_RECIPIENTS_ANYONE, _KLIOMESSAGE_METADATA_RECIPIENTS_LIMITED, ],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+    _descriptor.OneofDescriptor(
+      name='recipients', full_name='KlioMessage.Metadata.Recipients.recipients',
+      index=0, containing_type=None,
+      create_key=_descriptor._internal_create_key,
+    fields=[]),
+  ],
+  serialized_start=372,
+  serialized_end=608,
+)
 
 _KLIOMESSAGE_METADATA = _descriptor.Descriptor(
   name='Metadata',
@@ -105,10 +210,17 @@ _KLIOMESSAGE_METADATA = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='intended_recipients', full_name='KlioMessage.Metadata.intended_recipients', index=5,
+      number=6, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
-  nested_types=[],
+  nested_types=[_KLIOMESSAGE_METADATA_RECIPIENTS, ],
   enum_types=[
   ],
   serialized_options=None,
@@ -118,7 +230,7 @@ _KLIOMESSAGE_METADATA = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=165,
-  serialized_end=306,
+  serialized_end=608,
 )
 
 _KLIOMESSAGE_DATA = _descriptor.Descriptor(
@@ -162,8 +274,8 @@ _KLIOMESSAGE_DATA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=308,
-  serialized_end=367,
+  serialized_start=610,
+  serialized_end=669,
 )
 
 _KLIOMESSAGE = _descriptor.Descriptor(
@@ -208,7 +320,7 @@ _KLIOMESSAGE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=48,
-  serialized_end=367,
+  serialized_end=669,
 )
 
 
@@ -253,8 +365,8 @@ _KLIOJOB_JOBINPUT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=455,
-  serialized_end=525,
+  serialized_start=757,
+  serialized_end=827,
 )
 
 _KLIOJOB = _descriptor.Descriptor(
@@ -298,8 +410,8 @@ _KLIOJOB = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=370,
-  serialized_end=525,
+  serialized_start=672,
+  serialized_end=827,
 )
 
 
@@ -337,13 +449,27 @@ _KLIOJOBAUDITLOGITEM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=527,
-  serialized_end=623,
+  serialized_start=829,
+  serialized_end=925,
 )
 
+_KLIOMESSAGE_METADATA_RECIPIENTS_ANYONE.containing_type = _KLIOMESSAGE_METADATA_RECIPIENTS
+_KLIOMESSAGE_METADATA_RECIPIENTS_LIMITED.fields_by_name['recipients'].message_type = _KLIOJOB
+_KLIOMESSAGE_METADATA_RECIPIENTS_LIMITED.fields_by_name['trigger_children_of'].message_type = _KLIOJOB
+_KLIOMESSAGE_METADATA_RECIPIENTS_LIMITED.containing_type = _KLIOMESSAGE_METADATA_RECIPIENTS
+_KLIOMESSAGE_METADATA_RECIPIENTS.fields_by_name['anyone'].message_type = _KLIOMESSAGE_METADATA_RECIPIENTS_ANYONE
+_KLIOMESSAGE_METADATA_RECIPIENTS.fields_by_name['limited'].message_type = _KLIOMESSAGE_METADATA_RECIPIENTS_LIMITED
+_KLIOMESSAGE_METADATA_RECIPIENTS.containing_type = _KLIOMESSAGE_METADATA
+_KLIOMESSAGE_METADATA_RECIPIENTS.oneofs_by_name['recipients'].fields.append(
+  _KLIOMESSAGE_METADATA_RECIPIENTS.fields_by_name['anyone'])
+_KLIOMESSAGE_METADATA_RECIPIENTS.fields_by_name['anyone'].containing_oneof = _KLIOMESSAGE_METADATA_RECIPIENTS.oneofs_by_name['recipients']
+_KLIOMESSAGE_METADATA_RECIPIENTS.oneofs_by_name['recipients'].fields.append(
+  _KLIOMESSAGE_METADATA_RECIPIENTS.fields_by_name['limited'])
+_KLIOMESSAGE_METADATA_RECIPIENTS.fields_by_name['limited'].containing_oneof = _KLIOMESSAGE_METADATA_RECIPIENTS.oneofs_by_name['recipients']
 _KLIOMESSAGE_METADATA.fields_by_name['downstream'].message_type = _KLIOJOB
 _KLIOMESSAGE_METADATA.fields_by_name['visited'].message_type = _KLIOJOB
 _KLIOMESSAGE_METADATA.fields_by_name['job_audit_log'].message_type = _KLIOJOBAUDITLOGITEM
+_KLIOMESSAGE_METADATA.fields_by_name['intended_recipients'].message_type = _KLIOMESSAGE_METADATA_RECIPIENTS
 _KLIOMESSAGE_METADATA.containing_type = _KLIOMESSAGE
 _KLIOMESSAGE_DATA.containing_type = _KLIOMESSAGE
 _KLIOMESSAGE.fields_by_name['metadata'].message_type = _KLIOMESSAGE_METADATA
@@ -362,6 +488,27 @@ _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 KlioMessage = _reflection.GeneratedProtocolMessageType('KlioMessage', (_message.Message,), {
 
   'Metadata' : _reflection.GeneratedProtocolMessageType('Metadata', (_message.Message,), {
+
+    'Recipients' : _reflection.GeneratedProtocolMessageType('Recipients', (_message.Message,), {
+
+      'Anyone' : _reflection.GeneratedProtocolMessageType('Anyone', (_message.Message,), {
+        'DESCRIPTOR' : _KLIOMESSAGE_METADATA_RECIPIENTS_ANYONE,
+        '__module__' : 'klio_pb2'
+        # @@protoc_insertion_point(class_scope:KlioMessage.Metadata.Recipients.Anyone)
+        })
+      ,
+
+      'Limited' : _reflection.GeneratedProtocolMessageType('Limited', (_message.Message,), {
+        'DESCRIPTOR' : _KLIOMESSAGE_METADATA_RECIPIENTS_LIMITED,
+        '__module__' : 'klio_pb2'
+        # @@protoc_insertion_point(class_scope:KlioMessage.Metadata.Recipients.Limited)
+        })
+      ,
+      'DESCRIPTOR' : _KLIOMESSAGE_METADATA_RECIPIENTS,
+      '__module__' : 'klio_pb2'
+      # @@protoc_insertion_point(class_scope:KlioMessage.Metadata.Recipients)
+      })
+    ,
     'DESCRIPTOR' : _KLIOMESSAGE_METADATA,
     '__module__' : 'klio_pb2'
     # @@protoc_insertion_point(class_scope:KlioMessage.Metadata)
@@ -380,6 +527,9 @@ KlioMessage = _reflection.GeneratedProtocolMessageType('KlioMessage', (_message.
   })
 _sym_db.RegisterMessage(KlioMessage)
 _sym_db.RegisterMessage(KlioMessage.Metadata)
+_sym_db.RegisterMessage(KlioMessage.Metadata.Recipients)
+_sym_db.RegisterMessage(KlioMessage.Metadata.Recipients.Anyone)
+_sym_db.RegisterMessage(KlioMessage.Metadata.Recipients.Limited)
 _sym_db.RegisterMessage(KlioMessage.Data)
 
 KlioJob = _reflection.GeneratedProtocolMessageType('KlioJob', (_message.Message,), {

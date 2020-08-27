@@ -56,12 +56,8 @@ def klio_job_config():
 def expected_klio_job(klio_job_config):
     klio_job = klio_pb2.KlioJob()
     job_input = klio_job.JobInput()
-    job_input.topic = "an-input-topic"
-    job_input.subscription = "a-subscription"
-    job_input.data_location = "gs://a-test-input/location"
     klio_job.job_name = "test-job"
     klio_job.gcp_project = "test-gcp-project"
-    klio_job.inputs.extend([job_input])
     return klio_job
 
 
@@ -112,27 +108,35 @@ def test_get_current_klio_job(klio_job_config, expected_klio_job):
 
 
 @pytest.mark.parametrize(
-    "force,ping,top_down",
+    "force,ping,top_down,version",
     (
-        (True, True, True),
-        (True, False, False),
-        (False, True, False),
-        (False, False, False),
+        (True, True, True, 1),
+        (True, False, False, 1),
+        (False, True, False, 1),
+        (False, False, False, 1),
+        (False, False, False, 2),
     ),
 )
-def test_create_pubsub_message(force, ping, top_down, expected_klio_job):
+def test_create_pubsub_message(force, ping, top_down, version, expected_klio_job):
     entity_id = "s0m3-ent1ty-1D"
-    msg_version = 1
     expected_klio_message = klio_pb2.KlioMessage()
     expected_klio_message.metadata.force = force
     expected_klio_message.metadata.ping = ping
-    expected_klio_message.data.entity_id = entity_id
-    expected_klio_message.version = msg_version
-    if not top_down:
-        expected_klio_message.metadata.downstream.extend([expected_klio_job])
+    expected_klio_message.version = version
+    if version == 1:
+        expected_klio_message.data.entity_id = entity_id
+        if not top_down:
+            expected_klio_message.metadata.downstream.extend(
+                [expected_klio_job]
+            )
+    else:
+        expected_klio_message.data.element = bytes(entity_id, "utf-8")
+        if not top_down:
+            rec = expected_klio_message.metadata.intended_recipients
+            rec.limited.recipients.extend([expected_klio_job])
 
     ret_msg = publish._create_pubsub_message(
-        entity_id, expected_klio_job, force, ping, top_down, msg_version
+        entity_id, expected_klio_job, force, ping, top_down, version
     )
 
     assert expected_klio_message.SerializeToString() == ret_msg

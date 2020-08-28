@@ -79,6 +79,7 @@ def _expected_avro_kmsgs():
     for record in expected_records:
         message = klio_pb2.KlioMessage()
         message.version = klio_pb2.Version.V2
+        message.metadata.intended_recipients.anyone.SetInParent()
         message.data.element = bytes(json.dumps(record).encode("utf-8"))
         expected_kmsgs.append(message)
     return expected_kmsgs

@@ -91,6 +91,8 @@ class _KlioReadFromTextSource(beam.io.textio._TextSource):
         for record in records:
             record_as_bytes = record.encode("utf-8")
             message = klio_pb2.KlioMessage()
+            message.version = klio_pb2.Version.V2
+            message.metadata.intended_recipients.anyone.SetInParent()
             message.data.element = record_as_bytes
             yield message.SerializeToString()
 
@@ -107,6 +109,7 @@ class _KlioBigQueryReader(beam_bq_tools.BigQueryReader):
     def __generate_klio_message(self):
         message = klio_pb2.KlioMessage()
         message.version = klio_pb2.Version.V2
+        message.metadata.intended_recipients.anyone.SetInParent()
 
         # TODO: this is where we should add (relevant) KlioMessage.metadata;
         # (1) One thing to figure out is the klio_pb2.KlioJob definition,
@@ -227,6 +230,7 @@ class _KlioFastAvroSource(beam_avroio._FastAvroSource):
         for record in records:
             message = klio_pb2.KlioMessage()
             message.version = klio_pb2.Version.V2
+            message.metadata.intended_recipients.anyone.SetInParent()
             message.data.element = bytes(json.dumps(record).encode("utf-8"))
             yield message.SerializeToString()
 

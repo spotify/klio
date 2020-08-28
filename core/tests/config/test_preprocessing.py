@@ -1,6 +1,7 @@
 import json
 
 import pytest
+import yaml
 
 from klio_core import exceptions
 from klio_core.config import _preprocessing
@@ -205,3 +206,26 @@ def test_apply_templates(
         new_dict = kcp._apply_templates(raw_config_str, template_dict)
         assert isinstance(new_dict, str)
         assert expected == json.loads(new_dict)
+
+
+def test_apply_plugin_preprocessing(mocker, kcp):
+
+    config = {
+        "version": 1,
+        "job_name": "test_job",
+        "job_config": {},
+    }
+    raw_config = yaml.dump(config)
+
+    def add_field(config_dict):
+        config_dict["version"] = 2
+        return config_dict
+
+    expected_config = config.copy()
+    expected_config["version"] = 2
+
+    mocker.patch.object(kcp, "PLUGIN_PREPROCESSORS", [add_field])
+
+    processed_config = kcp.process(raw_config, [], [])
+
+    assert expected_config == processed_config

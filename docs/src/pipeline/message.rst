@@ -7,9 +7,10 @@ represents one unit of work for a transform.
 The ``KlioMessage`` is found in ``klio.proto`` and can be imported via
 ``klio_core.proto.klio_pb2``.
 
-.. todo::
 
-    Link to ``klio.proto`` file once the repo is public. Otherwise the doc build will fail.
+See the :ref:`FAQs page <faqs>` for :ref:`how to work with non-KlioMessages <non-klio-msgs>`,
+:ref:`how to publish KlioMessages from a non-Klio job <non-klio-publish>`, and
+:ref:`using custom protobuf messages <custom-proto-msgs>`.
 
 
 .. _kliomessage:
@@ -297,3 +298,9 @@ execution.
 .. option:: V2
 
     Version 2 of ``KlioMessage``.
+
+
+.. todo::
+
+    Link to ``klio.proto`` file in the page above once the repo is public. Otherwise the doc build
+    will fail.

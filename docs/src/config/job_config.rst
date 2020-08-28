@@ -3,6 +3,7 @@ Job Configuration
 
 Klio-specific and :ref:`user-specified custom <custom-conf>` job configuration.
 
+.. _allow-non-klio:
 .. option:: job_config.allow_non_klio_messages BOOL
 
     Allow this job to process free-form, non-``KlioMessage`` messages.

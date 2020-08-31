@@ -1,0 +1,35 @@
+version: 2
+job_name: batch-modular-default
+pipeline_options:
+  streaming: False
+  update: False
+  worker_harness_container_image: integration-batch-modular-default
+  experiments:
+    - enable_stackdriver_agent_metrics
+  project: fluffy-zelda-glitch-toki-kobe
+  runner: DirectRunner
+  setup_file: setup.py
+job_config:
+  allow_non_klio_messages: False
+  events:
+    inputs:
+      - type: file
+        location: ./batch_track_ids.txt
+        skip_klio_read: False
+    outputs:
+      - type: file
+        location: ./batch_track_ids_output
+        skip_klio_write: False
+  data:
+    inputs:
+      - type: gcs
+        location: gs://klio-integration/beatbox
+        file_suffix: .ogg
+        skip_klio_existence_check: False
+        ping: False
+    outputs:
+      - type: gcs
+        location: gs://klio-integration/batch-modular-default/outputs
+        file_suffix: .wav
+        skip_klio_existence_check: False
+        force: False

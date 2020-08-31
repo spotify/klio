@@ -1,0 +1,62 @@
+INFO:root:Found worker image: integration-batch-modular-default:batch-modular-default
+/usr/src/app/transforms.py:9: KlioFutureWarning: 'handle_klio' is experimental and is subject to incompatible changes, or removal in a future release of Klio.
+  @decorators.handle_klio
+INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/battleclip_daq.wav
+INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/callout_Turn-Table.wav
+INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/callout_azeem.wav
+INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/callout_mcld.wav
+INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/putfile_bui.wav
+INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/putfile_pepouni.wav
+INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/putfile_william.wav
+INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/callout_Pneumatic.wav
+INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/callout_adiao.wav
+INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/callout_luckeymonkey.wav
+INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/callout_mouss.wav
+INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/putfile_dbztenkaichi.wav
+INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/putfile_vonny.wav
+INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/snare_hex.wav
+INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/0123_id_does_not_exist.wav
+INFO:klio:Input found at gs://klio-integration/beatbox/battleclip_daq.ogg
+INFO:klio:Received element b'battleclip_daq'
+INFO:klio:Received payload b''
+INFO:klio:Input found at gs://klio-integration/beatbox/callout_Turn-Table.ogg
+INFO:klio:Received element b'callout_Turn-Table'
+INFO:klio:Received payload b''
+INFO:klio:Input found at gs://klio-integration/beatbox/callout_azeem.ogg
+INFO:klio:Received element b'callout_azeem'
+INFO:klio:Received payload b''
+INFO:klio:Input found at gs://klio-integration/beatbox/callout_mcld.ogg
+INFO:klio:Received element b'callout_mcld'
+INFO:klio:Received payload b''
+INFO:klio:Input found at gs://klio-integration/beatbox/putfile_bui.ogg
+INFO:klio:Received element b'putfile_bui'
+INFO:klio:Received payload b''
+INFO:klio:Input found at gs://klio-integration/beatbox/putfile_pepouni.ogg
+INFO:klio:Received element b'putfile_pepouni'
+INFO:klio:Received payload b''
+INFO:klio:Input found at gs://klio-integration/beatbox/putfile_william.ogg
+INFO:klio:Received element b'putfile_william'
+INFO:klio:Received payload b''
+INFO:klio:Input found at gs://klio-integration/beatbox/callout_Pneumatic.ogg
+INFO:klio:Received element b'callout_Pneumatic'
+INFO:klio:Received payload b''
+INFO:klio:Input found at gs://klio-integration/beatbox/callout_adiao.ogg
+INFO:klio:Received element b'callout_adiao'
+INFO:klio:Received payload b''
+INFO:klio:Input found at gs://klio-integration/beatbox/callout_luckeymonkey.ogg
+INFO:klio:Received element b'callout_luckeymonkey'
+INFO:klio:Received payload b''
+INFO:klio:Input found at gs://klio-integration/beatbox/callout_mouss.ogg
+INFO:klio:Received element b'callout_mouss'
+INFO:klio:Received payload b''
+INFO:klio:Input found at gs://klio-integration/beatbox/putfile_dbztenkaichi.ogg
+INFO:klio:Received element b'putfile_dbztenkaichi'
+INFO:klio:Received payload b''
+INFO:klio:Input found at gs://klio-integration/beatbox/putfile_vonny.ogg
+INFO:klio:Received element b'putfile_vonny'
+INFO:klio:Received payload b''
+INFO:klio:Input found at gs://klio-integration/beatbox/snare_hex.ogg
+INFO:klio:Received element b'snare_hex'
+INFO:klio:Received payload b''
+INFO:klio:Input not found at gs://klio-integration/beatbox/0123_id_does_not_exist.ogg
+INFO:klio:Dropping KlioMessage - can not process 'b'0123_id_does_not_exist'' any further.

@@ -31,6 +31,12 @@ Releases
    pipeline/index
    config/index
    ecosystem/index
+
+.. different max depth for these pages
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+
    faqs
    internals
    contributors

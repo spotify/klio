@@ -1,0 +1,46 @@
+INFO:root:Found worker image: integration-klio-audio:audio-spectrograms
+INFO:matplotlib.font_manager:Generating new fontManager, this may take some time...
+DEBUG:klio:KlioMessage full audit log - Entity ID:  - Path: fluffy-zelda-glitch-toki-kobe::klio-audio (current job)
+DEBUG:klio:Process 'battleclip_daq': Ping mode OFF.
+DEBUG:klio:Downloading battleclip_daq.ogg from gs://klio-integration/beatbox
+DEBUG:klio:Downloaded battleclip_daq.ogg
+DEBUG:klio:Loading battleclip_daq into memory as a numpy array.
+DEBUG:klio:Calculating the short-time Fourier transform for battleclip_daq
+DEBUG:klio:Computing the magnitude spectrogram for battleclip_daq
+DEBUG:klio:Generating a spectrogram for battleclip_daq
+DEBUG:klio:Generating plot 'Full Spectrogam for battleclip_daq'
+DEBUG:klio:Saving plot as png for battleclip_daq
+DEBUG:klio:Saved plot to gs://klio-integration/audio-spectrograms/outputs/battleclip_daq-full.png
+DEBUG:klio:Filtering nearest neighbors for battleclip_daq
+DEBUG:klio:KlioMessage full audit log - Entity ID:  - Path: fluffy-zelda-glitch-toki-kobe::klio-audio (current job)
+DEBUG:klio:Process 'callout_Turn-Table': Ping mode OFF.
+DEBUG:klio:Downloading callout_Turn-Table.ogg from gs://klio-integration/beatbox
+DEBUG:klio:Downloaded callout_Turn-Table.ogg
+DEBUG:klio:Loading callout_Turn-Table into memory as a numpy array.
+DEBUG:klio:Calculating the short-time Fourier transform for callout_Turn-Table
+DEBUG:klio:Computing the magnitude spectrogram for callout_Turn-Table
+DEBUG:klio:Generating a spectrogram for callout_Turn-Table
+DEBUG:klio:Generating plot 'Full Spectrogam for callout_Turn-Table'
+DEBUG:klio:Saving plot as png for callout_Turn-Table
+DEBUG:klio:Saved plot to gs://klio-integration/audio-spectrograms/outputs/callout_Turn-Table-full.png
+DEBUG:klio:Filtering nearest neighbors for callout_Turn-Table
+DEBUG:klio:Getting softmask for b'battleclip_daq'
+DEBUG:klio:Generating a spectrogram for battleclip_daq
+DEBUG:klio:Generating plot 'Background Spectrogam for battleclip_daq'
+DEBUG:klio:Saving plot as png for battleclip_daq
+DEBUG:klio:Saved plot to gs://klio-integration/audio-spectrograms/outputs/battleclip_daq-background.png
+DEBUG:klio:Getting softmask for b'callout_Turn-Table'
+DEBUG:klio:Generating a spectrogram for callout_Turn-Table
+DEBUG:klio:Generating plot 'Background Spectrogam for callout_Turn-Table'
+DEBUG:klio:Saving plot as png for callout_Turn-Table
+DEBUG:klio:Saved plot to gs://klio-integration/audio-spectrograms/outputs/callout_Turn-Table-background.png
+DEBUG:klio:Getting softmask for b'battleclip_daq'
+DEBUG:klio:Generating a spectrogram for battleclip_daq
+DEBUG:klio:Generating plot 'Foreground Spectrogam for battleclip_daq'
+DEBUG:klio:Saving plot as png for battleclip_daq
+DEBUG:klio:Saved plot to gs://klio-integration/audio-spectrograms/outputs/battleclip_daq-foreground.png
+DEBUG:klio:Getting softmask for b'callout_Turn-Table'
+DEBUG:klio:Generating a spectrogram for callout_Turn-Table
+DEBUG:klio:Generating plot 'Foreground Spectrogam for callout_Turn-Table'
+DEBUG:klio:Saving plot as png for callout_Turn-Table
+DEBUG:klio:Saved plot to gs://klio-integration/audio-spectrograms/outputs/callout_Turn-Table-foreground.png

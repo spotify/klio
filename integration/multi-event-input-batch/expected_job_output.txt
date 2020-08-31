@@ -1,4 +1,4 @@
-INFO:root:Found worker image: integration-multi-event-input-batch:multi-event-input-batch-klio-job.yaml
+INFO:root:Found worker image: integration-multi-event-input-batch:multi-event-input-batch
 INFO:klio:Output not found at gs://klio-integration/multi-event-input-batch-output/source1-abcd
 INFO:klio:Output not found at gs://klio-integration/multi-event-input-batch-output/source1-efgh
 INFO:klio:Output not found at gs://klio-integration/multi-event-input-batch-output/source1-ijkl

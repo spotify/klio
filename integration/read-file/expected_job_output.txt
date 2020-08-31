@@ -1,4 +1,4 @@
-INFO:root:Found worker image: integration-test-klio-read-file-write-file:read-file-klio-job.yaml
+INFO:root:Found worker image: integration-test-klio-read-file-write-file:read-file
 /usr/src/app/transforms.py:12: KlioFutureWarning: 'handle_klio' is experimental and is subject to incompatible changes, or removal in a future release of Klio.
   @decorators.handle_klio
 INFO:klio:Hello, Klio!

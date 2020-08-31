@@ -37,6 +37,7 @@ class KlioIODirection(enum.Enum):
 class TaggedStates(enum.Enum):
     PROCESS = "process"
     PASS_THRU = "pass_thru"
+    DROP = "drop"
     DEFAULT = "tag_not_set"
 
 
@@ -61,6 +62,18 @@ def _wrap_process(meth):
             return
 
     return wrapper
+
+
+def _job_in_jobs(current_job, job_list):
+    # Use job name & project to ensure uniqueness
+    curr_job_name = "{}-{}".format(
+        current_job.gcp_project, current_job.job_name
+    )
+    downstream_job_names = [
+        "{}-{}".format(j.gcp_project, j.job_name) for j in job_list
+    ]
+
+    return curr_job_name in downstream_job_names
 
 
 class _KlioBaseDoFnMetaclass(type):

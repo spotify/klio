@@ -272,3 +272,45 @@ class KlioCheckRecipients(
             yield pvalue.TaggedOutput(
                 _helpers.TaggedStates.DROP.value, raw_message
             )
+
+
+class KlioUpdateAuditLog(beam.DoFn, metaclass=_helpers._KlioBaseDoFnMetaclass):
+    """Update a KlioMessage's audit log to include current job."""
+
+    WITH_OUTPUTS = False
+
+    @decorators._set_klio_context
+    def _generate_current_job_object(self):
+        job = klio_pb2.KlioJob()
+        job.job_name = self._klio.config.job_name
+        job.gcp_project = self._klio.config.pipeline_options.project
+        return job
+
+    def _create_audit_item(self):
+        audit_log_item = klio_pb2.KlioJobAuditLogItem()
+        audit_log_item.timestamp.GetCurrentTime()
+        current_job = self._generate_current_job_object()
+        audit_log_item.klio_job.CopyFrom(current_job)
+        return audit_log_item
+
+    @decorators._set_klio_context
+    def process(self, raw_message):
+        klio_message = serializer.to_klio_message(raw_message)
+        audit_log_item = self._create_audit_item()
+        klio_message.metadata.job_audit_log.extend([audit_log_item])
+
+        audit_log = klio_message.metadata.job_audit_log
+        traversed_dag = " -> ".join(
+            "{}::{}".format(
+                str(al.klio_job.gcp_project), str(al.klio_job.job_name)
+            )
+            for al in audit_log
+        )
+        traversed_dag = "{} (current job)".format(traversed_dag)
+
+        base_log_msg = "KlioMessage full audit log"
+        log_msg = "{} - Entity ID: {} - Path: {}".format(
+            base_log_msg, klio_message.data.entity_id, traversed_dag
+        )
+        self._klio.logger.debug(log_msg)
+        yield klio_message.SerializeToString()

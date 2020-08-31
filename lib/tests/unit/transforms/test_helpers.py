@@ -362,3 +362,43 @@ class TestExecutionMode(BaseTest):
             _ = msg_version.v1 | "Assert no v1 msgs" >> beam.Map(
                 self.assert_not_processed
             )
+
+
+def assert_audit(actual):
+    job = klio_pb2.KlioJob()
+    job.job_name = "exec-modes"
+    job.gcp_project = "not-a-real-project"
+    audit_log_item = klio_pb2.KlioJobAuditLogItem()
+    audit_log_item.klio_job.CopyFrom(job)
+    exp_msg = klio_pb2.KlioMessage()
+    exp_msg.version = klio_pb2.Version.V2
+    exp_msg.metadata.job_audit_log.extend([audit_log_item])
+    expected = exp_msg.SerializeToString()
+
+    assert expected == actual
+    return actual
+
+
+def test_update_klio_log(mocker, monkeypatch, caplog):
+    mock_ts = mocker.Mock()
+    monkeypatch.setattr(klio_pb2.KlioJobAuditLogItem, "timestamp", mock_ts)
+
+    kmsg = klio_pb2.KlioMessage()
+    kmsg.version = klio_pb2.Version.V2
+    assert not kmsg.metadata.job_audit_log  # sanity check
+
+    with test_pipeline.TestPipeline() as p:
+        in_pcol = p | beam.Create([kmsg.SerializeToString()])
+        act_pcol = in_pcol | helpers.KlioUpdateAuditLog()
+        _ = act_pcol | beam.Map(assert_audit)
+
+    exp_log = (
+        "KlioMessage full audit log - Entity ID:  - Path: not-a-real-project::"
+        "exec-modes (current job)"
+    )
+    for rec in caplog.records:
+        if exp_log in rec.message:
+            assert True
+            break
+    else:
+        assert False, "Expected debug audit log not found"

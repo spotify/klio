@@ -328,6 +328,13 @@ class KlioPipeline(object):
 
         return to_process, to_pass_thru
 
+    def _update_audit_log(self, in_pcol, label_pfx=None):
+        label = "Updating KlioMessage Audit Log"
+        if label_pfx:
+            label = "[{}] {}".format(label_pfx, label)
+
+        return in_pcol | label >> helpers.KlioUpdateAuditLog()
+
     def _filter_intended_recipients(self, in_pcol, label_pfx=None):
         pfx = ""
         if label_pfx is not None:
@@ -412,8 +419,9 @@ class KlioPipeline(object):
             **input_config.to_io_kwargs()
         )
         intended_msgs = self._filter_intended_recipients(in_pcol, label_prefix)
+        audit_logged_msgs = self._update_audit_log(intended_msgs, label_prefix)
         to_process, to_pass_thru = self._setup_data_io_filters(
-            intended_msgs, label_prefix
+            audit_logged_msgs, label_prefix
         )
         return to_process, to_pass_thru
 

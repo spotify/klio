@@ -56,12 +56,14 @@ versions = {
     "klio_devtools_release": find_version("../../devtools/src/klio_devtools/__init__.py"),
     "klio_exec_release": find_version("../../exec/src/klio_exec/__init__.py"),
     "klio_release": find_version("../../lib/src/klio/__init__.py"),
+    "klio_audio_release": find_version("../../audio/src/klio_audio/__init__.py"),
 }
 
 # Define ``rst_epilog`` to make variables globally-available to compiled .rst files
 rst_epilog = """
 .. |klio-cli-version| replace:: {klio_cli_release}
 .. |klio-version| replace:: {klio_release}
+.. |klio-audio-version| replace:: {klio_release}
 .. |klio-exec-version| replace:: {klio_exec_release}
 .. |klio-core-version| replace:: {klio_core_release}
 .. |klio-devtools-version| replace:: {klio_devtools_release}

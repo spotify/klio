@@ -26,19 +26,9 @@ Releases
    :hidden:
 
    quickstart
-   Anatomy <anatomy/index>
-   io/index
-   pipeline/index
-   config/index
-   ecosystem/index
-
-.. different max depth for these pages
-.. toctree::
-   :maxdepth: 2
-   :hidden:
-
-   faqs
-   internals
+   User Guide <userguide/index>
+   Reference <reference/index>
+   FAQs <faqs/index>
    contributors
 
 

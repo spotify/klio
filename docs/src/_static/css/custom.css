@@ -1,37 +1,43 @@
-div.sphinxsidebarwrapper p.logo {
-  text-align: left;
+div.admonition-todo {
+  border-color: #EB1E32;
+  background: #fbd9dc;
 }
 
-/* <-- TODO: Remove me once general releases are made */
-div.prerelease-warning {
-  padding: 10px 16px;
+div.admonition-todo > p.admonition-title {
   background: #EB1E32;
-  color: #f1f1f1;
-  position: fixed;
-  top: 0;
-  width: 100%;
-  text-align: center;
 }
-div.document {
-  /*
-    push the rest of the body down so the pre-release warning header doesn't
-    overlap with the content. The original value is 30px, so we're adding 50px.
-  */
-  margin-top: 100px;
-}
-/* TODO: Remove me once general releases are made --> */
-
-/* give a little breathing room between `.. options`, particularly for config/*.html */
-div dl {
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-div dt {
-  margin-bottom: 15px;
-}
-
-/* Make the TODO admonition a bit more menacing */
-div .admonition-todo {
-  background-color: red;
+div.admonition-todo > p.admonition-title::before {
+  font-family: "Font Awesome 5 Free";
+  content: "\f071";
   color: white;
+}
+
+.custom-button {
+  background-color: #dcdcdc;
+  border: none;
+  color: #484848;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 0.9rem;
+  border-radius: 0.5rem;
+  max-width: 220px;
+  padding: 0.5rem 0rem;
+}
+
+.custom-button p {
+    margin-top: 0;
+    margin-bottom: 0rem;
+    color: #484848;
+}
+
+.intro-card {
+  background: #fff;
+  border-radius: 0;
+  padding: 30px 10px 10px 10px;
+  margin: 10px 0px;
+}
+
+.intro-card .card-text {
+  margin: 20px 0px;
 }

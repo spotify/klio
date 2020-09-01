@@ -1,6 +1,15 @@
 Job Configuration
 =================
 
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   pipeline_options
+   job_config
+   event_config
+   data_config
+
 A Klio job's configuration is defined in ``klio-job.yaml``.
 
 .. tip::
@@ -59,7 +68,8 @@ A ``klio-job.yaml`` file have the following top-level keys:
     *Required*
 
 
-**Further Configuration Options:**
+Further Configuration Options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. toctree::
    :maxdepth: 1
@@ -68,7 +78,6 @@ A ``klio-job.yaml`` file have the following top-level keys:
    job_config
    event_config
    data_config
-
 
 .. _access-config:
 

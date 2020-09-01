@@ -92,7 +92,12 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "alabaster"
+html_theme = "pydata_sphinx_theme"
+html_theme_options = {
+  "github_url": "https://github.com/spotify/klio",
+  "twitter_url": "https://twitter.com/SpotifyEng",
+  "show_prev_next": False,
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -100,11 +105,6 @@ html_theme = "alabaster"
 html_static_path = ["_static"]
 html_css_files = ["css/custom.css"]  # relative to _static
 html_favicon = "_static/images/favicon.ico"
-html_theme_options = {
-    "description": "klio: some clever tagline",
-    "logo": "images/logo.png",  # relative to _static
-    "fixed_sidebar": True,
-}
 
 
 # -- Extention configuration

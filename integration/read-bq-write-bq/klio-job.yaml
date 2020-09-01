@@ -1,0 +1,44 @@
+job_config:
+  allow_non_klio_messages: false
+  data:
+    inputs:
+    - location: gs://klio-integration
+      skip_klio_existence_check: true
+      type: gcs
+    outputs:
+    - location: gs://klio-integration
+      skip_klio_existence_check: true
+      type: gcs
+  events:
+    inputs:
+    - columns:
+      - entity_id
+      dataset: klio_integration
+      project: fluffy-zelda-glitch-toki-kobe
+      table: klio_bq_read_input
+      type: bq
+    outputs:
+    - dataset: klio_integration
+      project: fluffy-zelda-glitch-toki-kobe
+      schema:
+        fields:
+        - mode: nullable
+          name: entity_id
+          type: string
+        - mode: nullable
+          name: value
+          type: string
+      table: klio_bq_write_output
+      type: bq
+      write_disposition: WRITE_TRUNCATE
+job_name: klio-read-bq-write-bq
+pipeline_options:
+  experiments:
+  - enable_stackdriver_agent_metrics
+  project: fluffy-zelda-glitch-toki-kobe
+  runner: DirectRunner
+  setup_file: setup.py
+  streaming: false
+  update: false
+  worker_harness_container_image: integration-klio-read-bq-write-bq
+version: 2

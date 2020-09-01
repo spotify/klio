@@ -32,6 +32,9 @@ jobs:
           - "read-file-write-file"
           - "multi-event-input-batch"
           - "read-file"
+          - "batch-modular-default"
+          - "audio-spectrograms"
+          - "read-bq-write-bq"
       # do not cancel other jobs in matrix if one fails
       fail-fast: false
     steps:

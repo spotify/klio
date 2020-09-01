@@ -93,6 +93,7 @@ exclude_patterns = []
 # a list of builtin themes.
 #
 html_theme = "pydata_sphinx_theme"
+html_logo = "_static/images/shitty_logo.png"
 html_theme_options = {
   "github_url": "https://github.com/spotify/klio",
   "twitter_url": "https://twitter.com/SpotifyEng",
@@ -104,7 +105,7 @@ html_theme_options = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 html_css_files = ["css/custom.css"]  # relative to _static
-html_favicon = "_static/images/favicon.ico"
+html_favicon = "_static/images/k_favicon.png"
 
 
 # -- Extention configuration

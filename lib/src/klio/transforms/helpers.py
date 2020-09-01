@@ -1,4 +1,5 @@
 # Copyright 2020 Spotify AB
+import logging
 
 import apache_beam as beam
 
@@ -314,3 +315,44 @@ class KlioUpdateAuditLog(beam.DoFn, metaclass=_helpers._KlioBaseDoFnMetaclass):
         )
         self._klio.logger.debug(log_msg)
         yield klio_message.SerializeToString()
+
+
+class KlioDebugMessage(beam.PTransform):
+    """Log KlioMessage."""
+
+    def __init__(self, prefix="DEBUG: ", log_level="INFO"):
+        super().__init__()
+        self.prefix = prefix
+        self.log_level = self._get_log_level(log_level)
+
+    def _get_log_level(self, log_level):
+        # TODO: should prob do some pre-emptive checking
+        if isinstance(log_level, str):
+            return getattr(logging, log_level.upper())
+        if isinstance(log_level, int):
+            return log_level
+        raise SystemExit("Unrecognized `log_level` for `KlioDebugMessage`.")
+
+    @decorators._set_klio_context
+    def print_debug(self, raw_message):
+        klio_message = serializer.to_klio_message(raw_message)
+        self._klio.logger.log(
+            self.log_level, "{}{}".format(self.prefix, klio_message)
+        )
+        return raw_message
+
+    def expand(self, pipeline):
+        return pipeline | beam.Map(self.print_debug)
+
+
+class KlioSetTrace(beam.PTransform):
+    """Insert a Python debugger trace point."""
+
+    def set_trace(self, raw_message):
+        import pdb  # don't import this at top level, just when it's needed
+
+        pdb.set_trace()
+        return raw_message
+
+    def expand(self, pipeline):
+        return pipeline | beam.Map(self.set_trace)

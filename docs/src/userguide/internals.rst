@@ -10,5 +10,5 @@ Internals
    :maxdepth: 1
    :hidden:
 
-   ecosystem/core/index
-   ecosystem/devtools/index
+   ../reference/core/index
+   ../reference/devtools/index

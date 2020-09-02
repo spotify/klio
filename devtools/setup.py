@@ -47,7 +47,7 @@ PACKAGE_NAME = "klio_devtools"
 PACKAGES = find_packages(where="src")
 META_PATH = os.path.join("src", PACKAGE_NAME, "__init__.py")
 CLASSIFIERS = [
-    "Development Status :: 1 - Planning",
+    "Development Status :: 3 - Alpha",
     "Natural Language :: English",
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS :: MacOS X",
@@ -58,7 +58,13 @@ CLASSIFIERS = [
     "Programming Language :: Python :: Implementation :: CPython",
 ]
 META_FILE = read(META_PATH)
-INSTALL_REQUIRES = ["click", "docker", "dockerpty", "klio-cli", "klio-core"]
+INSTALL_REQUIRES = [
+    "click",
+    "docker",
+    "dockerpty",
+    "klio-cli>=1.0.0.alpha0",
+    "klio-core>=0.2.0.alpha0",
+]
 EXTRAS_REQUIRE = {
     "tests": [
         "coverage",

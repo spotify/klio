@@ -48,7 +48,7 @@ PACKAGE_NAME = "klio_exec"
 PACKAGES = find_packages(where="src")
 META_PATH = os.path.join("src", PACKAGE_NAME, "__init__.py")
 CLASSIFIERS = [
-    "Development Status :: 1 - Planning",
+    "Development Status :: 3 - Alpha",
     "Natural Language :: English",
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS :: MacOS X",
@@ -62,8 +62,8 @@ META_FILE = read(META_PATH)
 INSTALL_REQUIRES = [
     "attrs",
     "click",
-    "klio-core",
-    "klio",
+    "klio-core>=0.2.0.alpha0",
+    "klio>=0.2.0.alpha0",
     "pyyaml",
     "apache-beam[gcp]",
     "setuptools",  # for loading entry points w pkg_resources

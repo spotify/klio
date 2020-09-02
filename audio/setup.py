@@ -48,7 +48,7 @@ PACKAGE_NAME = "klio_audio"
 PACKAGES = find_packages(where="src")
 META_PATH = os.path.join("src", PACKAGE_NAME, "__init__.py")
 CLASSIFIERS = [
-    "Development Status :: 1 - Planning",
+    "Development Status :: 3 - Alpha",
     "Natural Language :: English",
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS :: MacOS X",
@@ -61,7 +61,7 @@ CLASSIFIERS = [
 META_FILE = read(META_PATH)
 INSTALL_REQUIRES = [
     "apache-beam",
-    "klio",
+    "klio>=0.2.0.alpha0",
     "librosa",
     "numpy",
     "matplotlib",

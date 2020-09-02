@@ -84,6 +84,7 @@ Releases
 
    * ``klio-cli``: |klio-cli-version| (:doc:`What's new? <reference/cli/changelog>`)
    * ``klio``: |klio-version| (:doc:`What's new? <reference/lib/changelog>`)
+   * ``klio-audio``: |klio-audio-version| (:doc:`What's new? <reference/audio/changelog>`)
    * ``klio-exec``: |klio-exec-version| (:doc:`What's new? <reference/executor/changelog>`)
    * ``klio-core``: |klio-core-version| (:doc:`What's new? <reference/core/changelog>`)
    * ``klio-devtools``: |klio-devtools-version| (:doc:`What's new? <reference/devtools/changelog>`)

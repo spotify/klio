@@ -13,10 +13,53 @@ See the :ref:`FAQs page <faqs>` for :ref:`how to work with non-KlioMessages <non
 :ref:`using custom protobuf messages <custom-proto-msgs>`.
 
 
+.. _msg-proc-logic:
+
+Processing Logic
+----------------
+
+When a streaming job is running and it receives a ``KlioMessage``, Klio first detects if the
+job is in the message's downstream path, signifying either :ref:`bottom-up <bottom-up>` or :ref:`top-down <top-down>` execution. If the job is not in the downstream path and is not an intended
+recipient of the message, then it should **not** process this message. Klio will then drop the
+message for no further processing.
+
+If the job should process the received message, then Klio looks to see if the message is in
+:ref:`ping-mode <ping-mode>`. If it is, then the message is just passed through and published to the job’s
+output topic.
+
+If the message is **not** in :ref:`ping-mode <ping-mode>`, Klio then checks to see if the output data for
+the message already exists. If it **does** exist, then Klio looks to see if the message itself
+of the pipeline is configured to :ref:`force-reprocess <force-mode>` already-generated output. If
+not, then the message is just passed through and published to the job’s output topic.
+
+If the output data does not exist, or :ref:`force mode <force-mode>` is turned on, then Klio checks
+to see if the input data for the message exists. If not, Klio will drop the message and log that it
+can't process any further.
+
+.. note::
+
+    **Coming soon!** The ability for Klio to automatically trigger parent jobs for when input
+    data doesn't exist is in development.
+
+
+If the input data does exist, then Klio will invoke the rest of the user's pipeline as defined in
+``run.py``.
+
+
+.. figure:: images/message_logic.gif
+    :alt: Klio processing logic flow
+
+    *Message handling: Klio will either drop the message if it doesn't need to or cannot process it, pass through the message directly to the output topic to avoid unnecessary work, or process the message if all conditions are met.*
+
+.. _proto-defs:
+
+Protobuf Definitions
+--------------------
+
 .. _kliomessage:
 
 ``KlioMessage``
----------------
+^^^^^^^^^^^^^^^
 
 .. option:: metadata
 
@@ -42,7 +85,7 @@ See the :ref:`FAQs page <faqs>` for :ref:`how to work with non-KlioMessages <non
 .. _metadata:
 
 ``KlioMessage.Metadata``
-^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. option:: downstream
 
@@ -102,7 +145,7 @@ See the :ref:`FAQs page <faqs>` for :ref:`how to work with non-KlioMessages <non
 .. _recipients:
 
 ``KlioMessage.Metadata.Recipients``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 One of the following attributes are required:
 
@@ -126,7 +169,7 @@ One of the following attributes are required:
 .. _anyone:
 
 ``KlioMessage.Metadata.Recipients.Anyone``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is an empty "stub" message. Its presence is used to simply signify :ref:`top-down <top-down>`
 execution.
@@ -135,7 +178,7 @@ execution.
 .. _limited:
 
 ``KlioMessage.Metadata.Recipients.Limited``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. option:: recipients
 
@@ -162,7 +205,7 @@ execution.
 .. _data:
 
 ``KlioMessage.Data``
-^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~
 
 .. option:: element
 
@@ -197,7 +240,7 @@ execution.
 .. _kliojob:
 
 ``KlioJob``
------------
+^^^^^^^^^^^
 
 .. warning::
 
@@ -231,7 +274,7 @@ execution.
 .. _job-input:
 
 ``KlioJob.JobInput``
-^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~
 
 .. warning::
 
@@ -265,7 +308,7 @@ execution.
 .. _auditlog:
 
 ``KlioJobAuditLogItem``
------------------------
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. option:: timestamp
 
@@ -285,7 +328,7 @@ execution.
 .. _version:
 
 ``Version``
------------
+^^^^^^^^^^^
 
 .. option:: UNKNOWN
 

@@ -57,7 +57,8 @@ class MetricsRegistry(object):
                 relay clients' counter object.
         Returns a dispatcher.CounterDispatcher instance
         """
-        key = "counter_{}_{}".format(name, self._transform_name)
+        transform_name = kwargs.pop("transform", self._transform_name)
+        key = "counter_{}_{}".format(name, transform_name)
         if key in self._registry:
             return self._registry[key]
 
@@ -65,7 +66,7 @@ class MetricsRegistry(object):
             relay_clients=self._relays,
             name=name,
             value=value,
-            transform=self._transform_name,
+            transform=transform_name,
             **kwargs
         )
         self._registry[key] = counter
@@ -86,7 +87,8 @@ class MetricsRegistry(object):
                 relay clients' gauge object.
         Returns a dispatcher.GaugeDispatcher instance
         """
-        key = "gauge_{}_{}".format(name, self._transform_name)
+        transform_name = kwargs.pop("transform", self._transform_name)
+        key = "gauge_{}_{}".format(name, transform_name)
         if key in self._registry:
             return self._registry[key]
 
@@ -94,7 +96,7 @@ class MetricsRegistry(object):
             relay_clients=self._relays,
             name=name,
             value=value,
-            transform=self._transform_name,
+            transform=transform_name,
             **kwargs
         )
         self._registry[key] = gauge
@@ -116,7 +118,8 @@ class MetricsRegistry(object):
                 relay clients' timer object.
         Returns a dispatcher.TimerDispatcher instance
         """
-        key = "timer_{}_{}".format(name, self._transform_name)
+        transform_name = kwargs.pop("transform", self._transform_name)
+        key = "timer_{}_{}".format(name, transform_name)
         if key in self._registry:
             return self._registry[key]
 
@@ -124,7 +127,7 @@ class MetricsRegistry(object):
             relay_clients=self._relays,
             name=name,
             value=value,
-            transform=self._transform_name,
+            transform=transform_name,
             timer_unit=timer_unit,
             **kwargs
         )

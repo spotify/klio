@@ -304,6 +304,22 @@ class KlioWriteFileEventConfig(KlioWriteFileConfig):
     pass
 
 
+@attr.attrs(frozen=True)
+@supports(KlioIODirection.INPUT, KlioIOType.DATA)
+class KlioFileInputDataConfig(KlioDataIOConfig, KlioFileConfig):
+    location = attr.attrib(type=str)
+    ping = attr.attrib(type=bool, default=False)
+    file_suffix = attr.attrib(type=str, default="")
+
+
+@attr.attrs(frozen=True)
+@supports(KlioIODirection.OUTPUT, KlioIOType.DATA)
+class KlioFileOutputDataConfig(KlioDataIOConfig, KlioFileConfig):
+    location = attr.attrib(type=str)
+    file_suffix = attr.attrib(type=str, default="")
+    force = attr.attrib(type=bool, default=False)
+
+
 class KlioAvroConfig(object):
     name = "avro"
 

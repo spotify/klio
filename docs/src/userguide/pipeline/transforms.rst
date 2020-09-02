@@ -1,3 +1,5 @@
+.. _helper-transforms:
+
 Implementing Transforms
 =======================
 
@@ -149,6 +151,8 @@ currently available for writing to file types and pubsub types.
             # Handle items that should be sent directly to output
             _ = output_force.pass_thru | "Passthru Found Output" >> KlioWriteToEventOutput()
 
+
+.. _transform-klio-drop:
 
 ``KlioDrop``
 """"""""""""

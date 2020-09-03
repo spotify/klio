@@ -1,3 +1,5 @@
+.. _kliopipelineconfig:
+
 Beam Pipeline Options
 =====================
 

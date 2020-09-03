@@ -21,6 +21,8 @@ De/serialization of Klio Messages
 ``@handle_klio`` generates a ``KlioContext`` instance as well as handles the de/serialization of
 the incoming PCollection as a ``KlioMessage``.
 
+.. _klio-context-decorators:
+
 Under the hood
 ^^^^^^^^^^^^^^
 

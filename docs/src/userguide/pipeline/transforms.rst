@@ -262,9 +262,8 @@ The composite transform can then be imported into the rest of the pipeline in th
 
 
     def run(in_pcol, config):
-        my_custom_config = config.job_config.my_custom_config
 
-        out_pcol = in_pcol | MyCompositeTransform(my_custom_config)
+        out_pcol = in_pcol | MyCompositeTransform()
 
         return out_pcol
 

@@ -23,6 +23,7 @@ Example configuration for `Google Cloud Storage`_:
                 location: gs://my-bucket/my-jobs-folder
                 file_suffix: ogg
 
+.. _data-inputs-type:
 .. option:: job_config.data.inputs[].type STR
 
     Value: ``gcs``
@@ -30,6 +31,7 @@ Example configuration for `Google Cloud Storage`_:
     | **Runner**: Dataflow, Direct
     | *Required*
 
+.. _data-inputs-location:
 .. option:: job_config.data.inputs[].location STR
 
     The GCS bucket of this job’s binary data input, usually an upstream job's output. Must be a
@@ -44,6 +46,7 @@ Example configuration for `Google Cloud Storage`_:
     | **Runner**: Dataflow, Direct
     | *Optional*
 
+.. _data-inputs-file-suffix:
 .. option:: job_config.data.inputs[].file_suffix STR
 
     The general file suffix or extension of input files.
@@ -148,11 +151,7 @@ Example configuration for `Google Cloud Storage`_:
 
     The general file suffix or extension of input files.
 
-    Required for Klio's automatic default existence checks.
-
-    .. todo::
-
-        Link to existence checks once documented.
+    Required for Klio's automatic :ref:`default existence checks <data-existence-checks>`.
 
     | **Runner**: Dataflow, Direct
     | *Optional*

@@ -124,3 +124,14 @@ todo_link_only = False
 autodoc_default_options = {
     "inherited-members": False,
 }
+
+
+# -- intersphinx mapping
+# This will auto-generate links to Python's docs when referenced (e.g.
+# :func:`pdb.set_trace` will link to the set_trace docs)
+# Note: this won't work for Apache Beam because they generate the
+# python documentation per SDK version, and we probably shouldn't hard-link
+# to a specific version
+intersphinx_mapping = {
+    "https://docs.python.org/3": None,
+}

@@ -187,10 +187,68 @@ log and drop a ``KlioMessage``.
             return input_data.found
 
 
+Debugging Transforms
+^^^^^^^^^^^^^^^^^^^^
+
+
+``KlioDebugMessage``
+""""""""""""""""""""
+
+:class:`KlioDebugMessage <klio.transforms.helpers.KlioDebugMessage>` is a `Composite Transform`_
+that will log a ``KlioMessage`` at the given point in a pipeline. It can be used any number of
+times within a transform.
+
+.. code-block:: python
+
+    from klio.transforms import helpers
+
+    def run(in_pcol, config):
+        return (
+            in_pcol
+            | "1st debug" >> helpers.KlioDebugMessage()
+            | MyTransform()
+            | "2nd debug" >> helpers.KlioDebugMessage(prefix="[MyTransform Output]")
+            | MyOtherTransform()
+            | "3rd debug" >> helpers.KlioDebugMessage(
+                prefix="[MyOtherTransform Output]", log_level="ERROR"
+            )
+        )
+
+``KlioSetTrace``
+""""""""""""""""
+
+:class:`KlioSetTrace <klio.transforms.helpers.KlioSetTrace>` is a `Composite Transform`_ that will
+insert a trace point (via :func:`pdb.set_trace`) at a given point in a pipeline.
+
+.. code-block:: python
+
+    from klio.transforms import helpers
+
+    def run(in_pcol, config):
+        return in_pcol | helpers.KlioSetTrace() | MyTransform()
+
+
+Other Transforms
+^^^^^^^^^^^^^^^^
+
+``KlioUpdateAuditLog``
+""""""""""""""""""""""
+
+:class:`KlioUpdateAuditLog <klio.transforms.helpers.KlioUpdateAuditLog>` is a `Composite
+Transform`_ that will update the audit log in the metadata of a :ref:`KlioMessage <klio-message>`
+with the current job's :ref:`KlioJob`.
+
+.. note::
+
+    This transform is automatically called **unless** the event input is :ref:`configured to be
+    skipped <skip-klio-read>`.
+
+
+
 .. _custom-existence-checks:
 
 Custom Data Existence Checks
--------------------------------
+----------------------------
 Klio by default handles these input and output existence checks. However Klio can also be
 configured to skip these checks if custom control is desired.
 

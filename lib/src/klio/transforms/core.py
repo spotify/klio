@@ -16,6 +16,12 @@ from klio.metrics import stackdriver
 
 
 class KlioContext(object):
+    """Context related to the currently running job.
+
+    Available to transforms via one of the :ref:`KlioContext decorators
+    <klio-context-decorators>`.
+    """
+
     # TODO: is this still needed on dataflow?
     _thread_local = threading.local()
 
@@ -98,6 +104,7 @@ class KlioContext(object):
 
     @property
     def config(self):
+        """A ``KlioConfig`` instance representing the job's configuration."""
         klio_config = getattr(self._thread_local, "klio_config", None)
         if not klio_config:
             self._thread_local.klio_config = self._load_config_from_file()
@@ -105,6 +112,7 @@ class KlioContext(object):
 
     @property
     def job(self):
+        """An instance of :ref:`kliojob` of the current job."""
         klio_job = getattr(self._thread_local, "klio_job", None)
         if not klio_job:
             self._thread_local.klio_job = self._create_klio_job_obj()
@@ -112,6 +120,10 @@ class KlioContext(object):
 
     @property
     def logger(self):
+        """A namespaced logger.
+
+        Equivalent to ``logging.getLogger("klio")``.
+        """
         klio_logger = getattr(self._thread_local, "klio_logger", None)
         if not klio_logger:
             self._thread_local.klio_logger = logging.getLogger("klio")
@@ -119,6 +131,9 @@ class KlioContext(object):
 
     @property
     def metrics(self):
+        """A metrics registry instance.
+
+        See :ref:`metrics <metrics>` for more information."""
         metrics_registry = getattr(self._thread_local, "klio_metrics", None)
         if not metrics_registry:
             self._thread_local.klio_metrics = self._get_metrics_registry()

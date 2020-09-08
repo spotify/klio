@@ -61,3 +61,15 @@ I/O Transforms
     io.KlioWriteToText
     io.KlioWriteToBigQuery
     io.KlioMissingConfiguration
+
+
+Core
+----
+
+
+.. currentmodule:: klio.transforms
+
+.. autosummary::
+    :nosignatures:
+
+    core.KlioContext

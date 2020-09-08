@@ -385,17 +385,19 @@ def _timeout(seconds=None, exception=None, exception_message=None):
 def serialize_klio_message(*args, **kwargs):
     """Serialize/deserialize incoming pcollections as a KlioMessage.
 
-    This decorator needs access to a KlioContext object via
-    ``@inject_klio_context`` or ``@set_klio_context`` if not available on
-    the object (i.e. ``self`` of a DoFn instance), or use ``@handle_klio``
-    which will handle KlioContext and KlioMessage de/serialization.
+    This decorator needs access to a :class:`KlioContext
+    <klio.transforms.core.KlioContext>` object via ``@inject_klio_context``
+    or ``@set_klio_context`` if not available on the object (i.e. ``self`` of
+    a DoFn instance), or use ``@handle_klio`` which will handle ``KlioContext``
+    and KlioMessage de/serialization.
     """
     return _serialize_klio_message(*args, **kwargs)
 
 
 @_utils.experimental()
 def set_klio_context(*args, **kwargs):
-    """Set Klio context to the class instance.
+    """Set :class:`KlioContext <klio.transforms.core.KlioContext>` to the
+    class instance.
 
     Use ``@handle_klio`` instead if KlioMessage de/serialization is
     also needed.
@@ -415,7 +417,8 @@ def set_klio_context(*args, **kwargs):
 
 @_utils.experimental()
 def inject_klio_context(*args, **kwargs):
-    """Provide Klio context as the first argument to a decorated method/func.
+    """Provide :class:`KlioContext <klio.transforms.core.KlioContext>` as the
+    first argument to a decorated method/func.
 
     Use ``@handle_klio`` instead if KlioMessage de/serialization is
     also needed.
@@ -442,13 +445,14 @@ def inject_klio_context(*args, **kwargs):
 def handle_klio(*args, **kwargs):
     """Serialize & deserialize incoming pcollections as a KlioMessage.
 
-    Behind the scenes, this generates Klio context as well as handles
-    de/serialize the incoming pcollection as a Klio Message.
+    Behind the scenes, this generates :class:`KlioContext
+    <klio.transforms.core.KlioContext>` as well as handles de/serialize the
+    incoming pcollection as a Klio Message.
 
-    If decorating a class method, the Klio context will be attached
+    If decorating a class method, the ``KlioContext`` will be attached
     to the ``self`` argument of the class instance.
 
-    If decorating a function, Klio context will be provided as the first
+    If decorating a function, ``KlioContext`` will be provided as the first
     argument.
 
     .. code-block:: python

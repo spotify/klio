@@ -18,16 +18,16 @@ De/serialization of Klio Messages
 ``@handle_klio``
 ^^^^^^^^^^^^^^^^
 
-``@handle_klio`` generates a ``KlioContext`` instance as well as handles the de/serialization of
-the incoming PCollection as a ``KlioMessage``.
+``@handle_klio`` generates a :class:`KlioContext <klio.transforms.core.KlioContext>` instance as
+well as handles the de/serialization of the incoming PCollection as a ``KlioMessage``.
 
 .. _klio-context-decorators:
 
 Under the hood
 ^^^^^^^^^^^^^^
 
-Decorating a class method with ``@handle_klio`` will first set the ``KlioContext`` instance on the
-class instance as ``self._klio``. Decorating a function will provide the ``KlioContext`` instance
+Decorating a class method with ``@handle_klio`` will first set the :class:`KlioContext
+<klio.transforms.core.KlioContext>` instance on the class instance as ``self._klio``. Decorating a function will provide the :class:`KlioContext <klio.transforms.core.KlioContext>` instance
 as the first argument of the function. For both methods and functions, the decorator handles
 de/serialization of a ``KlioMessage`` to/from protobuf.
 
@@ -67,9 +67,9 @@ de/serialization of a ``KlioMessage`` to/from protobuf.
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``@serialize_klio_message`` can be used for more fine-grained control of de/serialization of
-incoming PCollections of KlioMessages. This decorator expects access to a ``KlioContext`` object
-(see :ref:`@inject_klio_context <inject-klio-context>` or :ref:`@set_klio_context
-<set-klio-context>`).
+incoming PCollections of KlioMessages. This decorator expects access to a :class:`KlioContext
+<klio.transforms.core.KlioContext>` object (see :ref:`@inject_klio_context <inject-klio-context>`
+or :ref:`@set_klio_context <set-klio-context>`).
 
 
 .. code-block:: python
@@ -92,10 +92,10 @@ incoming PCollections of KlioMessages. This decorator expects access to a ``Klio
 .. tip::
 
     Functions and methods decorated with ``@serialize_klio_message`` will handle the same
-    de/serialize functionality as ``@handle_klio`` but will not set or inject ``KlioContext``.
-    This decorator expects access to a ``KlioContext`` object. If granular control is not
-    needed, then see :ref:`@handle_klio <handle-klio>` which handles both context and de/
-    serialization.
+    de/serialize functionality as ``@handle_klio`` but will not set or inject :class:`KlioContext
+    <klio.transforms.core.KlioContext>`. This decorator expects access to a ``KlioContext``
+    object. If granular control is not needed, then see :ref:`@handle_klio <handle-klio>` which
+    handles both context and de/serialization.
 
 
 .. _accessing-klio-context:
@@ -108,8 +108,8 @@ Accessing Klio Context
 ``@set_klio_context``
 ^^^^^^^^^^^^^^^^^^^^^
 
-``@set_klio_context`` is used on a class method to set a ``KlioContext`` instance on the class
-as the instance attribute ``self._klio``.
+``@set_klio_context`` is used on a class method to set a :class:`KlioContext
+<klio.transforms.core.KlioContext>` instance on the class as the instance attribute ``self._klio``.
 
 .. code-block:: python
 
@@ -128,9 +128,10 @@ as the instance attribute ``self._klio``.
     Methods decorated with ``@set_klio_context`` will not handle ``KlioMessage`` de/serialize
     functionality.
 
-    ``@set_klio_context`` should be used on a class method. If ``KlioContext`` is needed on a
-    function, see :ref:`@inject_klio_context <inject-klio-context>`. If KlioMessage de/
-    serialization functionality is needed, see :ref:`@handle_klio <handle-klio>`.
+    ``@set_klio_context`` should be used on a class method. If :class:`KlioContext
+    <klio.transforms.core.KlioContext>` is needed on a function, see :ref:`@inject_klio_context
+    <inject-klio-context>`. If KlioMessage de/serialization functionality is needed, see
+    :ref:`@handle_klio <handle-klio>`.
 
 
 .. _inject-klio-context:
@@ -138,7 +139,8 @@ as the instance attribute ``self._klio``.
 ``@inject_klio_context``
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-``@inject_klio_context`` provides a ``KlioContext`` instance as the first argument to a function.
+``@inject_klio_context`` provides a :class:`KlioContext <klio.transforms.core.KlioContext>`
+instance as the first argument to a function.
 
 .. code-block:: python
 
@@ -156,9 +158,10 @@ as the instance attribute ``self._klio``.
 
 .. tip::
 
-    ``@inject_klio_context`` should be used on a function. If ``KlioContext`` is needed on a
-    method, see :ref:`@set_klio_context <set-klio-context>`. If KlioMessage de/serialization
-    functionality is needed, see :ref:`@handle_klio <handle-klio>`.
+    ``@inject_klio_context`` should be used on a function. If :class:`KlioContext
+    <klio.transforms.core.KlioContext>` is needed on a method, see :ref:`@set_klio_context
+    <set-klio-context>`. If KlioMessage de/serialization functionality is needed, see
+    :ref:`@handle_klio <handle-klio>`.
 
 Timeouts
 --------

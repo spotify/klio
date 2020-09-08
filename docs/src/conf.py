@@ -118,3 +118,9 @@ html_favicon = "_static/images/k_favicon.png"
 todo_include_todos = True
 todo_emit_warnings = False
 todo_link_only = False
+
+
+# -- Autodoc config
+autodoc_default_options = {
+    "inherited-members": False,
+}

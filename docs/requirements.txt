@@ -5,5 +5,5 @@ pydata_sphinx_theme==0.4.0
 -e ../core/
 -e ../cli/
 -e ../devtools/
--e ../exec/
 -e ../lib/
+-e ../exec/

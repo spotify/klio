@@ -1,0 +1,45 @@
+{% if theme_search_bar_position == "sidebar" %}
+  {%- include "search-field.html" %}
+{% endif %}
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+
+  <div class="bd-toc-item active">
+  {% set nav = get_nav_object(maxdepth=5, collapse=True) %}
+
+  <ul class="nav bd-sidenav">
+      {% for main_nav_item in nav %}
+      {% if main_nav_item.active %}
+        {% for nav_item in main_nav_item.children %}
+          {% if nav_item.children %}
+
+              <li class="{% if nav_item.active%}active{% endif %}">
+                  <a href="{{ nav_item.url }}">{{ nav_item.title }}</a>
+                  <ul>
+                  {% for nav_item in nav_item.children %}
+                      <li class="{% if nav_item.active%}active{% endif %}">
+                          <a href="{{ nav_item.url }}">{{ nav_item.title }}</a>
+                          {% if nav_item.children %}
+                          <ul>
+                          {% for child_nav_item in nav_item.children %}
+                            <li class="{% if child_nav_item.active%}active{% endif %}">
+                              <a href="{{ child_nav_item.url }}">{{ child_nav_item.title }}</a>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                        {% endif %}
+                      </li>
+                  {% endfor %}
+                  </ul>
+              </li>
+          {% else %}
+              <li class="{% if nav_item.active%}active{% endif %}">
+                  <a href="{{ nav_item.url }}">{{ nav_item.title }}</a>
+              </li>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+      {% endfor %}
+    </ul>
+
+</nav>

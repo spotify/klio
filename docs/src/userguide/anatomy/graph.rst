@@ -1,7 +1,7 @@
 Graph
 =====
 
-In **streaming** mode, Klio makes use of `Google Pub/Sub`_ and `GCS buckets`_ to create a directed acyclic graph (DAG) to string job dependencies together, allowing various modes of execusion.
+In **streaming** mode, Klio makes use of `Google Pub/Sub`_ and `GCS buckets`_ to create a directed acyclic graph (DAG) to string job dependencies together, allowing various modes of execution.
 
 Klio support two modes of execution: :ref:`top-down <top-down>` and :ref:`bottom-up <bottom-up>`.
 

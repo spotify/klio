@@ -1,3 +1,5 @@
+.. _job-config:
+
 Job Configuration
 =================
 

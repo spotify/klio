@@ -1,3 +1,5 @@
+.. _klio-message:
+
 The Klio Message
 ================
 

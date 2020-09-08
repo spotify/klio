@@ -1,10 +1,7 @@
 Utilities
 =========
 
-Klio offers decorators that help:
- * :ref:`De/serialization of Klio Messages <serialization-klio-message>`
- * :ref:`Inject klio context on methods and functions <accessing-klio-context>`
- * :ref:`Handle timeouts <timeout>`
+Klio offers decorators that help Klio-ify transforms of a pipeline.
 
 
 .. _serialization-klio-message:

@@ -11,5 +11,5 @@ Klio Library
 .. toctree::
    :maxdepth: 1
 
-   api
+   api/index
    changelog

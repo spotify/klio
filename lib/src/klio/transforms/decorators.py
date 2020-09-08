@@ -386,8 +386,8 @@ def serialize_klio_message(*args, **kwargs):
     """Serialize/deserialize incoming pcollections as a KlioMessage.
 
     This decorator needs access to a KlioContext object via
-    `@inject_klio_context` or `@set_klio_context` if not available on
-    the object (i.e. `self` of a DoFn instance), or use `@handle_klio`
+    ``@inject_klio_context`` or ``@set_klio_context`` if not available on
+    the object (i.e. ``self`` of a DoFn instance), or use ``@handle_klio``
     which will handle KlioContext and KlioMessage de/serialization.
     """
     return _serialize_klio_message(*args, **kwargs)
@@ -397,16 +397,18 @@ def serialize_klio_message(*args, **kwargs):
 def set_klio_context(*args, **kwargs):
     """Set Klio context to the class instance.
 
-    Use `@handle_klio` instead if KlioMessage de/serialization is
+    Use ``@handle_klio`` instead if KlioMessage de/serialization is
     also needed.
 
-    Use `@inject_klio_context` if using on a function rather than a
+    Use ``@inject_klio_context`` if using on a function rather than a
     class method.
 
-    class MyComposite(beam.PTransform):
-        @set_klio_context
-        def expand(self, element):
-            self._klio.logger.info(f"Received {element}")
+    .. code-block:: python
+
+        class MyComposite(beam.PTransform):
+            @set_klio_context
+            def expand(self, element):
+                self._klio.logger.info(f"Received {element}")
     """
     return _set_klio_context(*args, **kwargs)
 
@@ -415,21 +417,23 @@ def set_klio_context(*args, **kwargs):
 def inject_klio_context(*args, **kwargs):
     """Provide Klio context as the first argument to a decorated method/func.
 
-    Use `@handle_klio` instead if KlioMessage de/serialization is
+    Use ``@handle_klio`` instead if KlioMessage de/serialization is
     also needed.
 
     If not needing KlioMessage de/serialization, consider
-    `@set_klio_context` if using on a class method (rather than a
-    function) to set the `_klio` attribute on `self`.
+    ``@set_klio_context`` if using on a class method (rather than a
+    function) to set the ``_klio`` attribute on ``self``.
 
-    @inject_klio_context
-    def my_map_func(ctx, element):
-        ctx.logger.info(f"Received {element}")
+    .. code-block:: python
 
-    class MyDoFn(beam.DoFn):
         @inject_klio_context
-        def process(self, ctx, element):
+        def my_map_func(ctx, element):
             ctx.logger.info(f"Received {element}")
+
+        class MyDoFn(beam.DoFn):
+            @inject_klio_context
+            def process(self, ctx, element):
+                ctx.logger.info(f"Received {element}")
     """
     return _inject_klio_context(*args, **kwargs)
 
@@ -442,27 +446,29 @@ def handle_klio(*args, **kwargs):
     de/serialize the incoming pcollection as a Klio Message.
 
     If decorating a class method, the Klio context will be attached
-    to the `self` argument of the class instance.
+    to the ``self`` argument of the class instance.
 
     If decorating a function, Klio context will be provided as the first
     argument.
 
-    @handle_klio
-    def my_map_func(ctx, item):
-        ctx.logger.info(f"Received {item.element} with {item.payload}")
+    .. code-block:: python
 
-    class MyDoFn(beam.DoFn):
         @handle_klio
-        def process(self, item):
-            self._klio.logger.info(
-                f"Received {item.element} with {item.payload}"
-            )
+        def my_map_func(ctx, item):
+            ctx.logger.info(f"Received {item.element} with {item.payload}")
 
-    class MyComposite(beam.PTransform):
-        @handle_klio
-        def expand(self, pcoll):
-            kms_config = self._klio.config.job_config.kms_config
-            return pcoll | MyKMSTransform(**kms_config)
+        class MyDoFn(beam.DoFn):
+            @handle_klio
+            def process(self, item):
+                self._klio.logger.info(
+                    f"Received {item.element} with {item.payload}"
+                )
+
+        class MyComposite(beam.PTransform):
+            @handle_klio
+            def expand(self, pcoll):
+                kms_config = self._klio.config.job_config.kms_config
+                return pcoll | MyKMSTransform(**kms_config)
     """
     return _handle_klio(*args, **kwargs)
 
@@ -471,38 +477,40 @@ def handle_klio(*args, **kwargs):
 def timeout(seconds, *args, exception=None, exception_message=None, **kwargs):
     """Run the decorated method/function with a timeout in a separate process.
 
-    If being used with another Klio decorator like `@handle_klio`, then
-    the `@timeout` decorator should be applied to a method/function
+    If being used with another Klio decorator like ``@handle_klio``, then
+    the ``@timeout`` decorator should be applied to a method/function
     **after** another Klio decorator.
 
-    @handle_klio
-    @timeout(seconds=5)
-    def my_map_func(ctx, item):
-        ctx.logger.info(f"Received {item.element} with {item.payload}")
+    .. code-block:: python
 
-    class MyDoFn(beam.DoFn):
         @handle_klio
-        @timeou(seconds=5, exception=MyTimeoutException)
-        def process(self, item):
-            self._klio.logger.info(
-                f"Received {item.element} with {item.payload}"
-            )
+        @timeout(seconds=5)
+        def my_map_func(ctx, item):
+            ctx.logger.info(f"Received {item.element} with {item.payload}")
 
-    @timeout(
-        seconds=5,
-        exception=MyTimeoutException,
-        exception_message="I got a timeout!"
-    )
-    def my_nonklio_map_func(item):
-        print(f"Received {item}!")
+        class MyDoFn(beam.DoFn):
+            @handle_klio
+            @timeout(seconds=5, exception=MyTimeoutException)
+            def process(self, item):
+                self._klio.logger.info(
+                    f"Received {item.element} with {item.payload}"
+                )
+
+        @timeout(
+            seconds=5,
+            exception=MyTimeoutException,
+            exception_message="I got a timeout!"
+        )
+        def my_nonklio_map_func(item):
+            print(f"Received {item}!")
+
 
     Args:
         seconds (float): The timeout period in seconds. Must be greater than 0.
         exception (Exception): The Exception that will be raised if a
-            timeout occurs. Default: `KlioTimeoutError`.
+            timeout occurs. Default: ``KlioTimeoutError``.
         exception_message (str): Custom exception message. Default:
-            `Function '{function}' timed out after {seconds} seconds.`
-
+            ``Function '{function}' timed out after {seconds} seconds.``
     """
     return _timeout(
         *args,

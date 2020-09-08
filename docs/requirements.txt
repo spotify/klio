@@ -1,9 +1,3 @@
 sphinx==3.2.0
 sphinx-autobuild==0.7.1
 pydata_sphinx_theme==0.4.0
-# install klio libs for autodoc
--e ../core/
--e ../cli/
--e ../devtools/
--e ../lib/
--e ../exec/

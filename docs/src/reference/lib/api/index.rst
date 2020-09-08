@@ -11,9 +11,11 @@ API
    core
 
 
+``klio.transforms`` Module
+--------------------------
 
 Decorators
-----------
+^^^^^^^^^^
 
 .. currentmodule:: klio.transforms
 
@@ -28,7 +30,7 @@ Decorators
 
 
 Helper Transforms
------------------
+^^^^^^^^^^^^^^^^^
 
 .. currentmodule:: klio.transforms
 
@@ -48,7 +50,7 @@ Helper Transforms
 
 
 I/O Transforms
---------------
+^^^^^^^^^^^^^^
 
 .. currentmodule:: klio.transforms
 
@@ -64,7 +66,7 @@ I/O Transforms
 
 
 Core
-----
+^^^^
 
 
 .. currentmodule:: klio.transforms

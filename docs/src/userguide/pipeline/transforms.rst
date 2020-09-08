@@ -16,23 +16,29 @@ Data Existence Checks
 ^^^^^^^^^^^^^^^^^^^^^
 
 For :ref:`data IO types <data-inputs-type>` of ``gcs``, Klio will perform the input
-existence check for you. Data input and output existence checks are configured by the :ref:`existence check <skip-input-ext-check>`. These two configuration field
-default to ``False`` and will therefore conduct transforms ``KlioGcsCheckInputExists``
-and ``KlioGcsCheckOutputExists`` automatically. If :ref:`custom data existence
+existence check for you. Data input and output existence checks are configured by the
+:ref:`existence check <skip-input-ext-check>`. These two configuration field default to ``False``
+and will therefore conduct transforms :class:`KlioGcsCheckInputExists
+<klio.transforms.helpers.KlioGcsCheckInputExists>` and :class:`KlioGcsCheckOutputExists
+<klio.transforms.helpers.KlioGcsCheckOutputExists>` automatically. If :ref:`custom data existence
 checks <custom-existence-checks>` are preferred then these fields should be set to ``True``.
 
 
-``KlioGcsCheckInputExists`` and ``KlioGcsCheckOutputExists`` work by inspecting data configuration
-for the fields for :ref:`data locations <data-inputs-location>` ``job_config.data.(in|out)puts[].location`` and :ref:`file suffix <data-inputs-file-suffix>` ``job_config.data.(in|out)puts[].file_suffix``. For
-example, if we have an element that represents a track ID ``f00b4r``, Klio would inspect the
-existence of the path: ``gs://foo-proj-input/example-streaming-parent-job-output/f00b4r.ogg``.
+:class:`KlioGcsCheckInputExists<klio.transforms.helpers.KlioGcsCheckInputExists>` and
+:class:`KlioGcsCheckOutputExists<klio.transforms.helpers.KlioGcsCheckOutputExists>` work by
+inspecting data configuration for the fields for :ref:`data locations <data-inputs-location>`
+``job_config.data.(in|out)puts[].location`` and :ref:`file suffix <data-inputs-file-suffix>`
+``job_config.data.(in|out)puts[].file_suffix``. For example, if we have an element that represents
+a track ID ``f00b4r``, Klio would inspect the existence of the path: ``gs://foo-proj-input/
+example-streaming-parent-job-output/f00b4r.ogg``.
 
 
 ``KlioGcsCheckInputExists``
 """""""""""""""""""""""""""
 
-``KlioGcsCheckInputExists`` is a `Composite Transform`_ to check the input data existence in GCS. The transform
-utilizes `Tagged Outputs`_ to label output as either as ``not_found`` or ``found``.
+:class:`KlioGcsCheckInputExists<klio.transforms.helpers.KlioGcsCheckInputExists>` is a `Composite
+Transform`_ to check the input data existence in GCS. The transform utilizes `Tagged Outputs`_ to
+label output as either as ``not_found`` or ``found``.
 
 .. code-block:: python
 
@@ -53,8 +59,9 @@ utilizes `Tagged Outputs`_ to label output as either as ``not_found`` or ``found
 ``KlioGcsCheckOutputExists``
 """"""""""""""""""""""""""""
 
-``KlioGcsCheckOutputExists`` is a composite transform to check the output exists in GCS. The
-transform will tag output as either ``not_found`` or ``found``.
+:class:`KlioGcsCheckOutputExists<klio.transforms.helpers.KlioGcsCheckOutputExists>` is a `Composite
+Transform`_ to check the output exists in GCS. The transform utilizes `Tagged Outputs`_ to label
+output as either  ``not_found`` or ``found``.
 
 .. code-block:: python
 
@@ -78,7 +85,9 @@ Data Filtering
 ``KlioFilterPing``
 """"""""""""""""""
 
-``KlioFilterPing`` is a composite transform to tag outputs if in :ref:`ping mode <ping-mode>` or not. The transform will tag output as either ``pass_thru`` or ``process``.
+:class:`KlioFilterPing <klio.transforms.helpers.KlioFilterPing>` is a `Composite Transform`_ to
+tag outputs if in :ref:`ping mode <ping-mode>` or not. The transform utilizes `Tagged Outputs`_
+to label output as either ``pass_thru`` or ``process``.
 
 
 .. code-block:: python
@@ -98,13 +107,13 @@ Data Filtering
 ``KlioFilterForce``
 """""""""""""""""""
 
-``KlioFilterForce`` is a composite transform to filter if existing output should be
-:ref:`force-processed <force-mode>`. The transform will look at a job's configuration for whether or
-not there is a global (pipeline-wide) forcing of messages with already-existing output. It will first inspect whether a message has an explicit ``True`` or ``False`` set for force processing. If
-force mode is not set, then ``KlioFilterForce`` will inspect the pipeline configuration. The default
-is ``False``. The ``KlioFilterForce`` transform will tag output as either ``pass_thru`` or
-``process``.
-
+:class:`KlioFilterForce <klio.transforms.helpers.KlioFilterForce>` is a `Composite Transform`_ to
+filter if existing output should be :ref:`force-processed <force-mode>`. The transform will look
+at a job's configuration for whether or not there is a global (pipeline-wide) forcing of messages
+with already-existing output. It will first inspect whether a message has an explicit ``True`` or
+``False`` set for force processing. If force mode is not set, then ``KlioFilterForce`` will
+inspect the pipeline configuration. The default is ``False``. The ``KlioFilterForce`` transform
+uses utilizes `Tagged Outputs`_ to label output as either ``pass_thru`` or``process``.
 
 
 .. code-block:: python
@@ -133,8 +142,9 @@ IO Helpers
 ``KlioWriteToEventOutput``
 """"""""""""""""""""""""""
 
-``KlioWriteToEventOutput`` is a composite to write to the configured event output. The transform is
-currently available for writing to file types and pubsub types.
+:class:`KlioWriteToEventOutput <klio.transforms.helpers.KlioWriteToEventOutput>` is a `Composite
+Transform`_ to write to the configured event output. The transform is currently available for
+writing to ``file`` types and ``pubsub`` types.
 
 .. code-block:: python
 
@@ -157,7 +167,8 @@ currently available for writing to file types and pubsub types.
 ``KlioDrop``
 """"""""""""
 
-``KlioDrop`` is a composite transform that will simply log and drop a KlioMessage.
+:class:`KlioDrop <klio.transforms.helpers.KlioDrop>` is a `Composite Transform`_ that will simply
+log and drop a ``KlioMessage``.
 
 .. code-block:: python
 
@@ -180,8 +191,8 @@ currently available for writing to file types and pubsub types.
 
 Custom Data Existence Checks
 -------------------------------
-Klio by default handles these input and output existence checks. However Klio can also be configured
-to skip these checks if custom control is desired.
+Klio by default handles these input and output existence checks. However Klio can also be
+configured to skip these checks if custom control is desired.
 
 To add custom checks, define a new transform that will hold custom existence checking logic.
 

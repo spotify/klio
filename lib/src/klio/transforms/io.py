@@ -244,12 +244,11 @@ class KlioReadFromAvro(beam.io.ReadFromAvro):
         self,
         file_pattern=None,
         location=None,
-        show_unpublished=False,
         min_bundle_size=0,
         validate=True,
     ):
         file_pattern = self._get_file_pattern(
-            file_pattern, location, show_unpublished
+            file_pattern, location,
         )
 
         super(KlioReadFromAvro, self).__init__(
@@ -263,7 +262,7 @@ class KlioReadFromAvro(beam.io.ReadFromAvro):
             file_pattern, min_bundle_size, validate=validate
         )
 
-    def _get_file_pattern(self, file_pattern, location, show_unpublished):
+    def _get_file_pattern(self, file_pattern, location):
         # TODO: this should be a validator in klio_core.config
         if not any([file_pattern, location]):
             raise KlioMissingConfiguration(

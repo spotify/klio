@@ -1,6 +1,18 @@
 Pipelines
 =========
 
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   transforms
+   context
+   message
+   state
+   utilities
+   multiple_inputs
+   metrics
+
 A `Beam Pipeline`_ encapsulates the various steps of the Klio job from reading input data,
 transforming the data, and writing output data. Klio pipelines offer a Pythonic interface to
 build upon beam pipelines and allow large-scale data processing on Docker and `Google
@@ -26,8 +38,8 @@ Klio Message
 
 A :ref:`Klio Message <klio-message>` is protobuf data that is passed between transforms
 and represents a unit of work to be done by the transform. It carries an ``element`` value
-that serves as a reference to the data that is accessed during a transform in a pipeline. 
-The Klio message also carries other data fields such as whether a message is in ping mode 
+that serves as a reference to the data that is accessed during a transform in a pipeline.
+The Klio message also carries other data fields such as whether a message is in ping mode
 and should not be processed in a transform and whether a message should be force processed
 despite output already existing.
 
@@ -46,7 +58,7 @@ that will read in data depending on the type specified in the :ref:`event config
 
 
 .. code-block:: python
-    
+
     # run.py file
 
     import apache_beam as beam
@@ -77,7 +89,7 @@ Below is an example of a transform that inherits from Beam's DoFn.
 
 
 .. code-block:: python
-    
+
     # transforms.py
 
     import apache_beam as beam
@@ -103,7 +115,7 @@ then used then decorating methods on transforms to make use of functionalities s
 
 
 .. code-block:: python
-    
+
     # transforms.py
 
     import apache_beam as beam
@@ -159,19 +171,10 @@ Top Down and Bottom Up Execution
 Streaming Klio jobs are structured as directed acyclic graphs (DAGs) where parent jobs can trigger dependent child jobs.
 Klio support two modes of execution - :ref:`top-down <top-down>` and :ref:`bottom-up <bottom-up>`.
 Top-down execution is used when every step of the DAG should run for ever received klio message.
-Bottom-up execution is used to run a single job for a file and mising upstream dependencies will be recursively created. 
+Bottom-up execution is used to run a single job for a file and mising upstream dependencies will be recursively created.
 
 
 
-.. toctree::
-   :maxdepth: 1
-
-   transforms
-   message
-   state
-   utilities
-   multiple_inputs
-   metrics
 
 
 .. _Google Dataflow: https://cloud.google.com/dataflow

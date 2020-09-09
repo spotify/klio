@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
 # Copyright 2019 Spotify AB
-
-from __future__ import absolute_import
 
 import datetime
 import os
@@ -154,6 +151,7 @@ def default_context():
         "job_name": "test-job",
         "python_version": "36",
         "use_fnapi": True,
+        "create_resources": False,
         "pipeline_options": {
             "project": "test-gcp-project",
             "region": "europe-west1",
@@ -307,6 +305,7 @@ def test_create_dockerfile(use_fnapi, tmpdir, job):
         },
         "python_version": "36",
         "use_fnapi": use_fnapi,
+        "create_resources": False,
     }
 
     job._create_dockerfile(env, context, output_dir.strpath)
@@ -438,6 +437,7 @@ def context_overrides():
         ],
         "python_version": "37",
         "use_fnapi": "n",
+        "create_resources": "n",
     }
 
 
@@ -482,6 +482,7 @@ def expected_overrides():
         },
         "python_version": "37",
         "use_fnapi": False,
+        "create_resources": False,
     }
 
 
@@ -615,6 +616,7 @@ def test_get_context_from_user_inputs(
     prompt_side_effect = [
         "europe-west1",
         "Y",
+        "n",
         ["beam_fn_api"],
         2,
         2,
@@ -670,6 +672,7 @@ def test_get_context_from_user_inputs(
     context.pop("job_name")
     context["pipeline_options"].pop("project")
     context["use_fnapi"] = True
+    context["create_resources"] = False
     assert context == ret_context
     assert ret_dockerfile
 
@@ -910,14 +913,12 @@ def test_parse_unknown_args(unknown_args, expected, job):
 
 @pytest.mark.parametrize("create_dockerfile", (True, False))
 @pytest.mark.parametrize("use_fnapi", (True, False))
-def test_create(use_fnapi, create_dockerfile, mocker, caplog, job):
-    context = {"job_name": "test-job", "use_fnapi": use_fnapi}
+@pytest.mark.parametrize("create_resources", (True, False))
+def test_create(use_fnapi, create_dockerfile, create_resources, mocker, caplog, job):
+    context = {"job_name": "test-job", "use_fnapi": use_fnapi, "create_resources": create_resources}
 
     mock_get_user_input = mocker.patch.object(job, "_get_user_input")
     mock_get_user_input.return_value = (context, create_dockerfile)
-    mock_create_external_resources = mocker.patch.object(
-        job, "_create_external_resources"
-    )
     mock_get_environment = mocker.patch.object(job, "_get_environment")
     mock_create_job_dir = mocker.patch.object(job, "_create_job_directory")
     mock_create_job_config = mocker.patch.object(job, "_create_job_config")
@@ -928,6 +929,10 @@ def test_create(use_fnapi, create_dockerfile, mocker, caplog, job):
     mock_create_reqs_files = mocker.patch.object(job, "_create_reqs_file")
     mock_create_dockerfile = mocker.patch.object(job, "_create_dockerfile")
     mock_create_readme = mocker.patch.object(job, "_create_readme")
+
+    mock_create_topics = mocker.patch.object(create.gcp_setup, "create_topics_and_buckets")
+    mock_create_stackdriver = mocker.patch.object(create.gcp_setup, "create_stackdriver_dashboard")
+
 
     unknown_args = ("--foo", "bar")
     known_args = {
@@ -941,7 +946,6 @@ def test_create(use_fnapi, create_dockerfile, mocker, caplog, job):
     known_args["foo"] = "bar"
     mock_get_user_input.assert_called_once_with(known_args)
 
-    mock_create_external_resources.assert_called_once_with(context)
     mock_get_environment.assert_called_once_with()
 
     ret_env = mock_get_environment.return_value
@@ -963,6 +967,14 @@ def test_create(use_fnapi, create_dockerfile, mocker, caplog, job):
         mock_create_no_fnapi_files.assert_called_once_with(
             ret_env, context, output_dir
         )
+
+    if create_resources:
+        mock_create_topics.assert_called_once_with(context)
+        mock_create_stackdriver.assert_called_once_with(context)
+    else:
+        mock_create_topics.assert_not_called()
+        mock_create_stackdriver.assert_not_called()
+
     mock_create_reqs_files.assert_called_once_with(
         ret_env, context, output_dir
     )

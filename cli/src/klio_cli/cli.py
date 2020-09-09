@@ -248,10 +248,7 @@ def _validate_job_name(ctx, param, value):
 
 @job.command(
     "create",
-    help=(
-        "Create a new Klio job. This generates the necessary files as well as "
-        "the required Google Cloud resources."
-    ),
+    help=("Create the necessary files for a new Klio job."),
     context_settings=dict(
         ignore_unknown_options=True,
         allow_extra_args=True,

@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
 # Copyright 2019 Spotify AB
-
-from __future__ import absolute_import
 
 import copy
 import os
@@ -173,6 +170,7 @@ def minimal_config_data():
 def minimal_mock_klio_config(
     mock_klio_config, config_file, minimal_config_data
 ):
+
     mock_klio_config.setup(minimal_config_data, config_file)
     return mock_klio_config
 
@@ -1044,7 +1042,6 @@ def test_profile_memory(runner, mocker, minimal_mock_klio_config):
 
 def test_profile_memory_per_line(runner, mocker, minimal_mock_klio_config):
     mock_profile = mocker.patch.object(cli, "_profile")
-
     result = runner.invoke(cli.profile_memory_per_line, [])
 
     assert_execution_success(result)

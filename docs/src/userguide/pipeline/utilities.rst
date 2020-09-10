@@ -1,10 +1,7 @@
 Utilities
 =========
 
-Klio offers decorators that help:
- * :ref:`De/serialization of Klio Messages <serialization-klio-message>`
- * :ref:`Inject klio context on methods and functions <accessing-klio-context>`
- * :ref:`Handle timeouts <timeout>`
+Klio offers decorators that help Klio-ify transforms of a pipeline.
 
 
 .. _serialization-klio-message:
@@ -169,8 +166,8 @@ function.
     method, see :ref:`@set_klio_context <set-klio-context>`. If KlioMessage de/serialization
     functionality is needed, see :ref:`@handle_klio <handle-klio>`.
 
-Timeouts
---------
+Handling Transient Errors
+-------------------------
 
 .. _timeout:
 
@@ -181,6 +178,19 @@ Timeouts
 with a timeout in a separate Python process. On timeout, the method or function will raise an
 exception of the provided type or default to raising a ``KlioTimeoutError``.
 
+.. caution::
+
+    If ``@timeout`` is being used with :ref:`@retry <retries>`, **order is important** depending
+    on the desired effect.
+
+    If ``@timeout`` is applied to a function before ``@retry``, then retries will apply first,
+    meaning the configured timeout will cancel the function even if the retries have not yet been
+    exhausted. In this case, be careful with the ``delay`` argument for the ``@retry`` decorator:
+    the set timeout is inclusive of a retry's delay.
+
+    Conversely, if ``@retry`` is applied to a function before ``@timeout``, retries will continue
+    until exhausted even if a function has timed out.
+
 .. code-block:: python
 
     from klio.transforms import decorators
@@ -193,7 +203,7 @@ exception of the provided type or default to raising a ``KlioTimeoutError``.
             )
 
 
-    @timeout(
+    @decorators.timeout(
         seconds=5,
         exception=MyTimeoutException,
         exception_message="I got a timeout!"
@@ -202,22 +212,107 @@ exception of the provided type or default to raising a ``KlioTimeoutError``.
         print(f"Received {item}!")
 
 
-If in use with another Klio decorator, the :func:`@timeout <klio.transforms.decorators.timeout>`
-decorator should be applied to a method or function **after** the other Klio decorator.
+.. caution::
+
+    If in use with another Klio decorator, the :func:`@timeout
+    <klio.transforms.decorators.timeout>` decorator should be applied to a method or function
+    **after** the other Klio decorator.
+
+    .. code-block:: python
+
+        from klio.transforms import decorators
+
+        @decorators.handle_klio
+        @decorators.timeout(seconds=5)
+        def my_map_func(ctx, item):
+            ctx.logger.info(f"Received {item.element} with {item.payload}")
+
+
+        class MyDoFn(beam.DoFn):
+            @decorators.handle_klio
+            @decorators.timeout(seconds=5, exception=MyTimeoutException)
+            def process(self, item):
+                self._klio.logger.info(
+                    f"Received {item.element} with {item.payload}"
+                )
+
+
+.. _retries:
+
+``@retry``
+^^^^^^^^^^
+
+:func:`@retry <klio.transforms.decorators.retry>` will retry the decorated method or function on
+failure. When retries are exhausted, ``KlioRetriesExhausted`` exception will be raised. Unless
+otherwise configured, a method or function decorated by ``@retry`` will be retried infinitely.
+
+.. caution::
+
+    If ``@retry`` is being used with :ref:`@timeout <timeout>`, **order is important** depending
+    on the desired effect.
+
+    If ``@timeout`` is applied to a function before ``@retry``, then retries will apply first,
+    meaning the configured timeout will cancel the function even if the retries have not yet been
+    exhausted. In this case, be careful with the ``delay`` argument for the ``@retry`` decorator:
+    the set timeout is inclusive of a retry's delay.
+
+    Conversely, if ``@retry``  is applied to a function before ``@timeout``, retries will continue
+    until exhausted even if a function has timed out.
+
 
 .. code-block:: python
 
     from klio.transforms import decorators
 
     @decorators.handle_klio
-    @decorators.timeout(seconds=5)
+    @decorators.retry()  # infinite retries, same as tries=-1
     def my_map_func(ctx, item):
         ctx.logger.info(f"Received {item.element} with {item.payload}")
+        ...
+
 
     class MyDoFn(beam.DoFn):
         @decorators.handle_klio
-        @decorators.timeout(seconds=5, exception=MyTimeoutException)
+        @decorators.retry(tries=3, exception=MyExceptionToCatch)
         def process(self, item):
-            self._klio.logger.info(
-                f"Received {item.element} with {item.payload}"
-            )
+            self._klio.logger.info(f"Received {item.element} with {item.payload}")
+            ...
+
+
+    # all available keyword arguments
+    @decorators.handle_klio
+    @decorators.retry(
+        tries=3,
+        delay=2.5,  # seconds
+        exception=MyExceptionToCatch,
+        raise_exception=MyExceptionToRaise,
+        exception_message="All retries have been exhausted!"
+    )
+    def my_other_map_function(item):
+        print(f"Received {item}!")
+        ...
+
+
+.. caution::
+
+    If in use with another Klio decorator, the :func:`@retry <klio.transforms.decorators.retry>`
+    decorator should be applied to a method or function **after** the other Klio decorator.
+
+    .. code-block:: python
+
+        from klio.transforms import decorators
+
+        @decorators.handle_klio
+        @decorators.retry(tries=5)
+        def my_map_func(ctx, item):
+            ctx.logger.info(f"Received {item.element} with {item.payload}")
+            ...
+
+
+        class MyDoFn(beam.DoFn):
+            @decorators.handle_klio
+            @decorators.retries(tries=5, exception=MyExceptionToCatch)
+            def process(self, item):
+                self._klio.logger.info(f"Received {item.element}")
+                ...
+

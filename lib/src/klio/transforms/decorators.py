@@ -383,7 +383,7 @@ def _timeout(seconds=None, exception=None, exception_message=None):
 # user-facing warnings
 @_utils.experimental()
 def serialize_klio_message(*args, **kwargs):
-    """Serialize/deserialize incoming pcollections as a KlioMessage.
+    """Serialize/deserialize incoming PCollections as a KlioMessage.
 
     This decorator needs access to a :class:`KlioContext
     <klio.transforms.core.KlioContext>` object via ``@inject_klio_context``
@@ -443,11 +443,11 @@ def inject_klio_context(*args, **kwargs):
 
 @_utils.experimental()
 def handle_klio(*args, **kwargs):
-    """Serialize & deserialize incoming pcollections as a KlioMessage.
+    """Serialize & deserialize incoming PCollections as a KlioMessage.
 
     Behind the scenes, this generates :class:`KlioContext
     <klio.transforms.core.KlioContext>` as well as handles de/serialize the
-    incoming pcollection as a Klio Message.
+    incoming PCollection as a Klio Message.
 
     If decorating a class method, the ``KlioContext`` will be attached
     to the ``self`` argument of the class instance.

@@ -93,7 +93,7 @@ to label output as either ``pass_thru`` or ``process``.
 .. code-block:: python
 
     class MyGcsFilterToProcess(beam.PTransform):
-        """Composite transform to filter pcollections for processing"""
+        """Composite transform to filter PCollections for processing"""
 
         def expand(self, pcoll):
             ping_pcoll = pcoll | "Ping Filter" >> KlioFilterPing()

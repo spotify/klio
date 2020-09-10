@@ -160,13 +160,7 @@ autodoc_default_options = {
 # -- intersphinx mapping
 # This will auto-generate links to Python's docs when referenced (e.g.
 # :func:`pdb.set_trace` will link to the set_trace docs)
-# Note: this won't work for Apache Beam because they generate the
-# python documentation per SDK version, and we probably shouldn't hard-link
-# to a specific version
-# Update ^: I emailed users@beam.apache.org and they're looking into it:
-# https://lists.apache.org/thread.html/r57a910d1689ace1c9067d2a702468325
-#         f6800626d82edef0a6d80961%40%3Cuser.beam.apache.org%3E
 intersphinx_mapping = {
     "https://docs.python.org/3": None,
-    "https://beam.apache.org/releases/pydoc/2.23.0/": None,
+    "https://beam.apache.org/releases/pydoc/current": None,
 }

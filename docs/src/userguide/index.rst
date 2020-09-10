@@ -12,4 +12,3 @@ The user guide blah blah blah
     pipeline/index
     io/index
     config/index
-    internals

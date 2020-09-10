@@ -111,6 +111,7 @@ then used then decorating methods on transforms to make use of functionalities s
  * :ref:`De/serialization of Klio Messages <serialization-klio-message>`
  * :ref:`Inject klio context on methods and functions <accessing-klio-context>`
  * :ref:`Handle timeouts <timeout>`
+ * :ref:`Retry on failure <retries>`
 
 
 
@@ -161,6 +162,7 @@ Helper transforms available including the below.
  * :ref:`Data existence cheks <data-existence-checks>`
  * :ref:`Inject klio context on methods and functions <accessing-klio-context>`
  * :ref:`Handle timeouts <timeout>`
+ * :ref:`Retry on failure <retries>`
 
 
 

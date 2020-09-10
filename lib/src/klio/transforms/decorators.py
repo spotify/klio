@@ -11,6 +11,7 @@ import apache_beam as beam
 from apache_beam import pvalue
 
 from klio.message import serializer
+from klio.transforms import _retry as kretry
 from klio.transforms import _timeout as ktimeout
 from klio.transforms import _utils
 from klio.transforms import core
@@ -379,6 +380,80 @@ def _timeout(seconds=None, exception=None, exception_message=None):
     return inner
 
 
+def _retry(
+    *args,
+    tries=None,
+    delay=None,
+    exception=None,
+    raise_exception=None,
+    exception_message=None,
+    **kwargs
+):
+    if tries is None:
+        tries = -1  # infinite
+
+    if not isinstance(tries, int):
+        # raise a runtime error so it actually crashes klio/beam rather than
+        # just continue processing elements
+        raise RuntimeError(
+            "Invalid type for retry 'tries'. Expected an int, got "
+            "`{}`.".format(type(tries).__name__)
+        )
+
+    if tries < -1:
+        # raise a runtime error so it actually crashes klio/beam rather than
+        # just continue processing elements
+        raise RuntimeError(
+            "Invalid value '%d' for retry 'tries'. Must be a positive integer "
+            "or '-1' for infinite tries." % tries
+        )
+
+    if delay is None:
+        delay = 0
+
+    if not isinstance(delay, (int, float)):
+        raise RuntimeError(
+            "Invalid type for retry 'delay'. Expected a `float` or an "
+            "`int`, got `%s`." % type(delay).__name__
+        )
+
+    if delay < 0:
+        # raise a runtime error so it actually crashes klio/beam rather than
+        # just continue processing elements
+        raise RuntimeError(
+            "Invalid value '%d' for retry 'delay'. Must be a positive number. "
+            % delay
+        )
+
+    def inner(func_or_meth):
+        retry_wrapper = kretry.KlioRetryWrapper(
+            function=func_or_meth,
+            tries=tries,
+            delay=delay,
+            exception=exception,
+            raise_exception=raise_exception,
+            exception_message=exception_message,
+        )
+
+        # Unfortunately these two wrappers can't be abstracted into
+        # one wrapper - the `self` arg apparently can not be abstracted
+        @functools.wraps(func_or_meth)
+        def method_wrapper(self, kmsg, *args, **kwargs):
+            args = (self, kmsg) + args
+            return retry_wrapper(*args, **kwargs)
+
+        @functools.wraps(func_or_meth)
+        def func_wrapper(ctx, kmsg, *args, **kwargs):
+            args = (ctx, kmsg) + args
+            return retry_wrapper(*args, **kwargs)
+
+        if __is_method(func_or_meth):
+            return method_wrapper
+        return func_wrapper
+
+    return inner
+
+
 # Allow internals to call semiprivate funcs without triggering
 # user-facing warnings
 @_utils.experimental()
@@ -481,9 +556,18 @@ def handle_klio(*args, **kwargs):
 def timeout(seconds, *args, exception=None, exception_message=None, **kwargs):
     """Run the decorated method/function with a timeout in a separate process.
 
-    If being used with another Klio decorator like ``@handle_klio``, then
-    the ``@timeout`` decorator should be applied to a method/function
-    **after** another Klio decorator.
+    If being used with :func:`@retry <retry>`, order is important depending
+    on the desired effect. If ``@timeout`` is applied to a function before
+    ``@retry``, then retries will apply first, meaning the configured timeout
+    will cancel the function even if the retries have not yet been exhausted.
+    In this case, be careful with the ``delay`` argument for the ``@retry``
+    decorator: the set timeout is inclusive of a retry's delay. Conversely,
+    if ``@retry`` is applied to a function before ``@timeout``, retries will
+    continue until exhausted even if a function has timed out.
+
+    If being used with another Klio decorator like :func:`@handle_klio
+    <handle_klio>`, then the ``@timeout`` decorator should be applied to a
+    method/function **after** another Klio decorator.
 
     .. code-block:: python
 
@@ -508,7 +592,6 @@ def timeout(seconds, *args, exception=None, exception_message=None, **kwargs):
         def my_nonklio_map_func(item):
             print(f"Received {item}!")
 
-
     Args:
         seconds (float): The timeout period in seconds. Must be greater than 0.
         exception (Exception): The Exception that will be raised if a
@@ -520,6 +603,89 @@ def timeout(seconds, *args, exception=None, exception_message=None, **kwargs):
         *args,
         seconds=seconds,
         exception=exception,
+        exception_message=exception_message,
+        **kwargs,
+    )
+
+
+@_utils.experimental()
+def retry(
+    *args,
+    tries=None,
+    delay=None,
+    exception=None,
+    raise_exception=None,
+    exception_message=None,
+    **kwargs
+):
+    """Retry a decorated method/function on failure.
+
+    If being used with :func:`@timeout <timeout>`, order is important
+    depending on the desired effect. If ``@timeout`` is applied to a function
+    before ``@retry``, then retries will apply first, meaning the configured
+    timeout will cancel the function even if the retries have not yet been
+    exhausted. In this case, be careful with the ``delay`` argument for the
+    ``@retry`` decorator: the set timeout is inclusive of a retry's delay.
+    Conversely, if ``@retry`` is applied to a function before ``@timeout``,
+    retries will continue until exhausted even if a function has timed out.
+
+    If being used with a Klio decorator like :func:`@handle_klio
+    <handle_klio>`, then the ``@retry`` decorator should be applied to a
+    method/function **after** another Klio decorator.
+
+    .. code-block:: python
+
+        @handle_klio
+        @retry()
+        def my_map_func(ctx, item):
+            ctx.logger.info(f"Received {item.element} with {item.payload}")
+
+        class MyDoFn(beam.DoFn):
+            @handle_klio
+            @retry(tries=3, exception=MyExceptionToCatch)
+            def process(self, item):
+                self._klio.logger.info(
+                    f"Received {item.element} with {item.payload}"
+                )
+
+        @retry(
+            tries=3,
+            exception=MyExceptionToCatch,
+            raise_exception=MyExceptionToRaise,
+            exception_message="All retries have been exhausted!"
+        )
+        def my_nonklio_map_func(item):
+            print(f"Received {item}!")
+
+    Args:
+        tries (int): Maximum number of attempts. Default: -1 (infinite)
+        delay (int or float): Delay between attempts in seconds. Default: 0
+        exception (Exception or tuple(Exception)): An Exception or tuple of
+            exceptions to catch and retry on. Defaults to ``Exception``.
+        raise_exception (Exception): The ``Exception`` to raise once configured
+            retries are exhausted. Defaults to ``KlioRetriesExhausted``.
+        exception_message (str): Custom message for `raise_exception`.
+            Default: ``Function '{}' has reached the maximum {} retries. Last
+            exception: {}``
+
+    """
+    # There isn't a way to nicely support `@retry` because it might be used
+    # with other decorators which adds a lot of complexity, so it must be
+    # `@retry()`. But we can detect it and give a more friendly error.
+    if len(args) == 1 and callable(args[0]):
+        func_name = getattr(args[0], "__qualname__", args[0].__name__)
+
+        raise RuntimeError(
+            "The `retry` decorator needs to be called with parens on '{}', "
+            "e.g. `@retry()`.".format(func_name)
+        )
+
+    return _retry(
+        *args,
+        tries=tries,
+        delay=delay,
+        exception=exception,
+        raise_exception=raise_exception,
         exception_message=exception_message,
         **kwargs,
     )

@@ -24,6 +24,7 @@ Decorators
 
     decorators.handle_klio
     decorators.timeout
+    decorators.retry
     decorators.set_klio_context
     decorators.inject_klio_context
     decorators.serialize_klio_message

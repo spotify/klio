@@ -4,6 +4,7 @@ from unittest import mock
 import apache_beam as beam
 import pytest
 
+from apache_beam.options import pipeline_options
 from apache_beam.testing import test_pipeline
 
 from klio_core.proto import klio_pb2
@@ -402,3 +403,66 @@ def test_update_klio_log(mocker, monkeypatch, caplog):
             break
     else:
         assert False, "Expected debug audit log not found"
+
+
+@pytest.fixture
+def mock_config_trigger_upstream():
+    config = mock.Mock(name="MockKlioConfig")
+    config.job_name = "a-job"
+    config.pipeline_options.streaming = True
+    config.pipeline_options.project = "not-a-real-project"
+
+    mock_data_input = mock.Mock(name="MockDataGcsInput")
+    mock_data_input.type = "gcs"
+    mock_data_input.location = "gs://hopefully-this-bucket-doesnt-exist"
+    mock_data_input.file_suffix = ""
+    mock_data_input.skip_klio_existence_check = True
+    config.job_config.data.inputs = [mock_data_input]
+    patcher = mock.patch(
+        "klio.transforms.core.KlioContext._load_config_from_file",
+        lambda x: config,
+    )
+    patcher.start()
+    return config
+
+
+def test_trigger_upstream_job(mock_config_trigger_upstream, mocker):
+    mock_gcs_client = mocker.patch("klio.transforms._helpers.gcsio.GcsIO")
+    mock_gcs_client.return_value.exists.return_value = False
+    mock_pubsub_client = mocker.patch("google.cloud.pubsub.PublisherClient")
+
+    kmsg = klio_pb2.KlioMessage()
+    kmsg.data.element = b"does_not_exist"
+
+    exp_current_job = klio_pb2.KlioJob()
+    exp_current_job.job_name = "a-job"
+    exp_current_job.gcp_project = "not-a-real-project"
+    exp_upstream_job = klio_pb2.KlioJob()
+    exp_upstream_job.job_name = "upstream-job"
+    exp_upstream_job.gcp_project = "upstream-project"
+    exp_kmsg = klio_pb2.KlioMessage()
+    exp_kmsg.version = klio_pb2.Version.V2
+    exp_kmsg.data.element = b"does_not_exist"
+    exp_lmtd = exp_kmsg.metadata.intended_recipients.limited
+    exp_lmtd.recipients.extend([exp_upstream_job, exp_current_job])
+    exp_lmtd.trigger_children_of.CopyFrom(exp_current_job)
+
+    options = pipeline_options.PipelineOptions([])
+    options.view_as(pipeline_options.StandardOptions).streaming = True
+
+    with test_pipeline.TestPipeline(options=options) as p:
+        in_pcol = p | beam.Create([kmsg.SerializeToString()])
+        input_data = in_pcol | helpers.KlioGcsCheckInputExists()
+
+        _ = input_data.not_found | helpers.KlioTriggerUpstream(
+            upstream_job_name="upstream-job",
+            upstream_topic="projects/upstream-project/topics/does-not-exist",
+        )
+
+    mock_gcs_client.return_value.exists.assert_called_once_with(
+        "gs://hopefully-this-bucket-doesnt-exist/does_not_exist"
+    )
+    mock_pubsub_client.return_value.publish.assert_called_once_with(
+        mock_pubsub_client.return_value.topic_path.return_value,
+        exp_kmsg.SerializeToString(),
+    )

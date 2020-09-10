@@ -244,6 +244,79 @@ with the current job's :ref:`KlioJob`.
     skipped <skip-klio-read>`.
 
 
+``KlioTriggerUpstream``
+"""""""""""""""""""""""
+
+``KlioTriggerUpstream`` is a `Composite Transform`_ that will trigger an upstream streaming job.
+This is particularly useful when input data does not exist.
+
+.. caution::
+
+    Klio does not automatically trigger upstream jobs if input data does not exist. It must be used
+    manually within a job's pipeline definition (in ``run.py::run``).
+
+
+.. note::
+
+    By default, Klio handles the input data existence check and only provides the ``run`` function
+    in ``run.py`` a ``PCollection`` with ``KlioMessages`` of input data that has been found. In
+    order to also have access to input not found, that default input data existence check must be
+    turned off by setting :ref:`skip_klio_existence_check <skip-input-ext-check>` to ``True``. Then the input existence check
+    must be invoked manually. See example ``run.py`` and ``klio-job.yaml`` files below.
+
+
+.. code-block:: python
+
+    # Example run.py
+    import apache_beam as beam
+    from klio.transforms import helpers
+    import transforms
+
+    def run(input_pcol, config):
+        # use the default helper transform to do the default input check
+        # in order to access the output tagged with `not_found`
+        input_data = input_pcol | helpers.KlioGcsCheckInputExists()
+
+        # Pipe the input data that was not found (using Tagged Outputs)
+        # into `KlioTriggerUpstream` in order to update the KlioMessage
+        # metadata, log it, then publish to upstream's
+        _ = input_data.not_found | helpers.KlioTriggerUpstream(
+            upstream_job_name="my-upstream-job",
+            upstream_topic="projects/my-gcp-project/topics/upstream-topic-input",
+            log_level="DEBUG",
+        )
+
+        # pipe the found input pcollection into other transform(s) as needed
+        output_pcol = input_data.found | beam.ParDo(MyTransform())
+        return output_pcol
+
+.. code-block:: yaml
+    :emphasize-lines: 7,23
+
+    # Example klio-job.yaml
+    version: 2
+    job_name: my-job
+    pipeline_options:
+      project: my-gcp-project
+      # `KlioTriggerUpstream` only supports streaming jobs
+      streaming: True
+      # <-- snip -->
+    job_config:
+      events:
+        inputs:
+          - type: pubsub
+            topic: projects/my-gcp-project/topics/upstream-topic-output
+            subscription: projects/my-gcp-project/subscriptions/my-job-input
+        # <-- snip -->
+      data:
+        inputs:
+          - type: gcs
+            location: gs://my-gcp-project/upstream-output-data
+            file_suffix: .ogg
+            # Be sure to skip Klio's default input existence check in
+            # order to access the input data that was not found.
+            skip_klio_existence_check: True
+
 
 .. _custom-existence-checks:
 

@@ -1,5 +1,4 @@
 # Copyright 2020 Spotify AB
-from unittest import mock
 
 import apache_beam as beam
 import pytest
@@ -12,25 +11,10 @@ from klio_core.proto import klio_pb2
 from klio.transforms import helpers
 
 
-# The most helper transforms end up calling config attributes, so
-# we'll just patch the config for the whole test module and turn on
-# autouse
-@pytest.fixture(autouse=True, scope="module")
-def mock_config():
-    config = mock.Mock()
-    config.job_name = "exec-modes"
-    config.pipeline_options.project = "not-a-real-project"
-    patcher = mock.patch(
-        "klio.transforms.core.KlioContext._load_config_from_file",
-        lambda x: config,
-    )
-    patcher.start()
-
-
 class BaseTest:
     def get_current_job(self):
         job = klio_pb2.KlioJob()
-        job.job_name = "exec-modes"
+        job.job_name = "a-job"
         job.gcp_project = "not-a-real-project"
         return job
 
@@ -51,6 +35,7 @@ class BaseTest:
 
 
 # TODO: remove me when migration to v2 is done
+@pytest.mark.usefixtures("mock_config")
 class TestV1ExecutionMode(BaseTest):
     """v1 messages are processed or dropped depending on top-down or bottom up.
     """
@@ -182,6 +167,7 @@ class TestV1ExecutionMode(BaseTest):
             )
 
 
+@pytest.mark.usefixtures("mock_config")
 class TestExecutionMode(BaseTest):
     """Messages are processed or dropped depending on top-down or bottom up.
     """
@@ -367,7 +353,7 @@ class TestExecutionMode(BaseTest):
 
 def assert_audit(actual):
     job = klio_pb2.KlioJob()
-    job.job_name = "exec-modes"
+    job.job_name = "a-job"
     job.gcp_project = "not-a-real-project"
     audit_log_item = klio_pb2.KlioJobAuditLogItem()
     audit_log_item.klio_job.CopyFrom(job)
@@ -380,7 +366,7 @@ def assert_audit(actual):
     return actual
 
 
-def test_update_klio_log(mocker, monkeypatch, caplog):
+def test_update_klio_log(mocker, monkeypatch, caplog, mock_config):
     mock_ts = mocker.Mock()
     monkeypatch.setattr(klio_pb2.KlioJobAuditLogItem, "timestamp", mock_ts)
 
@@ -395,7 +381,7 @@ def test_update_klio_log(mocker, monkeypatch, caplog):
 
     exp_log = (
         "KlioMessage full audit log - Entity ID:  - Path: not-a-real-project::"
-        "exec-modes (current job)"
+        "a-job (current job)"
     )
     for rec in caplog.records:
         if exp_log in rec.message:
@@ -405,28 +391,7 @@ def test_update_klio_log(mocker, monkeypatch, caplog):
         assert False, "Expected debug audit log not found"
 
 
-@pytest.fixture
-def mock_config_trigger_upstream():
-    config = mock.Mock(name="MockKlioConfig")
-    config.job_name = "a-job"
-    config.pipeline_options.streaming = True
-    config.pipeline_options.project = "not-a-real-project"
-
-    mock_data_input = mock.Mock(name="MockDataGcsInput")
-    mock_data_input.type = "gcs"
-    mock_data_input.location = "gs://hopefully-this-bucket-doesnt-exist"
-    mock_data_input.file_suffix = ""
-    mock_data_input.skip_klio_existence_check = True
-    config.job_config.data.inputs = [mock_data_input]
-    patcher = mock.patch(
-        "klio.transforms.core.KlioContext._load_config_from_file",
-        lambda x: config,
-    )
-    patcher.start()
-    return config
-
-
-def test_trigger_upstream_job(mock_config_trigger_upstream, mocker):
+def test_trigger_upstream_job(mock_config, mocker):
     mock_gcs_client = mocker.patch("klio.transforms._helpers.gcsio.GcsIO")
     mock_gcs_client.return_value.exists.return_value = False
     mock_pubsub_client = mocker.patch("google.cloud.pubsub.PublisherClient")

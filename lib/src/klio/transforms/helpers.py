@@ -318,7 +318,14 @@ class KlioUpdateAuditLog(beam.DoFn, metaclass=_helpers._KlioBaseDoFnMetaclass):
 
 
 class KlioDebugMessage(beam.PTransform):
-    """Log KlioMessage."""
+    """Log KlioMessage.
+
+    Args:
+        prefix (str): logging prefix. Default: ``"DEBUG"``.
+        log_level (str or int): The desired log level for the KlioMessage
+            logs. See `available log levels <https://docs.python.org/3/library/
+            logging.html#levels>`_ for what's supported. Default: ``"INFO"``.
+    """
 
     def __init__(self, prefix="DEBUG: ", log_level="INFO"):
         super().__init__()

@@ -1,0 +1,9 @@
+# A separate requirements file for CI workflows. We can't have this in
+# requirements.txt because readthedocs working directory is the top-level
+# repo, and CI + local development is klio/docs
+-e ../core/
+-e ../cli/
+-e ../devtools/
+-e ../lib/
+-e ../exec/
+-e ../audio/

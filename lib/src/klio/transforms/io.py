@@ -98,6 +98,10 @@ class _KlioReadFromTextSource(beam.io.textio._TextSource):
 
 
 class KlioReadFromText(beam.io.ReadFromText, _KlioTransformMixin):
+    """Read from a local or GCS file with each new line as a
+    ``KlioMessage.data.element``.
+    """
+
     _source_class = _KlioReadFromTextSource
 
 
@@ -155,8 +159,61 @@ class _KlioBigQueryReader(beam_bq_tools.BigQueryReader):
             yield message.SerializeToString()
 
 
+# Note: copy-pasting the docstrings of `BigQuerySource` so that we can
+# include our added parameter (`klio_message_columns`) in the API
+# documentation (via autodoc). If we don't do this, then just the parent
+# documentation will be shown, excluding our new parameter.
 class KlioReadFromBigQuery(beam_bq.BigQuerySource, _KlioTransformMixin):
-    """Read from BigQuery with each row as a KlioMessage."""
+    """Read from BigQuery with each row as a ``KlioMessage.data.element``.
+
+    Args:
+      table (str): The ID of a BigQuery table. If specified all data of the
+        table will be used as input of the current source. The ID must contain
+        only letters ``a-z``, ``A-Z``, numbers ``0-9``, or underscores
+        ``_``. If dataset and query arguments are :data:`None` then the table
+        argument must contain the entire table reference specified as:
+        ``'DATASET.TABLE'`` or ``'PROJECT:DATASET.TABLE'``.
+      dataset (str): The ID of the dataset containing this table or
+        :data:`None` if the table reference is specified entirely by the table
+        argument or a query is specified.
+      project (str): The ID of the project containing this table or
+        :data:`None` if the table reference is specified entirely by the table
+        argument or a query is specified.
+      klio_message_columns (list): A list of fields (``str``) that should
+        be assigned to ``KlioMessage.data.element``.
+
+        .. note::
+
+            If more than one field is provided, the results including the
+            column names will be serialized to JSON before assigning to
+            ``KlioMessage.data.element``. (e.g. ``'{"field1": "foo",
+            "field2": bar"}'``). If only one field is provided, just the
+            value will be assigned to ``KlioMessage.data.element``.
+
+      query (str): A query to be used instead of arguments table, dataset, and
+        project.
+      validate (bool): If :data:`True`, various checks will be done when source
+        gets initialized (e.g., is table present?). This should be
+        :data:`True` for most scenarios in order to catch errors as early as
+        possible (pipeline construction instead of pipeline execution). It
+        should be :data:`False` if the table is created during pipeline
+        execution by a previous step.
+      coder (~apache_beam.coders.coders.Coder): The coder for the table
+        rows if serialized to disk. If :data:`None`, then the default coder is
+        :class:`~apache_beam.io.gcp.bigquery_tools.RowAsDictJsonCoder`,
+        which will interpret every line in a file as a JSON serialized
+        dictionary. This argument needs a value only in special cases when
+        returning table rows as dictionaries is not desirable.
+      use_standard_sql (bool): Specifies whether to use BigQuery's standard SQL
+        dialect for this query. The default value is :data:`False`.
+        If set to :data:`True`, the query will use BigQuery's updated SQL
+        dialect with improved standards compliance.
+        This parameter is ignored for table inputs.
+      flatten_results (bool): Flattens all nested and repeated fields in the
+        query results. The default value is :data:`True`.
+      kms_key (str): Optional Cloud KMS key name for use when creating new
+        tables.
+    """
 
     _REQUIRES_IO_READ_WRAP = True
 
@@ -176,13 +233,13 @@ class KlioReadFromBigQuery(beam_bq.BigQuerySource, _KlioTransformMixin):
 
 
 class KlioWriteToBigQuery(beam.io.WriteToBigQuery, _KlioTransformMixin):
-    """Writes to BigQuery table.
-
-        Note: Not using BigQuerySink due to it only being available for
-        batch. See https://beam.apache.org/releases/pydoc/2.22.0/
-        apache_beam.io.gcp.bigquery.html?highlight=bigquerysink
-        #apache_beam.io.gcp.bigquery.BigQuerySink
+    """Writes to BigQuery table with each row as ``KlioMessage.data.element``.
     """
+
+    # Note: Not using BigQuerySink due to it only being available for
+    # batch. See https://beam.apache.org/releases/pydoc/2.22.0/
+    # apache_beam.io.gcp.bigquery.html?highlight=bigquerysink
+    # #apache_beam.io.gcp.bigquery.BigQuerySink
 
     _REQUIRES_IO_READ_WRAP = False
 
@@ -217,6 +274,10 @@ class _KlioTextSink(beam.io.textio._TextSink):
 
 
 class KlioWriteToText(beam.io.textio.WriteToText):
+    """Write to a local or GCS file with each new line as
+    ``KlioMessage.data.element``.
+    """
+
     def __init__(self, *args, **kwargs):
         self._sink = _KlioTextSink(*args, **kwargs)
 
@@ -237,20 +298,37 @@ class _KlioFastAvroSource(beam_avroio._FastAvroSource):
 
 # define an I/O transform using the klio-specific avro source
 # note: fast avro is default for py3 on beam
+# Note: copy-pasting the docstrings of `ReadFromAvro` so that we can
+# include our added parameter (`location`) in the API
+# documentation (via autodoc) and drop `use_fastavro` since we default to
+# True. If we don't do this, then just the parent documentation will be shown,
+# excluding our new parameter and including an unavailable parameter
+# (`location` and `use_fastavro` respectively)
 class KlioReadFromAvro(beam.io.ReadFromAvro):
+    """Read avro from a local directory or GCS bucket.
+
+    Data from avro is dumped into JSON and assigned to ``KlioMessage.data.
+    element``.
+
+    Args:
+      file_pattern (str): the file glob to read.
+      location (str): local or GCS path of file(s) to read.
+      min_bundle_size (int): the minimum size in bytes, to be considered when
+        splitting the input into bundles.
+      validate (bool): flag to verify that the files exist during the pipeline
+        creation time.
+    """
+
     _REQUIRES_IO_READ_WRAP = True
 
     def __init__(
         self,
         file_pattern=None,
         location=None,
-        show_unpublished=False,
         min_bundle_size=0,
         validate=True,
     ):
-        file_pattern = self._get_file_pattern(
-            file_pattern, location, show_unpublished
-        )
+        file_pattern = self._get_file_pattern(file_pattern, location)
 
         super(KlioReadFromAvro, self).__init__(
             file_pattern=file_pattern,
@@ -263,7 +341,7 @@ class KlioReadFromAvro(beam.io.ReadFromAvro):
             file_pattern, min_bundle_size, validate=validate
         )
 
-    def _get_file_pattern(self, file_pattern, location, show_unpublished):
+    def _get_file_pattern(self, file_pattern, location):
         # TODO: this should be a validator in klio_core.config
         if not any([file_pattern, location]):
             raise KlioMissingConfiguration(

@@ -78,6 +78,8 @@ extensions = [
     "sphinx.ext.todo",  # highlight TODO items
     "sphinx.ext.intersphinx",  # interlink between other projects w/ sphinx docs
     "sphinx.ext.autodoc",  # auto-generate docs from docstrings
+    "sphinx.ext.napoleon",  # handle Google-style docstrings
+    "sphinx.ext.autosummary",  # auto-gen summaries
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -88,6 +90,37 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
+# sphinx-build has a "nitpick" mode (used during CI docs workflow and
+# `make stricthtml`). We inherit some docs from Apache Beam, and some of
+# their docstrings fail to compile in nitpick mode.
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-nitpick_ignore
+nitpick_ignore = [
+    # <-- nitpick docstrings from beam.io.gcp.WriteToBigQuery
+    ("py:class", "callable"),
+    ("py:class", "ValueProvider"),
+    ("py:class", "apache_beam.io.gcp.internal.clients.bigquery.bigquery_v2_messages.TableSchema"),
+    ("py:class", "BigQueryDisposition"),
+    ("py:attr", "BigQueryDisposition.CREATE_IF_NEEDED"),
+    ("py:attr", "BigQueryDisposition.CREATE_NEVER"),
+    ("py:attr", "BigQueryDisposition.WRITE_TRUNCATE"),
+    ("py:attr", "BigQueryDisposition.WRITE_APPEND"),
+    ("py:attr", "BigQueryDisposition.WRITE_EMPTY"),
+    # -->
+    # <-- nitpick docstrings from beam.io.textio.WriteToText
+    ("py:class", "WriteToText"),
+    ("py:class", "apache_beam.io.filesystem.CompressionTypes.AUTO"),
+    # -->
+    # <-- nitpick drom beam.io.ReadFromText
+    ("py:class", "ReadFromText"),
+    # -->
+]
+
+# sphinx-build -b linkcheck will error out if links in docstrings are broken,
+# including inherited docstrings (i.e. Beam)
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-linkcheck_ignore
+linkcheck_ignore = [
+    r"https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs#configuration.load",
+]
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -116,3 +149,24 @@ html_favicon = "_static/images/k_favicon.png"
 todo_include_todos = True
 todo_emit_warnings = False
 todo_link_only = False
+
+
+# -- Autodoc config
+autodoc_default_options = {
+    "inherited-members": False,
+}
+
+
+# -- intersphinx mapping
+# This will auto-generate links to Python's docs when referenced (e.g.
+# :func:`pdb.set_trace` will link to the set_trace docs)
+# Note: this won't work for Apache Beam because they generate the
+# python documentation per SDK version, and we probably shouldn't hard-link
+# to a specific version
+# Update ^: I emailed users@beam.apache.org and they're looking into it:
+# https://lists.apache.org/thread.html/r57a910d1689ace1c9067d2a702468325
+#         f6800626d82edef0a6d80961%40%3Cuser.beam.apache.org%3E
+intersphinx_mapping = {
+    "https://docs.python.org/3": None,
+    "https://beam.apache.org/releases/pydoc/2.23.0/": None,
+}

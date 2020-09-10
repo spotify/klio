@@ -14,8 +14,8 @@ import codecs
 import os
 import re
 
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import sys
+sys.path.append(os.path.abspath("./_ext"))
 
 # -- Helper funcs
 
@@ -80,6 +80,7 @@ extensions = [
     "sphinx.ext.autodoc",  # auto-generate docs from docstrings
     "sphinx.ext.napoleon",  # handle Google-style docstrings
     "sphinx.ext.autosummary",  # auto-gen summaries
+    "collapsible_admon",  # custom extension from _ext dir
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -140,6 +141,7 @@ html_theme_options = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 html_css_files = ["css/custom.css"]  # relative to _static
+html_js_files = ["js/custom.js"]  # relative to _static
 html_favicon = "_static/images/k_favicon.png"
 
 

@@ -54,3 +54,23 @@ div.admonition-todo > p.admonition-title::before {
 
 }
 
+/* collapsible admonitions */
+div.admonition-collapsible {
+  padding-bottom: 0px!important;
+  padding-top: 0px!important;
+}
+
+div.admonition-collapsible.open {
+  /* normal admonition padding when open */
+  padding: 0 .6rem .8rem!important;
+}
+
+div.admonition-collapsible > p.admonition-title:before {
+  font-family: "Font Awesome 5 Free";
+  content: "\f105";
+}
+
+div.admonition-collapsible > p.admonition-title.open:before {
+  font-family: "Font Awesome 5 Free";
+  content: "\f107";
+}

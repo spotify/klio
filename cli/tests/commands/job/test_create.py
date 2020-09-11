@@ -914,8 +914,14 @@ def test_parse_unknown_args(unknown_args, expected, job):
 @pytest.mark.parametrize("create_dockerfile", (True, False))
 @pytest.mark.parametrize("use_fnapi", (True, False))
 @pytest.mark.parametrize("create_resources", (True, False))
-def test_create(use_fnapi, create_dockerfile, create_resources, mocker, caplog, job):
-    context = {"job_name": "test-job", "use_fnapi": use_fnapi, "create_resources": create_resources}
+def test_create(
+    use_fnapi, create_dockerfile, create_resources, mocker, caplog, job
+):
+    context = {
+        "job_name": "test-job",
+        "use_fnapi": use_fnapi,
+        "create_resources": create_resources,
+    }
 
     mock_get_user_input = mocker.patch.object(job, "_get_user_input")
     mock_get_user_input.return_value = (context, create_dockerfile)
@@ -930,9 +936,12 @@ def test_create(use_fnapi, create_dockerfile, create_resources, mocker, caplog, 
     mock_create_dockerfile = mocker.patch.object(job, "_create_dockerfile")
     mock_create_readme = mocker.patch.object(job, "_create_readme")
 
-    mock_create_topics = mocker.patch.object(create.gcp_setup, "create_topics_and_buckets")
-    mock_create_stackdriver = mocker.patch.object(create.gcp_setup, "create_stackdriver_dashboard")
-
+    mock_create_topics = mocker.patch.object(
+        create.gcp_setup, "create_topics_and_buckets"
+    )
+    mock_create_stackdriver = mocker.patch.object(
+        create.gcp_setup, "create_stackdriver_dashboard"
+    )
 
     unknown_args = ("--foo", "bar")
     known_args = {

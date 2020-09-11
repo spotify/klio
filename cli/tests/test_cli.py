@@ -1036,7 +1036,10 @@ def test_profile_memory(runner, mocker, minimal_mock_klio_config):
         "entity_ids": (),
     }
     mock_profile.assert_called_once_with(
-        "memory", minimal_mock_klio_config.klio_config, **exp_kwargs
+        "memory",
+        minimal_mock_klio_config.klio_config,
+        minimal_mock_klio_config.meta,
+        **exp_kwargs
     )
 
 
@@ -1057,7 +1060,10 @@ def test_profile_memory_per_line(runner, mocker, minimal_mock_klio_config):
         "entity_ids": (),
     }
     mock_profile.assert_called_once_with(
-        "memory-per-line", minimal_mock_klio_config.klio_config, **exp_kwargs
+        "memory-per-line",
+        minimal_mock_klio_config.klio_config,
+        minimal_mock_klio_config.meta,
+        **exp_kwargs
     )
 
 
@@ -1079,7 +1085,10 @@ def test_profile_cpu(runner, mocker, minimal_mock_klio_config):
         "entity_ids": (),
     }
     mock_profile.assert_called_once_with(
-        "cpu", minimal_mock_klio_config.klio_config, **exp_kwargs
+        "cpu",
+        minimal_mock_klio_config.klio_config,
+        minimal_mock_klio_config.meta,
+        **exp_kwargs
     )
 
 
@@ -1102,7 +1111,10 @@ def test_profile_timeit(
         "entity_ids": (),
     }
     mock_profile.assert_called_once_with(
-        "timeit", mock_klio_config.klio_config, **exp_kwargs
+        "timeit",
+        mock_klio_config.klio_config,
+        mock_klio_config.meta,
+        **exp_kwargs
     )
 
 

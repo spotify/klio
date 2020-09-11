@@ -82,13 +82,13 @@ def dummy_gen(x):
     ),
 )
 def test_print_user_exceptions_generators(transform, print_msg, capsys):
-    transform, *_ = list(wrappers.print_user_exceptions([transform]))
+    transform = wrappers.print_user_exceptions(transform.process)
 
     # fails without functools.wraps(func)
-    assert "process" == transform.process.__name__
+    assert "process" == transform.__name__
 
     # first argument is "self" of the process method
-    result = transform.process(None, 10)
+    result = transform(None, 10)
 
     assert 20 == next(result)
     assert 30 == next(result)
@@ -107,13 +107,13 @@ def test_print_user_exceptions_generators(transform, print_msg, capsys):
     ),
 )
 def test_print_user_exceptions_funcs(transform, print_msg, exp_ret, capsys):
-    transform, *_ = list(wrappers.print_user_exceptions([transform]))
+    transform = wrappers.print_user_exceptions(transform.process)
 
     # fails without functools.wraps(func)
-    assert "process" == transform.process.__name__
+    assert "process" == transform.__name__
 
     # first argument is "self" of the process method
-    result = transform.process(None, 10)
+    result = transform(None, 10)
 
     assert exp_ret == result
     captured = capsys.readouterr()

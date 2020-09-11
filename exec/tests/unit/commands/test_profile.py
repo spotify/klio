@@ -4,7 +4,10 @@ import sys
 
 import pytest
 
+from klio.transforms import decorators
+
 from klio_exec.commands import profile as profile_cmd
+from klio_exec.commands.utils import profile_utils
 
 
 @pytest.fixture
@@ -13,17 +16,20 @@ def klio_pipeline():
 
 
 class DummyTransformGenerator(object):
+    @decorators.profile()
     def process(self, x):
         yield x + 10
         yield x + 20
 
 
 class DummyTransformFunc(object):
+    @decorators.profile()
     def process(self, x):
         return x + 10
 
 
 class DummyTransformFuncRaises(object):
+    @decorators.profile()
     def process(self, *args):
         raise Exception("catch me")
 
@@ -37,21 +43,21 @@ def transforms():
     ]
 
 
-# TODO: temporary! remove me once profiling is supported for v2
-if hasattr(profile_cmd.klio_transforms, "KlioBaseDoFn"):
+@pytest.fixture
+def profile_objects():
+    return [
+        profile_utils.ProfileObject.from_object(
+            DummyTransformGenerator.process
+        ),
+        profile_utils.ProfileObject.from_object(DummyTransformFunc.process),
+        profile_utils.ProfileObject.from_object(
+            DummyTransformFuncRaises.process
+        ),
+    ]
 
-    class AKlioClass(profile_cmd.klio_transforms.KlioBaseDoFn):
-        def input_data_exists(self, *args, **kwargs):
-            pass
 
-        def output_data_exists(self, *args, **kwargs):
-            pass
-
-
-else:
-
-    class AKlioClass(object):
-        pass
+class AKlioClass(object):
+    pass
 
 
 class ANonKlioClass(object):
@@ -150,38 +156,51 @@ def test_get_subproc(
 
 @pytest.mark.parametrize("get_maximum", (True, False))
 def test_wrap_memory_per_line(
-    get_maximum, klio_pipeline, transforms, mocker, monkeypatch
+    get_maximum, klio_pipeline, profile_objects, mocker, monkeypatch
 ):
-    mock_wrap_per_element = mocker.Mock()
     kprof_cls = profile_cmd.memory_utils.KMemoryLineProfiler
-    monkeypatch.setattr(kprof_cls, "wrap_per_element", mock_wrap_per_element)
-    mock_wrap_maximum = mocker.Mock()
-    monkeypatch.setattr(kprof_cls, "wrap_maximum", mock_wrap_maximum)
+    monkeypatch.setattr(
+        kprof_cls, "wrap_per_element", lambda x, stream: "{} element".format(x)
+    )
+    monkeypatch.setattr(
+        kprof_cls,
+        "wrap_maximum",
+        lambda prof, x, stream: "{} maximum".format(x),
+    )
+
+    for obj in profile_objects:
+        monkeypatch.setattr(obj, "to_wrapped_transform", lambda x: x)
+    monkeypatch.setattr(
+        klio_pipeline, "_wrap_user_exceptions", lambda x: "[{}]".format(x)
+    )
 
     wrapped_transforms = list(
         klio_pipeline._wrap_memory_per_line(
-            transforms, get_maximum=get_maximum
+            profile_objects, get_maximum=get_maximum
         )
     )
 
     for txf in wrapped_transforms:
-        process_method = getattr(txf, "process")
-        assert process_method is not None
         if get_maximum:
-            assert process_method == mock_wrap_maximum.return_value
+            assert txf("test") == "[test maximum]"
         else:
-            assert process_method == mock_wrap_per_element.return_value
+            assert txf("test") == "[test element]"
 
 
-def test_wrap_wall_time(klio_pipeline, transforms, mocker, monkeypatch):
-    mock_prof = mocker.Mock()
-    monkeypatch.setattr(klio_pipeline, "_prof", mock_prof)
+def test_wrap_wall_time(klio_pipeline, profile_objects, mocker, monkeypatch):
+    monkeypatch.setattr(klio_pipeline, "_prof", lambda x: "got {}".format(x))
 
-    wrapped_transforms = list(klio_pipeline._wrap_wall_time(transforms))
+    for obj in profile_objects:
+        monkeypatch.setattr(obj, "to_wrapped_transform", lambda x: x)
+
+    monkeypatch.setattr(
+        klio_pipeline, "_wrap_user_exceptions", lambda x: "[{}]".format(x)
+    )
+
+    wrapped_transforms = list(klio_pipeline._wrap_wall_time(profile_objects))
 
     for txf in wrapped_transforms:
-        process_method = getattr(txf, "process")
-        assert process_method == mock_prof.return_value
+        assert txf("test") == "[got test]"
 
 
 @pytest.mark.parametrize("output_file", (None, "output.txt"))
@@ -397,23 +416,14 @@ def test_get_transforms(klio_pipeline, mocker, monkeypatch):
     assert AKlioClass == transforms[0]
 
 
-# TODO: temporary! remove me once profiling is supported for v2
-def test_get_transforms_raises(klio_pipeline, mocker, monkeypatch):
-    transforms_module = mocker.Mock()
-    mock_load_source = mocker.Mock()
-    mock_load_source.return_value = transforms_module
-    monkeypatch.setattr(profile_cmd.imp, "load_source", mock_load_source)
-
-    with pytest.raises(SystemExit):
-        list(klio_pipeline._get_transforms())
-
-
 @pytest.mark.parametrize(
     "what", ("run", "cpu", "timeit", "memory", "memory_per_line", "foo")
 )
 def test_profile(what, klio_pipeline, mocker, monkeypatch):
-    mock_get_transforms = mocker.Mock()
-    monkeypatch.setattr(klio_pipeline, "_get_transforms", mock_get_transforms)
+    mock_get_profile_objects = mocker.Mock()
+    monkeypatch.setattr(
+        klio_pipeline, "_get_profile_objects", mock_get_profile_objects
+    )
 
     mock_run_pipeline = mocker.Mock()
     monkeypatch.setattr(klio_pipeline, "_run_pipeline", mock_run_pipeline)
@@ -436,11 +446,11 @@ def test_profile(what, klio_pipeline, mocker, monkeypatch):
 
     klio_pipeline.profile(what)
 
-    mock_get_transforms.assert_called_once_with()
+    mock_get_profile_objects.assert_called_once_with()
 
     if what == "run":
         mock_run_pipeline.assert_called_once_with(
-            mock_get_transforms.return_value
+            mock_get_profile_objects.return_value
         )
         mock_profile_cpu.assert_not_called()
         mock_profile_memory.assert_not_called()
@@ -466,7 +476,7 @@ def test_profile(what, klio_pipeline, mocker, monkeypatch):
         mock_profile_cpu.assert_not_called()
         mock_profile_memory.assert_not_called()
         mock_memory_per_line.assert_called_once_with(
-            mock_get_transforms.return_value
+            mock_get_profile_objects.return_value
         )
         mock_wall_time_per_line.assert_not_called()
 
@@ -476,7 +486,7 @@ def test_profile(what, klio_pipeline, mocker, monkeypatch):
         mock_profile_memory.assert_not_called()
         mock_memory_per_line.assert_not_called()
         mock_wall_time_per_line.assert_called_once_with(
-            mock_get_transforms.return_value
+            mock_get_profile_objects.return_value
         )
 
     else:

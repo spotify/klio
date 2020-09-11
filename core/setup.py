@@ -64,7 +64,7 @@ INSTALL_REQUIRES = [
     "google-api-python-client>=1.10.0",
     "google-api-core>1.18.0,<1.21.0",  # TODO: try and remove
     "google-cloud-pubsub<=1.4.0",  # TODO: try and remove
-    "protobuf",
+    "protobuf>=3.12.0",
     "pyyaml",
     "six",
     "attrs",

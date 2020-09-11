@@ -3,7 +3,6 @@
 import contextlib
 import functools
 import imp
-import inspect
 import logging
 import os
 import subprocess
@@ -23,8 +22,6 @@ except ImportError:  # pragma: no cover
     raise SystemExit(1)
 
 from apache_beam.options import pipeline_options
-
-from klio import transforms as klio_transforms
 
 from klio_exec.commands.utils import cpu_utils
 from klio_exec.commands.utils import memory_utils
@@ -105,29 +102,34 @@ class KlioPipeline(object):
 
         return subprocess.Popen(cmd)
 
-    def _wrap_memory_per_line(self, transforms, get_maximum):
+    def _wrap_user_exceptions(self, fn):
+        return wrappers.print_user_exceptions(fn)
+
+    def _wrap_memory_per_line(self, profile_objects, get_maximum):
         wrapper = memory_utils.KMemoryLineProfiler.wrap_per_element
         if get_maximum:
             wrapper = functools.partial(
                 memory_utils.KMemoryLineProfiler.wrap_maximum, self._prof
             )
 
-        for txf in transforms:
-            process_method = getattr(txf, "process")
-            process_method = wrapper(process_method, stream=self._stream)
-            setattr(txf, "process", process_method)
-            yield txf
+        def wrapper_fn(profile_fn):
+            return self._wrap_user_exceptions(
+                wrapper(profile_fn, stream=self._stream)
+            )
 
-    def _wrap_wall_time(self, transforms):
-        for txf in transforms:
-            process_method = getattr(txf, "process")
-            process_method = self._prof(process_method)
-            setattr(txf, "process", process_method)
-            yield txf
+        for obj in profile_objects:
+            yield obj.to_wrapped_transform(wrapper_fn)
 
-    def _profile_wall_time_per_line(self, transforms, iterations, **_):
+    def _wrap_wall_time(self, profile_objects):
+        def wrapper_fn(profile_fn):
+            return self._wrap_user_exceptions(self._prof(profile_fn))
+
+        for obj in profile_objects:
+            yield obj.to_wrapped_transform(wrapper_fn)
+
+    def _profile_wall_time_per_line(self, profile_objects, iterations, **_):
         self._prof = cpu_utils.KLineProfiler()
-        wrapped_transforms = self._wrap_wall_time(transforms)
+        wrapped_transforms = self._wrap_wall_time(profile_objects)
 
         self._run_pipeline(wrapped_transforms, iterations=iterations)
 
@@ -138,10 +140,10 @@ class KlioPipeline(object):
         # "Per Hit" columns are in seconds
         self._prof.print_stats(output_unit=1)
 
-    def _profile_memory_per_line(self, transforms, get_maximum=False):
+    def _profile_memory_per_line(self, profile_objects, get_maximum=False):
         self._prof = memory_utils.KMemoryLineProfiler(backend="psutil")
         wrapped_transforms = self._wrap_memory_per_line(
-            transforms, get_maximum
+            profile_objects, get_maximum
         )
 
         # "a"ppend if output per element; "w"rite (once) for maximum.
@@ -215,7 +217,6 @@ class KlioPipeline(object):
     def _run_pipeline(self, transforms, iterations=None, **_):
         if not iterations:
             iterations = 1
-        transforms = wrappers.print_user_exceptions(transforms)
         options = pipeline_options.PipelineOptions()
         options.view_as(pipeline_options.StandardOptions).runner = "direct"
         options.view_as(pipeline_options.SetupOptions).save_main_session = True
@@ -234,38 +235,26 @@ class KlioPipeline(object):
         )
 
         for transform in transforms:
-            scaled_entity_ids.apply(beam.ParDo(transform()))
+            scaled_entity_ids.apply(transform)
 
         result = pipeline.run()
         # since on direct runner
         result.wait_until_finish()
 
-    def _get_transforms(self):
-        transforms_module = imp.load_source(
-            "transforms", KlioPipeline.TRANSFORMS_PATH
-        )
-        # TODO: temporary! remove me once profiling is supported for v2
-        if not hasattr(klio_transforms, "KlioBaseDoFn"):
-            logging.error("Profiling V2 klio jobs is not yet available.")
-            raise SystemExit(1)
-
-        for attribute in dir(transforms_module):
-            obj = getattr(transforms_module, attribute)
-            if inspect.isclass(obj) and issubclass(
-                obj, klio_transforms.KlioBaseDoFn
-            ):
-                yield obj
+    def _get_profile_objects(self):
+        imp.load_source("transforms", KlioPipeline.TRANSFORMS_PATH)
+        yield from profile_utils.load_profile_objects()
 
     def profile(self, what, **kwargs):
-        transforms = self._get_transforms()
+        profile_objects = self._get_profile_objects()
 
         if what == "run":
-            return self._run_pipeline(transforms, **kwargs)
+            return self._run_pipeline(profile_objects, **kwargs)
         elif what == "cpu":
             return self._profile_cpu(**kwargs)
         elif what == "memory":
             return self._profile_memory(**kwargs)
         elif what == "memory_per_line":
-            return self._profile_memory_per_line(transforms, **kwargs)
+            return self._profile_memory_per_line(profile_objects, **kwargs)
         elif what == "timeit":
-            return self._profile_wall_time_per_line(transforms, **kwargs)
+            return self._profile_wall_time_per_line(profile_objects, **kwargs)

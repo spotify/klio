@@ -563,6 +563,14 @@ def _profile(subcommand, klio_config, config_meta, **kwargs):
     pipeline = job_commands.profile.ProfilePipeline(
         config_meta.job_dir, klio_config, runtime_config, profile_config
     )
+
+    # TODO: Add the docs
+    warnings.warn(
+        "Warning! Profiling currently does not support all use cases and"
+        "may not work with your job!  Please check the docs for more"
+        "information."
+    )
+
     pipeline.run(what=subcommand, subcommand_flags=kwargs)
 
 
@@ -592,7 +600,7 @@ def _profile(subcommand, klio_config, config_meta, **kwargs):
 @click.argument("entity_ids", nargs=-1, required=False)
 @cli_utils.with_klio_config
 def profile_memory(klio_config, config_meta, **kwargs):
-    _profile("memory", klio_config, **kwargs)
+    _profile("memory", klio_config, config_meta, **kwargs)
 
 
 @profile.command(
@@ -619,7 +627,7 @@ def profile_memory(klio_config, config_meta, **kwargs):
 @click.argument("entity_ids", nargs=-1, required=False)
 @cli_utils.with_klio_config
 def profile_memory_per_line(klio_config, config_meta, **kwargs):
-    _profile("memory-per-line", klio_config, **kwargs)
+    _profile("memory-per-line", klio_config, config_meta, **kwargs)
 
 
 @profile.command(
@@ -646,7 +654,7 @@ def profile_memory_per_line(klio_config, config_meta, **kwargs):
 @click.argument("entity_ids", nargs=-1, required=False)
 @cli_utils.with_klio_config
 def profile_cpu(klio_config, config_meta, **kwargs):
-    _profile("cpu", klio_config, **kwargs)
+    _profile("cpu", klio_config, config_meta, **kwargs)
 
 
 @profile.command(
@@ -673,7 +681,7 @@ def profile_cpu(klio_config, config_meta, **kwargs):
 @click.argument("entity_ids", nargs=-1, required=False)
 @cli_utils.with_klio_config
 def profile_timeit(klio_config, config_meta, **kwargs):
-    _profile("timeit", klio_config, **kwargs)
+    _profile("timeit", klio_config, config_meta, **kwargs)
 
 
 #####

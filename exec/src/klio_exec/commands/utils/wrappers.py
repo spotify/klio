@@ -55,16 +55,12 @@ def _print_user_exceptions_func(func):
     return wrapper
 
 
-def print_user_exceptions(transforms):
+def print_user_exceptions(profile_fn):
     # Don't crap out if the process method errors; just continue profiling
-    for txf in transforms:
-        process_method = getattr(txf, "process")
-        if inspect.isgeneratorfunction(process_method):
-            process_method = _print_user_exceptions_generator(process_method)
-        else:
-            process_method = _print_user_exceptions_func(process_method)
-        setattr(txf, "process", process_method)
-        yield txf
+    if inspect.isgeneratorfunction(profile_fn):
+        return _print_user_exceptions_generator(profile_fn)
+    else:
+        return _print_user_exceptions_func(profile_fn)
 
 
 # adapted from line_profiler; memory_profiler doesn't handle generator

@@ -689,3 +689,37 @@ def retry(
         exception_message=exception_message,
         **kwargs,
     )
+
+
+# objects marked for profiling are collected here and picked up by klio-exec
+# when the `profile` commands are used
+PROFILE_OBJECTS = []
+
+
+@_utils.experimental()
+def profile():
+    """Mark class/method/function for profiling.
+
+    This decorator is used in conjunction with the ``klio job profile``
+    commands to mark which code you wish to profile.  In order to work
+    properly, **this must be the last decorator applied**.
+
+    You can currently add this decorator to DoFn classes or any method/function
+    used with ``@handle_klio``.  In these cases, ``self`` (with class methods)
+    and ``ctx`` with functions decorated with ``@handle_klio`` will be
+    ``None``.  Decorated classes will be initialized with no arguments.
+
+    .. code-block:: python
+
+        @handle_klio
+        @profile()
+        def my_map_func(ctx, item):
+            ctx.logger.info(f"Received {item.element} with {item.payload}")
+
+    """
+
+    def inner(obj):
+        PROFILE_OBJECTS.append(obj)
+        return obj
+
+    return inner

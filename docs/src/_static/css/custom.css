@@ -13,7 +13,7 @@ div.admonition-todo > p.admonition-title::before {
 }
 
 .custom-button {
-  background-color: #dcdcdc;
+  background-color: #e9ecef;
   border: none;
   color: #484848;
   text-align: center;
@@ -42,13 +42,12 @@ div.admonition-todo > p.admonition-title::before {
   margin: 20px 0px;
 }
 
-
 /* support sidebar nav that have pages with 3 levels */
-.bd-sidebar .nav>li>ul>li>ul>.active:hover>a, .bd-sidebar .nav>li>ul>li>ul>.active>a {
+.bd-sidebar .nav>li>ul>li>ul>.active:hover>a, .bd-sidebar .nav>li>ul>li>ul>.active>a,
+.bd-sidebar .nav>li>ul>li>ul>.active:hover>a, .bd-sidebar .nav>li>ul>li>ul>.active>a:hover {
     font-weight: 600;
-    color: #130654;
+    color: #00aa55;
 }
-
 .bd-sidebar .nav>li>ul>li>ul {
   list-style-type: none;
 

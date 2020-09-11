@@ -1,0 +1,189 @@
+/*
+
+Override pandas' theme with colorblind-friendly blues/greens color palette.
+Not exhaustive; for original, see:
+https://github.com/pandas-dev/pydata-sphinx-theme/blob/772ef6a5877649ff7541a77dd496a79a00857605/pydata_sphinx_theme/static/css/index.e00ebc5fe59cde01733db895d987848c.css
+
+*/
+h1, h2 {
+  color: #00aa55;
+}
+
+.navbar-nav > .active > .nav-link {
+  color: #00aa55 !important;
+}
+
+.bd-sidebar .nav > li > a:hover {
+  color: #00aa55;
+}
+
+.bd-sidebar .nav > .active:hover > a,
+.bd-sidebar .nav > .active > a {
+  color: #00aa55;
+}
+
+.bd-sidebar .nav > li > ul > .active > a,
+.bd-sidebar .nav > li > ul > .active > a:hover {
+  color: #00aa55;
+  text-decoration: none;
+}
+.bd-sidebar .nav>li>ul>li>ul>li>a {
+    display: block;
+    font-size: .9em;
+    color: rgba(0,0,0,.65);
+}
+.toc-entry > .nav-link.active {
+  color: #00aa55;
+  border-left: 2px solid #255640;
+}
+
+.toc-entry a, .toc-entry a:visited {
+  color: #77757a;
+}
+.toc-entry a:hover, .toc-entry a:hover:visited {
+    color: rgba(0,0,0,.85);
+    text-decoration: none;
+}
+a.headerlink {
+    color: #A0C3D2;
+}
+a.headerlink:hover {
+    background-color: #A0C3D2;
+    color: #fff;
+}
+
+a {
+    color: #1e8bc3;
+}
+
+a:hover, a:hover:visited {
+    color: #009fd4;
+}
+
+a:visited {
+  color: #1978d4;
+}
+
+code {
+  color: #255640;
+  background: #EFFAF1;
+  /*border: 1px solid #EFFAF1;*/
+  font-size: 85%;
+  border-radius: 2px;
+  padding: 2px;
+}
+code.xref, a code {
+  background: #EFFAF1;
+  color: #333;
+}
+code.descname {
+  background: #EFFAF1;
+}
+
+h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
+  background: #EFFAF1;
+  border: none;
+}
+
+.alert-info a {
+    color: #00aa55;
+}
+.btn-primary {
+    background-color: #1e8bc3;
+    border-color: #1e8bc3;
+}
+.btn-primary.disabled,
+.btn-primary:disabled {
+    background-color: #1e8bc3;
+    border-color: #1e8bc3;
+}
+.btn-outline-primary {
+    color: #1e8bc3;
+    border-color: #1e8bc3;
+}
+.btn-outline-primary:hover {
+    background-color: #1e8bc3;
+    border-color: #1e8bc3;
+}
+.btn-outline-primary.disabled,
+.btn-outline-primary:disabled {
+    color: #1e8bc3;
+    background-color: transparent;
+}
+.btn-outline-primary:not(:disabled):not(.disabled).active,
+.btn-outline-primary:not(:disabled):not(.disabled):active,
+.show > .btn-outline-primary.dropdown-toggle {
+    background-color: #1e8bc3;
+    border-color: #1e8bc3;
+}
+.btn-link {
+    color: #1e8bc3;
+}
+.dropdown-item.active,
+.dropdown-item:active {
+    background-color: #1e8bc3;
+}
+.custom-control-input:checked ~ .custom-control-label:before {
+    border-color: #1e8bc3;
+    background-color: #1e8bc3;
+}
+.custom-checkbox .custom-control-input:indeterminate ~ .custom-control-label:before {
+    border-color: #1e8bc3;
+    background-color: #1e8bc3;
+}
+.custom-range::-webkit-slider-thumb {
+    background-color: #1e8bc3;
+}
+.custom-range::-moz-range-thumb {
+    background-color: #1e8bc3;
+}
+.custom-range::-ms-thumb {
+    background-color: #1e8bc3;
+}
+.nav-pills .show > .nav-link {
+    background-color: #1e8bc3;
+}
+.page-link {
+    color: #1e8bc3;
+}
+.page-item.active .page-link {
+    background-color: #1e8bc3;
+    border-color: #1e8bc3;
+}
+.badge-primary {
+    background-color: #1e8bc3;
+}
+.progress-bar {
+    background-color: #1e8bc3;
+}
+.list-group-item.active {
+    background-color: #1e8bc3;
+    border-color: #1e8bc3;
+}
+.bg-primary {
+    background-color: #1e8bc3 !important;
+}
+.border-primary {
+    border-color: #1e8bc3 !important;
+}
+.text-primary {
+    color: #1e8bc3 !important;
+}
+.admonition {
+    border-left: 0.2rem solid #1e8bc3;
+}
+.admonition .admonition-title:before {
+    color: #1e8bc3;
+}
+.admonition.important {
+    border-color: #1e8bc3;
+}
+.admonition.important .admonition-title:before {
+    color: #1e8bc3;
+}
+.admonition.note {
+    border-color: #1e8bc3;
+}
+.admonition.note .admonition-title:before {
+    color: #1e8bc3;
+}

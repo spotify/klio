@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
 # Copyright 2019 Spotify AB
-
-from __future__ import absolute_import
 
 import datetime
 import io
@@ -40,6 +37,7 @@ DEFAULTS = {
     "worker_machine_type": "n1-standard-2",
     "python_version": "3.6",
     "use_fnapi": True,
+    "create_resources": False,
 }
 
 
@@ -219,6 +217,7 @@ class CreateJob(object):
         else:
             use_fnapi = DEFAULTS["use_fnapi"]
 
+        create_resources = self._get_create_resources(kwargs)
         default_exps = DEFAULTS["experiments"].split(",")
         if not use_fnapi:
             default_exps = [e for e in default_exps if e != "beam_fn_api"]
@@ -304,9 +303,38 @@ class CreateJob(object):
             "job_options": job_context,
             "python_version": python_version,
             "use_fnapi": use_fnapi,
+            "create_resources": create_resources,
         }
 
         return context, create_dockerfile
+
+    def _get_create_resources(self, kwargs, user_input=False):
+        if "create_resources" in kwargs:
+            create_resources = kwargs.get("create_resources")
+            if create_resources:
+                create_resources = str(create_resources).lower() in (
+                    "y",
+                    "true",
+                    "yes",
+                )
+            else:  # then it was used as a flag
+                create_resources = True
+        else:
+            if user_input:
+                create_resources = click.prompt(
+                    "Create topics, buckets, and dashboards? [Y/n]",
+                    type=click.Choice(["y", "Y", "n", "N"]),
+                    default="n"
+                    if DEFAULTS["create_resources"] is False
+                    else "y",
+                    show_choices=False,
+                    show_default=False,  # shown in prompt
+                )
+                create_resources = create_resources.lower() == "y"
+            else:
+                create_resources = DEFAULTS["create_resources"]
+
+        return create_resources
 
     def _get_dependencies_from_user_inputs(self):
         dependencies = []
@@ -359,6 +387,8 @@ class CreateJob(object):
                 show_default=False,  # shown in prompt
             )
             use_fnapi = use_fnapi.lower() == "y"
+
+        create_resources = self._get_create_resources(kwargs, user_input=True)
 
         # TODO should this even be an option? run-job will break if so.
         # TODO: figure out if we should expose `experiments` to the user, or
@@ -523,6 +553,7 @@ class CreateJob(object):
             "job_options": job_context,
             "python_version": python_version,
             "use_fnapi": use_fnapi,
+            "create_resources": create_resources,
         }
         return context, create_dockerfile
 
@@ -597,8 +628,9 @@ class CreateJob(object):
         return parsed_args
 
     def _create_external_resources(self, context):
-        gcp_setup.create_topics_and_buckets(context)
-        gcp_setup.create_stackdriver_dashboard(context)
+        if context["create_resources"]:
+            gcp_setup.create_topics_and_buckets(context)
+            gcp_setup.create_stackdriver_dashboard(context)
 
     def create(self, unknown_args, known_kwargs, output_dir):
         unknown_args = self._parse_unknown_args(unknown_args)

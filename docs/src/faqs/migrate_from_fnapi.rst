@@ -9,7 +9,7 @@ sdks/python-pipeline-dependencies>`_.
 Below describes what changes need to be made to an existing job to move from the FnAPI to
 ``setup.py``.
 
-Creatig a new Klio job that does not use the FnAPI from the start via:
+Creating a new Klio job that does not use the FnAPI from the start via:
 
 .. code-block:: console
 

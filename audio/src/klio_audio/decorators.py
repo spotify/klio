@@ -24,7 +24,7 @@ def __is_method(obj):
     # we have to do this instead of inspect.ismethod since
     # it's not a "bounded" method, ie Foo.process (unbounded)
     # vs Foo().process (bounded)
-    args = inspect.getargspec(obj).args
+    args = inspect.getfullargspec(obj).args
     if args:
         return "self" == args[0]
     return False

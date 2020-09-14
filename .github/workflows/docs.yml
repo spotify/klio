@@ -28,8 +28,7 @@ jobs:
       - uses: "actions/checkout@v2"
       - uses: "actions/setup-python@v1"
         with:
-          # TODO: update 3.8 when we add support
-          python-version: "3.7"
+          python-version: "3.8"
       - name: "Install dependencies"
         run: |
           set -xe

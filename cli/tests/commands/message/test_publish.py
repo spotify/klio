@@ -55,7 +55,6 @@ def klio_job_config():
 @pytest.fixture
 def expected_klio_job(klio_job_config):
     klio_job = klio_pb2.KlioJob()
-    job_input = klio_job.JobInput()
     klio_job.job_name = "test-job"
     klio_job.gcp_project = "test-gcp-project"
     return klio_job
@@ -117,7 +116,9 @@ def test_get_current_klio_job(klio_job_config, expected_klio_job):
         (False, False, False, 2),
     ),
 )
-def test_create_pubsub_message(force, ping, top_down, version, expected_klio_job):
+def test_create_pubsub_message(
+    force, ping, top_down, version, expected_klio_job
+):
     entity_id = "s0m3-ent1ty-1D"
     expected_klio_message = klio_pb2.KlioMessage()
     expected_klio_message.metadata.force = force

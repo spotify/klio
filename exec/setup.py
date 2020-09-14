@@ -65,7 +65,8 @@ INSTALL_REQUIRES = [
     "klio-core>=0.2.0.alpha0",
     "klio>=0.2.0.alpha0",
     "pyyaml",
-    "apache-beam[gcp]",
+    # 2.22 added DirectRunner support for `DoFn.setup`
+    "apache-beam[gcp]>2.21.0",
     "setuptools",  # for loading entry points w pkg_resources
     "py",
     "pytest",

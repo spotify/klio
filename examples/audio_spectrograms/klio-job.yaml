@@ -1,0 +1,24 @@
+version: 2
+job_name: example-audio-spectrograms
+pipeline_options:
+  streaming: False
+  worker_harness_container_image: integration-klio-audio
+  project: fluffy-zelda-glitch-toki-kobe
+  runner: DirectRunner
+  setup_file: setup.py
+job_config:
+  events:
+    inputs:
+      - type: file
+        location: ./audio_ids.txt
+  data:
+    inputs:
+      - type: file
+        location: ./inputs
+        file_suffix: .ogg
+        ping: False
+    outputs:
+      - type: file
+        location: ./outputs
+        file_suffix: .png
+        force: False

@@ -9,3 +9,4 @@ FAQs
     consume_non_klio_messages
     publish_kmsgs_from_non_klio_job
     custom_proto_def
+    migrate_from_fnapi

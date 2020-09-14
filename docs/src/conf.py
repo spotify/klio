@@ -14,8 +14,8 @@ import codecs
 import os
 import re
 
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import sys
+sys.path.append(os.path.abspath("./_ext"))
 
 # -- Helper funcs
 
@@ -80,6 +80,7 @@ extensions = [
     "sphinx.ext.autodoc",  # auto-generate docs from docstrings
     "sphinx.ext.napoleon",  # handle Google-style docstrings
     "sphinx.ext.autosummary",  # auto-gen summaries
+    "collapsible_admon",  # custom extension from _ext dir
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -139,9 +140,10 @@ html_theme_options = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-html_css_files = ["css/custom.css"]  # relative to _static
+html_css_files = ["css/custom.css", "css/colors.css"]  # relative to _static
+html_js_files = ["js/custom.js"]  # relative to _static
 html_favicon = "_static/images/k_favicon.png"
-
+pygments_style = "vs"
 
 # -- Extention configuration
 
@@ -160,13 +162,7 @@ autodoc_default_options = {
 # -- intersphinx mapping
 # This will auto-generate links to Python's docs when referenced (e.g.
 # :func:`pdb.set_trace` will link to the set_trace docs)
-# Note: this won't work for Apache Beam because they generate the
-# python documentation per SDK version, and we probably shouldn't hard-link
-# to a specific version
-# Update ^: I emailed users@beam.apache.org and they're looking into it:
-# https://lists.apache.org/thread.html/r57a910d1689ace1c9067d2a702468325
-#         f6800626d82edef0a6d80961%40%3Cuser.beam.apache.org%3E
 intersphinx_mapping = {
     "https://docs.python.org/3": None,
-    "https://beam.apache.org/releases/pydoc/2.23.0/": None,
+    "https://beam.apache.org/releases/pydoc/current": None,
 }

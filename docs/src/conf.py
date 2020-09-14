@@ -157,6 +157,7 @@ todo_link_only = False
 autodoc_default_options = {
     "inherited-members": False,
 }
+autodoc_mock_imports = ["librosa", "numpy", "matplotlib"]
 
 
 # -- intersphinx mapping
@@ -165,4 +166,7 @@ autodoc_default_options = {
 intersphinx_mapping = {
     "https://docs.python.org/3": None,
     "https://beam.apache.org/releases/pydoc/current": None,
+    "https://librosa.org/doc/latest": None,
+    "https://numpy.org/doc/stable/": None,
+    "https://matplotlib.org/": None,
 }

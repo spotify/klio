@@ -1,13 +1,7 @@
 # Copyright 2020 Spotify AB
 """
-===============
-Define Pipeline
-===============
-
 Construction of the Klio-ified pipeline.
-
 """
-# sphinx_gallery_thumbnail_path = '_static/images/play.svg'
 
 import logging
 
@@ -30,12 +24,10 @@ def run(in_pcol, job_config):
         | audio.LoadAudio(offset=10, duration=5)
         | audio.GetSTFT()
     )
-
     # get magnitude of audio
     magnitude = (
         stft | "Get magnitude" >> beam.ParDo(transforms.GetMagnitude()).with_outputs()
     )
-
     # map the result to a key (the KlioMessage element)
     # so we can group all results by key
     magnitude_key = (
@@ -48,16 +40,13 @@ def run(in_pcol, job_config):
         | "Get nn filter" >> beam.ParDo(transforms.FilterNearestNeighbors())
         | "element to filter" >> beam.Map(transforms.create_key_from_element)
     )
-
     # map together the full magnitude with its filter by key  (the KlioMessage element)
     merge = (
         {"full": magnitude_key, "nnfilter": nn_filter}
         | "merge" >> beam.CoGroupByKey()
     )
-
     # calc the difference between full magnitude and the filter
     net = merge | beam.Map(transforms.subtract_filter_from_full)
-
     # create a mask from the filter minus the difference of full & filter
     first_mask = (
         {"first": nn_filter, "second": net, "full": magnitude_key}
@@ -70,7 +59,6 @@ def run(in_pcol, job_config):
         | "second mask group" >> beam.CoGroupByKey()
         | "second mask" >> beam.ParDo(transforms.GetSoftMask(margin=10))
     )
-
     # plot the full magnitude spectrogram
     magnitude_out = (
         magnitude.spectrogram
@@ -92,9 +80,10 @@ def run(in_pcol, job_config):
         | "plot forground spec" >> audio.SpecToPlot(title="Foreground Spectrogam for {element}", y_axis="log")
         | "save foreground" >> aio.GcsUploadPlot(suffix="-foreground")
     )
-
-    return (
+    # flatten all outputs into one PCollection, then remove duplicates
+    out_pcol = (
         (magnitude_out, background_out, foreground_out)
         | "flatten output paths" >> beam.Flatten()
         | "remove dups" >> beam.Distinct()
     )
+    return out_pcol

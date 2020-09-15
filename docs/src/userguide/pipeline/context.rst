@@ -1,4 +1,4 @@
-.. kliocontext:
+.. _kliocontext:
 
 The Klio Context
 ================

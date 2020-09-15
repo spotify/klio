@@ -73,3 +73,20 @@ div.admonition-collapsible > p.admonition-title.open:before {
   font-family: "Font Awesome 5 Free";
   content: "\f107";
 }
+
+/*
+  blockquote styling - because apparently pandas theme doesn't include it?
+  making it similar to how admonitions look.
+*/
+blockquote {
+  background: #f9f9f9;
+  border-left: .2em solid #ccc;
+  margin: 1.5625em auto;
+  padding: .1rem .6rem .1rem!important;
+  width: 95%;
+}
+
+blockquote p {
+  padding: 0 1.4rem;
+  margin-top: .4em;
+}

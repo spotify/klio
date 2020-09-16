@@ -1,9 +1,7 @@
 version: 2
 sphinx:
   configuration: docs/src/conf.py
-formats:
-  - pdf
-  - epub
+formats: all # formats key is actually about additional formats beyond HTML (whose generation is implied)
 python:
   # NOTE: Keep version in sync with gh-actions
   version: 3.7

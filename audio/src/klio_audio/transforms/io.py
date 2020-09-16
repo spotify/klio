@@ -15,10 +15,44 @@ from klio_audio.transforms import _base
 class GcsLoadBinary(_base.KlioAudioBaseDoFn):
     """Download binary file from GCS into memory.
 
-    This transform uses the job_config.data.inputs configuration in
-    a job's `klio-job.yaml` file.
+    This transform uses the ``job_config.data.inputs`` configuration in
+    a job's ``klio-job.yaml`` file.
 
-    Returns a file-like bytes object of the downloaded audio.
+    This transform uses Apache's native :class:`GCS client
+    <apache_beam.io.gcp.gcsio.GcsIO>` and expects a
+    :class:`PCollection <apache_beam.pvalue.PCollection>` of
+    :ref:`KlioMessages <klio-message>`, and  returns with a payload of the
+    downloaded binary as a file-like bytes object.
+
+    Example:
+
+    .. code-block:: python
+
+        # run.py
+        from klio_audio.transforms import audio
+        from klio_audio.transforms import io
+
+        def run(in_pcol, job_config):
+            return (
+                in_pcol
+                | io.GcsLoadBinary()
+                | audio.LoadAudio()
+                # other transforms
+            )
+
+    .. code-block:: yaml
+
+        # klio-job.yaml
+        # <-- snip -->
+        job_config:
+          events:
+            # <-- snip -->
+          data:
+            inputs:
+              - type: file
+                location: gs://my-bucket/input
+                file_suffix: .ogg
+              # <-- snip -->
     """
 
     def setup(self):
@@ -66,15 +100,57 @@ class GcsLoadBinary(_base.KlioAudioBaseDoFn):
 
 # TODO: handle multiple data outputs
 class GcsUploadPlot(_base.KlioAudioBaseDoFn):
-    """Upload matplotlib figure to GCS.
+    """Upload a matplotlib :class:`figure <matplotlib.figure.Figure>` to GCS.
 
-    This transform uses the job_config.data.outputs configuration in
-    a job's `klio-job.yaml` file.
+    This transform uses the ``job_config.data.outputs`` configuration in
+    a job's ``klio-job.yaml`` file.
 
-    Input should be a matplotlib.figure.Figure (i.e. the output of any
-    of the *Plot transforms in the klio_audio.transforms.audio module).
+    This transform wraps :class:`savefig <matplotlib.figure.Figure>` and
+    expects a :class:`PCollection <apache_beam.pvalue.PCollection>` of
+    :ref:`KlioMessages <klio-message>` where the payload is a
+    :class:`matplotlib.figure.Figure` and returns with a payload of the
+    uploaded file location as ``bytes``.
 
-    Returns the uploaded location as a bytestring.
+    Example:
+
+    .. code-block:: python
+
+        # run.py
+        from klio_audio.transforms import audio
+        from klio_audio.transforms import io
+
+        def run(in_pcol, job_config):
+            return (
+                in_pcol
+                | io.GcsLoadBinary()
+                | audio.LoadAudio()
+                | audio.GetSpec()
+                | audio.SpecToPlot()
+                | io.GcsUploadPlot()
+            )
+
+    .. code-block:: yaml
+
+        # klio-job.yaml
+        # <-- snip -->
+        job_config:
+          # <-- snip -->
+          data:
+            inputs:
+              # <-- snip -->
+            outputs:
+              - type: file
+                location: gs://my-bucket/output
+                file_suffix: .png
+
+    Args:
+        prefix (str): filename prefix. Default: ``""``
+        suffix (str): filename suffix. Default: ``""``
+        file_format (str): plot format (e.g. png). Defaults to the file
+            suffix as configured in
+            ``klio-job.yaml::job_config.data.outputs[].file_suffix``.
+        plt_kwargs (dict): keyword arguments to pass to
+            :class:`savefig <matplotlib.figure.Figure>`.
     """
 
     def __init__(self, prefix="", suffix="", file_format=None, **plt_kwargs):

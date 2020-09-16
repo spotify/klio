@@ -11,12 +11,39 @@ from klio_audio.transforms import _base
 
 
 class LoadAudio(_base.KlioAudioBaseDoFn):
-    """Load audio into memory as a numpy array.
+    """Load audio into memory as a :class:`numpy.ndarray`.
 
-    Input should be a file-like object or a path to a file.
+    This transform wraps :func:`librosa.load` takes in a :class:`PCollection
+    <apache_beam.pvalue.PCollection>` of :ref:`KlioMessages <klio-message>`
+    with the payload of the ``KlioMessage`` a file-like object or a path
+    to a file, and returns a ``PCollection`` of ``KlioMessages`` where the
+    payload is a :class:`numpy.ndarray`.
 
-    Returns a loaded audio file as a numpy array (a floating point
-    time series).
+    Example:
+
+    .. code-block:: python
+
+        # run.py
+        import apache_beam as beam
+        from klio.transforms import decorators
+        from klio_audio.transforms import audio
+
+        @decorators.handle_klio
+        def element_to_filename(ctx, data):
+            filename = data.element.decode("utf-8")
+            return f"file:///path/to/audio/{filename}.wav"
+
+        def run(in_pcol, job_config):
+            return (
+                in_pcol
+                | beam.Map(element_to_filename)
+                | audio.LoadAudio()
+                # other transforms
+            )
+
+    Args:
+        librosa_kwargs (dict): Instantiate the transform with keyword
+            arguments to pass into :func:`librosa.load`.
     """
 
     def __init__(self, *_, **librosa_kwargs):
@@ -34,7 +61,12 @@ class LoadAudio(_base.KlioAudioBaseDoFn):
 
 
 class GetSTFT(_base.KlioAudioBaseDoFn):
-    """Calculate Short-time Fourier transform from audio.
+    """Calculate Short-time Fourier transform from a :class:`numpy.ndarray`.
+
+    This transform wraps :func:`librosa.stft` and expects a :class:`PCollection
+    <apache_beam.pvalue.PCollection>` of :ref:`KlioMessages <klio-message>`
+    where the payload is a :class:`numpy.ndarray` and the output is the
+    same with the ``stft`` calculation applied.
 
     The Short-time Fourier transform (STFT) is a Fourier-related
     transform used to determine the sinusoidal frequency and phase
@@ -44,11 +76,32 @@ class GetSTFT(_base.KlioAudioBaseDoFn):
     whereas the standard Fourier transform provides the frequency
     information averaged over the entire signal time interval.
 
-    Input should be a loaded audio file as a numpy array (i.e. the
-    output of the `LoadAudio` transform).
+    Example:
 
-    Returns an numpy array of the complex-valued matrix of short-term
-    Fourier transform coefficients.
+    .. code-block:: python
+
+        # run.py
+        import apache_beam as beam
+        from klio.transforms import decorators
+        from klio_audio.transforms import audio
+
+        @decorators.handle_klio
+        def element_to_filename(ctx, data):
+            filename = data.element.decode("utf-8")
+            return f"file:///path/to/audio/{filename}.wav"
+
+        def run(in_pcol, job_config):
+            return (
+                in_pcol
+                | beam.Map(element_to_filename)
+                | audio.LoadAudio()
+                | audio.GetSTFT
+                # other transforms
+            )
+
+    Args:
+        librosa_kwargs (dict): Instantiate the transform with keyword
+            arguments to pass into :func:`librosa.stft`.
     """
 
     def __init__(self, *_, **librosa_kwargs):
@@ -67,15 +120,42 @@ class GetSTFT(_base.KlioAudioBaseDoFn):
 
 
 class GetSpec(_base.KlioAudioBaseDoFn):
-    """Generate a spectrogram from audio.
+    """Generate a dB-scaled spectrogram from a :class:`numpy.ndarray`.
 
-    A spectrogram shows the the intensity of frequencies over time, and
-    is just the squared magnitude of the STFT.
+    This transform wraps :func:`librosa.amplitude_to_db` and expects a
+    :class:`PCollection <apache_beam.pvalue.PCollection>` of
+    :ref:`KlioMessages <klio-message>` where the payload is a
+    :class:`numpy.ndarray` and the output is the same with the ``amplitude_to_
+    db`` function applied.
 
-    Input should be the STFT of an audio file as a numpy array (i.e. the
-    output of the `GetSTFT` transform).
+    A spectrogram shows the the intensity of frequencies over time.
 
-    Returns an numpy array of the computed spectrogram of the given audio.
+    Example:
+
+    .. code-block:: python
+
+        # run.py
+        import apache_beam as beam
+        from klio.transforms import decorators
+        from klio_audio.transforms import audio
+
+        @decorators.handle_klio
+        def element_to_filename(ctx, data):
+            filename = data.element.decode("utf-8")
+            return f"file:///path/to/audio/{filename}.wav"
+
+        def run(in_pcol, job_config):
+            return (
+                in_pcol
+                | beam.Map(element_to_filename)
+                | audio.LoadAudio()
+                | audio.GetSpec()
+                # other transforms
+            )
+
+    Args:
+        librosa_kwargs (dict): Instantiate the transform with keyword
+            arguments to pass into :func:`librosa.amplitude_to_db`.
     """
 
     def __init__(self, *_, **librosa_kwargs):
@@ -95,18 +175,45 @@ class GetSpec(_base.KlioAudioBaseDoFn):
 
 
 class GetMelSpec(_base.KlioAudioBaseDoFn):
-    """Generate a spectrogram from audio using the mel scale.
+    """Generate a spectrogram from a :class:`numpy.ndarray` using the mel scale.
+
+    This transform wraps :func:`librosa.feature.melspectrogram` and expects a
+    :class:`PCollection <apache_beam.pvalue.PCollection>` of
+    :ref:`KlioMessages <klio-message>` where the payload is a
+    :class:`numpy.ndarray` and the output is the same with the
+    ``melspectrogram`` function applied.
 
     The mel scale is a non-linear transformation of frequency scale
     based on the perception of pitches. The mel scale is calculated so
     that two pairs of frequencies separated by a delta in the mel scale
     are perceived by humans as being equidistant.
 
-    Input should be a loaded audio file as a numpy array (i.e. the
-    output of the `LoadAudio` transform).
+    Example:
 
-    Returns an numpy array of the computed mel spectrogram of the given
-    audio.
+    .. code-block:: python
+
+        # run.py
+        import apache_beam as beam
+        from klio.transforms import decorators
+        from klio_audio.transforms import audio
+
+        @decorators.handle_klio
+        def element_to_filename(ctx, data):
+            filename = data.element.decode("utf-8")
+            return f"file:///path/to/audio/{filename}.wav"
+
+        def run(in_pcol, job_config):
+            return (
+                in_pcol
+                | beam.Map(element_to_filename)
+                | audio.LoadAudio()
+                | audio.GetMelSpec()
+                # other transforms
+            )
+
+    Args:
+        librosa_kwargs (dict): Instantiate the transform with keyword
+            arguments to pass into :func:`librosa.feature.melspectrogram`.
     """
 
     def __init__(self, *_, **librosa_kwargs):
@@ -125,18 +232,45 @@ class GetMelSpec(_base.KlioAudioBaseDoFn):
 
 
 class GetMFCC(_base.KlioAudioBaseDoFn):
-    """Calculate MFCCs from audio.
+    """Calculate MFCCs from a :class:`numpy.ndarray`.
+
+    This transform wraps :func:`librosa.power_to_db` followed by
+    :func:`librosa.feature.mfcc` and expects a :class:`PCollection
+    <apache_beam.pvalue.PCollection>` of :ref:`KlioMessages <klio-message>`
+    where the payload is a :class:`numpy.ndarray` and the output is the same
+    with the ``mfcc`` function applied.
 
     The Mel frequency cepstral coefficients (MFCCs) of a signal are
     a small set of features (usually about 10–20) which describe the
     overall shape of a spectral envelope. It's is often used to describe
     timbre or model characteristics of human voice.
 
-    Input should be a loaded audio file as a numpy array (i.e. the
-    output of the `LoadAudio` transform).
+    Example:
 
-    Returns an numpy array of the computed MFCC sequence of the given
-    audio.
+    .. code-block:: python
+
+        # run.py
+        import apache_beam as beam
+        from klio.transforms import decorators
+        from klio_audio.transforms import audio
+
+        @decorators.handle_klio
+        def element_to_filename(ctx, data):
+            filename = data.element.decode("utf-8")
+            return f"file:///path/to/audio/{filename}.wav"
+
+        def run(in_pcol, job_config):
+            return (
+                in_pcol
+                | beam.Map(element_to_filename)
+                | audio.LoadAudio()
+                | audio.GetMFCC()
+                # other transforms
+            )
+
+    Args:
+        librosa_kwargs (dict): Instantiate the transform with keyword
+            arguments to pass into :func:`librosa.feature.mfcc`.
     """
 
     def __init__(self, *_, **librosa_kwargs):
@@ -159,13 +293,44 @@ class GetMFCC(_base.KlioAudioBaseDoFn):
 
 
 class SpecToPlot(_base.KlioPlotBaseDoFn):
-    """Generate a matplotlib figure of the spectrogram of audio.
+    """Generate a matplotlib figure of the spectrogram of a
+    :class:`numpy.ndarray`.
 
-    Input should be a generated spectrogram as a numpy array (i.e. the
-    output of the `GetSpec` transform).
+    This transform wraps :func:`librosa.display.specshow` and expects a
+    :class:`PCollection <apache_beam.pvalue.PCollection>` of
+    :ref:`KlioMessages <klio-message>` where the payload is a
+    :class:`numpy.ndarray` of a spectrogram and the output is a
+    :class:`matplotlib.figure.Figure` instance.
 
-    Returns a matplotlib.figure.Figure of the mel spectrogram of the given
-    audio.
+    Example:
+
+    .. code-block:: python
+
+        # run.py
+        import apache_beam as beam
+        from klio.transforms import decorators
+        from klio_audio.transforms import audio
+
+        @decorators.handle_klio
+        def element_to_filename(ctx, data):
+            filename = data.element.decode("utf-8")
+            return f"file:///path/to/audio/{filename}.wav"
+
+        def run(in_pcol, job_config):
+            return (
+                in_pcol
+                | beam.Map(element_to_filename)
+                | audio.LoadAudio()
+                | audio.GetSpec()
+                | audio.SpecToPlot()
+                # other transforms
+            )
+
+    Args:
+        title (str): Title of spectrogram plot. Default: ``Spectrogram of
+            {KlioMessage.data.element}``.
+        plot_args (dict): keyword arguments to pass to
+            :func:`librosa.display.specshow`.
     """
 
     DEFAULT_TITLE = "Spectrogram of {element}"
@@ -180,13 +345,45 @@ class SpecToPlot(_base.KlioPlotBaseDoFn):
 
 
 class MelSpecToPlot(_base.KlioPlotBaseDoFn):
-    """Generate a matplotlib figure of the mel spectrogram of audio.
+    """Generate a matplotlib figure of the mel spectrogram of a
+    a :class:`numpy.ndarray`.
 
-    Input should be a generated mel spectrogram as a numpy array (i.e. the
-    output of the `GetMelSpec` transform).
+    This transform wraps :func:`librosa.power_to_db` followed by
+    :func:`librosa.display.specshow` and expects a
+    :class:`PCollection <apache_beam.pvalue.PCollection>` of
+    :ref:`KlioMessages <klio-message>` where the payload is a
+    :class:`numpy.ndarray` of a melspectrogram and the output is a
+    :class:`matplotlib.figure.Figure` instance.
 
-    Returns a matplotlib.figure.Figure of the mel spectrogram of the given
-    audio.
+    Example:
+
+    .. code-block:: python
+
+        # run.py
+        import apache_beam as beam
+        from klio.transforms import decorators
+        from klio_audio.transforms import audio
+
+        @decorators.handle_klio
+        def element_to_filename(ctx, data):
+            filename = data.element.decode("utf-8")
+            return f"file:///path/to/audio/{filename}.wav"
+
+        def run(in_pcol, job_config):
+            return (
+                in_pcol
+                | beam.Map(element_to_filename)
+                | audio.LoadAudio()
+                | audio.GetMelSpec()
+                | audio.SpecToPlot()
+                # other transforms
+            )
+
+    Args:
+        title (str): Title of spectrogram plot. Default: ``Mel-freqency
+            Spectrogram of {KlioMessage.data.element}``.
+        plot_args (dict): keyword arguments to pass to
+            :func:`librosa.display.specshow`.
     """
 
     DEFAULT_TITLE = "Mel-frequency Spectrogram of {element}"
@@ -203,13 +400,43 @@ class MelSpecToPlot(_base.KlioPlotBaseDoFn):
 
 
 class MFCCToPlot(_base.KlioPlotBaseDoFn):
-    """Generate a matplotlib figure of the MFCCs of audio.
+    """Generate a matplotlib figure of the MFCCs as a :class:`numpy.ndarray`.
 
-    Input should be the MFCCs of an audio as a numpy array (i.e. the
-    output of the `GetMFCC` transform).
+    This transform wraps :func:`librosa.display.specshow` and expects a
+    :class:`PCollection <apache_beam.pvalue.PCollection>` of
+    :ref:`KlioMessages <klio-message>` where the payload is a
+    :class:`numpy.ndarray` of the MFCCs of an audio and the output is a
+    :class:`matplotlib.figure.Figure` instance.
 
-    Returns a matplotlib.figure.Figure of the MFCC sequence of the given
-    audio.
+    Example:
+
+    .. code-block:: python
+
+        # run.py
+        import apache_beam as beam
+        from klio.transforms import decorators
+        from klio_audio.transforms import audio
+
+        @decorators.handle_klio
+        def element_to_filename(ctx, data):
+            filename = data.element.decode("utf-8")
+            return f"file:///path/to/audio/{filename}.wav"
+
+        def run(in_pcol, job_config):
+            return (
+                in_pcol
+                | beam.Map(element_to_filename)
+                | audio.LoadAudio()
+                | audio.GetMFCC()
+                | audio.MFCCToPlot()
+                # other transforms
+            )
+
+    Args:
+        title (str): Title of spectrogram plot. Default: ``MFCCs of
+            {KlioMessage.data.element}``.
+        plot_args (dict): keyword arguments to pass to
+            :func:`librosa.display.specshow`.
     """
 
     DEFAULT_TITLE = "MFCCs of {element}"
@@ -223,13 +450,44 @@ class MFCCToPlot(_base.KlioPlotBaseDoFn):
 
 
 class WaveformToPlot(_base.KlioAudioBaseDoFn):
-    """Generate a matplotlib figure of the wave form of audio.
+    """Generate a matplotlib figure of the wave form of a
+    :class:`numpy.ndarray`.
 
-    Input should be a loaded audio file as a numpy array (i.e. the
-    output of the `LoadAudio` transform).
+    This transform wraps :func:`librosa.display.waveplot` and expects a
+    :class:`PCollection <apache_beam.pvalue.PCollection>` of
+    :ref:`KlioMessages <klio-message>` where the payload is a
+    :class:`numpy.ndarray` of a loaded audio file the output is a
+    :class:`matplotlib.figure.Figure` instance.
 
-    Returns a matplotlib.figure.Figure of the wave form of the given
-    audio.
+    Example:
+
+    .. code-block:: python
+
+        # run.py
+        import apache_beam as beam
+        from klio.transforms import decorators
+        from klio_audio.transforms import audio
+
+        @decorators.handle_klio
+        def element_to_filename(ctx, data):
+            filename = data.element.decode("utf-8")
+            return f"file:///path/to/audio/{filename}.wav"
+
+        def run(in_pcol, job_config):
+            return (
+                in_pcol
+                | beam.Map(element_to_filename)
+                | audio.LoadAudio()
+                | audio.WaveformToPlot()
+                # other transforms
+            )
+
+    Args:
+        num_samples (int): Number of samples to plot. Default: ``5000``.
+        title (str): Title of spectrogram plot. Default: ``Waveplot of
+            {KlioMessage.data.element}``.
+        plot_args (dict): keyword arguments to pass to
+            :func:`librosa.display.waveplot`.
     """
 
     DEFAULT_TITLE = "Waveplot of {element}"

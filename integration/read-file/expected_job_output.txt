@@ -1,5 +1,5 @@
 INFO:root:Found worker image: integration-test-klio-read-file-write-file:read-file
-/usr/src/app/transforms.py:12: KlioFutureWarning: 'handle_klio' is experimental and is subject to incompatible changes, or removal in a future release of Klio.
+/usr/src/app/transforms.py:25: KlioFutureWarning: 'handle_klio' is experimental and is subject to incompatible changes, or removal in a future release of Klio.
   @decorators.handle_klio
 INFO:klio:Hello, Klio!
 INFO:klio:Received element b'0nQLxiNGbbUoSGrxksETLm'

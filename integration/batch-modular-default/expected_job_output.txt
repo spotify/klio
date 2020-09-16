@@ -1,5 +1,5 @@
 INFO:root:Found worker image: integration-batch-modular-default:batch-modular-default
-/usr/src/app/transforms.py:9: KlioFutureWarning: 'handle_klio' is experimental and is subject to incompatible changes, or removal in a future release of Klio.
+/usr/src/app/transforms.py:22: KlioFutureWarning: 'handle_klio' is experimental and is subject to incompatible changes, or removal in a future release of Klio.
   @decorators.handle_klio
 INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/battleclip_daq.wav
 INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/callout_Turn-Table.wav

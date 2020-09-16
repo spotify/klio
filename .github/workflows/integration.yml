@@ -58,5 +58,5 @@ jobs:
         run: "KLIO_TEST_DIR=${{ matrix.test-dir }} python -m tox -c tox.ini"
       - name: "Assert Apache License Headers & Copyright"
         run: |
-          pip install apache-license-headers
-          apache-license-headers --include-empty --copyright "Spotify AB"
+          pip install apache-license-check
+          apache-license-check --include-empty --copyright "Spotify AB"

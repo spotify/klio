@@ -41,3 +41,7 @@ jobs:
         run: "sphinx-build -n -T -W -b html -d build/doctrees src src/html"
       - name: "Check broken links"
         run: "sphinx-build -n -T -W -b linkcheck -d build/docstrees src src/linkcheck"
+      - name: "Assert Apache License Headers & Copyright"
+        run: |
+          pip install apache-license-check
+          apache-license-check --include-empty --copyright "Spotify AB"

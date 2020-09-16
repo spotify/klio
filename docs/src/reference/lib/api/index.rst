@@ -5,10 +5,11 @@ API
    :maxdepth: 1
    :hidden:
 
-   decorators
-   helpers
-   io
-   core
+   transforms/decorators
+   transforms/helpers
+   transforms/io
+   transforms/core
+   metrics/index
 
 
 ``klio.transforms`` Module
@@ -76,3 +77,4 @@ Core
     :nosignatures:
 
     core.KlioContext
+

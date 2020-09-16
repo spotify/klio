@@ -174,6 +174,7 @@ autodoc_default_options = {
     "inherited-members": False,
 }
 autodoc_mock_imports = ["librosa", "numpy", "matplotlib"]
+autodoc_member_order = "bysource"
 
 
 # -- intersphinx mapping

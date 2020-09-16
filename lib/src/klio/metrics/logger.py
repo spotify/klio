@@ -13,14 +13,16 @@
 # limitations under the License.
 #
 """
-Klio ships with a default klio.metrics.base.AbstractMetricRelay
-implementation, which outputs metrics via the standard library `logging`
-module through the MetricsLoggerClient below.
+Klio ships with a default :class:`klio.metrics.base.AbstractRelayClient`
+implementation, which outputs metrics via the standard library ``logging``
+module through the :class:`MetricsLoggerClient` below.
 
 This implementation is used by default if no other metrics consumers are
 configured. It must be explicitly turned off.
 
-The default configuration in `klio-info.yaml` can be overriden:
+The default configuration in ``klio-info.yaml`` can be overriden:
+
+.. code-block:: yaml
 
     job_config:
         metrics:
@@ -33,6 +35,8 @@ The default configuration in `klio-info.yaml` can be overriden:
                 timer_unit: s
 
 To turn off logging-based metrics:
+
+.. code-block:: yaml
 
     job_config
         metrics:
@@ -55,9 +59,22 @@ TIMER_UNIT_MAP = {
     "ms": "ms",
     "s": "s",
 }
+"""Map of supported measurement units to shorthand for :class:`LoggerTimer`.
+"""
 
 
 class MetricsLoggerClient(base.AbstractRelayClient):
+    """Logging client for transform metrics.
+
+    Intended to be instantiated by :class:`klio.metrics.client.MetricsRegistry`
+    and not by itself.
+
+    Args:
+        klio_config (klio_core.config.KlioConfig):  the job's configuration.
+        disabled (bool): whether or not to disable the Python ``logger``
+            Default: ``False``.
+    """
+
     RELAY_CLIENT_NAME = "logger"
     DEFAULT_LEVEL = logging.DEBUG
     DEFAULT_TIME_UNIT = "ns"
@@ -91,6 +108,9 @@ class MetricsLoggerClient(base.AbstractRelayClient):
 
     @property
     def logger(self):
+        """Python logger associated with the job which this client will use
+        to emit metrics.
+        """
         klio_metrics_logger = getattr(
             self._thread_local, "klio_metrics_logger", None
         )
@@ -105,7 +125,8 @@ class MetricsLoggerClient(base.AbstractRelayClient):
 
         Args:
             metric (LoggerMetric): logger-specific metrics object
-        Returns a dict of `metric`.
+        Returns:
+            dict(str, str): metric data
         """
         return {
             "name": metric.name,
@@ -126,7 +147,7 @@ class MetricsLoggerClient(base.AbstractRelayClient):
         )
 
     def counter(self, name, value=0, transform=None, tags=None, **kwargs):
-        """Create a LoggerCounter object.
+        """Create a :class:`LoggerCounter` object.
 
         Args:
             name (str): name of counter
@@ -135,14 +156,15 @@ class MetricsLoggerClient(base.AbstractRelayClient):
             tags (dict): any tags of additional contextual information
                 to associate with the counter
 
-        Returns an instance of LoggerCounter
+        Returns:
+            LoggerCounter: a log-based counter
         """
         return LoggerCounter(
             name=name, value=value, transform=transform, tags=tags
         )
 
     def gauge(self, name, value=0, transform=None, tags=None, **kwargs):
-        """Create a LoggerGauge object.
+        """Create a :class:`LoggerGauge` object.
 
         Args:
             name (str): name of gauge
@@ -151,7 +173,8 @@ class MetricsLoggerClient(base.AbstractRelayClient):
             tags (dict): any tags of additional contextual information
                 to associate with the gauge
 
-        Returns an instance of LoggerGauge
+        Returns:
+            LoggerGauge: a log-based gauge
         """
         return LoggerGauge(
             name=name, value=value, transform=transform, tags=tags
@@ -166,7 +189,7 @@ class MetricsLoggerClient(base.AbstractRelayClient):
         timer_unit=None,
         **kwargs
     ):
-        """Create a LoggerTimer object.
+        """Create a :class:`LoggerTimer` object.
 
         Args:
             name (str): name of timer
@@ -178,7 +201,8 @@ class MetricsLoggerClient(base.AbstractRelayClient):
                 in `klio-job.yaml`, or "ns". See module-level docs of
                 `klio.metrics.logger` for supported values.
 
-        Returns an instance of LoggerTimer
+        Returns:
+            LoggerTimer: a log-based timer
         """
         if timer_unit:
             # Note: this should probably have better validation if it does
@@ -197,6 +221,15 @@ class MetricsLoggerClient(base.AbstractRelayClient):
 
 
 class LoggerMetric(base.BaseMetric):
+    """Base metric type for loggers.
+
+    Args:
+        name (str): name of counter
+        value (int): initial value. Default: ``0``.
+        transform (str): Name of transform associated with metric, if any.
+        tags (dict): Tags to associate with metric.
+    """
+
     LOGGER_METRIC_TAGS = None
     DEFAULT_LOG_FORMAT = (
         "[{name}] value: {value} transform: '{transform}' tags: {tags}"
@@ -211,14 +244,46 @@ class LoggerMetric(base.BaseMetric):
 
 
 class LoggerCounter(LoggerMetric):
+    """Log-based counter metric.
+
+    Args:
+        name (str): name of counter
+        value (int): initial value. Default: ``0``.
+        transform (str): Name of transform associated with counter, if any.
+        tags (dict): Tags to associate with counter. Note:
+            ``{"metric_type": "counter"}`` will always be an included tag.
+    """
+
     LOGGER_METRIC_TAGS = {"metric_type": "counter"}
 
 
 class LoggerGauge(LoggerMetric):
+    """Log-based gauge metric.
+
+    Args:
+        name (str): name of gauge
+        value (int): initial value. Default: ``0``.
+        transform (str): Name of transform associated with gauge, if any.
+        tags (dict): Tags to associate with gauge. Note:
+            ``{"metric_type": "gauge"}`` will always be an included tag.
+    """
+
     LOGGER_METRIC_TAGS = {"metric_type": "gauge"}
 
 
 class LoggerTimer(LoggerMetric):
+    """Log-based timer metric.
+
+    Args:
+        name (str): name of timer
+        value (int): initial value. Default: ``0``.
+        transform (str): Name of transform associated with timer, if any.
+        tags (dict): Tags to associate with timer. Note:
+            ``{"metric_type": "timer"}`` will always be an included tag.
+        timer_unit (str): Unit of measurement. Options: :attr:`TIMER_UNIT_MAP`.
+            Default: ``ns`` (nanoseconds).
+    """
+
     LOGGER_METRIC_TAGS = {"metric_type": "timer"}
 
     def __init__(

@@ -16,15 +16,18 @@
 Klio ships with a Stackdriver Log-based Metrics relay client. The client
 creates metrics objects in Stackdriver Monitoring based off of filters in
 Stackdriver Logging. For more information on Stackdriver's Log-based Metrics,
-see https://cloud.google.com/logging/docs/logs-based-metrics/.
+see `related documentation <https://cloud.google.com/logging/docs/
+logs-based-metrics/>`_.
 
 When running on Dataflow, the client is on by default with no additional
-configuration needed. This must be actively turned off in `klio-job.yaml`
+configuration needed. This must be actively turned off in ``klio-job.yaml``
 if not wanted (see below).
 
 The log-based metrics client is not available for direct runner.
 
-To explicitly turn off log-based metrics, in `klio-job.yaml`:
+To explicitly turn off log-based metrics, in ``klio-job.yaml``:
+
+.. code-block:: yaml
 
     job_config:
       metrics:
@@ -40,6 +43,15 @@ from klio.metrics import logger
 
 
 class StackdriverLogMetricsClient(logger.MetricsLoggerClient):
+    """Stackdriver client for transform metrics.
+
+    Intended to be instantiated by :class:`klio.metrics.client.MetricsRegistry`
+    and not by itself.
+
+    Args:
+        klio_config (klio_core.config.KlioConfig):  the job's configuration.
+    """
+
     RELAY_CLIENT_NAME = "stackdriver_logger"
 
     def __init__(self, klio_config):
@@ -58,6 +70,22 @@ class StackdriverLogMetricsClient(logger.MetricsLoggerClient):
     # get a list of metrics first and use any already-available metrics
     # to create metrics objects
     def counter(self, name, transform=None, tags=None, **kwargs):
+        """Create a :class:`StackdriverLogMetricsCounter` object.
+
+        .. note::
+
+            Stackdriver counts loglines so initializing a
+            counter value is not supported .
+
+        Args:
+            name (str): name of counter
+            transform (str): transform the counter is associated with
+            tags (dict): any tags of additional contextual information
+                to associate with the counter
+
+        Returns:
+            StackdriverLogMetricsCounter: a log-based counter
+        """
         # Since stackdriver literally counts loglines, initializing a
         # counter value is not supported
         if kwargs.get("value", 0) > 0:
@@ -77,6 +105,23 @@ class StackdriverLogMetricsClient(logger.MetricsLoggerClient):
         return ctr
 
     def gauge(self, *args, **kwargs):
+        """Create a :class:`StackdriverLogMetricsGauge` object.
+
+        .. warning::
+
+            Gauges for Stackdriver are not yet supported. This will
+            default to standard logging.
+
+        Args:
+            name (str): name of gauge
+            value (int): starting value of gauge; defaults to 0
+            transform (str): transform the gauge is associated with
+            tags (dict): any tags of additional contextual information
+                to associate with the gauge
+
+        Returns:
+            StackdriverLogMetricsGauge: a log-based gauge
+        """
         self.logger.log(
             logging.WARNING,
             "Gauge is not supported for Stackdriver log-based metrics, "
@@ -85,6 +130,23 @@ class StackdriverLogMetricsClient(logger.MetricsLoggerClient):
         return StackdriverLogMetricsGauge(*args, **kwargs)
 
     def timer(self, *args, **kwargs):
+        """Create a :class:`StackdriverLogMetricsTimer` object.
+
+        .. warning::
+
+            Timers for Stackdriver are not yet supported. This will
+            default to standard logging.
+
+        Args:
+            name (str): name of gauge
+            value (int): starting value of gauge; defaults to 0
+            transform (str): transform the gauge is associated with
+            tags (dict): any tags of additional contextual information
+                to associate with the gauge
+
+        Returns:
+            StackdriverLogMetricsTimer: a log-based timer
+        """
         self.logger.log(
             logging.WARNING,
             "Timer is not supported for Stackdriver log-based metrics, "
@@ -94,6 +156,22 @@ class StackdriverLogMetricsClient(logger.MetricsLoggerClient):
 
 
 class StackdriverLogMetricsCounter(logger.LoggerCounter):
+    """Stackdriver log-based counter metric.
+
+    .. note::
+
+        Stackdriver counts loglines so initializing a counter value is
+        not supported .
+
+    Args:
+        name (str): name of counter
+        job_name (str): name of Dataflow job
+        project (str): name of GCP project associated with Dataflow job
+        transform (str): Name of transform associated with counter, if any.
+        tags (dict): Tags to associate with counter. Note:
+            ``{"metric_type": "counter"}`` will always be an included tag.
+    """
+
     # NOTE: The in-memory value (as kept track in the metric Dispatchers) may
     # be greater than 1, but it doesn't mean anything because:
     # 1. log-based counters in SD count the number log lines, and does not
@@ -196,6 +274,8 @@ class StackdriverLogMetricsCounter(logger.LoggerCounter):
                 "Error creating metric '{}': {}".format(self.name, e),
                 exc_info=True,
             )
+
+    # including method for documentation purposes
 
 
 class StackdriverLogMetricsGauge(logger.LoggerGauge):

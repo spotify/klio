@@ -18,6 +18,8 @@ A dispatcher provides one single metric instance that will then interface
 with all configured relay clients for that particular metric time. For
 example:
 
+.. code-block:: python
+
     relay_clients = [
         klio.metrics.logger.MetricsLoggerClient(config),
         some_other_relay_client,
@@ -25,9 +27,9 @@ example:
     my_counter = CounterDispatcher(relay_clients, name="my-counter")
     my_counter.inc()
 
-Creating the `my_counter` instance will create two relay counter
+Creating the ``my_counter`` instance will create two relay counter
 instances, each specific to each of the relay clients configured.
-Calling `inc()` on `my_counter` will then call `emit` on each relay
+Calling ``inc()`` on ``my_counter`` will then call ``emit`` on each relay
 counter instance where each relay client will take care of its own
 emit logic.
 """
@@ -73,6 +75,7 @@ class BaseMetricDispatcher(object):
 
     @property
     def logger(self):
+        """Python logger associated with metric dispatcher."""
         klio_metrics_dispatcher_logger = getattr(
             self._thread_local, "klio_metrics_dispatcher_logger", None
         )
@@ -90,6 +93,7 @@ class BaseMetricDispatcher(object):
             self.logger.warning(msg)
 
     def submit(self, emit, metric):
+        """Emit metrics via a threadpool."""
         fut = self._thread_pool.submit(emit, metric)
 
         fut.metric_key = self.metric_key  # for easy identifying
@@ -170,12 +174,16 @@ class TimerDispatcher(BaseMetricDispatcher):
 
     This may be used by instantiating and manually calling start & stop:
 
+    .. code-block:: python
+
         timer = TimerDispatcher(relay_clients, name)
         timer.start()
         # code to time
         timer.stop()
 
     Or as a context manager:
+
+    .. code-block:: python
 
         with TimerDispatcher(relay_clients, name):
             # code to time
@@ -224,12 +232,7 @@ class TimerDispatcher(BaseMetricDispatcher):
         ]
 
     def start(self):
-        """Start the timer.
-
-        Note: this uses `timeit.default_timer`, which is `time.perf_counter`
-        for Python 3.3 or later, and `time.time` for earlier versions of
-        Python.
-        """
+        """Start the timer."""
         self._start_time = timeit.default_timer()
 
     def stop(self):

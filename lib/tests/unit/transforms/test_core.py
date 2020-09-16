@@ -13,12 +13,7 @@
 # limitations under the License.
 #
 
-import os
-
 import pytest
-import yaml
-
-from klio_core import config
 
 from klio.metrics import logger as logger_metrics
 from klio.metrics import stackdriver as sd_metrics
@@ -97,47 +92,6 @@ def test_klio_metrics(
         assert isinstance(actual_relay, exp_clients)
         if isinstance(actual_relay, logger_metrics.MetricsLoggerClient):
             assert exp_logger_enabled is not actual_relay.disabled
-
-
-@pytest.mark.parametrize("exists", (True, False))
-def test_load_config_from_file(exists, config_dict, mocker, monkeypatch):
-    monkeypatch.setattr(os.path, "exists", lambda x: exists)
-
-    klio_yaml_file = "/usr/src/config/.effective-klio-job.yaml"
-    if not exists:
-        klio_yaml_file = "/usr/lib/python/site-packages/klio/klio-job.yaml"
-        mock_iglob = mocker.Mock()
-        mock_iglob.return_value = iter([klio_yaml_file])
-        monkeypatch.setattr(core_transforms.glob, "iglob", mock_iglob)
-
-    open_name = "klio.transforms.core.open"
-    config_str = yaml.dump(config_dict)
-    m_open = mocker.mock_open(read_data=config_str)
-    m = mocker.patch(open_name, m_open)
-
-    klio_ns = core_transforms.KlioContext()
-
-    klio_config = klio_ns._load_config_from_file()
-
-    m.assert_called_once_with(klio_yaml_file, "r")
-    assert isinstance(klio_config, config.KlioConfig)
-    if not exists:
-        mock_iglob.assert_called_once_with(
-            "/usr/**/klio-job.yaml", recursive=True
-        )
-
-
-def test_load_config_from_file_raises(config_dict, mocker, monkeypatch):
-    monkeypatch.setattr(os.path, "exists", lambda x: False)
-
-    mock_iglob = mocker.Mock()
-    mock_iglob.return_value = iter([])
-    monkeypatch.setattr(core_transforms.glob, "iglob", mock_iglob)
-
-    klio_ns = core_transforms.KlioContext()
-
-    with pytest.raises(IOError):
-        klio_ns._load_config_from_file()
 
 
 @pytest.mark.parametrize("thread_local_ret", (True, False))

@@ -14,19 +14,21 @@
 #
 
 import collections
-import hashlib
 import logging
 import os
 
 import click
 import yaml
 
+# WARNING: be careful with what is imported here.  Any decorators that read
+# config cannot be imported here (even transitively) since they will attempt to
+# read the config object before it exists.
+from klio.transforms import core as klio_transforms_core
 from klio_core import config
 from klio_core import options as core_options
 
 from klio_exec import options
 from klio_exec.commands import audit
-from klio_exec.commands import run
 from klio_exec.commands import stop
 
 
@@ -54,25 +56,9 @@ def _get_config(config_path):
         raise SystemExit(1)
 
 
+# TODO : remove this when the call in spotify-klio is removed
 def _compare_runtime_to_buildtime_config(runtime_config_path):
-    buildtime_config_path = "/usr/src/config/.effective-klio-job.yaml"
-    # to maintain backwards compatibility with klio lib < 0.0.18
-    if not os.path.exists(buildtime_config_path):
-        return True
-
-    # use the same hash algo as docker
-    runtime_hasher = hashlib.sha256()
-    buildtime_hasher = hashlib.sha256()
-
-    with open(runtime_config_path, "rb") as rt_conf:
-        buff = rt_conf.read()
-        runtime_hasher.update(buff)
-
-    with open(buildtime_config_path, "rb") as bt_conf:
-        buff = bt_conf.read()
-        buildtime_hasher.update(buff)
-
-    return buildtime_hasher.hexdigest() == runtime_hasher.hexdigest()
+    return True
 
 
 @main.command("run")
@@ -85,23 +71,20 @@ def run_pipeline(image_tag, direct_runner, update, config_file, blocking):
     config_path = config_file or "klio-job.yaml"
     config_data = _get_config(config_path)
 
-    # Prompt user to continue if runtime config file is not the same as
-    # the buildtime config file. Do this after _get_config since that
-    # will prompt the user if their config file doesn't even exist first.
-    if _compare_runtime_to_buildtime_config(config_path) is False:
-        msg = (
-            "The Klio config file '{}' at runtime differs from the config "
-            "file used when building this Docker image. If this is unexpected "
-            "behavior, please double check your runtime config, or rebuild "
-            "your Docker image with the correct config file."
-        )
-        logging.warning(msg.format(config_path))
-
     if direct_runner:
         config_data["pipeline_options"]["runner"] = "direct"
 
     job_name = config_data["job_name"]
     conf_obj = config.KlioConfig(config_data)
+
+    # RunConfig ensures config is pickled and sent to worker.  Note this
+    # depends on save_main_session being True
+    klio_transforms_core.RunConfig.set(conf_obj)
+
+    # This can only be imported after RunConfig is set since it will end up
+    # importing classes that may (or do) attempt to read it
+    from klio_exec.commands import run
+
     if update is None:  # if it's not explicitly set in CLI, look at config
         update = conf_obj.pipeline_options.update
     if blocking is None:  # if it's not explicitly set in CLI, look at config
@@ -133,6 +116,14 @@ def test_job(pytest_args):
     """
     import os
     import pytest
+
+    config_path = "klio-job.yaml"
+    config_data = _get_config(config_path)
+    conf_obj = config.KlioConfig(config_data)
+
+    # RunConfig ensures config is pickled and sent to worker.  Note this
+    # depends on save_main_session being True
+    klio_transforms_core.RunConfig.set(conf_obj)
 
     # NOTE: we assume that test_job is the only method called in this
     # subprocess, so setting KLIO_TEST_MODE will not impact subsequent

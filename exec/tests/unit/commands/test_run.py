@@ -126,19 +126,6 @@ def _config():
     return mock_config
 
 
-# NOTE: Python decorators are evaluated on import, and so importing
-# `klio_exec.commands.run` (which imports `klio.transforms.helpers`,
-# which imports `klio.transforms.decorators`) triggers the  code in those
-# decorators to get evaluated. Therefore, we must patch this part in
-# order to import it, otherwise it will try to load the non-existant
-# `/usr/src/config/.effective-klio-job.yaml`
-mock_config = _config()
-patcher = mock.patch(
-    "klio.transforms.core.KlioContext._load_config_from_file",
-    lambda x: mock_config,
-)
-patcher.start()
-
 from klio_exec.commands import run  # noqa E402
 
 

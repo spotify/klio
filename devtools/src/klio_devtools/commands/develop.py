@@ -42,6 +42,7 @@ class DevelopKlioContainer(base.BaseDockerizedPipeline):
         self.install_pkgs = [
             pkg for pkg in self.PKGS if pkg not in exclude_pkgs
         ]
+        self.requires_config_file = False
 
     def _run_docker_container(self, runflags):
         """

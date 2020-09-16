@@ -15,9 +15,12 @@
 
 import logging
 import os
+import tempfile
 
 import docker
+import yaml
 
+from klio_cli.commands.job import configuration
 from klio_cli.utils import docker_utils
 
 
@@ -28,14 +31,20 @@ class BaseDockerizedPipeline(object):
     CONTAINER_GCP_CRED_PATH = os.path.join("/usr", GCP_CRED_FILE)
     CONTAINER_JOB_DIR = "/usr/src/app"
     DOCKER_LOGGER_NAME = "klio.base_docker_pipeline"
+    # path where the temp config-file is mounted into klio-exec's container
+    MATERIALIZED_CONFIG_PATH = "/usr/src/config/materialized_config.yaml"
 
     def __init__(self, job_dir, klio_config, docker_runtime_config):
         self.job_dir = job_dir
-        # TODO: this should be KlioConfig object
         self.klio_config = klio_config
         self.docker_runtime_config = docker_runtime_config
         self._docker_client = None
         self._docker_logger = self._get_docker_logger()
+
+        # if this is set to true, running the command will generate a temp file
+        # and mount it to the container
+        self.requires_config_file = True
+        self.materialized_config_file = None
 
     @property
     def _full_image_name(self):
@@ -82,7 +91,7 @@ class BaseDockerizedPipeline(object):
         host_cred_path = os.path.join(
             os.environ.get("HOME"), BaseDockerizedPipeline.HOST_GCP_CRED_PATH
         )
-        return {
+        volumes = {
             host_cred_path: {
                 "bind": BaseDockerizedPipeline.CONTAINER_GCP_CRED_PATH,
                 "mode": "rw",  # Fails if no write access
@@ -93,15 +102,33 @@ class BaseDockerizedPipeline(object):
             },
         }
 
+        if self.materialized_config_file is not None:
+            volumes[self.materialized_config_file.name] = {
+                "bind": BaseDockerizedPipeline.MATERIALIZED_CONFIG_PATH,
+                "mode": "rw",
+            }
+
+        return volumes
+
     def _get_command(self, *args, **kwargs):
         raise NotImplementedError
+
+    def _add_base_args(self, command):
+        if self.requires_config_file:
+            command.extend(
+                [
+                    "--config-file",
+                    BaseDockerizedPipeline.MATERIALIZED_CONFIG_PATH,
+                ]
+            )
+        return command
 
     def _get_docker_runflags(self, *args, **kwargs):
         return {
             "image": self._full_image_name,
             # overwrite fnapi image entrypoint
             "entrypoint": self.ENTRYPOINT,
-            "command": self._get_command(*args, **kwargs),
+            "command": self._add_base_args(self._get_command(*args, **kwargs)),
             # mount klio code
             "volumes": self._get_volumes(),
             "environment": self._get_environment(),
@@ -149,10 +176,24 @@ class BaseDockerizedPipeline(object):
                 )
             )
 
+    def _write_effective_config(self):
+        if self.requires_config_file:
+            self.materialized_config_file = tempfile.NamedTemporaryFile(
+                prefix="/tmp/", mode="w", delete=False
+            )
+            yaml.dump(
+                self.klio_config._raw,
+                stream=self.materialized_config_file,
+                Dumper=configuration.IndentListDumper,
+                default_flow_style=False,
+                sort_keys=False,
+            )
+
     def run(self, *args, **kwargs):
         # bail early
         self._check_gcp_credentials_exist()
         self._check_docker_setup()
+        self._write_effective_config()
 
         self._setup_docker_image()
         runflags = self._get_docker_runflags(*args, **kwargs)

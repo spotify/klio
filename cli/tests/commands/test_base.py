@@ -72,6 +72,13 @@ def mock_docker_client(mocker):
 
 
 @pytest.fixture
+def mock_materialized_config_file(mocker):
+    mock = mocker.Mock()
+    mock.name = "test-config"
+    return mock
+
+
+@pytest.fixture
 def base_pipeline(
     klio_config,
     docker_runtime_config,
@@ -108,6 +115,10 @@ def expected_volumes():
             "mode": "rw",
         },
         "/test/dir/jobs/test_run_job": {"bind": "/usr/src/app", "mode": "rw"},
+        "test-config": {
+            "bind": base.BaseDockerizedPipeline.MATERIALIZED_CONFIG_PATH,
+            "mode": "rw",
+        },
     }
 
 
@@ -136,7 +147,18 @@ def test_get_environment(base_pipeline, expected_envs):
     assert expected_envs == base_pipeline._get_environment()
 
 
-def test_get_volumes(base_pipeline, expected_volumes):
+def test_get_volumes(
+    base_pipeline,
+    expected_volumes,
+    mocker,
+    monkeypatch,
+    mock_materialized_config_file,
+):
+    monkeypatch.setattr(
+        base_pipeline,
+        "materialized_config_file",
+        mock_materialized_config_file,
+    )
     assert expected_volumes == base_pipeline._get_volumes()
 
 
@@ -145,16 +167,42 @@ def test_get_command(base_pipeline):
         base_pipeline._get_command()
 
 
+@pytest.mark.parametrize("requires_config", (False, True))
 def test_get_docker_runflags(
-    base_pipeline, expected_volumes, expected_envs, mocker, monkeypatch
+    base_pipeline,
+    expected_volumes,
+    expected_envs,
+    mocker,
+    monkeypatch,
+    requires_config,
+    mock_materialized_config_file,
 ):
     mock_get_command = mocker.Mock(return_value=["command"])
     monkeypatch.setattr(base_pipeline, "_get_command", mock_get_command)
 
+    base_pipeline.requires_config_file = requires_config
+
+    expected_command = ["command"]
+
+    if requires_config:
+        monkeypatch.setattr(
+            base_pipeline,
+            "materialized_config_file",
+            mock_materialized_config_file,
+        )
+        expected_command.extend(
+            [
+                "--config-file",
+                base.BaseDockerizedPipeline.MATERIALIZED_CONFIG_PATH,
+            ]
+        )
+    else:
+        expected_volumes.pop("test-config")
+
     exp_runflags = {
         "image": "test-image:foo-123",
         "entrypoint": "klioexec",
-        "command": ["command"],
+        "command": expected_command,
         "volumes": expected_volumes,
         "environment": expected_envs,
         "detach": True,

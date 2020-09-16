@@ -13,19 +13,31 @@
 # limitations under the License.
 #
 
-import glob
+import __main__
 import logging
-import os
 import threading
 
-import yaml
-
-from klio_core import config
 from klio_core.proto import klio_pb2
 
 from klio.metrics import client as metrics_client
 from klio.metrics import logger as metrics_logger
 from klio.metrics import stackdriver
+
+
+class RunConfig(object):
+    @staticmethod
+    def get():
+        if hasattr(__main__, "run_config"):
+            return __main__.run_config
+        else:
+            raise Exception(
+                "Attempt to access RunConfig before it was set. This likely"
+                " means something was imported before RunConfig was set."
+            )
+
+    @staticmethod
+    def set(config):
+        __main__.run_config = config
 
 
 class KlioContext(object):
@@ -40,24 +52,6 @@ class KlioContext(object):
 
     def __init__(self):
         self.__transform_name = None
-
-    def _load_config_from_file(self):
-        # [Klio v2] this may get expensive, to always be reading config
-        # from a file. Can this be replaced by something in memory
-        # that's also globally accessible?
-        klio_job_file = "/usr/src/config/.effective-klio-job.yaml"
-        # for backwards compatibility, and user is using setup.py and we
-        # have to find it somewhere...
-        if not os.path.exists(klio_job_file):
-            # use iterator so we don't waste time searching everywhere upfront
-            files = glob.iglob("/usr/**/klio-job.yaml", recursive=True)
-            for f in files:
-                klio_job_file = f
-                # only grab the first one
-                break
-        with open(klio_job_file, "r") as f:
-            all_config_data = yaml.safe_load(f)
-        return config.KlioConfig(all_config_data)
 
     def _create_klio_job_obj(self):
         klio_job = klio_pb2.KlioJob()
@@ -117,11 +111,7 @@ class KlioContext(object):
 
     @property
     def config(self):
-        """A ``KlioConfig`` instance representing the job's configuration."""
-        klio_config = getattr(self._thread_local, "klio_config", None)
-        if not klio_config:
-            self._thread_local.klio_config = self._load_config_from_file()
-        return self._thread_local.klio_config
+        return RunConfig.get()
 
     @property
     def job(self):

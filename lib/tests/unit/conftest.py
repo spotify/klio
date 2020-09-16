@@ -104,7 +104,6 @@ def mock_config(mocker, monkeypatch):
     mock_data_input.skip_klio_existence_check = True
     mconfig.job_config.data.inputs = [mock_data_input]
     monkeypatch.setattr(
-        "klio.transforms.core.KlioContext._load_config_from_file",
-        lambda x: mconfig,
+        "klio.transforms.core.RunConfig.get", lambda: mconfig,
     )
     return mconfig

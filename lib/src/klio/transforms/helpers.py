@@ -86,7 +86,6 @@ class KlioFilterForce(
         yield pvalue.TaggedOutput(tagged_state.value, kmsg.SerializeToString())
 
 
-# TODO: define a helper transform that can trigger parents of a streaming job.
 class KlioWriteToEventOutput(beam.PTransform):
     """Klio composite transform to write to the configured event output."""
 
@@ -363,3 +362,230 @@ class KlioSetTrace(beam.PTransform):
 
     def expand(self, pipeline):
         return pipeline | beam.Map(self.set_trace)
+
+
+class KlioTriggerUpstream(beam.PTransform):
+    """Trigger upstream job from current job with a given ``KlioMessage``.
+
+    This transform will update the intended recipients in ``KlioMessage.
+    metadata`` in order to trigger a partial :ref:`bottom-up execution
+    <bottom-up>` of the overall graph of jobs. It will also generate a log
+    message (optional), then publish the ``KlioMessage`` to the upstream's
+    Pub/Sub topic.
+
+    .. caution::
+
+        Klio does not automatically trigger upstream jobs if input data does
+        not exist. It must be used manually within a job's pipeline definition
+        (in ``run.py::run``).
+
+    .. note::
+
+        In order to get access to input data not found, the automatic data
+        existence check that Klio does must be turned off by setting
+        ``klio-job.yaml::job_config.data.inputs[].skip_klio_existence_check``
+        to ``True``. Then the existence check must be invoked manually. See
+        example ``run.py`` and ``klio-job.yaml`` files below.
+
+    Example usage:
+
+    .. code-block:: python
+
+        import apache_beam as beam
+        from klio.transforms import helpers
+        import transforms
+
+        def run(input_pcol, config):
+            # use the default helper transform to do the default input check
+            # in order to access the output tagged with `not_found`
+            input_data = input_pcol | helpers.KlioGcsCheckInputExists()
+
+            # Pipe the input data that was not found (using Tagged Outputs)
+            # into `KlioTriggerUpstream` in order to update the KlioMessage
+            # metadata, log it, then publish to upstream's
+            _ = input_data.not_found | helpers.KlioTriggerUpstream(
+                upstream_job_name="my-upstream-job",
+                upstream_topic="projects/my-gcp-project/topics/upstream-topic",
+                log_level="DEBUG",
+            )
+
+            # pipe the found input pcollection into transform(s) as needed
+            output_pcol = input_data.found | beam.ParDo(MyTransform())
+            return output_pcol
+
+    .. code-block:: yaml
+        :emphasize-lines: 7,23
+
+        # Example klio-job.yaml
+        version: 2
+        job_name: my-job
+        pipeline_options:
+          project: my-gcp-project
+          # `KlioTriggerUpstream` only supports streaming jobs
+          streaming: True
+          # <-- snip -->
+        job_config:
+          events:
+            inputs:
+              - type: pubsub
+                topic: projects/my-gcp-project/topics/upstream-topic-output
+                subscription: projects/my-gcp-project/subscriptions/my-job-in
+            # <-- snip -->
+          data:
+            inputs:
+              - type: gcs
+                location: gs://my-gcp-project/upstream-output-data
+                file_suffix: .ogg
+                # Be sure to skip Klio's default input existence check in
+                # order to access the input data that was not found.
+                skip_klio_existence_check: True
+
+    Args:
+        upstream_job_name (str): Name of upstream job.
+        upstream_topic (str): Pub/Sub topic for the upstream job, in the
+            form of ``project/<GCP_PROJECT>/topics/<TOPIC_NAME>``.
+        log_level (str, int, or None): The desired log level for log message,
+            or ``None`` if no logging is desired. See `available log levels
+            <https://docs.python.org/3/library/logging.html#levels>`_ for
+            what's supported. Default: ``"INFO"``.
+
+    Raises:
+        SystemExit: If the current job is not in streaming mode (set
+            in `klio-job.yaml::pipeline_options.streaming`), if the
+            provided log level is not recognized, or if the provided
+            upstream topic is not in the correct form.
+    """
+
+    @decorators._set_klio_context
+    def __init__(self, upstream_job_name, upstream_topic, log_level="INFO"):
+        if self._klio.config.pipeline_options.streaming is False:
+            # Fail early
+            self._klio.logger.error(
+                "The `KlioTriggerUpstreams` transform is only available for "
+                "jobs in streaming mode."
+            )
+            raise SystemExit(1)
+
+        self.upstream_job_name = upstream_job_name
+        self.upstream_topic = upstream_topic
+        self.upstream_gcp_project = self._get_project_from_topic()
+        self.log_level = self._get_log_level(log_level)
+
+    def _get_project_from_topic(self):
+        stems = self.upstream_topic.split("/")
+        if len(stems) != 4:
+            # Fail early
+            self._klio.logger.error(
+                "The provided upstream topic for `KlioTriggerUpstream` is "
+                "expected in the form of 'project/<GCP_PROJECT>/topics/"
+                "<TOPIC_NAME>'. Received '{}'.".format(self.upstream_topic)
+            )
+            raise SystemExit(1)
+        return stems[1]
+
+    def _get_log_level(self, log_level):
+        if log_level is None:
+            return log_level
+
+        if isinstance(log_level, (str, int)):
+            # save to a different variable so we don't alter it for the error
+            # log message below
+            _log_level = log_level
+            if isinstance(_log_level, str):
+                _log_level = _log_level.upper()
+
+            level = logging.getLevelName(_log_level)
+            if isinstance(level, int):
+                return level
+
+            # getLevelName will create a level if it doesn't recognize it (wtf)
+            # so let's check if it actually exists
+            ret = getattr(logging, level, None)
+            if ret is not None:
+                return ret
+        self._klio.logger.error(
+            "Unrecognized log level '{}' for `KlioTriggerUpstream`.".format(
+                log_level
+            )
+        )
+        raise SystemExit(1)
+
+    def _generate_upstream_job_object(self):
+        upstream_job = klio_pb2.KlioJob()
+        upstream_job.job_name = self.upstream_job_name
+        upstream_job.gcp_project = self.upstream_gcp_project
+        return upstream_job
+
+    def default_label(self):
+        # Will be overwritten when invoked with a custom label, i.e.
+        # `"Some Label" >> KlioTriggerUpstream(...)`
+        return "{}(upstream={})".format(
+            self.__class__.__name__, self.upstream_job_name
+        )
+
+    @decorators._set_klio_context
+    def _generate_current_job_object(self):
+        job = klio_pb2.KlioJob()
+        job.job_name = self._klio.config.job_name
+        job.gcp_project = self._klio.config.pipeline_options.project
+        return job
+
+    @decorators._set_klio_context
+    def update_kmsg_metadata(self, raw_kmsg):
+        """Update KlioMessage to enable partial bottom-up execution.
+
+        Args:
+            raw_kmsg (bytes): Unserialized KlioMessage
+        Returns:
+            bytes: KlioMessage deserialized to ``bytes`` with updated intended
+                recipients metadata.
+        """
+        # Use `serializer.to_klio_message` instead of @handle_klio in order to
+        # get the full KlioMessage object (not just the data).
+        kmsg = serializer.to_klio_message(
+            raw_kmsg, kconfig=self._klio.config, logger=self._klio.logger
+        )
+
+        # Make sure upstream job doesn't skip the message
+        upstream_job = self._generate_upstream_job_object()
+        lmtd = kmsg.metadata.intended_recipients.limited
+        lmtd.recipients.extend([upstream_job])
+
+        # Assign the current job to `trigger_children_of` so that top-down
+        # execution resumes after this job is done.
+        current_job = self._generate_current_job_object()
+        lmtd.recipients.extend([current_job])
+        lmtd.trigger_children_of.CopyFrom(current_job)
+        return serializer.from_klio_message(kmsg)
+
+    @decorators._handle_klio
+    def log(self, data):
+        """Log KlioMessage being published to upstream job.
+
+        Args:
+            data (klio_core.proto.KlioMessage.data): data of ``KlioMessage``.
+        Returns:
+            klio_core.proto.KlioMessage.data: unchanged data of
+                ``KlioMessage``.
+        """
+        element = data.element.decode("utf-8")
+        msg = "Triggering upstream {} for {}".format(
+            self.upstream_job_name, element
+        )
+        self._klio.logger.log(self.log_level, msg)
+        return data
+
+    def expand(self, pcoll):
+        name = self.upstream_job_name
+        lbl1 = "Update KlioMessage for Upstream {}".format(name)
+        lbl2 = "Log Triggering Upstream {}".format(name)
+        lbl3 = "Publish KlioMessage to Upstream {}".format(name)
+
+        updated_kmsg = pcoll | lbl1 >> beam.Map(self.update_kmsg_metadata)
+
+        if self.log_level is not None:
+            _ = updated_kmsg | lbl2 >> beam.Map(self.log)
+
+        return updated_kmsg | lbl3 >> beam.io.WriteToPubSub(
+            topic=self.upstream_topic
+        )

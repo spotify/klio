@@ -1,25 +1,10 @@
 # Copyright 2020 Spotify AB
 
-from unittest import mock
-
 import pytest
 
 from klio_core.proto import klio_pb2
 
 from klio.transforms import decorators
-
-
-# The most helper transforms end up calling config attributes, so
-# we'll just patch the config for the whole test module and turn on
-# autouse
-@pytest.fixture(autouse=True, scope="module")
-def mock_config():
-    config = mock.Mock()
-    patcher = mock.patch(
-        "klio.transforms.core.KlioContext._load_config_from_file",
-        lambda x: config,
-    )
-    patcher.start()
 
 
 @pytest.fixture
@@ -29,7 +14,7 @@ def kmsg():
     return msg
 
 
-def test_retry(kmsg, mocker):
+def test_retry(kmsg, mocker, mock_config):
     mock_function = mocker.Mock()
 
     @decorators._handle_klio
@@ -43,7 +28,7 @@ def test_retry(kmsg, mocker):
     assert 2 == mock_function.call_count
 
 
-def test_retry_custom_catch(kmsg, mocker):
+def test_retry_custom_catch(kmsg, mocker, mock_config):
 
     # Assert retry on custom exception
     class CustomCatchException(Exception):
@@ -88,7 +73,7 @@ def test_retry_custom_catch(kmsg, mocker):
     assert 1 == mock_function.call_count
 
 
-def test_retry_raises_runtime_parents(kmsg, mocker):
+def test_retry_raises_runtime_parents(kmsg, mocker, mock_config):
     # Need to call @retry with parens
     with pytest.raises(RuntimeError):
 
@@ -103,7 +88,9 @@ def test_retry_raises_runtime_parents(kmsg, mocker):
 @pytest.mark.parametrize(
     "invalid_tries", (-2, 0.5, "1", {"a": "dict"}, ["a", "list"], lambda x: x)
 )
-def test_retry_raises_runtime_invalid_tries(invalid_tries, kmsg, mocker):
+def test_retry_raises_runtime_invalid_tries(
+    invalid_tries, kmsg, mocker, mock_config
+):
     # Assert `tries` as a valid integer
     with pytest.raises(RuntimeError):
 
@@ -118,7 +105,9 @@ def test_retry_raises_runtime_invalid_tries(invalid_tries, kmsg, mocker):
 @pytest.mark.parametrize(
     "invalid_delay", (-2, {"a": "dict"}, ["a", "list"], lambda x: x)
 )
-def test_retry_raises_runtime_invalid_delay(invalid_delay, kmsg, mocker):
+def test_retry_raises_runtime_invalid_delay(
+    invalid_delay, kmsg, mocker, mock_config
+):
     # Assert `delay` as a valid int/float
     with pytest.raises(RuntimeError):
 

@@ -77,3 +77,23 @@ def config_dict(job_config_dict, pipeline_config_dict):
 @pytest.fixture
 def klio_config(config_dict):
     return config.KlioConfig(config_dict)
+
+
+@pytest.fixture
+def mock_config(mocker, monkeypatch):
+    mconfig = mocker.Mock(name="MockKlioConfig")
+    mconfig.job_name = "a-job"
+    mconfig.pipeline_options.streaming = True
+    mconfig.pipeline_options.project = "not-a-real-project"
+
+    mock_data_input = mocker.Mock(name="MockDataGcsInput")
+    mock_data_input.type = "gcs"
+    mock_data_input.location = "gs://hopefully-this-bucket-doesnt-exist"
+    mock_data_input.file_suffix = ""
+    mock_data_input.skip_klio_existence_check = True
+    mconfig.job_config.data.inputs = [mock_data_input]
+    monkeypatch.setattr(
+        "klio.transforms.core.KlioContext._load_config_from_file",
+        lambda x: mconfig,
+    )
+    return mconfig

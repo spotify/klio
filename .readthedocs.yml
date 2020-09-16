@@ -1,6 +1,9 @@
 version: 2
 sphinx:
   configuration: docs/src/conf.py
+formats:
+  - pdf
+  - epub
 python:
   # NOTE: Keep version in sync with gh-actions
   version: 3.7

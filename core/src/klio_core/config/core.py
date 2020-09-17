@@ -257,7 +257,10 @@ class KlioPipelineConfig(object):
     streaming = utils.field(type=bool, default=True)
 
     # debug options
-    experiments = utils.field(default=["beam_fn_api"])
+    # TODO: add validation - if job is instreaming mode and no setup.py,
+    # then config must use the "beam_fn_api" experiment (we could also just
+    # automatically put it in there)
+    experiments = utils.field(default=[])
 
     # setup options
     sdk_location = utils.field(type=str, default=None)

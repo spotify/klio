@@ -47,7 +47,12 @@ class DevelopKlioContainer(base.BaseDockerizedPipeline):
                 self.PIP_CMD.format(pkg=pkg), tty=True, stream=True
             )
             for line in output:
-                self._docker_logger.info(line.decode("utf-8").strip("\n"))
+                try:
+                    self._docker_logger.info(line.decode("utf-8").strip("\n"))
+                except Exception:
+                    # sometimes there's a decode error for a log line, but it
+                    # shouldn't stop the setup
+                    pass
 
         # need to use lower-level Docker API client in order to start
         # an interactive terminal inside the running container

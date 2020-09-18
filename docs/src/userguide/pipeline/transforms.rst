@@ -103,6 +103,7 @@ to label output as either ``pass_thru`` or ``process``.
 
             out_pcoll = ping_pcoll.process | "Process Data" >> MyPrcessTransform()
 
+.. _filter-force:
 
 ``KlioFilterForce``
 """""""""""""""""""

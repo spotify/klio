@@ -1,5 +1,5 @@
-Metrics
-=======
+``klio.metrics`` Subpackage
+===========================
 
 .. toctree::
    :maxdepth: 1
@@ -11,9 +11,7 @@ Metrics
    dispatcher
    base
 
-
-``klio.metrics`` Subpackage
----------------------------
+.. automodule:: klio.metrics
 
 
 :doc:`client`

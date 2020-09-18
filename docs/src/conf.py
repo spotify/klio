@@ -128,6 +128,12 @@ nitpick_ignore = [
     # <-- nitpick drom beam.io.ReadFromText
     ("py:class", "ReadFromText"),
     # -->
+    # <-- nitpick docstrings that reference other Klio objects that are
+    # not yet documented
+    ("py:class", "klio_core.config.KlioConfig"),
+    ("py:class", "klio_core.proto.klio_pb2.KlioMessage"),
+    ("py:exc", "klio_core.proto.klio_pb2._message.DecodeError"),
+    # -->
 ]
 
 # sphinx-build -b linkcheck will error out if links in docstrings are broken,

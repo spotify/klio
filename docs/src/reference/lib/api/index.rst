@@ -7,6 +7,7 @@ API
 
    Transforms <transforms/index>
    Metrics <metrics/index>
+   Message <message/index>
 
 
 Subpackages
@@ -18,3 +19,4 @@ Subpackages
 
     transforms
     metrics
+    message

@@ -78,6 +78,7 @@ REQUIREMENTS_COMMANDS = [
         # --index-url will not work on Dataflow, but `--extra-index-url` will
         "--requirement",
         "job-requirements.txt",  # Must also be included in MANIFEST.in
+        "--use-feature=2020-resolver",
     ]
 ]
 

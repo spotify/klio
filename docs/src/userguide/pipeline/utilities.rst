@@ -316,3 +316,37 @@ otherwise configured, a method or function decorated by ``@retry`` will be retri
                 self._klio.logger.info(f"Received {item.element}")
                 ...
 
+
+.. _profile:
+
+``@profile``
+^^^^^^^^^^^^
+
+:func:`@profile <klio.transforms.decorators.profile>` will mark the decorated
+method or function for profiling.  This is used in conjunction with the ``klio
+job profile`` commands to selectively profile parts of your pipeline.  This
+decorator can be added to any function or method, but when using with other
+Klio decorators such as ``@handle_klio`` it **must** be the last decorator
+applied.
+
+When running/testing a job normally and not profiling, this decorator has no
+effect.
+
+.. code-block:: python
+
+    @handle_klio
+    @profile
+    def my_map_func(ctx, item):
+        ctx.logger.info(f"Received {item.element} with {item.payload}")
+
+    class MyDoFn(beam.DoFn):
+        @handle_klio
+        @profile
+        def process(self, item):
+            self._klio.logger.info(
+                f"Received {item.element} with {item.payload}"
+            )
+
+    @profile
+    def my_nonklio_map_func(item):
+        print(f"Received {item}!")

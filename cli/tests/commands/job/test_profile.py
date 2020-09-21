@@ -105,7 +105,6 @@ def test_get_environment(monkeypatch, project, config_data, klio_pipeline):
     gcreds = "/usr/gcloud/application_default_credentials.json"
     exp_envs = {
         "PYTHONPATH": "/usr/src/app",
-        "KLIO_TEST_MODE": "true",
         "GOOGLE_APPLICATION_CREDENTIALS": gcreds,
         "USER": "cookiemonster",
     }

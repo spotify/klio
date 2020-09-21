@@ -9,3 +9,4 @@ Decorators
 .. autodecorator:: set_klio_context()
 .. autodecorator:: inject_klio_context()
 .. autodecorator:: serialize_klio_message()
+.. autodecorator:: profile()

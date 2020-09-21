@@ -22,7 +22,7 @@ except ImportError:  # pragma: no cover
     # https://stackoverflow.com/a/34583958/1579977
     import matplotlib
 
-    matplotlib.use("TkAgg")
+    matplotlib.use("agg")
     import matplotlib.pyplot as plt
 import numpy as np
 

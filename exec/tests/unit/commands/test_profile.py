@@ -21,8 +21,13 @@ from klio_exec.commands import profile as profile_cmd
 
 
 @pytest.fixture
-def klio_pipeline():
-    return profile_cmd.KlioPipeline()
+def config(mocker):
+    return mocker.Mock()
+
+
+@pytest.fixture
+def klio_pipeline(config):
+    return profile_cmd.KlioPipeline(config)
 
 
 class DummyTransformGenerator(object):
@@ -48,27 +53,6 @@ def transforms():
         DummyTransformFunc,
         DummyTransformFuncRaises,
     ]
-
-
-# TODO: temporary! remove me once profiling is supported for v2
-if hasattr(profile_cmd.klio_transforms, "KlioBaseDoFn"):
-
-    class AKlioClass(profile_cmd.klio_transforms.KlioBaseDoFn):
-        def input_data_exists(self, *args, **kwargs):
-            pass
-
-        def output_data_exists(self, *args, **kwargs):
-            pass
-
-
-else:
-
-    class AKlioClass(object):
-        pass
-
-
-class ANonKlioClass(object):
-    pass
 
 
 @pytest.mark.parametrize("filename", (None, "-", "input.txt"))
@@ -161,59 +145,19 @@ def test_get_subproc(
     mock_subproc_open.assert_called_once_with(exp_call_args)
 
 
-@pytest.mark.parametrize("get_maximum", (True, False))
-def test_wrap_memory_per_line(
-    get_maximum, klio_pipeline, transforms, mocker, monkeypatch
-):
-    mock_wrap_per_element = mocker.Mock()
-    kprof_cls = profile_cmd.memory_utils.KMemoryLineProfiler
-    monkeypatch.setattr(kprof_cls, "wrap_per_element", mock_wrap_per_element)
-    mock_wrap_maximum = mocker.Mock()
-    monkeypatch.setattr(kprof_cls, "wrap_maximum", mock_wrap_maximum)
-
-    wrapped_transforms = list(
-        klio_pipeline._wrap_memory_per_line(
-            transforms, get_maximum=get_maximum
-        )
-    )
-
-    for txf in wrapped_transforms:
-        process_method = getattr(txf, "process")
-        assert process_method is not None
-        if get_maximum:
-            assert process_method == mock_wrap_maximum.return_value
-        else:
-            assert process_method == mock_wrap_per_element.return_value
-
-
-def test_wrap_wall_time(klio_pipeline, transforms, mocker, monkeypatch):
-    mock_prof = mocker.Mock()
-    monkeypatch.setattr(klio_pipeline, "_prof", mock_prof)
-
-    wrapped_transforms = list(klio_pipeline._wrap_wall_time(transforms))
-
-    for txf in wrapped_transforms:
-        process_method = getattr(txf, "process")
-        assert process_method == mock_prof.return_value
-
-
 @pytest.mark.parametrize("output_file", (None, "output.txt"))
 def test_profile_wall_time_per_line(
-    output_file, klio_pipeline, transforms, mocker, monkeypatch
+    output_file, klio_pipeline, mocker, monkeypatch
 ):
     monkeypatch.setattr(klio_pipeline, "output_file", output_file)
     mock_line_prof = mocker.Mock()
-    monkeypatch.setattr(profile_cmd.cpu_utils, "KLineProfiler", mock_line_prof)
-    mock_wrap_wall_time = mocker.Mock()
-    monkeypatch.setattr(klio_pipeline, "_wrap_wall_time", mock_wrap_wall_time)
+    monkeypatch.setattr(
+        klio_pipeline, "_get_cpu_line_profiler", mock_line_prof
+    )
     mock_run_pipeline = mocker.Mock()
     monkeypatch.setattr(klio_pipeline, "_run_pipeline", mock_run_pipeline)
 
-    klio_pipeline._profile_wall_time_per_line(transforms, iterations=1)
-
-    assert klio_pipeline._prof == mock_line_prof.return_value
-
-    mock_wrap_wall_time.assert_called_once_with(transforms)
+    klio_pipeline._profile_wall_time_per_line(iterations=1)
 
     if output_file:
         mock_line_prof.return_value.print_stats.assert_called_once_with(
@@ -227,39 +171,45 @@ def test_profile_wall_time_per_line(
 
 @pytest.mark.parametrize("get_maximum,exp_fmode", ((True, "w"), (False, "a")))
 def test_profile_memory_per_line(
-    get_maximum, exp_fmode, klio_pipeline, transforms, mocker, monkeypatch
+    get_maximum, exp_fmode, klio_pipeline, mocker, monkeypatch
 ):
-    mock_prof = mocker.Mock()
+
+    mock_memory_profiler = mocker.Mock()
     monkeypatch.setattr(
-        profile_cmd.memory_utils, "KMemoryLineProfiler", mock_prof
+        klio_pipeline, "_get_memory_line_profiler", mock_memory_profiler
     )
-    mock_wrap_memory_per_line = mocker.Mock()
+
+    mock_memory_wrapper = mocker.Mock()
     monkeypatch.setattr(
-        klio_pipeline, "_wrap_memory_per_line", mock_wrap_memory_per_line
+        klio_pipeline, "_get_memory_line_wrapper", mock_memory_wrapper
     )
+
     mock_smart_open = mocker.patch.object(profile_cmd, "smart_open")
     mock_smart_open.return_value.__enter__.return_value = "opened_file"
+
     mock_run_pipeline = mocker.Mock()
     monkeypatch.setattr(klio_pipeline, "_run_pipeline", mock_run_pipeline)
+
     mock_show_results = mocker.Mock()
     monkeypatch.setattr(
         profile_cmd.memory_profiler, "show_results", mock_show_results
     )
 
-    klio_pipeline._profile_memory_per_line(transforms, get_maximum=get_maximum)
+    klio_pipeline._profile_memory_per_line(get_maximum=get_maximum)
 
-    assert mock_prof.return_value == klio_pipeline._prof
-    mock_wrap_memory_per_line.assert_called_once_with(transforms, get_maximum)
+    mock_memory_profiler.assert_called_once_with()
+    mock_memory_wrapper.assert_called_once_with(
+        mock_memory_profiler.return_value, get_maximum
+    )
+
     mock_smart_open.assert_called_once_with(
         klio_pipeline.output_file, fmode=exp_fmode
     )
     assert "opened_file" == klio_pipeline._stream
-    mock_run_pipeline.assert_called_once_with(
-        mock_wrap_memory_per_line.return_value
-    )
+    mock_run_pipeline.assert_called_once_with()
     if get_maximum:
         mock_show_results.assert_called_once_with(
-            mock_prof.return_value, stream="opened_file"
+            mock_memory_profiler.return_value, stream="opened_file"
         )
     else:
         mock_show_results.assert_not_called()
@@ -326,24 +276,19 @@ def test_profile_cpu(plot_graph, klio_pipeline, mocker, monkeypatch):
 
 
 @pytest.mark.parametrize("input_file", (None, "input.txt"))
-def test_run_pipeline(
+def test_get_io_mapper(
     input_file, klio_pipeline, transforms, mocker, monkeypatch
 ):
+    entity_ids = ["id1", "id2", "id3"]
+    serialized_messages = [
+        klio_pipeline._entity_id_to_message(i).SerializeToString()
+        for i in entity_ids
+    ]
+
     if input_file:
         monkeypatch.setattr(klio_pipeline, "input_file", input_file)
-
-    mock_wrap_transforms = mocker.Mock()
-    mock_wrap_transforms.return_value = transforms
-    monkeypatch.setattr(
-        profile_cmd.wrappers, "print_user_exceptions", mock_wrap_transforms
-    )
-
-    mock_options = mocker.Mock()
-    monkeypatch.setattr(
-        profile_cmd.pipeline_options, "PipelineOptions", mock_options
-    )
-    mock_pipeline = mocker.Mock()
-    monkeypatch.setattr(profile_cmd.beam, "Pipeline", mock_pipeline)
+    else:
+        monkeypatch.setattr(klio_pipeline, "entity_ids", entity_ids)
 
     mock_read_from_text = mocker.Mock()
     monkeypatch.setattr(
@@ -353,81 +298,49 @@ def test_run_pipeline(
     monkeypatch.setattr(profile_cmd.beam, "Create", mock_create)
 
     mock_flatmap = mocker.Mock()
+    mock_transform = mocker.MagicMock()
+    mock_flatmap.return_value = mock_transform
     monkeypatch.setattr(profile_cmd.beam, "FlatMap", mock_flatmap)
 
-    mock_pardo = mocker.Mock()
-    monkeypatch.setattr(profile_cmd.beam, "ParDo", mock_pardo)
+    mapper = klio_pipeline._get_io_mapper(1)
 
-    klio_pipeline._run_pipeline(transforms)
-
-    mock_options.assert_called_once_with()
-    assert 2 == mock_options.return_value.view_as.call_count
+    assert isinstance(mapper, profile_cmd.StubIOMapper)
 
     if input_file:
         mock_read_from_text.assert_called_once_with(klio_pipeline.input_file)
-        mock_pipeline.return_value.apply.assert_called_once_with(
-            mock_read_from_text.return_value, mock_pipeline.return_value
-        )
     else:
-        mock_create.assert_called_once_with(klio_pipeline.entity_ids)
-        mock_pipeline.return_value.apply.assert_called_once_with(
-            mock_create.return_value, mock_pipeline.return_value
-        )
-
-    # file i/o / create
-    assert 1 == mock_pipeline.return_value.apply.call_count
-
-    # flatmap
-    entity_ids = mock_pipeline.return_value.apply.return_value
-    assert 1 == entity_ids.apply.call_count
-
-    # pardo
-    scaled_entity_ids = entity_ids.apply.return_value
-    assert 3 == scaled_entity_ids.apply.call_count
-
-    mock_pipeline.return_value.run.assert_called_once_with()
-    mock_result = mock_pipeline.return_value.run
-    mock_result.assert_called_once_with()
+        mock_create.assert_called_once_with(serialized_messages)
 
 
-@pytest.mark.skip("TODO: fixme once we support profiling for v2")
-def test_get_transforms(klio_pipeline, mocker, monkeypatch):
-    transforms_module = mocker.Mock()
+def test_run_pipeline(klio_pipeline, mocker, monkeypatch):
 
-    transforms_module.AKlioClass = AKlioClass
-    transforms_module.ANonKlioClass = ANonKlioClass
+    mock_get_io_mapper = mocker.Mock()
+    monkeypatch.setattr(klio_pipeline, "_get_io_mapper", mock_get_io_mapper)
 
-    mock_load_source = mocker.Mock()
-    mock_load_source.return_value = transforms_module
-    monkeypatch.setattr(profile_cmd.imp, "load_source", mock_load_source)
-
-    transforms = list(klio_pipeline._get_transforms())
-
-    mock_load_source.assert_called_once_with(
-        "transforms", profile_cmd.KlioPipeline.TRANSFORMS_PATH
+    mock_get_user_pipeline = mocker.Mock()
+    monkeypatch.setattr(
+        klio_pipeline, "_get_user_pipeline", mock_get_user_pipeline
     )
-    assert 1 == len(transforms)
-    assert AKlioClass == transforms[0]
 
+    mock_get_user_config = mocker.Mock()
+    monkeypatch.setattr(
+        klio_pipeline, "_get_user_config", mock_get_user_config
+    )
 
-# TODO: temporary! remove me once profiling is supported for v2
-def test_get_transforms_raises(klio_pipeline, mocker, monkeypatch):
-    transforms_module = mocker.Mock()
-    mock_load_source = mocker.Mock()
-    mock_load_source.return_value = transforms_module
-    monkeypatch.setattr(profile_cmd.imp, "load_source", mock_load_source)
+    klio_pipeline._run_pipeline()
 
-    with pytest.raises(SystemExit):
-        list(klio_pipeline._get_transforms())
+    mock_get_io_mapper.assert_called_once_with(1)
+    mock_get_user_config.assert_called_once_with()
+    mock_get_user_pipeline.assert_called_once_with(
+        mock_get_user_config.return_value, mock_get_io_mapper.return_value
+    )
+    mock_get_user_pipeline.return_value.run.assert_called_once_with()
 
 
 @pytest.mark.parametrize(
     "what", ("run", "cpu", "timeit", "memory", "memory_per_line", "foo")
 )
 def test_profile(what, klio_pipeline, mocker, monkeypatch):
-    mock_get_transforms = mocker.Mock()
-    monkeypatch.setattr(klio_pipeline, "_get_transforms", mock_get_transforms)
-
     mock_run_pipeline = mocker.Mock()
     monkeypatch.setattr(klio_pipeline, "_run_pipeline", mock_run_pipeline)
 
@@ -449,12 +362,8 @@ def test_profile(what, klio_pipeline, mocker, monkeypatch):
 
     klio_pipeline.profile(what)
 
-    mock_get_transforms.assert_called_once_with()
-
     if what == "run":
-        mock_run_pipeline.assert_called_once_with(
-            mock_get_transforms.return_value
-        )
+        mock_run_pipeline.assert_called_once_with()
         mock_profile_cpu.assert_not_called()
         mock_profile_memory.assert_not_called()
         mock_memory_per_line.assert_not_called()
@@ -478,9 +387,7 @@ def test_profile(what, klio_pipeline, mocker, monkeypatch):
         mock_run_pipeline.assert_not_called()
         mock_profile_cpu.assert_not_called()
         mock_profile_memory.assert_not_called()
-        mock_memory_per_line.assert_called_once_with(
-            mock_get_transforms.return_value
-        )
+        mock_memory_per_line.assert_called_once_with()
         mock_wall_time_per_line.assert_not_called()
 
     elif what == "timeit":
@@ -488,9 +395,7 @@ def test_profile(what, klio_pipeline, mocker, monkeypatch):
         mock_profile_cpu.assert_not_called()
         mock_profile_memory.assert_not_called()
         mock_memory_per_line.assert_not_called()
-        mock_wall_time_per_line.assert_called_once_with(
-            mock_get_transforms.return_value
-        )
+        mock_wall_time_per_line.assert_called_once_with()
 
     else:
         mock_run_pipeline.assert_not_called()

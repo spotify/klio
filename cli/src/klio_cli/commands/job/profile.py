@@ -36,7 +36,6 @@ class ProfilePipeline(base.BaseDockerizedPipeline):
 
     def _get_environment(self):
         envs = super()._get_environment()
-        envs["KLIO_TEST_MODE"] = "true"
         project = self.klio_config.pipeline_options.project
         if project:
             envs["GOOGLE_CLOUD_PROJECT"] = project

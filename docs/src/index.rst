@@ -113,7 +113,7 @@ A collection of all the todos that we should probably address before we publicly
    User Guide <userguide/index>
    Reference <reference/index>
    FAQs <faqs/index>
-   contributors
+   Contributing <contributors>
 
 
 Indices and tables

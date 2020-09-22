@@ -41,4 +41,5 @@ pipeline_options:
   streaming: false
   update: false
   worker_harness_container_image: integration-klio-read-bq-write-bq
+  temp_location: gs://klio-integration
 version: 2

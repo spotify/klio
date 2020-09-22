@@ -1,4 +1,4 @@
-FROM dataflow.gcr.io/v1beta3/python38-fnapi:2.23.0
+FROM dataflow.gcr.io/v1beta3/python38-fnapi:2.24.0
 
 WORKDIR /usr/src/app
 RUN mkdir -p /usr/src/config
@@ -19,7 +19,7 @@ RUN pip install ./exec
 RUN pip install ./audio
 
 COPY job-requirements.txt job-requirements.txt
-RUN pip install -r job-requirements.txt
+RUN pip install -r job-requirements.txt --use-feature=2020-resolver
 
 COPY __init__.py \
      run.py \

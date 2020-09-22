@@ -1,4 +1,4 @@
-FROM dataflow.gcr.io/v1beta3/python36-fnapi:2.23.0
+FROM dataflow.gcr.io/v1beta3/python36-fnapi:2.24.0
 
 WORKDIR /usr/src/app
 RUN mkdir -p /usr/src/config
@@ -17,4 +17,4 @@ COPY __init__.py \
      job-requirements.txt \
      /usr/src/app/
 
-RUN pip install .
+RUN pip install . --use-feature=2020-resolver

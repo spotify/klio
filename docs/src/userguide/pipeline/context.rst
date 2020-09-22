@@ -1,7 +1,7 @@
 .. _kliocontext:
 
-The Klio Context
-================
+Klio Context
+============
 
 The ``KlioContext`` is an object containing useful state about your job.
 

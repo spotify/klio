@@ -1,3 +1,6 @@
+:nosidebar:
+:nodocstoc:
+
 klio: some clever tagline
 =========================
 

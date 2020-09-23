@@ -20,10 +20,7 @@ Built-in Transforms
 ^^^^^^^^^^^^^^^^^^^
 
 Built-in transforms are used **by default** in a Klio pipeline, but can be turned off if needed.
-
-.. todo::
-
-    add prose and/or a diagram of what transforms are automatically done and in what order (similar to the message process logic but transform-specific; maybe a visual like dataflow-esque).
+See :ref:`below <pipeline-using-builtins>` for an flow diagram of how these built-in transforms are used in a pipeline.
 
 .. _data-existence-checks:
 
@@ -437,6 +434,50 @@ The composite transform can then be imported into the rest of the pipeline in th
 
         return out_pcol
 
+.. _pipeline-using-builtins:
+
+Pipeline Using Built-ins
+------------------------
+
+The diagram below shows the transforms that are invoked behind the scenes in every Klio pipeline.
+By setting the values ``skip_klio_read``, ``skip_klio_write``, and/or ``skip_klio_existence_check`` in a job's ``klio-job.yaml``, these transforms can be enabled or disabled.
+
+.. figure:: images/klio_exec_pipeline.png
+    :alt: Diagram of a Klio pipeline with included built-in transforms
+
+
+Please see the thumbnails below for a visual explanation of how each configuration variable impacts each transform.
+
+.. thumbnail:: images/klio_exec_pipeline_skip_input.png
+    :height: 100px
+    :width: 100px
+    :group: klio_exec_pipeline
+    :title: Skip automatic existence checks on input data
+
+
+.. thumbnail:: images/klio_exec_pipeline_skip_output.png
+    :height: 100px
+    :width: 100px
+    :group: klio_exec_pipeline
+    :title: Skip automatic existence checks on output data
+
+.. thumbnail:: images/klio_exec_pipeline_skip_read.png
+    :height: 100px
+    :width: 100px
+    :group: klio_exec_pipeline
+    :title: Skip automatic reading from event input
+
+.. thumbnail:: images/klio_exec_pipeline_skip_write.png
+    :height: 100px
+    :width: 100px
+    :group: klio_exec_pipeline
+    :title: Skip automatic writing to event output
+
+.. thumbnail:: images/klio_exec_pipeline_skip_read_skip_write.png
+    :height: 100px
+    :width: 100px
+    :group: klio_exec_pipeline
+    :title: Skip both automatic reading from event input and writing to event output
 
 .. _Composite Transform: https://beam.apache.org/documentation/programming-guide/#composite-transforms
 .. _Tagged Outputs: https://beam.apache.org/documentation/programming-guide/#additional-outputs

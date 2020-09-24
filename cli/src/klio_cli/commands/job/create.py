@@ -71,15 +71,15 @@ class CreateJob(object):
         env = self._get_environment()
 
         # create klio job files
-        self._create_job_directory(self.create_args.output)
-        self._create_job_config(env, self.context, self.create_args.output)
-        self._create_python_files(env, self.create_args.output)
+        self._create_job_directory(self.create_args.job_dir)
+        self._create_job_config(env, self.context, self.create_args.job_dir)
+        self._create_python_files(env, self.create_args.job_dir)
         if not self.create_args.use_fnapi:
-            self._create_no_fnapi_files(env, self.context, self.create_args.output)
-        self._create_reqs_file(env, self.context, self.create_args.output)
+            self._create_no_fnapi_files(env, self.context, self.create_args.job_dir)
+        self._create_reqs_file(env, self.context, self.create_args.job_dir)
         if self.create_args.create_dockerfile:
-            self._create_dockerfile(env, self.context, self.create_args.output)
-        self._create_readme(env, self.context, self.create_args.output)
+            self._create_dockerfile(env, self.context, self.create_args.job_dir)
+        self._create_readme(env, self.context, self.create_args.job_dir)
 
     def _get_environment(self):
         here = os.path.abspath(__file__)
@@ -275,8 +275,8 @@ class CreateJob(object):
             if self.create_args_dict.get(k) is None and k in DEFAULTS:
                 self.create_args_dict[k] = DEFAULTS[k]
 
-        if not self.create_args_dict.get("output"):
-            self.create_args_dict["output"] = self.default_output
+        if not self.create_args_dict.get("job_dir"):
+            self.create_args_dict["job_dir"] = self.default_job_dir
 
     def _parse_unknown_args(self, user_args):
         # ('--foo', 'bar', '--baz', 'bla', 'qaz')
@@ -302,7 +302,7 @@ class CreateJob(object):
         return parsed_args
 
     def _build_defaults(self):
-        self.default_output = os.getcwd()
+        self.default_job_dir = os.getcwd()
 
     def build_create_job_args(self, known_args, addl_job_args):
         unknown_args = self._parse_unknown_args(addl_job_args)

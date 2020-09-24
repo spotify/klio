@@ -279,7 +279,7 @@ def test_create_job(runner, mock_create):
         "job_name": "test-job",
         "gcp_project": "test-gcp-project",
         "use_defaults": True,
-        "output": None,
+        "job_dir": None,
     }
     mock_create.assert_called_once_with((), known_kwargs)
 
@@ -302,7 +302,7 @@ def test_create_job_prompts(runner, mock_create):
         "job_name": "test-job",
         "gcp_project": "test-gcp-project",
         "use_defaults": False,
-        "output": None,
+        "job_dir": None,
     }
     mock_create.assert_called_once_with((), known_kwargs)
 
@@ -328,7 +328,7 @@ def test_create_job_unknown_args(runner, mock_create, patch_os_getcwd):
         "job_name": "test-job",
         "gcp_project": "test-gcp-project",
         "use_defaults": True,
-        "output": None,
+        "job_dir": None,
     }
     mock_create.assert_called_once_with(unknown_args, known_kwargs)
 

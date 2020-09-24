@@ -19,11 +19,12 @@ import pytest
 
 from klio_cli.commands.job.utils import create_args
 
+
 @pytest.fixture
 def valid_dict():
     return {
         "job_name": "job_name",
-        "output": ".",
+        "job_dir": ".",
         "use_defaults": False,
         "worker_image": "worker_image",
         "use_fnapi": False,
@@ -47,10 +48,11 @@ def valid_dict():
         "create_dockerfile": False,
     }
 
+
 def test_from_dict(valid_dict):
     expected_args = create_args.CreateJobArgs(
         job_name=valid_dict.get("job_name"),
-        output=valid_dict.get("output"),
+        job_dir=valid_dict.get("job_dir"),
         use_defaults=valid_dict.get("use_defaults"),
         worker_image=valid_dict.get("worker_image"),
         use_fnapi=valid_dict.get("use_fnapi"),
@@ -75,22 +77,26 @@ def test_from_dict(valid_dict):
     )
     assert expected_args == create_args.CreateJobArgs.from_dict(valid_dict)
 
+
 @pytest.mark.parametrize(
     "input_version,exp_output_version",
     (
-            ("3.5", "3"),
-            ("3.5.1", "3"),
-            ("35", "3"),
-            ("3.6", "36"),
-            ("3.6.1", "36"),
-            ("36", "36"),
-            ("3.7", "37"),
-            ("3.7.1", "37"),
-            ("37", "37"),
+        ("3.5", "3"),
+        ("3.5.1", "3"),
+        ("35", "3"),
+        ("3.6", "36"),
+        ("3.6.1", "36"),
+        ("36", "36"),
+        ("3.7", "37"),
+        ("3.7.1", "37"),
+        ("37", "37"),
     ),
 )
 def test_python_version_converter(input_version, exp_output_version):
-    assert exp_output_version == create_args.python_version_converter(input_version)
+    assert exp_output_version == create_args.python_version_converter(
+        input_version
+    )
+
 
 def test_python_version_converter_raises():
     input_version = "3.6.7.8"
@@ -98,13 +104,14 @@ def test_python_version_converter_raises():
     with pytest.raises(click.BadParameter, match=exp_msg):
         create_args.python_version_converter(input_version)
 
+
 @pytest.mark.parametrize(
     "input_version,exp_msg",
     (
-            ("2", "Klio no longer supports Python 2.7"),
-            ("2.7", "Klio no longer supports Python 2.7"),
-            ("3", "Invalid Python version given"),
-            ("3.3", "Invalid Python version given"),
+        ("2", "Klio no longer supports Python 2.7"),
+        ("2.7", "Klio no longer supports Python 2.7"),
+        ("3", "Invalid Python version given"),
+        ("3.3", "Invalid Python version given"),
     ),
 )
 def test_python_version_validator_raises(input_version, exp_msg, valid_dict):
@@ -112,6 +119,7 @@ def test_python_version_validator_raises(input_version, exp_msg, valid_dict):
     # only matching the start of the error message
     with pytest.raises(click.BadParameter, match=exp_msg):
         create_args.CreateJobArgs.from_dict(valid_dict)
+
 
 @pytest.mark.parametrize("valid_region", ("us-central1", None))
 def test_validate_region(valid_dict, valid_region):
@@ -128,4 +136,3 @@ def test_validate_region_raises(valid_dict):
     assert e.match(
         '"{}" is not a valid region. Available: '.format(valid_dict["region"])
     )
-

@@ -24,10 +24,12 @@ VALID_BEAM_PY_VERSIONS_SHORT = [
 # TODO: include all dataflow-supported GCP regions
 GCP_REGIONS = ["europe-west1", "us-central1", "asia-east1"]
 
+
 def convert_to_bool(booleanish):
     if isinstance(booleanish, bool):
-            return booleanish
+        return booleanish
     return booleanish.lower() in ["y", "true", "yes"]
+
 
 def python_version_converter(python_version):
     # can't have something like 3.6.7.8
@@ -48,11 +50,12 @@ def python_version_converter(python_version):
         python_version = "3"
     return python_version
 
+
 @attr.s
 class CreateJobArgs(object):
     # validation and conversion managed by click
     job_name = attr.ib()
-    output = attr.ib()
+    job_dir = attr.ib()
     use_defaults = attr.ib()
 
     # validation
@@ -61,7 +64,9 @@ class CreateJobArgs(object):
     create_resources = attr.ib(
         converter=attr.converters.optional(convert_to_bool)
     )
-    python_version = attr.ib(converter=attr.converters.optional(python_version_converter))
+    python_version = attr.ib(
+        converter=attr.converters.optional(python_version_converter)
+    )
 
     # GCP specific
     gcp_project = attr.ib(converter=attr.converters.optional(str))
@@ -87,7 +92,7 @@ class CreateJobArgs(object):
     def from_dict(cls, fields_dict):
         return cls(
             job_name=fields_dict.get("job_name"),
-            output=fields_dict.get("output"),
+            job_dir=fields_dict.get("job_dir"),
             use_defaults=fields_dict.get("use_defaults"),
             worker_image=fields_dict.get("worker_image"),
             use_fnapi=fields_dict.get("use_fnapi"),
@@ -146,5 +151,3 @@ class CreateJobArgs(object):
             )
             raise click.BadParameter(msg)
         return region
-
-

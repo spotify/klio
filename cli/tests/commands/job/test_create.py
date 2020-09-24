@@ -625,11 +625,11 @@ def test_create(
         create.gcp_setup, "create_stackdriver_dashboard"
     )
 
-    unknown_args = ("--foo", "bar")
+    unknown_args = ("--foo", "bar", "--use_fnapi", str(use_fnapi))
     known_args = {
         "job_name": "test-job",
         "gcp_project": "test-gcp-project",
-        "output": "/testing/dir",
+        "job_dir": "/testing/dir",
         "use_defaults": True,
     }
     job.create(unknown_args, known_args)
@@ -640,20 +640,20 @@ def test_create(
     mock_get_environment.assert_called_once_with()
 
     ret_env = mock_get_environment.return_value
-    mock_create_job_dir.assert_called_once_with(known_args["output"])
+    mock_create_job_dir.assert_called_once_with(known_args["job_dir"])
 
     mock_create_job_config.assert_called_once_with(
-        ret_env, context, known_args["output"]
+        ret_env, context, known_args["job_dir"]
     )
 
     mock_create_python_files.assert_called_once_with(
-        ret_env, known_args["output"]
+        ret_env, known_args["job_dir"]
     )
     if use_fnapi:
         mock_create_no_fnapi_files.assert_not_called()
     else:
         mock_create_no_fnapi_files.assert_called_once_with(
-            ret_env, context, known_args["output"]
+            ret_env, context, known_args["job_dir"]
         )
 
     if create_resources:
@@ -664,13 +664,13 @@ def test_create(
         mock_create_stackdriver.assert_not_called()
 
     mock_create_reqs_files.assert_called_once_with(
-        ret_env, context, known_args["output"]
+        ret_env, context, known_args["job_dir"]
     )
     if create_dockerfile:
         mock_create_dockerfile.assert_called_once_with(
-            ret_env, context, known_args["output"]
+            ret_env, context, known_args["job_dir"]
         )
     mock_create_readme.assert_called_once_with(
-        ret_env, context, known_args["output"]
+        ret_env, context, known_args["job_dir"]
     )
     assert 1 == len(caplog.records)

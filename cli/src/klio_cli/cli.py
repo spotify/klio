@@ -276,7 +276,7 @@ def _validate_job_name(ctx, param, value):
     prompt="Name of the GCP project the job should be created in",
     help="Name of the GCP project the job should be created in",
 )
-@options.output
+@options.job_dir
 @options.use_defaults
 @click.argument("addl_job_opts", nargs=-1, type=click.UNPROCESSED)
 def create_job(addl_job_opts, **known_kwargs):

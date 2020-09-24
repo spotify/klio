@@ -1,6 +1,7 @@
-Contributing
-============
 
-.. todo::
+.. include:: ../../CONTRIBUTING.rst
 
-    add our contributing docs!
+Code of Conduct
+---------------
+
+.. include:: ../../CODE_OF_CONDUCT.rst

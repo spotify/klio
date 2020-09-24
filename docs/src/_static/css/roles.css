@@ -1,0 +1,18 @@
+/* These classes correspond with the roles defined in .custom_roles.rst */
+.underline {
+  text-decoration: underline;
+}
+.green {
+  color: #00aa55;
+}
+.greenemph {
+  color: #00aa55;
+  font-weight: bold;
+}
+.blue {
+  color: #2D46B9;
+}
+.blueemph {
+  color: #2D46B9;
+  font-weight: bold;
+}

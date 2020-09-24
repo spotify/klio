@@ -156,7 +156,7 @@ def default_context():
     return {
         "job_name": "test-job",
         "python_version": "36",
-        "use_fnapi": True,
+        "use_fnapi": False,
         "create_resources": False,
         "pipeline_options": {
             "project": "test-gcp-project",
@@ -224,9 +224,7 @@ def test_create_python_files(tmpdir, mocker, base_job):
 
     dt_patch = "klio_cli.commands.job.create.datetime.datetime"
     with mock.patch(dt_patch, MockDatetime):
-        base_job._create_python_files(
-            env, output_dir.strpath
-        )
+        base_job._create_python_files(env, output_dir.strpath)
 
     ret_init_file = output_dir.join("__init__.py")
     ret_init_contents = ret_init_file.read()

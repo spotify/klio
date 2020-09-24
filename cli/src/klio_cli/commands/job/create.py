@@ -46,10 +46,9 @@ DEFAULTS = {
     "disk_size_gb": 32,
     "worker_machine_type": "n1-standard-2",
     "python_version": "3.6",
-    "use_fnapi": True,
+    "use_fnapi": False,
     "create_resources": False,
 }
-
 
 
 class CreateJob(object):
@@ -75,11 +74,18 @@ class CreateJob(object):
         self._create_job_config(env, self.context, self.create_args.job_dir)
         self._create_python_files(env, self.create_args.job_dir)
         if not self.create_args.use_fnapi:
-            self._create_no_fnapi_files(env, self.context, self.create_args.job_dir)
+            self._create_no_fnapi_files(
+                env, self.context, self.create_args.job_dir
+            )
         self._create_reqs_file(env, self.context, self.create_args.job_dir)
         if self.create_args.create_dockerfile:
-            self._create_dockerfile(env, self.context, self.create_args.job_dir)
+            self._create_dockerfile(
+                env, self.context, self.create_args.job_dir
+            )
         self._create_readme(env, self.context, self.create_args.job_dir)
+
+    def _get_context(self):
+        pass
 
     def _get_environment(self):
         here = os.path.abspath(__file__)
@@ -122,9 +128,7 @@ class CreateJob(object):
 
     def _create_python_files(self, env, output_dir):
         current_year = datetime.datetime.now().year
-        template_context = {
-            "klio": {"year": current_year}
-        }
+        template_context = {"klio": {"year": current_year}}
 
         init_tpl = env.get_template("init.py.tpl")
         init_rendered = init_tpl.render(template_context)
@@ -311,7 +315,9 @@ class CreateJob(object):
         self._parse_user_input_args()
         self._apply_defaults()
 
-        self.create_args = create_args.CreateJobArgs.from_dict(self.create_args_dict)
+        self.create_args = create_args.CreateJobArgs.from_dict(
+            self.create_args_dict
+        )
 
 
 class CreateStreamingJob(CreateJob):
@@ -518,7 +524,6 @@ class CreateStreamingJob(CreateJob):
 
             self.create_args_dict.update(updated_fields)
 
-
     def _get_context(self):
         pipeline_context = {
             "project": self.create_args.gcp_project,
@@ -573,9 +578,8 @@ class CreateStreamingJob(CreateJob):
         super().create(unknown_args, known_kwargs)
         self._create_external_resources(self.context)
 
-        msg = "Streaming Klio job {} created successfully! :beer:".format(self.create_args.job_name)
+        msg = "Streaming Klio job {} created successfully! :beer:".format(
+            self.create_args.job_name
+        )
         logging.info(emoji.emojize(msg, use_aliases=True))
-
-
-
 

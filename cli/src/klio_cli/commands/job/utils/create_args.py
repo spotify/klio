@@ -56,6 +56,7 @@ class CreateJobArgs(object):
     # validation and conversion managed by click
     job_name = attr.ib()
     job_dir = attr.ib()
+    job_type = attr.ib()
     use_defaults = attr.ib()
 
     # validation
@@ -93,6 +94,7 @@ class CreateJobArgs(object):
         return cls(
             job_name=fields_dict.get("job_name"),
             job_dir=fields_dict.get("job_dir"),
+            job_type=fields_dict.get("job_type"),
             use_defaults=fields_dict.get("use_defaults"),
             worker_image=fields_dict.get("worker_image"),
             use_fnapi=fields_dict.get("use_fnapi"),

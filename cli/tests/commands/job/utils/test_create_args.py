@@ -25,6 +25,7 @@ def valid_dict():
     return {
         "job_name": "job_name",
         "job_dir": ".",
+        "job_type": "streaming",
         "use_defaults": False,
         "worker_image": "worker_image",
         "use_fnapi": False,
@@ -53,6 +54,7 @@ def test_from_dict(valid_dict):
     expected_args = create_args.CreateJobArgs(
         job_name=valid_dict.get("job_name"),
         job_dir=valid_dict.get("job_dir"),
+        job_type=valid_dict.get("job_type"),
         use_defaults=valid_dict.get("use_defaults"),
         worker_image=valid_dict.get("worker_image"),
         use_fnapi=valid_dict.get("use_fnapi"),

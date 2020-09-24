@@ -109,8 +109,10 @@ def mock_create(mocker):
 
 
 @pytest.fixture
-def mock_create_base(mocker):
-    return mocker.patch.object(cli.job_commands.create.CreateJob, "create")
+def mock_create_batch(mocker):
+    return mocker.patch.object(
+        cli.job_commands.create.CreateBatchJob, "create"
+    )
 
 
 @pytest.fixture
@@ -266,7 +268,8 @@ def test_build_image(
     )
 
 
-def test_create_job(runner, mock_create):
+@pytest.mark.parametrize("job_type", ("batch", "streaming"))
+def test_create_job(runner, job_type, mock_create, mock_create_batch):
     cli_inputs = [
         "job",
         "create",
@@ -276,7 +279,7 @@ def test_create_job(runner, mock_create):
         "test-gcp-project",
         "--use-defaults",
         "--job_type",
-        "streaming",
+        job_type,
     ]
     result = runner.invoke(cli.main, cli_inputs)
     assert_execution_success(result)
@@ -287,9 +290,12 @@ def test_create_job(runner, mock_create):
         "gcp_project": "test-gcp-project",
         "use_defaults": True,
         "job_dir": None,
-        "job_type": "streaming",
+        "job_type": job_type,
     }
-    mock_create.assert_called_once_with((), known_kwargs)
+    if job_type == "batch":
+        mock_create_batch.assert_called_once_with((), known_kwargs)
+    else:
+        mock_create.assert_called_once_with((), known_kwargs)
 
 
 def test_create_job_prompts(runner, mock_create):

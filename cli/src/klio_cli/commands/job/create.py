@@ -85,7 +85,28 @@ class CreateJob(object):
         self._create_readme(env, self.context, self.create_args.job_dir)
 
     def _get_context(self):
-        pass
+        pipeline_context = {
+            "project": self.create_args.gcp_project,
+            "worker_harness_container_image": self.create_args.worker_image,
+            "experiments": self.create_args.experiments,
+            "region": self.create_args.region,
+            "staging_location": self.create_args.staging_location,
+            "temp_location": self.create_args.temp_location,
+            "num_workers": self.create_args.num_workers,
+            "max_num_workers": self.create_args.max_num_workers,
+            "autoscaling_algorithm": self.create_args.autoscaling_algorithm,
+            "disk_size_gb": self.create_args.disk_size_gb,
+            "worker_machine_type": self.create_args.worker_machine_type,
+        }
+
+        context = {
+            "pipeline_options": pipeline_context,
+            "python_version": self.create_args.python_version,
+            "use_fnapi": self.create_args.use_fnapi,
+            "create_resources": self.create_args.create_resources,
+            "job_name": self.create_args.job_name,
+        }
+        return context
 
     def _get_environment(self):
         here = os.path.abspath(__file__)
@@ -120,7 +141,9 @@ class CreateJob(object):
         logging.debug("Created {0}".format(output))
 
     def _create_job_config(self, env, context, job_dir):
-        config_tpl = env.get_template("klio-job.yaml.tpl")
+        config_tpl = env.get_template(
+            "klio-job-{}.yaml.tpl".format(self.create_args.job_type)
+        )
 
         template_context = {"klio": context}
         rendered_file = config_tpl.render(template_context)
@@ -525,19 +548,7 @@ class CreateStreamingJob(CreateJob):
             self.create_args_dict.update(updated_fields)
 
     def _get_context(self):
-        pipeline_context = {
-            "project": self.create_args.gcp_project,
-            "worker_harness_container_image": self.create_args.worker_image,
-            "experiments": self.create_args.experiments,
-            "region": self.create_args.region,
-            "staging_location": self.create_args.staging_location,
-            "temp_location": self.create_args.temp_location,
-            "num_workers": self.create_args.num_workers,
-            "max_num_workers": self.create_args.max_num_workers,
-            "autoscaling_algorithm": self.create_args.autoscaling_algorithm,
-            "disk_size_gb": self.create_args.disk_size_gb,
-            "worker_machine_type": self.create_args.worker_machine_type,
-        }
+        context = super()._get_context()
 
         inputs = [
             {
@@ -554,19 +565,11 @@ class CreateStreamingJob(CreateJob):
             }
         ]
 
-        job_context = {
+        context["job_options"] = {
             "inputs": inputs,
             "outputs": outputs,
         }
 
-        context = {
-            "pipeline_options": pipeline_context,
-            "job_options": job_context,
-            "python_version": self.create_args.python_version,
-            "use_fnapi": self.create_args.use_fnapi,
-            "create_resources": self.create_args.create_resources,
-            "job_name": self.create_args.job_name,
-        }
         return context
 
     def _create_external_resources(self, context):
@@ -583,3 +586,12 @@ class CreateStreamingJob(CreateJob):
         )
         logging.info(emoji.emojize(msg, use_aliases=True))
 
+
+class CreateBatchJob(CreateJob):
+    def create(self, unknown_args, known_kwargs):
+        super().create(unknown_args, known_kwargs)
+
+        msg = "Batch Klio job {} created successfully! :beer:".format(
+            self.create_args.job_name
+        )
+        logging.info(emoji.emojize(msg, use_aliases=True))

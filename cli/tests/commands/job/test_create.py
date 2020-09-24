@@ -52,7 +52,8 @@ def test_get_environment(base_job):
         "dockerfile.tpl",
         "init.py.tpl",
         "job-requirements.txt.tpl",
-        "klio-job.yaml.tpl",
+        "klio-job-batch.yaml.tpl",
+        "klio-job-streaming.yaml.tpl",
         "run.py.tpl",
         "setup.py.tpl",
         "test_transforms.py.tpl",
@@ -194,9 +195,16 @@ def default_context():
     }
 
 
+@pytest.mark.parametrize("job_type", ("batch", "streaming"))
 @pytest.mark.parametrize("use_fnapi", (True, False))
-def test_create_job_config(use_fnapi, context, tmpdir, monkeypatch, base_job):
+def test_create_job_config(
+    use_fnapi, job_type, context, tmpdir, monkeypatch, base_job
+):
     output_dir = tmpdir.mkdir("testing").mkdir("jobs").mkdir("test_job")
+    base_job.build_create_job_args(
+        {"job_name": "test-job", "use_defaults": True, "job_type": job_type},
+        (),
+    )
     env = base_job._get_environment()
 
     context["use_fnapi"] = use_fnapi
@@ -208,13 +216,14 @@ def test_create_job_config(use_fnapi, context, tmpdir, monkeypatch, base_job):
     is_fnapi_dir = "fnapi" if use_fnapi else "no_fnapi"
     expected_fixtures = os.path.join(expected_fixtures, is_fnapi_dir)
 
-    fixture = os.path.join(expected_fixtures, "klio-job.yaml")
+    fixture = os.path.join(
+        expected_fixtures, "klio-job-{}.yaml".format(job_type)
+    )
     with open(fixture, "r") as f:
         expected = yaml.safe_load(f)
 
     ret_file = output_dir.join("klio-job.yaml")
     ret_contents = yaml.safe_load(ret_file.read())
-
     assert expected == ret_contents
 
 

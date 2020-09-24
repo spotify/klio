@@ -288,7 +288,9 @@ def _validate_job_name(ctx, param, value):
 def create_job(addl_job_opts, **known_kwargs):
     if known_kwargs.get("job_type") == "streaming":
         job_creator = job_commands.create.CreateStreamingJob()
-        job_creator.create(addl_job_opts, known_kwargs)
+    else:
+        job_creator = job_commands.create.CreateBatchJob()
+    job_creator.create(addl_job_opts, known_kwargs)
 
 
 @job.command(

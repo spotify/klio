@@ -278,10 +278,17 @@ def _validate_job_name(ctx, param, value):
 )
 @options.job_dir
 @options.use_defaults
+@click.option(
+    "--job_type",
+    default="batch",
+    prompt="Choose a job type",
+    type=click.Choice(["batch", "streaming"]),
+)
 @click.argument("addl_job_opts", nargs=-1, type=click.UNPROCESSED)
 def create_job(addl_job_opts, **known_kwargs):
-    job_creator = job_commands.create.CreateStreamingJob()
-    job_creator.create(addl_job_opts, known_kwargs)
+    if known_kwargs.get("job_type") == "streaming":
+        job_creator = job_commands.create.CreateStreamingJob()
+        job_creator.create(addl_job_opts, known_kwargs)
 
 
 @job.command(

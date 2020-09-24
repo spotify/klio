@@ -109,6 +109,11 @@ def mock_create(mocker):
 
 
 @pytest.fixture
+def mock_create_base(mocker):
+    return mocker.patch.object(cli.job_commands.create.CreateJob, "create")
+
+
+@pytest.fixture
 def mock_delete(mocker):
     return mocker.patch.object(
         cli.job_commands.delete, "DeleteJob", autospec=True
@@ -270,6 +275,8 @@ def test_create_job(runner, mock_create):
         "--gcp-project",
         "test-gcp-project",
         "--use-defaults",
+        "--job_type",
+        "streaming",
     ]
     result = runner.invoke(cli.main, cli_inputs)
     assert_execution_success(result)
@@ -280,13 +287,14 @@ def test_create_job(runner, mock_create):
         "gcp_project": "test-gcp-project",
         "use_defaults": True,
         "job_dir": None,
+        "job_type": "streaming",
     }
     mock_create.assert_called_once_with((), known_kwargs)
 
 
 def test_create_job_prompts(runner, mock_create):
     cli_inputs = ["job", "create"]
-    prompt_inputs = ["test-job", "test-gcp-project"]
+    prompt_inputs = ["test-job", "test-gcp-project", "streaming"]
     inputs = "\n".join(prompt_inputs)
     result = runner.invoke(cli.main, cli_inputs, input=inputs)
     assert_execution_success(result)
@@ -294,15 +302,18 @@ def test_create_job_prompts(runner, mock_create):
     exp_output = (
         "Name of your new job: {0}\n"
         "Name of the GCP project the job should be created in: "
-        "{1}\n".format(*prompt_inputs)
+        "{1}\n"
+        "Choose a job type (batch, streaming) [batch]: {2}\n".format(
+            *prompt_inputs
+        )
     )
     assert exp_output == result.output
-
     known_kwargs = {
         "job_name": "test-job",
         "gcp_project": "test-gcp-project",
         "use_defaults": False,
         "job_dir": None,
+        "job_type": "streaming",
     }
     mock_create.assert_called_once_with((), known_kwargs)
 
@@ -318,6 +329,8 @@ def test_create_job_unknown_args(runner, mock_create, patch_os_getcwd):
         "--use-defaults",
         "--input-topic",
         "test-input-topic",
+        "--job_type",
+        "streaming",
     ]
     result = runner.invoke(cli.main, cli_inputs)
     assert_execution_success(result)
@@ -329,6 +342,7 @@ def test_create_job_unknown_args(runner, mock_create, patch_os_getcwd):
         "gcp_project": "test-gcp-project",
         "use_defaults": True,
         "job_dir": None,
+        "job_type": "streaming",
     }
     mock_create.assert_called_once_with(unknown_args, known_kwargs)
 

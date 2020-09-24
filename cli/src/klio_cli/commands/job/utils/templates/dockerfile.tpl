@@ -6,8 +6,7 @@ WORKDIR /usr/src/app
 RUN mkdir -p /usr/src/config
 {%- endif %}
 
-ENV GOOGLE_CLOUD_PROJECT={{klio.pipeline_options.project}} \
-    PYTHONPATH=/usr/src/app
+ENV PYTHONPATH=/usr/src/app
 
 {% if klio.use_fnapi -%}
 RUN pip install --upgrade pip setuptools && \

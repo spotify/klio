@@ -3,8 +3,7 @@ FROM dataflow.gcr.io/v1beta3/python36-fnapi:2.19.0
 
 WORKDIR /usr/src/app
 
-ENV GOOGLE_CLOUD_PROJECT=test-gcp-project \
-    PYTHONPATH=/usr/src/app
+ENV PYTHONPATH=/usr/src/app
 
 RUN pip install --upgrade pip setuptools
 

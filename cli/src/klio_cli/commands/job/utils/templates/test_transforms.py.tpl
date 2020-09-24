@@ -4,35 +4,44 @@ tests for a transform.
 
 Feel free to import what's needed, rewrite tests, etc.
 """
+import logging
+
 import pytest
+
+from klio_core.proto import klio_pb2
 
 import transforms
 
 
 @pytest.fixture
-def helloklio_dofn():
-    """An instance of HelloKlio available for test functions.
-
-    See https://docs.pytest.org/en/latest/fixture.html for more info
-    on pytest fixtures.
-    """
-    return transforms.HelloKlio()
+def caplog(caplog):
+    """Set global test logging levels."""
+    caplog.set_level(logging.DEBUG)
+    return caplog
 
 
-def test_process(helloklio_dofn):
-    """`process` method returns expected message and logs expected lines."""
-    input_entity_id = "message"
-    expected = "message"
-    assert expected == helloklio_dofn.process(input_entity_id)
+@pytest.fixture
+def klio_msg():
+    msg = klio_pb2.KlioMessage()
+    msg.data.element = b"s0m3_tr4ck_1d"
+    msg.version = klio_pb2.Version.V2
+    return msg
 
 
-def test_input_data_exists(helloklio_dofn):
-    """Assert input data does exist."""
-    input_exists = helloklio_dofn.input_data_exists("message")
-    assert input_exists is True
+@pytest.fixture
+def expected_log_messages(klio_msg):
+    return [
+        "Hello, Klio!",
+        "Received element {}".format(klio_msg.data.element),
+        "Received payload {}".format(klio_msg.data.payload),
+    ]
 
 
-def test_output_data_exists(helloklio_dofn):
-    """Assert output data does not exist."""
-    output_exists = helloklio_dofn.output_data_exists("message")
-    assert output_exists is False
+def test_process(klio_msg, expected_log_messages, caplog):
+    helloklio_fn = transforms.HelloKlio()
+    output = helloklio_fn.process(klio_msg.SerializeToString())
+    assert klio_msg.SerializeToString() == list(output)[0]
+
+    for index, record in enumerate(caplog.records):
+        assert "INFO" == record.levelname
+        assert expected_log_messages[index] == record.message

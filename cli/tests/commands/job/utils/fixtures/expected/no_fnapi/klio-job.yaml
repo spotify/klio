@@ -1,4 +1,5 @@
 job_name: test-job
+version: 2
 pipeline_options:
   streaming: True
   update: False
@@ -16,10 +17,18 @@ pipeline_options:
   setup_file: setup.py  # relative to job root
 job_config:
   allow_non_klio_messages: False
-  inputs:
-    - topic: projects/test-parent-gcp-project/topics/test-parent-job-output
-      subscription: projects/test-gcp-project/subscriptions/test-parent-job-output-test-job
-      data_location: gs://test-parent-gcp-project-output/test-parent-job
-  outputs:
-    - topic: projects/test-gcp-project/topics/test-job-output
-      data_location: gs://test-gcp-project-output/test-job
+  events:
+    inputs:
+      - type: pubsub
+        topic: projects/test-parent-gcp-project/topics/test-parent-job-output
+        subscription: projects/test-gcp-project/subscriptions/test-parent-job-output-test-job
+    outputs:
+      - type: pubsub
+        topic: projects/test-gcp-project/topics/test-job-output
+  data:
+    inputs:
+      - type: file
+        location: gs://test-parent-gcp-project-output/test-parent-job
+    outputs:
+      - type: file
+        location: gs://test-gcp-project-output/test-job

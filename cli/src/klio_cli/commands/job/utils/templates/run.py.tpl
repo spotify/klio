@@ -20,7 +20,7 @@ def run(input_pcol, job_config):
     Args:
         input_pcol: A Beam PCollection returned from
             ``beam.io.ReadFromPubSub``.
-        job_config (klio.KlioJobConfig): Job-related configuration as
+        config (klio.KlioConfig): Job-related configuration as
             defined in ``klio-job.yaml``.
     Returns:
         A Beam PCollection that will be passed to ``beam.io.WriteToPubSub``.

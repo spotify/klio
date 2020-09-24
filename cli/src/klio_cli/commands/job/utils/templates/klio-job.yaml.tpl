@@ -11,15 +11,7 @@ pipeline_options:
   {%- endfor %}
   {%- endif %}
   project: {{klio.pipeline_options.project}}
-  region: {{klio.pipeline_options.region}}
-  staging_location: {{klio.pipeline_options.staging_location}}
-  temp_location: {{klio.pipeline_options.temp_location}}
-  num_workers: {{klio.pipeline_options.num_workers}}
-  max_num_workers: {{klio.pipeline_options.max_num_workers}}
-  autoscaling_algorithm: {{klio.pipeline_options.autoscaling_algorithm}}
-  disk_size_gb: {{klio.pipeline_options.disk_size_gb}}
-  worker_machine_type: {{klio.pipeline_options.worker_machine_type}}
-  runner: DataflowRunner
+  runner: DirectRunner
   {%- if not klio.use_fnapi %}
   setup_file: setup.py  # relative to job dir
   {%- endif %}

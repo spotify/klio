@@ -7,15 +7,7 @@ pipeline_options:
   experiments:
     - beam_fn_api
   project: test-gcp-project
-  region: europe-west1
-  staging_location: gs://test-gcp-project-dataflow-tmp/test-job/staging
-  temp_location: gs://test-gcp-project-dataflow-tmp/test-job/temp
-  num_workers: 2
-  max_num_workers: 2
-  autoscaling_algorithm: NONE
-  disk_size_gb: 32
-  worker_machine_type: n1-standard-2
-  runner: DataflowRunner
+  runner: DirectRunner
 job_config:
   allow_non_klio_messages: False
   events:

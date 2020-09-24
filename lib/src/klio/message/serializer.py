@@ -56,6 +56,30 @@ def _handle_msg_compat(parsed_message):
 # [batch dev] attemping to make this a little generic so it can (eventually)
 # be used with transforms other than DoFns
 def to_klio_message(incoming_message, kconfig=None, logger=None):
+    """Serialize ``bytes`` to a :ref:`KlioMessage <klio-message>`.
+
+    .. tip::
+
+        Set ``job_config.allow_non_klio_messages`` to ``True`` in
+        ``klio-job.yaml`` in order to process non-``KlioMessages`` as
+        regular ``bytes``. This function will create a new ``KlioMessage``
+        and set the incoming ``bytes`` to ``KlioMessage.data.element``.
+
+    Args:
+        incoming_message (bytes): Incoming bytes to parse into a \
+            ``KlioMessage``.
+        kconfig (klio_core.config.KlioConfig): the current job's
+            configuration.
+        logger (logging.Logger): the logger associated with the Klio
+            job.
+    Returns:
+        klio_core.proto.klio_pb2.KlioMessage: a ``KlioMessage``.
+    Raises:
+        klio_core.proto.klio_pb2._message.DecodeError: incoming message
+            can not be parsed into a ``KlioMessage`` and
+            ``job_config.allow_non_klio_messages`` in ``klio-job.yaml``
+            is set to ``False``.
+    """
     # TODO: when making a generic de/ser func, be sure to assert
     # kconfig and logger exists
     parsed_message = klio_pb2.KlioMessage()
@@ -107,6 +131,20 @@ def _handle_v2_payload(klio_message, payload):
 
 
 def from_klio_message(klio_message, payload=None):
+    """Deserialize a given :ref:`KlioMessage <klio-message>` to ``bytes``.
+
+    Args:
+        klio_message (klio_core.proto.klio_pb2.KlioMessage): the
+            ``KlioMessage`` in which to deserialize into ``bytes``
+        payload (bytes or str): Optional ``bytes`` or ``str`` to update
+            the value of ``KlioMessage.data.payload`` with before
+            deserializing into bytes. Default: ``None``.
+    Returns:
+        bytes: a ``KlioMessage`` as ``bytes``.
+    Raises:
+        exceptions.KlioMessagePayloadException: the provided payload
+            value cannot be coerced into ``bytes``.
+    """
     tagged, tag = False, None
     if isinstance(payload, pvalue.TaggedOutput):
         tagged = True

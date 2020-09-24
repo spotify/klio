@@ -16,8 +16,8 @@
 Base classes from which a metrics consumer (i.e. Stackdriver, ffwd, etc.)
 will need to implement.
 
-New consumers are required to implement the `AbstractRelayClient`, and
-three metrics objects based off of `BaseMetric`: a counter, a gauge, and
+New consumers are required to implement the :class:`AbstractRelayClient`, and
+three metrics objects based off of :class:`BaseMetric`: a counter, a gauge, and
 a timer.
 """
 import abc
@@ -35,9 +35,11 @@ def abstract_attr(obj=None):
     """Set an attribute or a property as abstract.
 
     Supports class-level attributes as well as methods defined as a
-    @property.
+    ``@property``.
 
     Usage:
+
+    .. code-block:: python
 
         class Foo(object):
             my_foo_attribute = abstract_attr()
@@ -48,12 +50,12 @@ def abstract_attr(obj=None):
                 pass
 
     Args:
-        obj (any): Python object to "decorate", i.e. a class method. If
+        obj (callable): Python object to "decorate", i.e. a class method. If
             none is provided, a dummy object is created in order to attach
-            the `__isabstractattr__` attribute (similar to
-            `__isabstractmethod__` from `abc.abstractmethod`).
+            the ``__isabstractattr__`` attribute (similar to
+            ``__isabstractmethod__`` from ``abc.abstractmethod``).
 
-    Returns object with `__isabstractattr__` attribute set to True.
+    Returns object with ``__isabstractattr__`` attribute set to ``True``.
     """
     if not obj:
         obj = _DummyAttribute()
@@ -112,8 +114,9 @@ class AbstractRelayClient(six.with_metaclass(_ABCBaseMeta)):
     will need to implement this relay class.
 
     Attributes:
-        RELAY_CLIENT_NAME (str): must match the key in `klio-job.yaml`
-        under `job_config.metrics`.
+        RELAY_CLIENT_NAME (str): must match the key in ``klio-job.yaml``
+            under ``job_config.metrics``.
+
     """
 
     RELAY_CLIENT_NAME = abstract_attr()
@@ -123,14 +126,14 @@ class AbstractRelayClient(six.with_metaclass(_ABCBaseMeta)):
 
     @abc.abstractmethod
     def unmarshal(self, metric):
-        """Returns a dictionary-representation of the `metric` object"""
+        """Returns a dictionary-representation of the ``metric`` object"""
         pass
 
     @abc.abstractmethod
     def emit(self, metric):
         """Emit the given metric object to the particular consumer.
 
-        `emit` will be run in a threadpool separate from the transform,
+        ``emit`` will be run in a threadpool separate from the transform,
         and any errors raised from the method will be logged then ignored.
         """
         pass
@@ -140,7 +143,7 @@ class AbstractRelayClient(six.with_metaclass(_ABCBaseMeta)):
         """Return a newly instantiated counter-type metric specific for
         the particular consumer.
 
-        Callers to the `counter` method will store new counter objects
+        Callers to the ``counter`` method will store new counter objects
         returned in memory for simple caching.
         """
         pass
@@ -150,7 +153,7 @@ class AbstractRelayClient(six.with_metaclass(_ABCBaseMeta)):
         """Return a newly instantiated gauge-type metric specific for
         the particular consumer.
 
-        Callers to the `gauge` method will store new gauge objects
+        Callers to the ``gauge`` method will store new gauge objects
         returned in memory for simple caching.
         """
         pass
@@ -160,7 +163,7 @@ class AbstractRelayClient(six.with_metaclass(_ABCBaseMeta)):
         """Return a newly instantiated timer-type metric specific for
         the particular consumer.
 
-        Callers to the `timer` method will store new timer objects
+        Callers to the ``timer`` method will store new timer objects
         returned in memory for simple caching.
         """
         pass

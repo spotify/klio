@@ -14,9 +14,10 @@
 #
 """Metrics registry to manage metrics for all configured relay clients.
 
-The `MetricsRegistry` is the main client for which to create and emit
-metrics. For example:
+The :class:`MetricsRegistry` class is the main client for which to create
+and emit metrics. For example:
 
+.. code-block:: python
 
     class MyTransform(KlioBaseTransform):
         def __init__(self):
@@ -57,7 +58,7 @@ class MetricsRegistry(object):
         """Get or create a counter.
 
         Creates a new counter if one is not found with a key of
-        "counter_{name}_{transform}" if `transform`.
+        ``"counter_{name}_{transform}"`` of the given  ``transform``.
 
         New counters will be stored in memory for simple caching.
 
@@ -66,7 +67,8 @@ class MetricsRegistry(object):
             value (int): starting value of counter; defaults to 0
             kwargs (dict): keyword arguments passed to each configured
                 relay clients' counter object.
-        Returns a dispatcher.CounterDispatcher instance
+        Returns:
+            `klio.metrics.dispatcher.CounterDispatcher` instance
         """
         transform_name = kwargs.pop("transform", self._transform_name)
         key = "counter_{}_{}".format(name, transform_name)

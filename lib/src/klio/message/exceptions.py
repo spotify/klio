@@ -15,8 +15,8 @@
 
 
 class KlioMessageException(Exception):
-    """General KlioMessage exception."""
+    """General :ref:`KlioMessage <klio-message>` exception."""
 
 
 class KlioMessagePayloadException(KlioMessageException):
-    """Error handling payload for a KlioMessage."""
+    """Error handling payload for a :ref:`KlioMessage <klio-message>`."""

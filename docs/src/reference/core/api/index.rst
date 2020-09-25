@@ -47,9 +47,13 @@ API
 ``klio_core.dataflow`` Module
 -----------------------------
 
+.. automodule:: klio_core.dataflow
+   :noindex:
+
 .. currentmodule:: klio_core.dataflow
 
 .. autosummary::
+    :nosignatures:
 
     DataflowClient
     get_dataflow_client

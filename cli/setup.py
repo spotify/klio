@@ -72,6 +72,7 @@ CLASSIFIERS = [
 ]
 META_FILE = read(META_PATH)
 INSTALL_REQUIRES = [
+    "attrs",
     "click",
     "dateparser",
     "docker",

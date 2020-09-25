@@ -139,19 +139,6 @@ def context():
                     "data_location": "gs://test-gcp-project-output/test-job",
                 }
             ],
-            "dependencies": [
-                {
-                    "job_name": "test-parent-job",
-                    "gcp_project": "test-parent-gcp-project",
-                    "input_topics": [
-                        (
-                            "projects/test-grandparent-gcp-project/topics/"
-                            "test-grandparent-job-output"
-                        )
-                    ],
-                    "region": "us-central1",
-                }
-            ],
         },
     }
 
@@ -197,7 +184,6 @@ def default_context():
                     "data_location": "gs://test-gcp-project-output/test-job",
                 }
             ],
-            "dependencies": [],
         },
     }
 
@@ -445,9 +431,6 @@ def context_overrides():
         "output_topic": "a-different-topic",
         "input_data_location": "gs://test-parent-gcp-project/test-parent-job",
         "output_data_location": "bq://somewhere/over/the/rainbow",
-        "dependencies": [
-            {"job_name": "parent-job", "gcp_project": "parent-gcp-project"}
-        ],
         "python_version": "37",
         "use_fnapi": "n",
         "create_resources": "n",
@@ -489,9 +472,6 @@ def expected_overrides():
                     "data_location": "bq://somewhere/over/the/rainbow",
                 }
             ],
-            "dependencies": [
-                {"job_name": "parent-job", "gcp_project": "parent-gcp-project"}
-            ],
         },
         "python_version": "37",
         "use_fnapi": False,
@@ -512,118 +492,13 @@ def test_get_context_from_defaults_overrides(
     assert not ret_create_dockerfile
 
 
-@pytest.mark.parametrize(
-    "inputs,confirmation, regions,expected_dependencies",
-    (
-        (
-            ["my-job", "my-proj", "my-topic", "europe-west1"],
-            [False],
-            ["europe-west1"],
-            [
-                {
-                    "job_name": "my-job",
-                    "gcp_project": "my-proj",
-                    "input_topics": ["my-topic"],
-                    "region": "europe-west1",
-                }
-            ],
-        ),  # full input
-        (
-            [
-                # mock confirm 1
-                "my-job",
-                "my-proj",
-                "my-topic",
-                "europe-west1",
-                # mock confirm 2
-                "my-job2",
-                "my-proj",
-                "my-topic2",
-                "europe-west1",
-            ],
-            [True, False],
-            ["europe-west1", "europe-west1"],
-            [
-                {
-                    "job_name": "my-job",
-                    "gcp_project": "my-proj",
-                    "input_topics": ["my-topic"],
-                    "region": "europe-west1",
-                },
-                {
-                    "job_name": "my-job2",
-                    "gcp_project": "my-proj",
-                    "input_topics": ["my-topic2"],
-                    "region": "europe-west1",
-                },
-            ],
-        ),  # multiple full inputs
-        (
-            ["my-job", "my-proj", "", ""],
-            [False],
-            [],
-            [{"job_name": "my-job", "gcp_project": "my-proj"}],
-        ),  # use default inputs for input_topics and region
-        (
-            ["my-job", "my-proj", "my-topic", ""],
-            [False],
-            [],
-            [
-                {
-                    "job_name": "my-job",
-                    "gcp_project": "my-proj",
-                    "input_topics": ["my-topic"],
-                }
-            ],
-        ),  # use defaults for region
-        (
-            ["my-job", "my-proj", "", "europe-west1"],
-            [False],
-            ["europe-west1"],
-            [
-                {
-                    "job_name": "my-job",
-                    "gcp_project": "my-proj",
-                    "region": "europe-west1",
-                }
-            ],
-        ),  # use defaults for input topics
-    ),
-)
-def test_get_dependencies_from_user_inputs(
-    mocker,
-    mock_prompt,
-    mock_confirm,
-    inputs,
-    confirmation,
-    regions,
-    expected_dependencies,
-    job,
-):
-    mock_prompt.side_effect = inputs
-    mock_confirm.side_effect = confirmation
-
-    mock_validate_region = mocker.patch.object(job, "_validate_region")
-    actual_dependencies = job._get_dependencies_from_user_inputs()
-    assert expected_dependencies == actual_dependencies
-    expected_validate_region_calls = [mocker.call(r) for r in regions]
-    assert (
-        expected_validate_region_calls == mock_validate_region.call_args_list
-    )
-
-
 @pytest.fixture
 def mock_prompt(mocker):
     return mocker.patch.object(create.click, "prompt")
 
 
-@pytest.fixture
-def mock_confirm(mocker):
-    return mocker.patch.object(create.click, "confirm")
-
-
 def test_get_context_from_user_inputs(
-    context, mock_prompt, mock_confirm, mocker, job,
+    context, mock_prompt, mocker, job,
 ):
     # mimicking user inputs for each prompt
     prompt_side_effect = [
@@ -644,19 +519,8 @@ def test_get_context_from_user_inputs(
         "projects/test-gcp-project/topics/test-job-output",
         "gs://test-parent-gcp-project-output/test-parent-job",
         "gs://test-gcp-project-output/test-job",
-        # <-- mock_confirm side effect 1 -->
-        "test-parent-job",
-        "test-parent-gcp-project",
-        (
-            "projects/test-grandparent-gcp-project/topics/test-grandparent-"
-            "job-output"
-        ),
-        "us-central1",
-        # <-- mock_confirm side effect 2-->
     ]
-    confirm_side_effect = [True, False]
     mock_prompt.side_effect = prompt_side_effect
-    mock_confirm.side_effect = confirm_side_effect
 
     user_input_context = {
         "job_name": "test-job",
@@ -672,11 +536,10 @@ def test_get_context_from_user_inputs(
     )
 
     assert len(prompt_side_effect) == mock_prompt.call_count
-    assert len(confirm_side_effect) == mock_confirm.call_count
 
-    exp_calls = [mocker.call("europe-west1"), mocker.call("us-central1")]
+    exp_calls = [mocker.call("europe-west1")]
     assert exp_calls == mock_validate_region.call_args_list
-    assert 2 == mock_validate_region.call_count
+    assert len(exp_calls) == mock_validate_region.call_count
 
     # mock_validate_region.assert_called_once_with("europe-west1")
     gcr_url = "gcr.io/test-gcp-project/test-job-worker"
@@ -695,7 +558,6 @@ def test_get_context_from_user_inputs_no_prompts(
     context_overrides,
     expected_overrides,
     mock_prompt,
-    mock_confirm,
     job,
 ):
     context_overrides["machine_type"] = "n4-highmem-l33t"
@@ -710,79 +572,10 @@ def test_get_context_from_user_inputs_no_prompts(
     expected_overrides["pipeline_options"].pop("project")
     expected_overrides["python_version"] = "36"
     assert not mock_prompt.call_count
-    assert not mock_confirm.call_count
     mock_validate_region.assert_called_once_with("us-central1")
     mock_validate_worker_image.assert_called_once_with("gcr.io/foo/bar")
     assert not ret_dockerfile
     assert expected_overrides == ret_context
-
-
-@pytest.mark.parametrize(
-    "users_provided_dependencies,confirmed_dependencies",
-    (
-        (True, True),
-        # (True, False), # not possible
-        (False, True),
-        (False, False),
-    ),
-)
-def test_get_context_from_user_inputs_dependency_settings(
-    context_overrides,
-    expected_overrides,
-    mock_prompt,
-    mock_confirm,
-    mocker,
-    monkeypatch,
-    users_provided_dependencies,
-    confirmed_dependencies,
-    job,
-):
-    context_overrides["machine_type"] = "n4-highmem-l33t"
-    saved_dependencies = context_overrides.pop("dependencies")
-
-    mock_get_dependencies_from_user_inputs = mocker.Mock()
-    if users_provided_dependencies:
-        mock_get_dependencies_from_user_inputs.return_value = (
-            saved_dependencies
-        )
-    else:
-        mock_get_dependencies_from_user_inputs.return_value = None
-
-    monkeypatch.setattr(
-        job,
-        "_get_dependencies_from_user_inputs",
-        mock_get_dependencies_from_user_inputs,
-    )
-
-    mock_confirm.side_effect = [confirmed_dependencies]
-
-    mock_validate_region = mocker.patch.object(job, "_validate_region")
-    mock_validate_worker_image = mocker.patch.object(
-        job, "_validate_worker_image"
-    )
-    ret_context, ret_dockerfile = job._get_context_from_user_inputs(
-        context_overrides
-    )
-
-    expected_overrides["pipeline_options"].pop("project")
-    expected_overrides["python_version"] = "36"
-
-    assert not mock_prompt.call_count
-    assert 1 == mock_confirm.call_count
-    mock_validate_region.assert_called_once_with("us-central1")
-    mock_validate_worker_image.assert_called_once_with("gcr.io/foo/bar")
-    assert not ret_dockerfile
-    if users_provided_dependencies:
-        assert expected_overrides == ret_context
-
-    else:
-        expected_overrides["job_options"]["dependencies"] = []
-        assert expected_overrides == ret_context
-
-    if confirmed_dependencies:
-        assert 1 == mock_get_dependencies_from_user_inputs.call_count
-    else:
-        assert 0 == mock_get_dependencies_from_user_inputs.call_count
 
 
 def test_get_context_from_user_inputs_no_prompts_image(
@@ -790,7 +583,6 @@ def test_get_context_from_user_inputs_no_prompts_image(
     context_overrides,
     expected_overrides,
     mock_prompt,
-    mock_confirm,
     job,
 ):
     mock_prompt.side_effect = [""]
@@ -812,7 +604,6 @@ def test_get_context_from_user_inputs_no_prompts_image(
     exp_pipeline_opts["worker_harness_container_image"] = gcr_url
 
     assert 1 == mock_prompt.call_count
-    assert not mock_confirm.call_count
     mock_validate_region.assert_called_once_with("us-central1")
     mock_validate_worker_image.assert_called_once_with(gcr_url)
     assert ret_dockerfile
@@ -845,57 +636,6 @@ def test_get_user_input(use_defaults, mocker, job):
 
 
 @pytest.mark.parametrize(
-    "dependencies,expected_dependencies,num_warnings",
-    (
-        (
-            (
-                "job_name=parent-job",
-                "gcp_project=a-project",
-                "region=a-region",
-                "input_topic=d",
-                "input_topics=a,b,c",
-            ),
-            {
-                "job_name": "parent-job",
-                "gcp_project": "a-project",
-                "region": "a-region",
-                "input_topic": "d",
-                "input_topics": ["a", "b", "c"],
-            },
-            0,
-        ),
-        (
-            (
-                "job-name=parent-job",
-                "gcp-project=a-project",
-                "region=a-region",
-                "input-topic=d",
-                "input-topics=a,b,c",
-            ),
-            {
-                "job_name": "parent-job",
-                "gcp_project": "a-project",
-                "region": "a-region",
-                "input_topic": "d",
-                "input_topics": ["a", "b", "c"],
-            },
-            0,
-        ),
-        (
-            ("job-name=parent-job", "gcp-project=a-project", "banana=1"),
-            {"job_name": "parent-job", "gcp_project": "a-project"},
-            1,
-        ),
-    ),
-)
-def test_parse_dependency_args(
-    dependencies, expected_dependencies, num_warnings, caplog, job,
-):
-    assert expected_dependencies == job._parse_dependency_args(dependencies)
-    assert num_warnings == len(caplog.records)
-
-
-@pytest.mark.parametrize(
     "unknown_args,expected",
     (
         (("--foo", "foobar"), {"foo": "foobar"}),
@@ -904,19 +644,6 @@ def test_parse_dependency_args(
             {"foo": "foobar", "bar": "barfoo"},
         ),
         (("--foo", "bar", "baz"), {"foo": ("bar", "baz")}),
-        (
-            ("--dependency", "job_name=parent-job", "gcp_project=a-project"),
-            {
-                "dependencies": [
-                    {"job_name": "parent-job", "gcp_project": "a-project"}
-                ]
-            },
-        ),
-        (
-            ("--dependency", "job_name=parent-job"),
-            {"dependencies": [{"job_name": "parent-job"}]},
-        ),
-        (("--dependency", "banana=phone"), {},),
     ),
 )
 def test_parse_unknown_args(unknown_args, expected, job):

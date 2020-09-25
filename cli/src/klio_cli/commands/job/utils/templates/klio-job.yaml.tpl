@@ -35,19 +35,3 @@ job_config:
     - topic: {{item.topic}}
       data_location: {{item.data_location}}
   {%- endfor %}
-  {%- if klio.job_options.dependencies %}
-  dependencies:
-  {%- for dep in klio.job_options.dependencies %}
-    - job_name: {{ dep.job_name }}
-      gcp_project: {{ dep.gcp_project }}
-      {%- if dep.input_topics %}
-      input_topics:
-      {%- for topic in dep.input_topics %}
-        - {{ topic }}
-      {%- endfor %}
-      {%- endif %}
-      {%- if dep.region %}
-      region: {{ dep.region }}
-      {%- endif %}
-  {%- endfor %}
-  {%- endif %}

@@ -282,7 +282,6 @@ class CreateJob(object):
             input_data_location = "gs://{gcp_project}-input/{job_name}".format(
                 **kwargs
             )
-        dependencies = kwargs.get("dependencies", [])
 
         match = TOPIC_REGEX.match(input_topic)
         topic_name = match.group("topic")
@@ -303,7 +302,6 @@ class CreateJob(object):
         job_context = {
             "inputs": inputs,
             "outputs": outputs,
-            "dependencies": dependencies,
         }
 
         python_version = kwargs.get(
@@ -348,35 +346,6 @@ class CreateJob(object):
                 create_resources = DEFAULTS["create_resources"]
 
         return create_resources
-
-    def _get_dependencies_from_user_inputs(self):
-        dependencies = []
-        while True:
-            job = {}
-            job_name = click.prompt("Dependency job name")
-            job["job_name"] = job_name
-            job["gcp_project"] = click.prompt(
-                "GCP project where '{}' is located".format(job_name)
-            )
-            input_topic = click.prompt(
-                "Input topic of '{}'".format(job_name), default=""
-            )
-            if input_topic:
-                job["input_topics"] = [input_topic]
-
-            region = click.prompt(
-                "GCP region where '{}' is located".format(job_name), default=""
-            )
-            if region:
-                self._validate_region(region)
-                job["region"] = region
-
-            dependencies.append(job)
-
-            if not click.confirm("Do you have another dependency?"):
-                break
-
-        return dependencies
 
     def _get_context_from_user_inputs(self, kwargs):
         region = kwargs.get("region") or click.prompt(
@@ -550,16 +519,7 @@ class CreateJob(object):
         job_context = {
             "inputs": inputs,
             "outputs": outputs,
-            "dependencies": [],
         }
-
-        dependencies = kwargs.get("dependencies")
-        if not dependencies:
-            if click.confirm("Does your job have dependencies on other jobs?"):
-                dependencies = self._get_dependencies_from_user_inputs()
-
-        if dependencies is not None:
-            job_context["dependencies"] = dependencies
 
         context = {
             "pipeline_options": pipeline_context,
@@ -585,32 +545,6 @@ class CreateJob(object):
         context["pipeline_options"]["project"] = kwargs["gcp_project"]
         return context, create_dockerfile
 
-    def _parse_dependency_args(self, dependency):
-        # both "_" and "-" are valid
-        valid_keys = (
-            "job_name",
-            "gcp_project",
-            "region",
-            "input_topics",
-            "input_topic",
-        )
-        job_dependency = {}
-
-        for item in dependency:
-            key, value = item.split("=")
-            clean_key = key.replace("-", "_")
-            if clean_key in valid_keys:
-                if clean_key == "input_topics":
-                    value = value.split(",")
-                job_dependency[clean_key] = value
-            else:
-                logging.warning(
-                    "Skipping unrecognized job dependency key: '{}'.".format(
-                        key
-                    )
-                )
-        return job_dependency
-
     def _parse_unknown_args(self, user_args):
         # ('--foo', 'bar', '--baz', 'bla', 'qaz')
         parsed_keys_index = []  # (0, 2)
@@ -627,16 +561,10 @@ class CreateJob(object):
                 next_key = len(user_args)
 
             values = user_args[item + 1 : next_key]
-            if len(values) == 1 and key != "dependency":
+            if len(values) == 1:
                 values = values[0]
 
-            if key == "dependency":
-                dependency = self._parse_dependency_args(values)
-                if len(dependency) == 0:
-                    continue
-                parsed_args.setdefault("dependencies", []).append(dependency)
-            else:
-                parsed_args[key] = values
+            parsed_args[key] = values
 
         return parsed_args
 

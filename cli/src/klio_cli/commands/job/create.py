@@ -52,6 +52,8 @@ DEFAULTS = {
 
 
 class CreateJob(object):
+    WORKER_IMAGE_TPL = "gcr.io/{gcp_project}/{job_name}-worker"
+
     def __init__(self):
         self.create_args_dict = {
             f: None for f in attr.fields_dict(create_args.CreateJobArgs)
@@ -297,6 +299,18 @@ class CreateJob(object):
 
             self.create_args_dict.update(updated_fields)
 
+    def _apply_default_experiments(self):
+        if not self.create_args_dict.get("experiments"):
+            if not self.create_args_dict.get("use_fnapi"):
+                self.create_args_dict["experiments"] = [
+                    e for e in self.default_exps if e != "beam_fn_api"
+                ]
+        else:
+            if isinstance(self.create_args_dict.get("experiments"), str):
+                self.create_args_dict[
+                    "experiments"
+                ] = self.create_args_dict.get("experiments").split(",")
+
     def _apply_defaults(self):
         for k in self.create_args_dict:
             if self.create_args_dict.get(k) is None and k in DEFAULTS:
@@ -304,6 +318,20 @@ class CreateJob(object):
 
         if not self.create_args_dict.get("job_dir"):
             self.create_args_dict["job_dir"] = self.default_job_dir
+
+        self.create_args_dict["create_dockerfile"] = False
+        if not self.create_args_dict.get("worker_image"):
+            # worker image name not supplied by either CLI flags
+            # or through user input, so we will have to
+            # create one
+            self.create_args_dict["create_dockerfile"] = True
+            image = self.WORKER_IMAGE_TPL.format(
+                gcp_project=self.create_args_dict.get("gcp_project"),
+                job_name=self.create_args_dict.get("job_name"),
+            )
+            self.create_args_dict["worker_image"] = image
+
+        self._apply_default_experiments()
 
     def _parse_unknown_args(self, user_args):
         # ('--foo', 'bar', '--baz', 'bla', 'qaz')
@@ -330,6 +358,7 @@ class CreateJob(object):
 
     def _build_defaults(self):
         self.default_job_dir = os.getcwd()
+        self.default_exps = DEFAULTS["experiments"].split(",")
 
     def build_create_job_args(self, known_args, addl_job_args):
         unknown_args = self._parse_unknown_args(addl_job_args)
@@ -345,7 +374,6 @@ class CreateJob(object):
 
 class CreateStreamingJob(CreateJob):
     BASE_TOPIC_TPL = "projects/{gcp_project}/topics/{job_name}"
-    WORKER_IMAGE_TPL = "gcr.io/{gcp_project}/{job_name}-worker"
 
     def _build_defaults(self):
         super()._build_defaults()
@@ -357,7 +385,6 @@ class CreateStreamingJob(CreateJob):
         self.default_staging_location = default_bucket + "/staging"
         self.default_temp_location = default_bucket + "/temp"
 
-        self.default_exps = DEFAULTS["experiments"].split(",")
 
         base_topic = self.BASE_TOPIC_TPL.format(
             gcp_project=self.create_args_dict.get("gcp_project"),
@@ -383,17 +410,7 @@ class CreateStreamingJob(CreateJob):
         if not self.create_args_dict.get("temp_location"):
             self.create_args_dict["temp_location"] = self.default_temp_location
 
-    def _apply_default_experiments(self):
-        if not self.create_args_dict.get("experiments"):
-            if not self.create_args_dict.get("use_fnapi"):
-                self.create_args_dict["experiments"] = [
-                    e for e in self.default_exps if e != "beam_fn_api"
-                ]
-        else:
-            if isinstance(self.create_args_dict.get("experiments"), str):
-                self.create_args_dict[
-                    "experiments"
-                ] = self.create_args_dict.get("experiments").split(",")
+
 
     def _apply_default_topics_and_subscriptions(self):
         if not self.create_args_dict.get("output_topic"):
@@ -425,20 +442,7 @@ class CreateStreamingJob(CreateJob):
     def _apply_defaults(self):
         super()._apply_defaults()
 
-        self.create_args_dict["create_dockerfile"] = False
-        if not self.create_args_dict.get("worker_image"):
-            # worker image name not supplied by either CLI flags
-            # or through user input, so we will have to
-            # create one
-            self.create_args_dict["create_dockerfile"] = True
-            image = self.WORKER_IMAGE_TPL.format(
-                gcp_project=self.create_args_dict.get("gcp_project"),
-                job_name=self.create_args_dict.get("job_name"),
-            )
-            self.create_args_dict["worker_image"] = image
-
         self._apply_default_gcs_bucket()
-        self._apply_default_experiments()
         self._apply_default_topics_and_subscriptions()
 
     def _parse_experiments_user_input(self, updated_fields):

@@ -30,11 +30,11 @@ WORKER_DISK_TYPE_URL = (
 
 @utils.config_object(key_prefix=None, allow_unknown_keys=False)
 class BaseKlioConfig(object):
-    """Klio config object representation of klio-job.yaml.
+    """Base Klio config representation of ``klio-job.yaml``.
 
     Args:
         config_dict (dict): dictionary representation of configuration
-            as parsed from klio-job.yaml.
+            as parsed from ``klio-job.yaml``.
     """
 
     job_name = attr.attrib(type=str)
@@ -69,7 +69,26 @@ class BaseKlioConfig(object):
 
 
 class KlioConfig(BaseKlioConfig):
-    pass
+    """Klio config object representation of ``klio-job.yaml``.
+
+    Args:
+        config_dict (dict): dictionary representation of configuration
+            as parsed from ``klio-job.yaml``.
+
+    Attributes:
+        job_name (str): Name of Klio job.
+        version (int): Version of Klio job.
+        pipeline_options (KlioPipelineConfig): Apache Beam pipeline-related
+            configuration.
+        job_config (KlioJobConfig): Job-related configuration.
+    """
+
+    # re-defining as_dict just to have its docstring.
+    def as_dict(self):
+        """Return a dictionary representation of the :class:`KlioConfig`
+        object.
+        """
+        return super().as_dict()
 
 
 @attr.attrs
@@ -80,14 +99,28 @@ class KlioIOConfigContainer(object):
 
 @utils.config_object(key_prefix="job_config", allow_unknown_keys=True)
 class KlioJobConfig(object):
-    """Job-specific config representing the "job_config" key of klio-job.yaml.
+    """Job-specific config representing the ``job_config`` key of
+    ``klio-job.yaml``.
 
-    "job_config" is both for any user-specific job configuration needed,
+    ``job_config`` is both for any user-specific job configuration needed,
     as well as klio-related configuration (i.e. timeouts, metrics).
 
+    See :ref:`documentation <job-config>` for information on available
+    configuration.
+
+    Attributes:
+        job_name (str): Name of Klio job.
+        version (int): Version of Klio job.
+        allow_non_klio_messages (bool): Allow this job to process free-form,
+            non-KlioMessage messages.
+        blocking (bool): Wait for Dataflow job to finish before exiting.
+        metrics (dict): Dictionary representing desired metrics configuration.
+        events (``KlioIOConfigContainer``): Job event I/O configuration.
+        data (``KlioIOConfigContainer``): Job data I/O configuration.
+
     Args:
-        config_dict (dict): dictionary representation of configuration
-            as parsed from klio-job.yaml.
+        config_dict (dict): dictionary representation of ``job_config``
+            as parsed from ``klio-job.yaml``.
     """
 
     ATTRIBS_TO_SKIP = ["version", "job_name"]
@@ -217,6 +250,15 @@ class KlioJobConfig(object):
         return config_dict
 
     def as_dict(self):
+        """Return a dictionary representation of the :class:`KlioJobConfig`
+        object.
+
+        .. tip::
+
+            Use this method to access any custom config key/value pairs
+            defined under ``klio-job.yaml::job_config``.
+        """
+
         config_dict = self._as_dict()
         for attrib in self.USER_ATTRIBS:
             for key, value in attrib.items():
@@ -230,21 +272,34 @@ class KlioJobConfig(object):
 
 @utils.config_object(key_prefix="pipeline_options", allow_unknown_keys=True)
 class KlioPipelineConfig(object):
-    """Pipeline-specific config representing the "pipeline_options" key
-    of klio-job.yaml.
+    """Pipeline-specific config representing the ``pipeline_options`` key
+    of ``klio-job.yaml``.
 
-    "pipeline_options" map 1:1 to options supported in Apache Beam and
-    its runners (i.e. Dataflow). See https://github.com/apache/beam/blob/
-    master/sdks/python/apache_beam/options/pipeline_options.py for
-    available options.
+    .. note::
 
-    Any instance attribute not defined below but is available in Apache
+        ``pipeline_options`` map 1:1 to options supported in Apache Beam and
+        its runners (i.e. Dataflow). See `all supported pipeline options
+        <https://github.com/apache/beam/blob/master/sdks/python/apache_beam/
+        options/pipeline_options.py>`_ for available options.
+
+    Any instance attribute not defined in this class but is available in Apache
     Beam or its runners will still be passed through when running the
     pipeline.
 
+    See :ref:`documentation <kliopipelineconfig>` for information on available
+    configuration.
+
     Args:
-        config_dict (dict): dictionary representation of configuration
-            as parsed from klio-job.yaml.
+        config_dict (dict): dictionary representation of ``pipeline_options``
+            as parsed from ``klio-job.yaml``.
+
+    Attributes:
+        job_name (str): Name of Klio job.
+        version (int): Version of Klio job.
+        (remaining attributes): See `all supported pipeline options
+            <https://github.com/apache/beam/blob/master/sdks/python/
+            apache_beam/options/pipeline_options.py>`_ for all available
+            remaining attributes.
     """
 
     ATTRIBS_TO_SKIP = ["version"]
@@ -358,6 +413,9 @@ class KlioPipelineConfig(object):
         )
 
     def as_dict(self):
+        """Return a dictionary representation of the
+        :class:`KlioPipelineConfig` object.
+        """
         config_dict = self._as_dict()
         for attrib in self.USER_ATTRIBS:
             for key, value in attrib.items():

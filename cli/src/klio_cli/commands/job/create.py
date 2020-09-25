@@ -98,7 +98,7 @@ class CreateJob(object):
         rendered_file = config_tpl.render(template_context)
         self._write_template(job_dir, "klio-job.yaml", rendered_file)
 
-    def _create_python_files(self, env, package_name, mode, output_dir):
+    def _create_python_files(self, env, package_name, output_dir):
         current_year = datetime.datetime.now().year
         template_context = {
             "klio": {"year": current_year, "package_name": package_name}
@@ -594,8 +594,7 @@ class CreateJob(object):
         self._create_job_directory(output_dir)
         self._create_job_config(env, context, output_dir)
 
-        mode = context.get("mode", "basic")
-        self._create_python_files(env, package_name, mode, output_dir)
+        self._create_python_files(env, package_name, output_dir)
         if not context["use_fnapi"]:
             context["package_name"] = package_name
             self._create_no_fnapi_files(env, context, output_dir)

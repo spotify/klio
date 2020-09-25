@@ -218,7 +218,7 @@ def test_create_python_files(tmpdir, mocker, job):
 
     dt_patch = "klio_cli.commands.job.create.datetime.datetime"
     with mock.patch(dt_patch, MockDatetime):
-        job._create_python_files(env, "test_job", "basic", output_dir.strpath)
+        job._create_python_files(env, "test_job", output_dir.strpath)
 
     ret_init_file = output_dir.join("__init__.py")
     ret_init_contents = ret_init_file.read()
@@ -706,9 +706,8 @@ def test_create(
         ret_env, context, output_dir
     )
 
-    mode = context.get("mode", "basic")
     mock_create_python_files.assert_called_once_with(
-        ret_env, package_name, mode, output_dir
+        ret_env, package_name, output_dir
     )
     if use_fnapi:
         mock_create_no_fnapi_files.assert_not_called()

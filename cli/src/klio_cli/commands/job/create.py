@@ -385,7 +385,6 @@ class CreateStreamingJob(CreateJob):
         self.default_staging_location = default_bucket + "/staging"
         self.default_temp_location = default_bucket + "/temp"
 
-
         base_topic = self.BASE_TOPIC_TPL.format(
             gcp_project=self.create_args_dict.get("gcp_project"),
             job_name=self.create_args_dict.get("job_name"),
@@ -409,8 +408,6 @@ class CreateStreamingJob(CreateJob):
             ] = self.default_staging_location
         if not self.create_args_dict.get("temp_location"):
             self.create_args_dict["temp_location"] = self.default_temp_location
-
-
 
     def _apply_default_topics_and_subscriptions(self):
         if not self.create_args_dict.get("output_topic"):

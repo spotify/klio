@@ -14,7 +14,6 @@
 #
 
 import click
-import mock
 import pytest
 
 from klio_cli.commands.job.utils import create_args

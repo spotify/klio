@@ -62,6 +62,9 @@ API
 ``klio_core.exceptions`` Module
 -------------------------------
 
+.. automodule:: klio_core.exceptions
+   :noindex:
+
 .. currentmodule:: klio_core.exceptions
 
 .. autosummary::

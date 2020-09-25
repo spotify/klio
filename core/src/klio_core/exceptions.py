@@ -12,11 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+"""Common exceptions for use within the Klio ecosystem."""
 
 
 class KlioConfigTemplatingException(Exception):
-    """Exception for missing keys when overriding
-    klio config parameters
+    """Exception for missing keys when overriding Klio config parameters
+
+    Args:
+        key (str): missing configuration key
     """
 
     def __init__(self, key):

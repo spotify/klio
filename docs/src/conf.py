@@ -73,6 +73,13 @@ versions = {
     "klio_audio_release": find_version("../../audio/src/klio_audio/__init__.py"),
 }
 
+# Define ``rst_prolog`` to make custom roles available at the beginning of each
+# rst file. The `/` is 'relative' to the main source directory / where conf.py
+# is, otherwhise sphinx will try to do relative includes
+rst_prolog = """
+.. include:: /.custom_roles.rst
+"""
+
 # Define ``rst_epilog`` to make variables globally-available to compiled .rst files
 rst_epilog = """
 .. |klio-cli-version| replace:: {klio_cli_release}
@@ -162,7 +169,7 @@ html_theme_options = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-html_css_files = ["css/custom.css", "css/colors.css"]  # relative to _static
+html_css_files = ["css/custom.css", "css/colors.css", "css/roles.css"]  # relative to _static
 html_js_files = ["js/custom.js"]  # relative to _static
 html_favicon = "_static/images/k_favicon.png"
 pygments_style = "vs"

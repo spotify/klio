@@ -1,6 +1,10 @@
+:nosidebar:
+:nodocstoc:
+
 klio: some clever tagline
 =========================
 
+Klio is an ecosystem for processing audio files – or any binary files – easily and at scale. :doc:`Read more<userguide/index>`.
 
 .. raw:: html
 
@@ -93,10 +97,6 @@ TODOs
 -----
 
 A collection of all the todos that we should probably address before we publicly release.
-
-.. todo::
-
-   This is the landing page. Let's add some landing page documentation! This can actually be pulled in from our repo's README.
 
 .. the `todolist` directive below collects all todos in our docs and lists them here to make them super obvious
 

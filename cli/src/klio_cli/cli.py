@@ -279,12 +279,9 @@ def _validate_job_name(ctx, param, value):
 @options.output
 @options.use_defaults
 @click.argument("addl_job_opts", nargs=-1, type=click.UNPROCESSED)
-def create_job(addl_job_opts, output, **known_kwargs):
-    if not output:
-        output = os.getcwd()
-    output = os.path.abspath(output)
-    job = job_commands.create.CreateJob()
-    job.create(addl_job_opts, known_kwargs, output)
+def create_job(addl_job_opts, **known_kwargs):
+    job_creator = job_commands.create.CreateStreamingJob()
+    job_creator.create(addl_job_opts, known_kwargs)
 
 
 @job.command(

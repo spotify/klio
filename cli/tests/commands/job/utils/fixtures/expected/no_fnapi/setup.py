@@ -113,7 +113,7 @@ class CustomCommands(setuptools.Command):
 # NOTE: `version` does not particularly mean anything here since we're
 # not publishing to PyPI; it's just a required field
 setuptools.setup(
-    name="test-job",  # required
+    name="test_job",  # required
     version="0.0.1",  # required
     # NOTE: required only when *not* using the above REQUIREMENTS_COMMANDS
     # approach to install deps (i.e. deps that don't require OS-level deps

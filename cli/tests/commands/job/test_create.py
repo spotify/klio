@@ -16,7 +16,6 @@
 import datetime
 import os
 
-import click
 import mock
 import pytest
 import yaml
@@ -29,8 +28,13 @@ FIXTURE_PATH = os.path.join(HERE, "utils", "fixtures")
 
 
 @pytest.fixture
-def job():
+def base_job():
     return create.CreateJob()
+
+
+@pytest.fixture
+def job():
+    return create.CreateStreamingJob()
 
 
 # pytest prevents monkeypatching datetime directly
@@ -40,8 +44,8 @@ class MockDatetime(datetime.datetime):
         return datetime.datetime(2019, 1, 1)
 
 
-def test_get_environment(job):
-    env = job._get_environment()
+def test_get_environment(base_job):
+    env = base_job._get_environment()
     expected_templates = [
         "MANIFEST.in.tpl",
         "README.md.tpl",
@@ -57,16 +61,18 @@ def test_get_environment(job):
     assert expected_templates == sorted(env.list_templates())
 
 
-def test_create_job_directory(tmpdir, job):
+def test_create_job_directory(tmpdir, base_job):
     output_base_dir = tmpdir.mkdir("testing")
     output_dir = os.path.join(str(output_base_dir), "test_job")
-    job._create_job_directory(output_dir)
+    base_job._create_job_directory(output_dir)
 
     assert os.path.exists(output_dir)
 
 
 @pytest.mark.parametrize("error_code", (1, 17))
-def test_create_job_directory_raises(monkeypatch, tmpdir, error_code, job):
+def test_create_job_directory_raises(
+    monkeypatch, tmpdir, error_code, base_job
+):
     output_base_dir = tmpdir.mkdir("testing")
     output_dir = os.path.join(str(output_base_dir), "test_job")
 
@@ -77,20 +83,20 @@ def test_create_job_directory_raises(monkeypatch, tmpdir, error_code, job):
 
     if error_code != 17:
         with pytest.raises(OSError) as e:
-            job._create_job_directory(output_dir)
+            base_job._create_job_directory(output_dir)
 
         assert e.match("some error message")
     else:
         # should not re-raise if file already existsgit
-        job._create_job_directory(output_dir)
+        base_job._create_job_directory(output_dir)
 
 
-def test_write_template(tmpdir, job):
+def test_write_template(tmpdir, base_job):
     data = u"this is some test data"
     output_dir = tmpdir.mkdir("testing")
     output_file = "foo.txt"
 
-    job._write_template(output_dir.strpath, output_file, data)
+    base_job._write_template(output_dir.strpath, output_file, data)
 
     ret_file = output_dir.join(output_file)
     ret_contents = ret_file.read()
@@ -139,19 +145,6 @@ def context():
                     "data_location": "gs://test-gcp-project-output/test-job",
                 }
             ],
-            "dependencies": [
-                {
-                    "job_name": "test-parent-job",
-                    "gcp_project": "test-parent-gcp-project",
-                    "input_topics": [
-                        (
-                            "projects/test-grandparent-gcp-project/topics/"
-                            "test-grandparent-job-output"
-                        )
-                    ],
-                    "region": "us-central1",
-                }
-            ],
         },
     }
 
@@ -197,20 +190,19 @@ def default_context():
                     "data_location": "gs://test-gcp-project-output/test-job",
                 }
             ],
-            "dependencies": [],
         },
     }
 
 
 @pytest.mark.parametrize("use_fnapi", (True, False))
-def test_create_job_config(use_fnapi, context, tmpdir, monkeypatch, job):
+def test_create_job_config(use_fnapi, context, tmpdir, monkeypatch, base_job):
     output_dir = tmpdir.mkdir("testing").mkdir("jobs").mkdir("test_job")
-    env = job._get_environment()
+    env = base_job._get_environment()
 
     context["use_fnapi"] = use_fnapi
     if not use_fnapi:
         monkeypatch.setitem(context["pipeline_options"], "experiments", [])
-    job._create_job_config(env, context, output_dir.strpath)
+    base_job._create_job_config(env, context, output_dir.strpath)
 
     expected_fixtures = os.path.join(FIXTURE_PATH, "expected")
     is_fnapi_dir = "fnapi" if use_fnapi else "no_fnapi"
@@ -226,13 +218,15 @@ def test_create_job_config(use_fnapi, context, tmpdir, monkeypatch, job):
     assert expected == ret_contents
 
 
-def test_create_python_files(tmpdir, mocker, job):
+def test_create_python_files(tmpdir, mocker, base_job):
     output_dir = tmpdir.mkdir("testing").mkdir("jobs").mkdir("test_job")
-    env = job._get_environment()
+    env = base_job._get_environment()
 
     dt_patch = "klio_cli.commands.job.create.datetime.datetime"
     with mock.patch(dt_patch, MockDatetime):
-        job._create_python_files(env, "test_job", "basic", output_dir.strpath)
+        base_job._create_python_files(
+            env, output_dir.strpath
+        )
 
     ret_init_file = output_dir.join("__init__.py")
     ret_init_contents = ret_init_file.read()
@@ -259,12 +253,12 @@ def test_create_python_files(tmpdir, mocker, job):
     assert expected_transforms == ret_transforms_contents + "\n"
 
 
-def test_create_no_fnapi_files(tmpdir, job):
+def test_create_no_fnapi_files(tmpdir, base_job):
     output_dir = tmpdir.mkdir("testing").mkdir("jobs").mkdir("test_job")
-    env = job._get_environment()
-    context = {"use_fnapi": False, "package_name": "test-job"}
+    env = base_job._get_environment()
+    context = {"job_name": "test-job", "use_fnapi": False}
 
-    job._create_no_fnapi_files(env, context, output_dir.strpath)
+    base_job._create_no_fnapi_files(env, context, output_dir.strpath)
 
     manifest_file = output_dir.join("MANIFEST.in")
     ret_manifest_contents = manifest_file.read()
@@ -286,12 +280,12 @@ def test_create_no_fnapi_files(tmpdir, job):
 
 
 @pytest.mark.parametrize("use_fnapi", (True, False))
-def test_create_reqs_file(use_fnapi, tmpdir, job):
+def test_create_reqs_file(use_fnapi, tmpdir, base_job):
     output_dir = tmpdir.mkdir("testing").mkdir("jobs").mkdir("test_job")
-    env = job._get_environment()
+    env = base_job._get_environment()
     context = {"use_fnapi": use_fnapi}
 
-    job._create_reqs_file(env, context, output_dir.strpath)
+    base_job._create_reqs_file(env, context, output_dir.strpath)
 
     ret_reqs_file = output_dir.join("job-requirements.txt")
     ret_reqs_contents = ret_reqs_file.read()
@@ -308,9 +302,9 @@ def test_create_reqs_file(use_fnapi, tmpdir, job):
 
 
 @pytest.mark.parametrize("use_fnapi", (True, False))
-def test_create_dockerfile(use_fnapi, tmpdir, job):
+def test_create_dockerfile(use_fnapi, tmpdir, base_job):
     output_dir = tmpdir.mkdir("testing").mkdir("jobs").mkdir("test_job")
-    env = job._get_environment()
+    env = base_job._get_environment()
     context = {
         "pipeline_options": {
             "worker_harness_container_image": "gcr.io/foo/bar",
@@ -321,7 +315,7 @@ def test_create_dockerfile(use_fnapi, tmpdir, job):
         "create_resources": False,
     }
 
-    job._create_dockerfile(env, context, output_dir.strpath)
+    base_job._create_dockerfile(env, context, output_dir.strpath)
 
     ret_dockerfile_file = output_dir.join("Dockerfile")
     ret_dockerfile_contents = ret_dockerfile_file.read()
@@ -338,12 +332,12 @@ def test_create_dockerfile(use_fnapi, tmpdir, job):
 
 
 @pytest.mark.parametrize("use_fnapi", (True, False))
-def test_create_readme(use_fnapi, tmpdir, job):
+def test_create_readme(use_fnapi, tmpdir, base_job):
     output_dir = tmpdir.mkdir("testing").mkdir("test_job")
-    env = job._get_environment()
+    env = base_job._get_environment()
     context = {"job_name": "test-job", "use_fnapi": use_fnapi}
 
-    job._create_readme(env, context, output_dir.strpath)
+    base_job._create_readme(env, context, output_dir.strpath)
 
     expected_fixtures = os.path.join(FIXTURE_PATH, "expected")
     is_fnapi_dir = "fnapi" if use_fnapi else "no_fnapi"
@@ -358,81 +352,36 @@ def test_create_readme(use_fnapi, tmpdir, job):
     assert exp_file_contents == ret_file_contents
 
 
-def test_validate_worker_image(job):
-    assert not job._validate_worker_image("foo")
+def test_parse_cli_args(base_job):
+    known_args = {"job_name": "job"}
+    addl_job_args = {"worker_machine_type": "lazy"}
 
+    base_job._parse_cli_args(known_args, addl_job_args)
 
-def test_validate_region(job):
-    exp_region = "us-central1"
-    ret_region = job._validate_region(exp_region)
-    assert exp_region == ret_region
+    for k in base_job.create_args_dict:
+        if k not in ("job_name", "worker_machine_type"):
+            assert base_job.create_args_dict.get(k) is None
 
-
-def test_validate_region_raises(job):
-    err_region = "not-a-region"
-    with pytest.raises(click.BadParameter) as e:
-        job._validate_region(err_region)
-
-    assert e.match(
-        '"{}" is not a valid region. Available: '.format(err_region)
-    )
-
-
-@pytest.mark.parametrize(
-    "input_version,exp_output_version",
-    (
-        ("3.5", "3"),
-        ("3.5.1", "3"),
-        ("35", "3"),
-        ("3.6", "36"),
-        ("3.6.1", "36"),
-        ("36", "36"),
-        ("3.7", "37"),
-        ("3.7.1", "37"),
-        ("37", "37"),
-    ),
-)
-def test_parse_python_version(input_version, exp_output_version, job):
-    assert exp_output_version == job._parse_python_version(input_version)
-
-
-@pytest.mark.parametrize(
-    "input_version,exp_msg",
-    (
-        ("2", "Klio no longer supports Python 2.7"),
-        ("2.7", "Klio no longer supports Python 2.7"),
-        ("3", "Invalid Python version given"),
-        ("3.3", "Invalid Python version given"),
-        ("3.6.7.8", "Invalid Python version given"),
-    ),
-)
-def test_parse_python_version_raises(input_version, exp_msg, job):
-    # only matching the start of the error message
-    with pytest.raises(click.BadParameter, match=exp_msg):
-        job._parse_python_version(input_version)
+    assert known_args["job_name"] == base_job.create_args_dict.get("job_name")
+    assert addl_job_args[
+        "worker_machine_type"
+    ] == base_job.create_args_dict.get("worker_machine_type")
 
 
 def test_get_context_from_defaults(default_context, job):
-    basic_context = {
-        "job_name": "test-job",
-        "gcp_project": "test-gcp-project",
-    }
-
-    ret_context, ret_create_dockerfile = job._get_context_from_defaults(
-        basic_context
+    job.build_create_job_args(
+        {"job_name": "test-job", "use_defaults": True},
+        ("--gcp-project", "test-gcp-project"),
     )
-    default_context.pop("job_name")
+    ret_context = job._get_context()
 
     assert default_context == ret_context
-    assert ret_create_dockerfile
 
 
 @pytest.fixture
-def context_overrides():
+def addl_job_args_overrides():
     return {
-        "job_name": "test-job",
         "gcp_project": "test-gcp-project",
-        "worker_image": "gcr.io/foo/bar",
         "experiments": "beam_fn_api,another_experiment",
         "region": "us-central1",
         "staging_location": "gs://a-different/staging/location",
@@ -445,9 +394,28 @@ def context_overrides():
         "output_topic": "a-different-topic",
         "input_data_location": "gs://test-parent-gcp-project/test-parent-job",
         "output_data_location": "bq://somewhere/over/the/rainbow",
-        "dependencies": [
-            {"job_name": "parent-job", "gcp_project": "parent-gcp-project"}
-        ],
+        "worker_image": "gcr.io/foo/bar",
+    }
+
+
+def convert_to_args(override_dict):
+    """
+    Converts override_dict to tuple of command line args
+
+    Example:
+        {"foo": "bar"} -> ("--foo", "bar")
+    """
+    new_keys = ["--{}".format(k) for k in override_dict.keys()]
+    new_values = [str(v) for v in override_dict.values()]
+    arg_pairs = zip(new_keys, new_values)
+    args = [item for kv in arg_pairs for item in kv]
+    return args
+
+
+@pytest.fixture
+def known_args_overrides():
+    return {
+        "job_name": "test-job",
         "python_version": "37",
         "use_fnapi": "n",
         "create_resources": "n",
@@ -457,6 +425,7 @@ def context_overrides():
 @pytest.fixture
 def expected_overrides():
     return {
+        "job_name": "test-job",
         "pipeline_options": {
             "project": "test-gcp-project",
             "worker_harness_container_image": "gcr.io/foo/bar",
@@ -489,9 +458,6 @@ def expected_overrides():
                     "data_location": "bq://somewhere/over/the/rainbow",
                 }
             ],
-            "dependencies": [
-                {"job_name": "parent-job", "gcp_project": "parent-gcp-project"}
-            ],
         },
         "python_version": "37",
         "use_fnapi": False,
@@ -500,116 +466,15 @@ def expected_overrides():
 
 
 def test_get_context_from_defaults_overrides(
-    context_overrides, expected_overrides, job
+    known_args_overrides, addl_job_args_overrides, expected_overrides, job
 ):
     # FYI: Click will pass in kwargs as a flat dict
-    context_overrides["worker_machine_type"] = "n4-highmem-l33t"
-    ret_context, ret_create_dockerfile = job._get_context_from_defaults(
-        context_overrides
-    )
+    addl_job_args_overrides["worker_machine_type"] = "n4-highmem-l33t"
+    addl_job_args = convert_to_args(addl_job_args_overrides)
+    job.build_create_job_args(known_args_overrides, addl_job_args)
+    ret_context = job._get_context()
 
     assert expected_overrides == ret_context
-    assert not ret_create_dockerfile
-
-
-@pytest.mark.parametrize(
-    "inputs,confirmation, regions,expected_dependencies",
-    (
-        (
-            ["my-job", "my-proj", "my-topic", "europe-west1"],
-            [False],
-            ["europe-west1"],
-            [
-                {
-                    "job_name": "my-job",
-                    "gcp_project": "my-proj",
-                    "input_topics": ["my-topic"],
-                    "region": "europe-west1",
-                }
-            ],
-        ),  # full input
-        (
-            [
-                # mock confirm 1
-                "my-job",
-                "my-proj",
-                "my-topic",
-                "europe-west1",
-                # mock confirm 2
-                "my-job2",
-                "my-proj",
-                "my-topic2",
-                "europe-west1",
-            ],
-            [True, False],
-            ["europe-west1", "europe-west1"],
-            [
-                {
-                    "job_name": "my-job",
-                    "gcp_project": "my-proj",
-                    "input_topics": ["my-topic"],
-                    "region": "europe-west1",
-                },
-                {
-                    "job_name": "my-job2",
-                    "gcp_project": "my-proj",
-                    "input_topics": ["my-topic2"],
-                    "region": "europe-west1",
-                },
-            ],
-        ),  # multiple full inputs
-        (
-            ["my-job", "my-proj", "", ""],
-            [False],
-            [],
-            [{"job_name": "my-job", "gcp_project": "my-proj"}],
-        ),  # use default inputs for input_topics and region
-        (
-            ["my-job", "my-proj", "my-topic", ""],
-            [False],
-            [],
-            [
-                {
-                    "job_name": "my-job",
-                    "gcp_project": "my-proj",
-                    "input_topics": ["my-topic"],
-                }
-            ],
-        ),  # use defaults for region
-        (
-            ["my-job", "my-proj", "", "europe-west1"],
-            [False],
-            ["europe-west1"],
-            [
-                {
-                    "job_name": "my-job",
-                    "gcp_project": "my-proj",
-                    "region": "europe-west1",
-                }
-            ],
-        ),  # use defaults for input topics
-    ),
-)
-def test_get_dependencies_from_user_inputs(
-    mocker,
-    mock_prompt,
-    mock_confirm,
-    inputs,
-    confirmation,
-    regions,
-    expected_dependencies,
-    job,
-):
-    mock_prompt.side_effect = inputs
-    mock_confirm.side_effect = confirmation
-
-    mock_validate_region = mocker.patch.object(job, "_validate_region")
-    actual_dependencies = job._get_dependencies_from_user_inputs()
-    assert expected_dependencies == actual_dependencies
-    expected_validate_region_calls = [mocker.call(r) for r in regions]
-    assert (
-        expected_validate_region_calls == mock_validate_region.call_args_list
-    )
 
 
 @pytest.fixture
@@ -627,167 +492,68 @@ def test_get_context_from_user_inputs(
 ):
     # mimicking user inputs for each prompt
     prompt_side_effect = [
-        "europe-west1",
         "Y",
         "n",
+        "",
+        "36",
         ["beam_fn_api"],
+        "europe-west1",
         2,
         2,
         "NONE",
         32,
         "n1-standard-2",
-        "",
-        "36",
         "gs://test-gcp-project-dataflow-tmp/test-job/staging",
         "gs://test-gcp-project-dataflow-tmp/test-job/temp",
         "projects/test-parent-gcp-project/topics/test-parent-job-output",
         "projects/test-gcp-project/topics/test-job-output",
         "gs://test-parent-gcp-project-output/test-parent-job",
         "gs://test-gcp-project-output/test-job",
-        # <-- mock_confirm side effect 1 -->
-        "test-parent-job",
-        "test-parent-gcp-project",
-        (
-            "projects/test-grandparent-gcp-project/topics/test-grandparent-"
-            "job-output"
-        ),
-        "us-central1",
-        # <-- mock_confirm side effect 2-->
     ]
-    confirm_side_effect = [True, False]
+    confirm_side_effect = []
     mock_prompt.side_effect = prompt_side_effect
     mock_confirm.side_effect = confirm_side_effect
 
-    user_input_context = {
-        "job_name": "test-job",
-        "gcp_project": "test-gcp-project",
-    }
-
-    mock_validate_region = mocker.patch.object(job, "_validate_region")
-    mock_validate_worker_image = mocker.patch.object(
-        job, "_validate_worker_image"
+    job.build_create_job_args(
+        {"job_name": "test-job", "use_defaults": False},
+        ("--gcp_project", "test-gcp-project"),
     )
-    ret_context, ret_dockerfile = job._get_context_from_user_inputs(
-        user_input_context
-    )
+    ret_context = job._get_context()
 
     assert len(prompt_side_effect) == mock_prompt.call_count
     assert len(confirm_side_effect) == mock_confirm.call_count
 
-    exp_calls = [mocker.call("europe-west1"), mocker.call("us-central1")]
-    assert exp_calls == mock_validate_region.call_args_list
-    assert 2 == mock_validate_region.call_count
-
-    # mock_validate_region.assert_called_once_with("europe-west1")
-    gcr_url = "gcr.io/test-gcp-project/test-job-worker"
-    mock_validate_worker_image.assert_called_once_with(gcr_url)
-
-    context.pop("job_name")
-    context["pipeline_options"].pop("project")
     context["use_fnapi"] = True
     context["create_resources"] = False
     assert context == ret_context
-    assert ret_dockerfile
+    assert job.create_args_dict.get("create_dockerfile")
 
 
 def test_get_context_from_user_inputs_no_prompts(
     mocker,
-    context_overrides,
+    known_args_overrides,
+    addl_job_args_overrides,
     expected_overrides,
     mock_prompt,
     mock_confirm,
     job,
 ):
-    context_overrides["machine_type"] = "n4-highmem-l33t"
-    mock_validate_region = mocker.patch.object(job, "_validate_region")
-    mock_validate_worker_image = mocker.patch.object(
-        job, "_validate_worker_image"
-    )
-    ret_context, ret_dockerfile = job._get_context_from_user_inputs(
-        context_overrides
-    )
+    addl_job_args_overrides["worker_machine_type"] = "n4-highmem-l33t"
+    addl_job_args = convert_to_args(addl_job_args_overrides)
+    job.build_create_job_args(known_args_overrides, addl_job_args)
+    ret_context = job._get_context()
 
-    expected_overrides["pipeline_options"].pop("project")
-    expected_overrides["python_version"] = "36"
+    expected_overrides["python_version"] = "37"
     assert not mock_prompt.call_count
     assert not mock_confirm.call_count
-    mock_validate_region.assert_called_once_with("us-central1")
-    mock_validate_worker_image.assert_called_once_with("gcr.io/foo/bar")
-    assert not ret_dockerfile
+    assert not job.create_args_dict.get("create_dockerfile")
     assert expected_overrides == ret_context
-
-
-@pytest.mark.parametrize(
-    "users_provided_dependencies,confirmed_dependencies",
-    (
-        (True, True),
-        # (True, False), # not possible
-        (False, True),
-        (False, False),
-    ),
-)
-def test_get_context_from_user_inputs_dependency_settings(
-    context_overrides,
-    expected_overrides,
-    mock_prompt,
-    mock_confirm,
-    mocker,
-    monkeypatch,
-    users_provided_dependencies,
-    confirmed_dependencies,
-    job,
-):
-    context_overrides["machine_type"] = "n4-highmem-l33t"
-    saved_dependencies = context_overrides.pop("dependencies")
-
-    mock_get_dependencies_from_user_inputs = mocker.Mock()
-    if users_provided_dependencies:
-        mock_get_dependencies_from_user_inputs.return_value = (
-            saved_dependencies
-        )
-    else:
-        mock_get_dependencies_from_user_inputs.return_value = None
-
-    monkeypatch.setattr(
-        job,
-        "_get_dependencies_from_user_inputs",
-        mock_get_dependencies_from_user_inputs,
-    )
-
-    mock_confirm.side_effect = [confirmed_dependencies]
-
-    mock_validate_region = mocker.patch.object(job, "_validate_region")
-    mock_validate_worker_image = mocker.patch.object(
-        job, "_validate_worker_image"
-    )
-    ret_context, ret_dockerfile = job._get_context_from_user_inputs(
-        context_overrides
-    )
-
-    expected_overrides["pipeline_options"].pop("project")
-    expected_overrides["python_version"] = "36"
-
-    assert not mock_prompt.call_count
-    assert 1 == mock_confirm.call_count
-    mock_validate_region.assert_called_once_with("us-central1")
-    mock_validate_worker_image.assert_called_once_with("gcr.io/foo/bar")
-    assert not ret_dockerfile
-    if users_provided_dependencies:
-        assert expected_overrides == ret_context
-
-    else:
-        expected_overrides["job_options"]["dependencies"] = []
-        assert expected_overrides == ret_context
-
-    if confirmed_dependencies:
-        assert 1 == mock_get_dependencies_from_user_inputs.call_count
-    else:
-        assert 0 == mock_get_dependencies_from_user_inputs.call_count
 
 
 def test_get_context_from_user_inputs_no_prompts_image(
     mocker,
-    context_overrides,
+    known_args_overrides,
+    addl_job_args_overrides,
     expected_overrides,
     mock_prompt,
     mock_confirm,
@@ -795,104 +561,20 @@ def test_get_context_from_user_inputs_no_prompts_image(
 ):
     mock_prompt.side_effect = [""]
 
-    context_overrides.pop("worker_image")
-    context_overrides["machine_type"] = "n4-highmem-l33t"
-
-    mock_validate_region = mocker.patch.object(job, "_validate_region")
-    mock_validate_worker_image = mocker.patch.object(
-        job, "_validate_worker_image"
-    )
-    ret_context, ret_dockerfile = job._get_context_from_user_inputs(
-        context_overrides
-    )
+    addl_job_args_overrides.pop("worker_image")
+    addl_job_args_overrides["worker_machine_type"] = "n4-highmem-l33t"
+    addl_job_args = convert_to_args(addl_job_args_overrides)
+    job.build_create_job_args(known_args_overrides, addl_job_args)
+    ret_context = job._get_context()
 
     gcr_url = "gcr.io/test-gcp-project/test-job-worker"
     exp_pipeline_opts = expected_overrides["pipeline_options"]
-    exp_pipeline_opts.pop("project")
     exp_pipeline_opts["worker_harness_container_image"] = gcr_url
 
     assert 1 == mock_prompt.call_count
     assert not mock_confirm.call_count
-    mock_validate_region.assert_called_once_with("us-central1")
-    mock_validate_worker_image.assert_called_once_with(gcr_url)
-    assert ret_dockerfile
+    assert job.create_args_dict.get("create_dockerfile")
     assert expected_overrides == ret_context
-
-
-@pytest.mark.parametrize("use_defaults", (True, False))
-def test_get_user_input(use_defaults, mocker, job):
-    ret_context = {"pipeline_options": {}}
-    mock_get_context_defaults = mocker.patch.object(
-        job, "_get_context_from_defaults"
-    )
-    mock_get_context_defaults.return_value = (ret_context, True)
-    mock_get_context_user = mocker.patch.object(
-        job, "_get_context_from_user_inputs"
-    )
-    mock_get_context_user.return_value = (ret_context, True)
-
-    input_kwargs = {
-        "use_defaults": use_defaults,
-        "job_name": "test-job",
-        "gcp_project": "test-gcp-project",
-    }
-
-    job._get_user_input(input_kwargs)
-    if use_defaults:
-        mock_get_context_defaults.assert_called_once_with(input_kwargs)
-    else:
-        mock_get_context_user.assert_called_once_with(input_kwargs)
-
-
-@pytest.mark.parametrize(
-    "dependencies,expected_dependencies,num_warnings",
-    (
-        (
-            (
-                "job_name=parent-job",
-                "gcp_project=a-project",
-                "region=a-region",
-                "input_topic=d",
-                "input_topics=a,b,c",
-            ),
-            {
-                "job_name": "parent-job",
-                "gcp_project": "a-project",
-                "region": "a-region",
-                "input_topic": "d",
-                "input_topics": ["a", "b", "c"],
-            },
-            0,
-        ),
-        (
-            (
-                "job-name=parent-job",
-                "gcp-project=a-project",
-                "region=a-region",
-                "input-topic=d",
-                "input-topics=a,b,c",
-            ),
-            {
-                "job_name": "parent-job",
-                "gcp_project": "a-project",
-                "region": "a-region",
-                "input_topic": "d",
-                "input_topics": ["a", "b", "c"],
-            },
-            0,
-        ),
-        (
-            ("job-name=parent-job", "gcp-project=a-project", "banana=1"),
-            {"job_name": "parent-job", "gcp_project": "a-project"},
-            1,
-        ),
-    ),
-)
-def test_parse_dependency_args(
-    dependencies, expected_dependencies, num_warnings, caplog, job,
-):
-    assert expected_dependencies == job._parse_dependency_args(dependencies)
-    assert num_warnings == len(caplog.records)
 
 
 @pytest.mark.parametrize(
@@ -904,19 +586,6 @@ def test_parse_dependency_args(
             {"foo": "foobar", "bar": "barfoo"},
         ),
         (("--foo", "bar", "baz"), {"foo": ("bar", "baz")}),
-        (
-            ("--dependency", "job_name=parent-job", "gcp_project=a-project"),
-            {
-                "dependencies": [
-                    {"job_name": "parent-job", "gcp_project": "a-project"}
-                ]
-            },
-        ),
-        (
-            ("--dependency", "job_name=parent-job"),
-            {"dependencies": [{"job_name": "parent-job"}]},
-        ),
-        (("--dependency", "banana=phone"), {},),
     ),
 )
 def test_parse_unknown_args(unknown_args, expected, job):
@@ -936,8 +605,8 @@ def test_create(
         "create_resources": create_resources,
     }
 
-    mock_get_user_input = mocker.patch.object(job, "_get_user_input")
-    mock_get_user_input.return_value = (context, create_dockerfile)
+    mock_get_context = mocker.patch.object(job, "_get_context")
+    mock_get_context.return_value = context
     mock_get_environment = mocker.patch.object(job, "_get_environment")
     mock_create_job_dir = mocker.patch.object(job, "_create_job_directory")
     mock_create_job_config = mocker.patch.object(job, "_create_job_config")
@@ -959,35 +628,32 @@ def test_create(
     unknown_args = ("--foo", "bar")
     known_args = {
         "job_name": "test-job",
-        "gcp-project": "test-gcp-project",
+        "gcp_project": "test-gcp-project",
+        "output": "/testing/dir",
+        "use_defaults": True,
     }
-    output_dir = "/testing/dir"
-
-    job.create(unknown_args, known_args, output_dir)
+    job.create(unknown_args, known_args)
 
     known_args["foo"] = "bar"
-    mock_get_user_input.assert_called_once_with(known_args)
+    mock_get_context.assert_called_once_with()
 
     mock_get_environment.assert_called_once_with()
 
     ret_env = mock_get_environment.return_value
-    job_name = context["job_name"]
-    package_name = job_name.replace("-", "_")
-    mock_create_job_dir.assert_called_once_with(output_dir)
+    mock_create_job_dir.assert_called_once_with(known_args["output"])
 
     mock_create_job_config.assert_called_once_with(
-        ret_env, context, output_dir
+        ret_env, context, known_args["output"]
     )
 
-    mode = context.get("mode", "basic")
     mock_create_python_files.assert_called_once_with(
-        ret_env, package_name, mode, output_dir
+        ret_env, known_args["output"]
     )
     if use_fnapi:
         mock_create_no_fnapi_files.assert_not_called()
     else:
         mock_create_no_fnapi_files.assert_called_once_with(
-            ret_env, context, output_dir
+            ret_env, context, known_args["output"]
         )
 
     if create_resources:
@@ -998,11 +664,13 @@ def test_create(
         mock_create_stackdriver.assert_not_called()
 
     mock_create_reqs_files.assert_called_once_with(
-        ret_env, context, output_dir
+        ret_env, context, known_args["output"]
     )
     if create_dockerfile:
         mock_create_dockerfile.assert_called_once_with(
-            ret_env, context, output_dir
+            ret_env, context, known_args["output"]
         )
-    mock_create_readme.assert_called_once_with(ret_env, context, output_dir)
+    mock_create_readme.assert_called_once_with(
+        ret_env, context, known_args["output"]
+    )
     assert 1 == len(caplog.records)

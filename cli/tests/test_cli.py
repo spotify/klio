@@ -103,7 +103,9 @@ def mock_klio_config(mocker, monkeypatch, patch_os_getcwd):
 
 @pytest.fixture
 def mock_create(mocker):
-    return mocker.patch.object(cli.job_commands.create.CreateJob, "create")
+    return mocker.patch.object(
+        cli.job_commands.create.CreateStreamingJob, "create"
+    )
 
 
 @pytest.fixture
@@ -259,7 +261,7 @@ def test_build_image(
     )
 
 
-def test_create_job(runner, mock_create, patch_os_getcwd):
+def test_create_job(runner, mock_create):
     cli_inputs = [
         "job",
         "create",
@@ -277,11 +279,12 @@ def test_create_job(runner, mock_create, patch_os_getcwd):
         "job_name": "test-job",
         "gcp_project": "test-gcp-project",
         "use_defaults": True,
+        "output": None,
     }
-    mock_create.assert_called_once_with((), known_kwargs, patch_os_getcwd)
+    mock_create.assert_called_once_with((), known_kwargs)
 
 
-def test_create_job_prompts(runner, mock_create, patch_os_getcwd):
+def test_create_job_prompts(runner, mock_create):
     cli_inputs = ["job", "create"]
     prompt_inputs = ["test-job", "test-gcp-project"]
     inputs = "\n".join(prompt_inputs)
@@ -299,8 +302,9 @@ def test_create_job_prompts(runner, mock_create, patch_os_getcwd):
         "job_name": "test-job",
         "gcp_project": "test-gcp-project",
         "use_defaults": False,
+        "output": None,
     }
-    mock_create.assert_called_once_with((), known_kwargs, patch_os_getcwd)
+    mock_create.assert_called_once_with((), known_kwargs)
 
 
 def test_create_job_unknown_args(runner, mock_create, patch_os_getcwd):
@@ -324,10 +328,9 @@ def test_create_job_unknown_args(runner, mock_create, patch_os_getcwd):
         "job_name": "test-job",
         "gcp_project": "test-gcp-project",
         "use_defaults": True,
+        "output": None,
     }
-    mock_create.assert_called_once_with(
-        unknown_args, known_kwargs, patch_os_getcwd
-    )
+    mock_create.assert_called_once_with(unknown_args, known_kwargs)
 
 
 @pytest.mark.parametrize("config_override", (None, "klio-job2.yaml"))

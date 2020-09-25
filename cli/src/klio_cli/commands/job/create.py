@@ -19,10 +19,12 @@ import logging
 import os
 import re
 
+import attr
 import click
 import emoji
 import jinja2
 
+from klio_cli.commands.job.utils import create_args
 from klio_cli.commands.job.utils import gcp_setup
 
 
@@ -34,12 +36,7 @@ TOPIC_REGEX = re.compile(
     r"^projects/(?P<project>[a-z0-9-]{6,30})/"
     r"topics/(?P<topic>[a-zA-Z0-9-_.~+%]{3,255})"
 )
-# TODO: include all dataflow-supported GCP regions
-GCP_REGIONS = ["europe-west1", "us-central1", "asia-east1"]
-VALID_BEAM_PY_VERSIONS = ["3.5", "3.6", "3.7"]
-VALID_BEAM_PY_VERSIONS_SHORT = [
-    "".join(p.split(".")) for p in VALID_BEAM_PY_VERSIONS
-]
+
 DEFAULTS = {
     "region": "europe-west1",
     "experiments": "beam_fn_api",
@@ -54,10 +51,35 @@ DEFAULTS = {
 }
 
 
-class CreateJob(object):
 
-    BASE_TOPIC_TPL = "projects/{gcp_project}/topics/{job_name}"
-    WORKER_IMAGE_TPL = "gcr.io/{gcp_project}/{job_name}-worker"
+class CreateJob(object):
+    def __init__(self):
+        self.create_args_dict = {
+            f: None for f in attr.fields_dict(create_args.CreateJobArgs)
+        }
+
+    def create(self, unknown_args, known_kwargs):
+        # Build single source of truth for job creation arguments
+        # (stored in self.create_args) by
+        # consolidating information from command line, user
+        # inputs and predetermined default values.
+        # Values will be normalized and validated.
+        self.build_create_job_args(known_kwargs, unknown_args)
+
+        # build jinja context
+        self.context = self._get_context()
+        env = self._get_environment()
+
+        # create klio job files
+        self._create_job_directory(self.create_args.output)
+        self._create_job_config(env, self.context, self.create_args.output)
+        self._create_python_files(env, self.create_args.output)
+        if not self.create_args.use_fnapi:
+            self._create_no_fnapi_files(env, self.context, self.create_args.output)
+        self._create_reqs_file(env, self.context, self.create_args.output)
+        if self.create_args.create_dockerfile:
+            self._create_dockerfile(env, self.context, self.create_args.output)
+        self._create_readme(env, self.context, self.create_args.output)
 
     def _get_environment(self):
         here = os.path.abspath(__file__)
@@ -98,10 +120,10 @@ class CreateJob(object):
         rendered_file = config_tpl.render(template_context)
         self._write_template(job_dir, "klio-job.yaml", rendered_file)
 
-    def _create_python_files(self, env, package_name, mode, output_dir):
+    def _create_python_files(self, env, output_dir):
         current_year = datetime.datetime.now().year
         template_context = {
-            "klio": {"year": current_year, "package_name": package_name}
+            "klio": {"year": current_year}
         }
 
         init_tpl = env.get_template("init.py.tpl")
@@ -123,6 +145,9 @@ class CreateJob(object):
         )
 
     def _create_no_fnapi_files(self, env, context, output_dir):
+        package_name = context["job_name"].replace("-", "_")
+        context["package_name"] = package_name
+
         template_context = {"klio": context}
 
         setup_tpl = env.get_template("setup.py.tpl")
@@ -156,242 +181,26 @@ class CreateJob(object):
         setup_inst_rendered = setup_inst_tpl.render(template_context)
         self._write_template(output_dir, "README.md", setup_inst_rendered)
 
-    def _validate_worker_image(self, value):
-        # TODO: add validation that the image string is in the format of
-        #       gcr.io/<project>/<name>(:<version>)  (@lynn)
-        return
+    def _parse_cli_args(self, known_args, addl_job_args):
+        updated_fields = {}
 
-    def _validate_region(self, region):
-        if region not in GCP_REGIONS:
-            regions = ", ".join(GCP_REGIONS)
-            msg = '"{0}" is not a valid region. Available: {1}'.format(
-                region, regions
+        for create_arg in self.create_args_dict:
+            if create_arg in known_args:
+                updated_fields[create_arg] = known_args.get(create_arg)
+            if create_arg in addl_job_args:
+                updated_fields[create_arg] = addl_job_args.get(create_arg)
+
+        self.create_args_dict.update(updated_fields)
+
+    def __parse_use_fnapi_user_input(self, updated_fields):
+        use_fnapi = self.create_args_dict.get("use_fnapi")
+        if isinstance(use_fnapi, str):
+            updated_fields["use_fnapi"] = str(use_fnapi).lower() in (
+                "y",
+                "true",
+                "yes",
             )
-            raise click.BadParameter(msg)
-        return region
-
-    def _parse_python_version(self, python_version):
-        if python_version.startswith("2"):
-            msg = (
-                "Klio no longer supports Python 2.7. "
-                "Supported versions: {}".format(
-                    ", ".join(VALID_BEAM_PY_VERSIONS)
-                )
-            )
-            raise click.BadParameter(msg)
-
-        invalid_err_msg = (
-            "Invalid Python version given: '{}'. Valid Python versions: "
-            "{}".format(python_version, ", ".join(VALID_BEAM_PY_VERSIONS))
-        )
-
-        # valid examples: 35, 3.5, 3.5.6
-        if len(python_version) < 2 or len(python_version) > 5:
-            raise click.BadParameter(invalid_err_msg)
-
-        # 3.x -> 3x; 3.x.y -> 3x
-        if "." in python_version:
-            python_version = "".join(python_version.split(".")[:2])
-
-        if python_version not in VALID_BEAM_PY_VERSIONS_SHORT:
-            raise click.BadParameter(invalid_err_msg)
-
-        # Dataflow's 3.5 image is just "python3" while 3.6 and 3.7 are
-        # "python36" and "python37"
-        if python_version == "35":
-            python_version = "3"
-        return python_version
-
-    def _get_context_from_defaults(self, kwargs):
-        def _get_worker_image():
-            create_dockerfile = True
-            image = self.WORKER_IMAGE_TPL.format(**kwargs)
-            if kwargs.get("worker_image"):
-                create_dockerfile = False
-                image = kwargs["worker_image"]
-            return image, create_dockerfile
-
-        # TODO: increase abstraction - we generate some defaults more than once
-        #       throughout this `job create` flow. We can probably abstract
-        #       it better and write more DRY code (@lynn)
-        tmp_default = "gs://{gcp_project}-dataflow-tmp/{job_name}".format(
-            **kwargs
-        )
-        staging_default = tmp_default + "/staging"
-        temp_default = tmp_default + "/temp"
-        worker_image, create_dockerfile = _get_worker_image()
-
-        if "use_fnapi" in kwargs:
-            use_fnapi = kwargs.get("use_fnapi")
-            if use_fnapi:
-                use_fnapi = str(use_fnapi).lower() in ("y", "true", "yes")
-            else:  # then it was used as a flag
-                use_fnapi = True
-        else:
-            use_fnapi = DEFAULTS["use_fnapi"]
-
-        create_resources = self._get_create_resources(kwargs)
-        default_exps = DEFAULTS["experiments"].split(",")
-        if not use_fnapi:
-            default_exps = [e for e in default_exps if e != "beam_fn_api"]
-        experiments = kwargs.get("experiments")
-        if not experiments:
-            experiments = default_exps
-        else:
-            experiments = experiments.split(",")
-
-        pipeline_context = {
-            "worker_harness_container_image": worker_image,
-            "experiments": experiments,
-            "project": kwargs["gcp_project"],
-            "region": kwargs.get("region", DEFAULTS["region"]),
-            "staging_location": kwargs.get(
-                "staging_location", staging_default
-            ),
-            "temp_location": kwargs.get("temp_location", temp_default),
-            "num_workers": kwargs.get("num_workers", DEFAULTS["num_workers"]),
-            "max_num_workers": kwargs.get(
-                "max_num_workers", DEFAULTS["max_num_workers"]
-            ),
-            "autoscaling_algorithm": kwargs.get(
-                "autoscaling_algorithm", DEFAULTS["autoscaling_algorithm"]
-            ),
-            "disk_size_gb": kwargs.get(
-                "disk_size_gb", DEFAULTS["disk_size_gb"]
-            ),
-            "worker_machine_type": kwargs.get(
-                "worker_machine_type", DEFAULTS["worker_machine_type"]
-            ),
-        }
-
-        base_topic = self.BASE_TOPIC_TPL.format(**kwargs)
-        output_topic = kwargs.get("output_topic")
-        if not output_topic:
-            output_topic = base_topic + "-output"
-        output_location = kwargs.get("output_data_location")
-        if not output_location:
-            output_location = "gs://{gcp_project}-output/{job_name}".format(
-                **kwargs
-            )
-        input_topic = kwargs.get("input_topic")
-        if not input_topic:
-            input_topic = base_topic + "-input"
-
-        input_data_location = kwargs.get("input_data_location")
-        if not input_data_location:
-            input_data_location = "gs://{gcp_project}-input/{job_name}".format(
-                **kwargs
-            )
-        dependencies = kwargs.get("dependencies", [])
-
-        match = TOPIC_REGEX.match(input_topic)
-        topic_name = match.group("topic")
-        default_sub = (
-            "projects/{gcp_project}/subscriptions/{topic_name}-{job_name}"
-        )
-        default_sub = default_sub.format(topic_name=topic_name, **kwargs)
-        inputs = [
-            {
-                "topic": input_topic,
-                "subscription": default_sub,
-                "data_location": input_data_location,
-            }
-        ]
-
-        outputs = [{"topic": output_topic, "data_location": output_location}]
-
-        job_context = {
-            "inputs": inputs,
-            "outputs": outputs,
-            "dependencies": dependencies,
-        }
-
-        python_version = kwargs.get(
-            "python_version", DEFAULTS["python_version"]
-        )
-        python_version = self._parse_python_version(python_version)
-
-        context = {
-            "pipeline_options": pipeline_context,
-            "job_options": job_context,
-            "python_version": python_version,
-            "use_fnapi": use_fnapi,
-            "create_resources": create_resources,
-        }
-
-        return context, create_dockerfile
-
-    def _get_create_resources(self, kwargs, user_input=False):
-        if "create_resources" in kwargs:
-            create_resources = kwargs.get("create_resources")
-            if create_resources:
-                create_resources = str(create_resources).lower() in (
-                    "y",
-                    "true",
-                    "yes",
-                )
-            else:  # then it was used as a flag
-                create_resources = True
-        else:
-            if user_input:
-                create_resources = click.prompt(
-                    "Create topics, buckets, and dashboards? [Y/n]",
-                    type=click.Choice(["y", "Y", "n", "N"]),
-                    default="n"
-                    if DEFAULTS["create_resources"] is False
-                    else "y",
-                    show_choices=False,
-                    show_default=False,  # shown in prompt
-                )
-                create_resources = create_resources.lower() == "y"
-            else:
-                create_resources = DEFAULTS["create_resources"]
-
-        return create_resources
-
-    def _get_dependencies_from_user_inputs(self):
-        dependencies = []
-        while True:
-            job = {}
-            job_name = click.prompt("Dependency job name")
-            job["job_name"] = job_name
-            job["gcp_project"] = click.prompt(
-                "GCP project where '{}' is located".format(job_name)
-            )
-            input_topic = click.prompt(
-                "Input topic of '{}'".format(job_name), default=""
-            )
-            if input_topic:
-                job["input_topics"] = [input_topic]
-
-            region = click.prompt(
-                "GCP region where '{}' is located".format(job_name), default=""
-            )
-            if region:
-                self._validate_region(region)
-                job["region"] = region
-
-            dependencies.append(job)
-
-            if not click.confirm("Do you have another dependency?"):
-                break
-
-        return dependencies
-
-    def _get_context_from_user_inputs(self, kwargs):
-        region = kwargs.get("region") or click.prompt(
-            "Desired GCP Region", default=DEFAULTS["region"]
-        )
-        self._validate_region(region)
-
-        if "use_fnapi" in kwargs:
-            use_fnapi = kwargs.get("use_fnapi")
-            if use_fnapi:
-                use_fnapi = str(use_fnapi).lower() in ("y", "true", "yes")
-            else:  # then it was used as a flag
-                use_fnapi = True
-
-        else:
+        if use_fnapi is None:
             use_fnapi = click.prompt(
                 "Use Apache Beam's FnAPI (experimental) [Y/n]",
                 type=click.Choice(["y", "Y", "n", "N"]),
@@ -399,60 +208,46 @@ class CreateJob(object):
                 show_choices=False,
                 show_default=False,  # shown in prompt
             )
-            use_fnapi = use_fnapi.lower() == "y"
+            updated_fields["use_fnapi"] = use_fnapi.lower() == "y"
 
-        create_resources = self._get_create_resources(kwargs, user_input=True)
-
-        # TODO should this even be an option? run-job will break if so.
-        # TODO: figure out if we should expose `experiments` to the user, or
-        #       if it's okay to always assume `beam_fn_api` is the only
-        #       experiment someone would ever use.
-        default_exps = DEFAULTS["experiments"].split(",")
-        if not use_fnapi:
-            default_exps = [e for e in default_exps if e != "beam_fn_api"]
-
-        experiments = kwargs.get("experiments")
-        if experiments:
-            experiments = experiments.split(",")
+    def __parse_created_resources_user_input(self, updated_fields):
+        if self.create_args_dict.get("create_resources"):
+            create_resources = self.create_args_dict.get("create_resources")
+            if create_resources:
+                updated_fields["create_resources"] = str(
+                    create_resources
+                ).lower() in ("y", "true", "yes",)
+            else:  # then it was used as a flag
+                updated_fields["create_resources"] = True
         else:
-            experiments = click.prompt(
-                "Beam experiments to enable", default=default_exps,
+            create_resources = click.prompt(
+                "Create topics, buckets, and dashboards? [Y/n]",
+                type=click.Choice(["y", "Y", "n", "N"]),
+                default="n" if DEFAULTS["create_resources"] is False else "y",
+                show_choices=False,
+                show_default=False,  # shown in prompt
             )
-        num_workers = kwargs.get("num_workers") or click.prompt(
-            "Number of workers to run",
-            type=int,
-            default=DEFAULTS["num_workers"],
-        )
-        max_workers = kwargs.get("max_num_workers") or click.prompt(
-            "Maximum number of workers to run",
-            type=int,
-            default=DEFAULTS["max_num_workers"],
-        )
-        autoscaling_algorithm = kwargs.get(
-            "autoscaling_algorithm"
-        ) or click.prompt(
-            "Autoscaling algorithm to use. "
-            "Can be NONE (default) or THROUGHPUT_BASED",
-            type=str,
-            default=DEFAULTS["autoscaling_algorithm"],
-        )
-        disk_size = kwargs.get("disk_size_gb") or click.prompt(
-            "Size of a worker disk (GB)",
-            type=int,
-            default=DEFAULTS["disk_size_gb"],
-        )
-        machine_type = kwargs.get("machine_type") or click.prompt(
-            "Type of GCP instance for the worker machine(s)",
-            default=DEFAULTS["worker_machine_type"],
-        )
+            updated_fields["create_resources"] = (
+                create_resources.lower() == "y"
+            )
 
+    def __parse_python_version_user_input(self, updated_fields):
+        if not self.create_args_dict.get("worker_image"):  # pragma: no cover
+            python_version = self.create_args_dict.get(
+                "python_version"
+            ) or click.prompt(
+                "Python major version ({})".format(
+                    ", ".join(create_args.VALID_BEAM_PY_VERSIONS)
+                ),
+                default=DEFAULTS["python_version"],
+            )
+            updated_fields["python_version"] = python_version
+
+    def __parse_worker_image_user_input(self, updated_fields):
         # TODO: remove support for providing a dockerfile and docker image
         #       specifically for a job. But be able to provide the ability to
         #       choose between py2 or py3 base fnapi image. (@lynn)
-        create_dockerfile = False
-        worker_image = kwargs.get("worker_image")
-        python_version = DEFAULTS["python_version"]
-        if not worker_image:
+        if not self.create_args_dict.get("worker_image"):
             worker_image = click.prompt(
                 (
                     "Docker image to use for the worker."
@@ -461,155 +256,27 @@ class CreateJob(object):
                 ),
                 default="",
             )
-            # FYI: for some reason, coverage doesn't detect that this branch
-            #      is indeed covered; force skipping for now
-            if not worker_image:  # pragma: no cover
-                worker_image = self.WORKER_IMAGE_TPL.format(**kwargs)
-                python_version = kwargs.get("python_version") or click.prompt(
-                    "Python major version ({})".format(
-                        ", ".join(VALID_BEAM_PY_VERSIONS)
-                    ),
-                    default=DEFAULTS["python_version"],
-                )
-                create_dockerfile = True
 
-        python_version = self._parse_python_version(python_version)
-        self._validate_worker_image(worker_image)
+            if worker_image:
+                updated_fields["worker_image"] = worker_image
 
-        tmp_default = "gs://{gcp_project}-dataflow-tmp/{job_name}".format(
-            **kwargs
-        )
-        staging_default = tmp_default + "/staging"
-        temp_default = tmp_default + "/temp"
-        staging = kwargs.get("staging_location") or click.prompt(
-            "Staging environment location", default=staging_default
-        )
-        temp = kwargs.get("temp_location") or click.prompt(
-            "Temporary environment location", default=temp_default
-        )
+    def _parse_user_input_args(self):
+        if not self.create_args_dict.get("use_defaults"):
+            updated_fields = {}
+            self.__parse_use_fnapi_user_input(updated_fields)
+            self.__parse_created_resources_user_input(updated_fields)
+            self.__parse_worker_image_user_input(updated_fields)
+            self.__parse_python_version_user_input(updated_fields)
 
-        pipeline_context = {
-            "worker_harness_container_image": worker_image,
-            "experiments": experiments,
-            "region": region,
-            "staging_location": staging,
-            "temp_location": temp,
-            "num_workers": num_workers,
-            "max_num_workers": max_workers,
-            "autoscaling_algorithm": autoscaling_algorithm,
-            "disk_size_gb": disk_size,
-            "worker_machine_type": machine_type,
-        }
+            self.create_args_dict.update(updated_fields)
 
-        base_topic = self.BASE_TOPIC_TPL.format(**kwargs)
-        default_input_topic = base_topic + "-input"
-        default_output_topic = base_topic + "-output"
+    def _apply_defaults(self):
+        for k in self.create_args_dict:
+            if self.create_args_dict.get(k) is None and k in DEFAULTS:
+                self.create_args_dict[k] = DEFAULTS[k]
 
-        input_topic = kwargs.get("input_topic") or click.prompt(
-            "Input topic (usually your dependency's output topic)",
-            default=default_input_topic,
-        )
-
-        output_topic = kwargs.get("output_topic") or click.prompt(
-            "Output topic", default=default_output_topic
-        )
-
-        default_input_loc = "gs://{gcp_project}-input/{job_name}".format(
-            **kwargs
-        )
-        input_location = kwargs.get("input_data_location") or click.prompt(
-            (
-                "Location of job's input data (usually the location of your "
-                "dependency's output data)"
-            ),
-            default=default_input_loc,
-        )
-
-        default_output_loc = "gs://{gcp_project}-output/{job_name}".format(
-            **kwargs
-        )
-        output_location = kwargs.get("output_data_location") or click.prompt(
-            "Location of job's output", default=default_output_loc
-        )
-
-        match = TOPIC_REGEX.match(input_topic)
-        topic_name = match.group("topic")
-        default_sub = (
-            "projects/{gcp_project}/subscriptions/{topic_name}-{job_name}"
-        )
-        default_sub = default_sub.format(topic_name=topic_name, **kwargs)
-        inputs = [
-            {
-                "topic": input_topic,
-                "subscription": default_sub,
-                "data_location": input_location,
-            }
-        ]
-        outputs = [{"topic": output_topic, "data_location": output_location}]
-
-        job_context = {
-            "inputs": inputs,
-            "outputs": outputs,
-            "dependencies": [],
-        }
-
-        dependencies = kwargs.get("dependencies")
-        if not dependencies:
-            if click.confirm("Does your job have dependencies on other jobs?"):
-                dependencies = self._get_dependencies_from_user_inputs()
-
-        if dependencies is not None:
-            job_context["dependencies"] = dependencies
-
-        context = {
-            "pipeline_options": pipeline_context,
-            "job_options": job_context,
-            "python_version": python_version,
-            "use_fnapi": use_fnapi,
-            "create_resources": create_resources,
-        }
-        return context, create_dockerfile
-
-    def _get_user_input(self, kwargs):
-        accept_defaults = kwargs["use_defaults"]
-        if accept_defaults:
-            context, create_dockerfile = self._get_context_from_defaults(
-                kwargs
-            )
-        else:
-            context, create_dockerfile = self._get_context_from_user_inputs(
-                kwargs
-            )
-
-        context["job_name"] = kwargs["job_name"]
-        context["pipeline_options"]["project"] = kwargs["gcp_project"]
-        return context, create_dockerfile
-
-    def _parse_dependency_args(self, dependency):
-        # both "_" and "-" are valid
-        valid_keys = (
-            "job_name",
-            "gcp_project",
-            "region",
-            "input_topics",
-            "input_topic",
-        )
-        job_dependency = {}
-
-        for item in dependency:
-            key, value = item.split("=")
-            clean_key = key.replace("-", "_")
-            if clean_key in valid_keys:
-                if clean_key == "input_topics":
-                    value = value.split(",")
-                job_dependency[clean_key] = value
-            else:
-                logging.warning(
-                    "Skipping unrecognized job dependency key: '{}'.".format(
-                        key
-                    )
-                )
-        return job_dependency
+        if not self.create_args_dict.get("output"):
+            self.create_args_dict["output"] = self.default_output
 
     def _parse_unknown_args(self, user_args):
         # ('--foo', 'bar', '--baz', 'bla', 'qaz')
@@ -627,54 +294,288 @@ class CreateJob(object):
                 next_key = len(user_args)
 
             values = user_args[item + 1 : next_key]
-            if len(values) == 1 and key != "dependency":
+            if len(values) == 1:
                 values = values[0]
 
-            if key == "dependency":
-                dependency = self._parse_dependency_args(values)
-                if len(dependency) == 0:
-                    continue
-                parsed_args.setdefault("dependencies", []).append(dependency)
-            else:
-                parsed_args[key] = values
+            parsed_args[key] = values
 
         return parsed_args
+
+    def _build_defaults(self):
+        self.default_output = os.getcwd()
+
+    def build_create_job_args(self, known_args, addl_job_args):
+        unknown_args = self._parse_unknown_args(addl_job_args)
+        self._parse_cli_args(known_args, unknown_args)
+        self._build_defaults()
+        self._parse_user_input_args()
+        self._apply_defaults()
+
+        self.create_args = create_args.CreateJobArgs.from_dict(self.create_args_dict)
+
+
+class CreateStreamingJob(CreateJob):
+    BASE_TOPIC_TPL = "projects/{gcp_project}/topics/{job_name}"
+    WORKER_IMAGE_TPL = "gcr.io/{gcp_project}/{job_name}-worker"
+
+    def _build_defaults(self):
+        super()._build_defaults()
+
+        default_bucket = "gs://{gcp_project}-dataflow-tmp/{job_name}".format(
+            gcp_project=self.create_args_dict.get("gcp_project"),
+            job_name=self.create_args_dict.get("job_name"),
+        )
+        self.default_staging_location = default_bucket + "/staging"
+        self.default_temp_location = default_bucket + "/temp"
+
+        self.default_exps = DEFAULTS["experiments"].split(",")
+
+        base_topic = self.BASE_TOPIC_TPL.format(
+            gcp_project=self.create_args_dict.get("gcp_project"),
+            job_name=self.create_args_dict.get("job_name"),
+        )
+        self.default_input_topic = base_topic + "-input"
+        self.default_output_topic = base_topic + "-output"
+        self.default_input_loc = "gs://{gcp_project}-input/{job_name}".format(
+            gcp_project=self.create_args_dict.get("gcp_project"),
+            job_name=self.create_args_dict.get("job_name"),
+        )
+        self.default_output_loc = "gs://{gcp_project}-output/{job_name}".format(
+            gcp_project=self.create_args_dict.get("gcp_project"),
+            job_name=self.create_args_dict.get("job_name"),
+        )
+
+    def _apply_default_gcs_bucket(self):
+
+        if not self.create_args_dict.get("staging_location"):
+            self.create_args_dict[
+                "staging_location"
+            ] = self.default_staging_location
+        if not self.create_args_dict.get("temp_location"):
+            self.create_args_dict["temp_location"] = self.default_temp_location
+
+    def _apply_default_experiments(self):
+        if not self.create_args_dict.get("experiments"):
+            if not self.create_args_dict.get("use_fnapi"):
+                self.create_args_dict["experiments"] = [
+                    e for e in self.default_exps if e != "beam_fn_api"
+                ]
+        else:
+            if isinstance(self.create_args_dict.get("experiments"), str):
+                self.create_args_dict[
+                    "experiments"
+                ] = self.create_args_dict.get("experiments").split(",")
+
+    def _apply_default_topics_and_subscriptions(self):
+        if not self.create_args_dict.get("output_topic"):
+            self.create_args_dict["output_topic"] = self.default_output_topic
+        if not self.create_args_dict.get("output_data_location"):
+            self.create_args_dict[
+                "output_data_location"
+            ] = self.default_output_loc
+
+        if not self.create_args_dict.get("input_topic"):
+            self.create_args_dict["input_topic"] = self.default_input_topic
+        if not self.create_args_dict.get("input_data_location"):
+            self.create_args_dict[
+                "input_data_location"
+            ] = self.default_input_loc
+
+        match = TOPIC_REGEX.match(self.create_args_dict.get("input_topic"))
+        topic_name = match.group("topic")
+        default_sub = (
+            "projects/{gcp_project}/subscriptions/{topic_name}-{job_name}"
+        )
+        default_sub = default_sub.format(
+            topic_name=topic_name,
+            gcp_project=self.create_args_dict.get("gcp_project"),
+            job_name=self.create_args_dict.get("job_name"),
+        )
+        self.create_args_dict["subscription"] = default_sub
+
+    def _apply_defaults(self):
+        super()._apply_defaults()
+
+        self.create_args_dict["create_dockerfile"] = False
+        if not self.create_args_dict.get("worker_image"):
+            # worker image name not supplied by either CLI flags
+            # or through user input, so we will have to
+            # create one
+            self.create_args_dict["create_dockerfile"] = True
+            image = self.WORKER_IMAGE_TPL.format(
+                gcp_project=self.create_args_dict.get("gcp_project"),
+                job_name=self.create_args_dict.get("job_name"),
+            )
+            self.create_args_dict["worker_image"] = image
+
+        self._apply_default_gcs_bucket()
+        self._apply_default_experiments()
+        self._apply_default_topics_and_subscriptions()
+
+    def _parse_experiments_user_input(self, updated_fields):
+        # TODO should this even be an option? run-job will break if so.
+        # TODO: figure out if we should expose `experiments` to the user, or
+        #       if it's okay to always assume `beam_fn_api` is the only
+        #       experiment someone would ever use.
+        experiments = self.create_args_dict.get("experiments")
+        if experiments:
+            updated_fields["experiments"] = experiments.split(",")
+        else:
+            updated_fields["experiments"] = click.prompt(
+                "Beam experiments to enable", default=self.default_exps
+            )
+
+    def _parse_worker_config_user_input(self, updated_fields):
+        updated_fields["region"] = self.create_args_dict.get(
+            "region"
+        ) or click.prompt("Desired GCP Region", default=DEFAULTS["region"])
+
+        updated_fields["num_workers"] = self.create_args_dict.get(
+            "num_workers"
+        ) or click.prompt(
+            "Number of workers to run",
+            type=int,
+            default=DEFAULTS["num_workers"],
+        )
+        updated_fields["max_workers"] = self.create_args_dict.get(
+            "max_num_workers"
+        ) or click.prompt(
+            "Maximum number of workers to run",
+            type=int,
+            default=DEFAULTS["max_num_workers"],
+        )
+        updated_fields["autoscaling_algorithm"] = self.create_args_dict.get(
+            "autoscaling_algorithm"
+        ) or click.prompt(
+            "Autoscaling algorithm to use. "
+            "Can be NONE (default) or THROUGHPUT_BASED",
+            type=str,
+            default=DEFAULTS["autoscaling_algorithm"],
+        )
+        updated_fields["disk_size"] = self.create_args_dict.get(
+            "disk_size_gb"
+        ) or click.prompt(
+            "Size of a worker disk (GB)",
+            type=int,
+            default=DEFAULTS["disk_size_gb"],
+        )
+        updated_fields["machine_type"] = self.create_args_dict.get(
+            "worker_machine_type"
+        ) or click.prompt(
+            "Type of GCP instance for the worker machine(s)",
+            default=DEFAULTS["worker_machine_type"],
+        )
+
+    def _parse_user_input_topics_and_subs(self, updated_fields):
+        updated_fields["input_topic"] = self.create_args_dict.get(
+            "input_topic"
+        ) or click.prompt(
+            "Input topic (usually your dependency's output topic)",
+            default=self.default_input_topic,
+        )
+        updated_fields["output_topic"] = self.create_args_dict.get(
+            "output_topic"
+        ) or click.prompt("Output topic", default=self.default_output_topic)
+
+        updated_fields["input_data_location"] = self.create_args_dict.get(
+            "input_data_location"
+        ) or click.prompt(
+            (
+                "Location of job's input data (usually the location of your "
+                "dependency's output data)"
+            ),
+            default=self.default_input_loc,
+        )
+        updated_fields["output_data_location"] = self.create_args_dict.get(
+            "output_data_location"
+        ) or click.prompt(
+            "Location of job's output", default=self.default_output_loc
+        )
+
+    def _parse_default_data_locations_user_input(self, updated_fields):
+        updated_fields["staging_location"] = self.create_args_dict.get(
+            "staging_location"
+        ) or click.prompt(
+            "Staging environment location",
+            default=self.default_staging_location,
+        )
+        updated_fields["temp_location"] = self.create_args_dict.get(
+            "temp_location"
+        ) or click.prompt(
+            "Temporary environment location",
+            default=self.default_temp_location,
+        )
+
+    def _parse_user_input_args(self):
+        if not self.create_args_dict.get("use_defaults"):
+            super()._parse_user_input_args()
+
+            updated_fields = {}
+            self._parse_experiments_user_input(updated_fields)
+            self._parse_worker_config_user_input(updated_fields)
+            self._parse_default_data_locations_user_input(updated_fields)
+            self._parse_user_input_topics_and_subs(updated_fields)
+
+            self.create_args_dict.update(updated_fields)
+
+
+    def _get_context(self):
+        pipeline_context = {
+            "project": self.create_args.gcp_project,
+            "worker_harness_container_image": self.create_args.worker_image,
+            "experiments": self.create_args.experiments,
+            "region": self.create_args.region,
+            "staging_location": self.create_args.staging_location,
+            "temp_location": self.create_args.temp_location,
+            "num_workers": self.create_args.num_workers,
+            "max_num_workers": self.create_args.max_num_workers,
+            "autoscaling_algorithm": self.create_args.autoscaling_algorithm,
+            "disk_size_gb": self.create_args.disk_size_gb,
+            "worker_machine_type": self.create_args.worker_machine_type,
+        }
+
+        inputs = [
+            {
+                "topic": self.create_args.input_topic,
+                "subscription": self.create_args.subscription,
+                "data_location": self.create_args.input_data_location,
+            }
+        ]
+
+        outputs = [
+            {
+                "topic": self.create_args.output_topic,
+                "data_location": self.create_args.output_data_location,
+            }
+        ]
+
+        job_context = {
+            "inputs": inputs,
+            "outputs": outputs,
+        }
+
+        context = {
+            "pipeline_options": pipeline_context,
+            "job_options": job_context,
+            "python_version": self.create_args.python_version,
+            "use_fnapi": self.create_args.use_fnapi,
+            "create_resources": self.create_args.create_resources,
+            "job_name": self.create_args.job_name,
+        }
+        return context
 
     def _create_external_resources(self, context):
         if context["create_resources"]:
             gcp_setup.create_topics_and_buckets(context)
             gcp_setup.create_stackdriver_dashboard(context)
 
-    def create(self, unknown_args, known_kwargs, output_dir):
-        unknown_args = self._parse_unknown_args(unknown_args)
+    def create(self, unknown_args, known_kwargs):
+        super().create(unknown_args, known_kwargs)
+        self._create_external_resources(self.context)
 
-        def merge_two_dicts(x, y):
-            """Given two dicts, merge them into a new dict as a shallow copy."""
-            z = x.copy()
-            z.update(y)
-            return z
-
-        all_kwargs = merge_two_dicts(unknown_args, known_kwargs)
-
-        context, create_dockerfile = self._get_user_input(all_kwargs)
-
-        self._create_external_resources(context)
-
-        env = self._get_environment()
-        job_name = context["job_name"]
-        package_name = job_name.replace("-", "_")
-        self._create_job_directory(output_dir)
-        self._create_job_config(env, context, output_dir)
-
-        mode = context.get("mode", "basic")
-        self._create_python_files(env, package_name, mode, output_dir)
-        if not context["use_fnapi"]:
-            context["package_name"] = package_name
-            self._create_no_fnapi_files(env, context, output_dir)
-        self._create_reqs_file(env, context, output_dir)
-        if create_dockerfile:
-            self._create_dockerfile(env, context, output_dir)
-        self._create_readme(env, context, output_dir)
-
-        msg = "Klio job {} created successfully! :beer:".format(job_name)
+        msg = "Streaming Klio job {} created successfully! :beer:".format(self.create_args.job_name)
         logging.info(emoji.emojize(msg, use_aliases=True))
+
+
+
+

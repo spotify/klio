@@ -24,9 +24,3 @@ job_config:
   outputs:
     - topic: projects/test-gcp-project/topics/test-job-output
       data_location: gs://test-gcp-project-output/test-job
-  dependencies:
-    - job_name: test-parent-job
-      gcp_project: test-parent-gcp-project
-      input_topics:
-        - projects/test-grandparent-gcp-project/topics/test-grandparent-job-output
-      region: us-central1

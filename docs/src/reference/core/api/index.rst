@@ -30,6 +30,9 @@ API
 ``klio_core.utils`` Module
 --------------------------
 
+.. automodule:: klio_core.utils
+   :noindex:
+
 .. currentmodule:: klio_core.utils
 
 .. autosummary::

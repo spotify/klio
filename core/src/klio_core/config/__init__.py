@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+"""Klio configuration handling."""
 
 from klio_core.config._preprocessing import KlioConfigPreprocessor
 from klio_core.config.core import (
@@ -21,8 +22,8 @@ from klio_core.config.core import (
 )
 
 __all__ = (
-    KlioConfig,
-    KlioJobConfig,
-    KlioPipelineConfig,
-    KlioConfigPreprocessor,
+    "KlioConfig",
+    "KlioJobConfig",
+    "KlioPipelineConfig",
+    "KlioConfigPreprocessor",
 )

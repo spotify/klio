@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+"""Utility functions for use within the Klio ecosystem."""
 
 import functools
 
@@ -24,19 +25,52 @@ def _name(name):
 
 
 def set_global(name, value):
+    """Set a variable in the global namespace.
+
+    Args:
+        name (str): name of global variable.
+        value (Any): value of global variable.
+    """
     globals()[_name(name)] = value
 
 
 def get_global(name):
+    """Get a variable from the global namespace.
+
+    Args:
+        name (str): name of global variable.
+    Returns:
+        Any: value of global variable, or ``None`` if not set.
+    """
     return globals().get(_name(name), None)
 
 
 def delete_global(name):
+    """Delete a variable from the global namespace.
+
+    Args:
+        name (str): name of global variable.
+    """
     if _name(name) in globals():
         del globals()[_name(name)]
 
 
 def get_or_initialize_global(name, initializer):
+    """Get a global variable, initializing if does not exist.
+
+    .. caution::
+
+        Global variables may cause problems for jobs in Dataflow,
+        particularly where jobs use more than one thread.
+
+    Args:
+        name (str): name of global variable.
+        initializer (Any): initial value if ``name`` does not exist in the
+            global namespace.
+
+    Returns:
+        Any: Value of the global variable.
+    """
     value = get_global(name)
     if value is not None:
         return value
@@ -72,7 +106,8 @@ def get_publisher(topic):
         topic (str): Pub/Sub topic for the client with which to be
             initialized.
     Returns:
-        An instance of ``pubsub.PublisherClient``.
+        google.cloud.pubsub_v1.publisher.client.Client: an initialized
+        client for publishing to Google Pub/Sub.
     """
     key = "publisher_{}".format(topic)
     initializer = functools.partial(_get_publisher, topic)

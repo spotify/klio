@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+"""Module for interacting with the `Dataflow REST API
+<https://cloud.google.com/dataflow/docs/reference/rest>`_."""
 
 import functools
 import logging
@@ -25,16 +27,14 @@ from klio_core import utils
 class DataflowClient(object):
     """Client to interact with Dataflow REST API.
 
-    Attributes:
-        DEFAULT_REGIONS (tuple(str)): default tuple of regions/locations
-            for which to query.
-
     Args:
         api_version (str): Version of Dataflow REST API. Defaults to
-            v1b3.
+            ``v1b3``.
     """
 
+    # TODO: allow for all regions supported by Dataflow
     DEFAULT_REGIONS = ("europe-west1", "asia-east1", "us-central1")
+    """Default tuple of regions/locations for which to query."""
 
     def __init__(self, api_version=None):
         _api_version = api_version or "v1b3"
@@ -48,11 +48,10 @@ class DataflowClient(object):
             job_name (str): Name of Dataflow job.
             gcp_project (str): GCP project in which to search.
             region (str): Region in which to search. Defaults to
-                searching all regions in ``DataflowClient.
-                DEFAULT_REGIONS``.
+                searching all regions in :attr:`DEFAULT_REGIONS`.
         Returns:
-            If found, ``dict`` of job summary results. Otherwise,
-                ``None``.
+            dict or None: If found, ``dict`` of job summary results. Otherwise,
+            ``None``.
         """
         if not region:
             regions = DataflowClient.DEFAULT_REGIONS
@@ -109,11 +108,10 @@ class DataflowClient(object):
             job_name (str): Name of Dataflow job.
             gcp_project (str): GCP project in which to search.
             region (str): Region in which to search. Defaults to
-                searching all regions in ``DataflowClient.
-                DEFAULT_REGIONS``.
+                searching all regions in :attr:`DEFAULT_REGIONS`.
         Returns:
-            If found, ``dict`` of detailed job results. Otherwise,
-                ``None``.
+            dict or None: If found, ``dict`` of detailed job results.
+            Otherwise, ``None``.
         """
         basic_job = self.find_job_by_name(job_name, gcp_project, region)
         if not basic_job:
@@ -153,10 +151,9 @@ class DataflowClient(object):
             job_name (str): Name of Dataflow job.
             gcp_project (str): GCP project in which to search.
             region (str): Region in which to search. Defaults to
-                searching all regions in ``DataflowClient.
-                DEFAULT_REGIONS``.
+                searching all regions in :attr:`DEFAULT_REGIONS`.
         Returns:
-            If found, input topic (str) of job. Otherwise, ``None``.
+            str or None: If found, input topic of job. Otherwise, ``None``.
         """
         job_info = self.get_job_detail(job_name, gcp_project, region=None)
         if not job_info:
@@ -175,17 +172,17 @@ class DataflowClient(object):
 
 
 def get_dataflow_client(api_version=None):
-    """Get an initialized ``DataflowClient``.
+    """Get an initialized :class:`DataflowClient`.
 
-    Will first check if there is an already initialized client in the
-    global namespace. Otherwise, initialize one then set it in the
-    global namespace to avoid redundant initialization.
+    This function will first check if there is an already initialized
+    client in the global namespace. Otherwise, initialize one then set it
+    in the global namespace to avoid redundant initialization.
 
     Args:
         api_version (str): Version of Dataflow REST API. Defaults to
-            v1b3.
+            ``v1b3``.
     Returns:
-        An instance of a ``DataflowClient``.
+        DataflowClient: A client to interact with the Dataflow REST API.
     """
     if not api_version:
         api_version = "v1b3"

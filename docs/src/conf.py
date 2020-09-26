@@ -199,4 +199,5 @@ intersphinx_mapping = {
     "https://librosa.org/doc/latest": None,
     "https://numpy.org/doc/stable/": None,
     "https://matplotlib.org/": None,
+    "https://googleapis.dev/python/pubsub/latest/": None,
 }

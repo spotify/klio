@@ -1,4 +1,4 @@
-.. image:: https://spotify-klio-klio.readthedocs-hosted.com/en/latest/_static/shitty_logo.png
+.. image:: docs/src/_static/images/shitty_logo.png
     :alt: Klio Logo
     :width: 70px
 

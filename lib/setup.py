@@ -68,6 +68,7 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.5",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
 META_FILE = read(META_PATH)
@@ -94,7 +95,8 @@ EXTRAS_REQUIRE = {
 EXTRAS_REQUIRE["dev"] = (
     EXTRAS_REQUIRE["docs"] + EXTRAS_REQUIRE["tests"] + ["bumpversion", "wheel"]
 )
-
+# support 3.5, 3.6, 3.7, & 3.8, matching Beam's support
+PYTHON_REQUIRES = ">=3.5, <3.9"
 
 setup(
     name=NAME,
@@ -112,4 +114,5 @@ setup(
     zip_safe=False,
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
+    python_requires=PYTHON_REQUIRES,
 )

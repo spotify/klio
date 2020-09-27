@@ -19,6 +19,7 @@ import re
 import click
 import emoji
 
+from klio_cli.commands.job.utils import create_args
 from klio_cli.commands.job.utils import gcp_setup
 from klio_cli.commands.job.utils import rendering
 
@@ -246,6 +247,162 @@ class CreateJob(object):
                 create_resources = DEFAULTS["create_resources"]
 
         return create_resources
+
+    def _create_args_from_user_prompt(self, command_line_args):
+        """Prompts for anything not provided on the command line
+
+        Args:
+            command_line_args(dict): Command line args
+        Returns:
+             A CreateJobArgs instance containing for each field
+             the command line argument, if provided
+             the user prompted input, if provided
+             the default value, otherwise
+        """
+        create_job_args = create_args.CreateJobArgs(
+            gcp_project=command_line_args.get("gcp_project"),
+            job_name=command_line_args.get("job_name"),
+        )
+
+        create_job_args.region = command_line_args.get(
+            "region"
+        ) or click.prompt("Desired GCP Region", default=create_job_args.region)
+
+        create_job_args.use_fnapi = command_line_args.get(
+            "use_fnapi"
+        ) or click.prompt(
+            "Use Apache Beam's FnAPI (experimental) [Y/n]",
+            type=click.Choice(["y", "Y", "n", "N"]),
+            default="y" if create_job_args.use_fnapi is True else "n",
+            show_choices=False,
+            show_default=False,  # shown in prompt
+        )
+
+        create_job_args.create_resources = command_line_args.get(
+            "create_resources"
+        ) or click.prompt(
+            "Create topics, buckets, and dashboards? [Y/n]",
+            type=click.Choice(["y", "Y", "n", "N"]),
+            default="n" if create_job_args.create_resources is False else "y",
+            show_choices=False,
+            show_default=False,  # shown in prompt
+        )
+        create_job_args.experiments = command_line_args.get(
+            "experiments"
+        ) or click.prompt(
+            "Beam experiments to enable",
+            default=",".join(create_job_args.experiments),
+        )
+        create_job_args.num_workers = command_line_args.get(
+            "num_workers"
+        ) or click.prompt(
+            "Number of workers to run",
+            type=int,
+            default=create_job_args.num_workers,
+        )
+        create_job_args.max_num_workers = command_line_args.get(
+            "max_num_workers"
+        ) or click.prompt(
+            "Maximum number of workers to run",
+            type=int,
+            default=create_job_args.max_num_workers,
+        )
+        create_job_args.autoscaling_algorithm = command_line_args.get(
+            "autoscaling_algorithm"
+        ) or click.prompt(
+            "Autoscaling algorithm to use. "
+            "Can be NONE (default) or THROUGHPUT_BASED",
+            type=str,
+            default=create_job_args.autoscaling_algorithm,
+        )
+        create_job_args.disk_size_gb = command_line_args.get(
+            "disk_size_gb"
+        ) or click.prompt(
+            "Size of a worker disk (GB)",
+            type=int,
+            default=create_job_args.disk_size_gb,
+        )
+        create_job_args.worker_machine_type = command_line_args.get(
+            "machine_type"
+        ) or click.prompt(
+            "Type of GCP instance for the worker machine(s)",
+            default=create_job_args.worker_machine_type,
+        )
+        worker_image = command_line_args.get("worker_image") or click.prompt(
+            (
+                "Docker image to use for the worker."
+                "If none, a Dockerfile will"
+                " be created for you"
+            ),
+            default="",
+        )
+        if not worker_image:
+            create_job_args.python_version = command_line_args.get(
+                "python_version"
+            ) or click.prompt(
+                "Python major version ({})".format(
+                    ", ".join(VALID_BEAM_PY_VERSIONS)
+                ),
+                default=create_job_args.python_version,
+            )
+        # post-refactor change in behavior: worker_image
+        # is now set to the empty string if the user does not supply it
+        # rather than being filled in with the default worker image value
+        # this makes it possible to use this value later to decide
+        # if a Dockerfile is created or not
+        create_job_args.worker_image = worker_image
+
+        create_job_args.staging_location = command_line_args.get(
+            "staging_location"
+        ) or click.prompt(
+            "Staging environment location",
+            default=create_job_args.staging_location,
+        )
+        create_job_args.temp_location = command_line_args.get(
+            "temp_location"
+        ) or click.prompt(
+            "Temporary environment location",
+            default=create_job_args.temp_location,
+        )
+
+        create_job_args.input_topic = command_line_args.get(
+            "input_topic"
+        ) or click.prompt(
+            "Input topic (usually your dependency's output topic)",
+            default=create_job_args.input_topic,
+        )
+
+        create_job_args.output_topic = command_line_args.get(
+            "output_topic"
+        ) or click.prompt("Output topic", default=create_job_args.output_topic)
+
+        create_job_args.input_data_location = command_line_args.get(
+            "input_data_location"
+        ) or click.prompt(
+            (
+                "Location of job's input data (usually the location of your "
+                "dependency's output data)"
+            ),
+            default=create_job_args.input_data_location,
+        )
+        create_job_args.output_data_location = command_line_args.get(
+            "output_data_location"
+        ) or click.prompt(
+            "Location of job's output",
+            default=create_job_args.output_data_location,
+        )
+        match = TOPIC_REGEX.match(create_job_args.input_topic)
+        topic_name = match.group("topic")
+        SUB_TPL = (
+            "projects/{gcp_project}/subscriptions/{topic_name}-{job_name}"
+        )
+        create_job_args.subscription = SUB_TPL.format(
+            topic_name=topic_name,
+            gcp_project=create_job_args.gcp_project,
+            job_name=create_job_args.job_name,
+        )
+
+        return create_job_args
 
     def _get_context_from_user_inputs(self, kwargs):
         region = kwargs.get("region") or click.prompt(

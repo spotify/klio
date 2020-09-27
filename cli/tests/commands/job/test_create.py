@@ -19,6 +19,7 @@ import click
 import pytest
 
 from klio_cli.commands.job import create
+from klio_cli.commands.job.utils import create_args
 
 HERE = os.path.abspath(os.path.join(os.path.abspath(__file__), os.path.pardir))
 FIXTURE_PATH = os.path.join(HERE, "utils", "fixtures")
@@ -446,6 +447,7 @@ def test_create(
     )
     mock_create_job_config = mocker.patch.object(
         template_renderer, "create_job_config"
+
     )
     mock_create_no_fnapi_files = mocker.patch.object(
         template_renderer, "create_no_fnapi_files"
@@ -518,3 +520,65 @@ def test_create(
         )
     mock_create_readme.assert_called_once_with(ret_env, context, output_dir)
     assert 1 == len(caplog.records)
+
+
+@pytest.mark.parametrize("user_prompt_worker_image", ("", "my-worker"))
+def test_create_args_from_user_prompt(
+    job, mock_prompt, user_prompt_worker_image
+):
+    expected_create_job_args = create_args.CreateJobArgs(
+        job_name="test-job",
+        worker_image="gcr.io/test-gcp-project/test-job-worker",
+        create_resources=False,
+        python_version="36",
+        gcp_project="test-gcp-project",
+        staging_location="my-staging-location",
+        temp_location="my-temp-location",
+        output_topic="my-output-topic",
+        output_data_location="my-output-location",
+        input_topic="projects/test-gcp-project/topics/another-topic",
+        input_data_location="my-input-data",
+        use_fnapi=True,
+        experiments=["beam_fn_api"],
+        region="us-central1",
+        num_workers=2,
+        max_num_workers=2,
+        autoscaling_algorithm="NONE",
+        disk_size_gb=32,
+        worker_machine_type="A-machine",
+    )
+    if user_prompt_worker_image:
+        expected_create_job_args.worker_image = user_prompt_worker_image
+
+    prompt_responses = [
+        expected_create_job_args.region,
+        str(expected_create_job_args.use_fnapi),
+        str(expected_create_job_args.create_resources),
+        ",".join(expected_create_job_args.experiments),
+        str(expected_create_job_args.num_workers),
+        str(expected_create_job_args.max_num_workers),
+        expected_create_job_args.autoscaling_algorithm,
+        str(expected_create_job_args.disk_size_gb),
+        expected_create_job_args.worker_machine_type,
+        user_prompt_worker_image,
+    ]
+
+    if not user_prompt_worker_image:
+        prompt_responses.append(expected_create_job_args.python_version)
+
+    prompt_responses += [
+        expected_create_job_args.staging_location,
+        expected_create_job_args.temp_location,
+        expected_create_job_args.input_topic,
+        expected_create_job_args.output_topic,
+        expected_create_job_args.input_data_location,
+        expected_create_job_args.output_data_location,
+    ]
+    mock_prompt.side_effect = prompt_responses
+    command_line_args = {
+        "job_name": expected_create_job_args.job_name,
+        "gcp_project": expected_create_job_args.gcp_project,
+    }
+    create_job_args = job._create_args_from_user_prompt(command_line_args)
+    assert len(prompt_responses) == mock_prompt.call_count
+    assert expected_create_job_args == create_job_args

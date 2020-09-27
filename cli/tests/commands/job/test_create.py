@@ -582,3 +582,46 @@ def test_create_args_from_user_prompt(
     create_job_args = job._create_args_from_user_prompt(command_line_args)
     assert len(prompt_responses) == mock_prompt.call_count
     assert expected_create_job_args == create_job_args
+
+
+def test_create_context_from_job_args(job):
+    create_job_args = create_args.CreateJobArgs(
+        gcp_project="test-proj", job_name="job-name"
+    )
+    expected_context = {
+        "job_name": "job-name",
+        "pipeline_options": {
+            "gcp_project": "test-proj",
+            "worker_harness_container_image": create_job_args.worker_image,
+            "experiments": create_job_args.experiments,
+            "region": create_job_args.region,
+            "staging_location": create_job_args.staging_location,
+            "temp_location": create_job_args.temp_location,
+            "num_workers": create_job_args.num_workers,
+            "max_num_workers": create_job_args.max_num_workers,
+            "autoscaling_algorithm": create_job_args.autoscaling_algorithm,
+            "disk_size_gb": create_job_args.disk_size_gb,
+            "worker_machine_type": create_job_args.worker_machine_type,
+        },
+        "job_options": {
+            "inputs": [
+                {
+                    "topic": create_job_args.input_topic,
+                    "subscription": create_job_args.subscription,
+                    "data_location": create_job_args.input_data_location,
+                }
+            ],
+            "outputs": [
+                {
+                    "topic": create_job_args.output_topic,
+                    "data_location": create_job_args.output_data_location,
+                }
+            ],
+        },
+        "python_version": create_job_args.python_version,
+        "use_fnapi": create_job_args.use_fnapi,
+        "create_resources": create_job_args.create_resources,
+    }
+    assert expected_context == job._create_context_from_create_job_args(
+        create_job_args
+    )

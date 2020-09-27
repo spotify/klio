@@ -248,6 +248,55 @@ class CreateJob(object):
 
         return create_resources
 
+    def _create_context_from_create_job_args(self, create_job_args):
+        """Create Jinja template context object from CreateJobArgs
+
+        TODO remove this method after switching Jimja templates to using
+        dict from create_job_args.asdict()
+        """
+        pipeline_context = {
+            "project": create_job_args.gcp_project,
+            "worker_harness_container_image": create_job_args.worker_image,
+            "experiments": create_job_args.experiments,
+            "region": create_job_args.region,
+            "staging_location": create_job_args.staging_location,
+            "temp_location": create_job_args.temp_location,
+            "num_workers": create_job_args.num_workers,
+            "max_num_workers": create_job_args.max_num_workers,
+            "autoscaling_algorithm": create_job_args.autoscaling_algorithm,
+            "disk_size_gb": create_job_args.disk_size_gb,
+            "worker_machine_type": create_job_args.worker_machine_type,
+        }
+        inputs = [
+            {
+                "topic": create_job_args.input_topic,
+                "subscription": create_job_args.subscription,
+                "data_location": create_job_args.input_data_location,
+            }
+        ]
+
+        outputs = [
+            {
+                "topic": create_job_args.output_topic,
+                "data_location": create_job_args.output_data_location,
+            }
+        ]
+
+        job_context = {
+            "inputs": inputs,
+            "outputs": outputs,
+        }
+
+        context = {
+            "pipeline_options": pipeline_context,
+            "job_options": job_context,
+            "python_version": create_job_args.python_version,
+            "use_fnapi": create_job_args.use_fnapi,
+            "create_resources": create_job_args.create_resources,
+            "job_name": create_job_args.job_name
+        }
+        return context
+
     def _create_args_from_user_prompt(self, command_line_args):
         """Prompts for anything not provided on the command line
 

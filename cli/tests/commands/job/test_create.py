@@ -121,58 +121,8 @@ def default_context():
     }
 
 
-def test_validate_worker_image(job):
-    assert not job._validate_worker_image("foo")
 
 
-def test_validate_region(job):
-    exp_region = "us-central1"
-    ret_region = job._validate_region(exp_region)
-    assert exp_region == ret_region
-
-
-def test_validate_region_raises(job):
-    err_region = "not-a-region"
-    with pytest.raises(click.BadParameter) as e:
-        job._validate_region(err_region)
-
-    assert e.match(
-        '"{}" is not a valid region. Available: '.format(err_region)
-    )
-
-
-@pytest.mark.parametrize(
-    "input_version,exp_output_version",
-    (
-        ("3.5", "3"),
-        ("3.5.1", "3"),
-        ("35", "3"),
-        ("3.6", "36"),
-        ("3.6.1", "36"),
-        ("36", "36"),
-        ("3.7", "37"),
-        ("3.7.1", "37"),
-        ("37", "37"),
-    ),
-)
-def test_parse_python_version(input_version, exp_output_version, job):
-    assert exp_output_version == job._parse_python_version(input_version)
-
-
-@pytest.mark.parametrize(
-    "input_version,exp_msg",
-    (
-        ("2", "Klio no longer supports Python 2.7"),
-        ("2.7", "Klio no longer supports Python 2.7"),
-        ("3", "Invalid Python version given"),
-        ("3.3", "Invalid Python version given"),
-        ("3.6.7.8", "Invalid Python version given"),
-    ),
-)
-def test_parse_python_version_raises(input_version, exp_msg, job):
-    # only matching the start of the error message
-    with pytest.raises(click.BadParameter, match=exp_msg):
-        job._parse_python_version(input_version)
 
 
 def test_get_context_from_defaults(default_context, job):

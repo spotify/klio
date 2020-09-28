@@ -197,7 +197,6 @@ def test_default_input_topic(create_job_args_default_inst):
 
 
 def test_default_input_subscription(create_job_args_default_inst):
-    topic_name = "projects/stinky/topics/cheese-input"
     expected = "projects/stinky/subscriptions/cheese-input-cheese"
     assert expected == create_job_args_default_inst.subscription
 

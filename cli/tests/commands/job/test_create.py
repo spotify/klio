@@ -15,7 +15,6 @@
 
 import os
 
-import click
 import pytest
 
 from klio_cli.commands.job import create
@@ -119,10 +118,6 @@ def default_context():
             ],
         },
     }
-
-
-
-
 
 
 def test_get_context_from_defaults(default_context, job):
@@ -372,7 +367,6 @@ def test_create(
     )
     mock_create_job_config = mocker.patch.object(
         template_renderer, "create_job_config"
-
     )
     mock_create_no_fnapi_files = mocker.patch.object(
         template_renderer, "create_no_fnapi_files"

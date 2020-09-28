@@ -53,7 +53,6 @@ DEFAULTS = {
 
 
 class CreateJob(object):
-
     def _create_context_from_create_job_args(self, create_job_args):
         """Create Jinja template context object from CreateJobArgs
 
@@ -263,7 +262,7 @@ class CreateJob(object):
         """Consolidates user input
 
         Args:
-              command_line_args(dict): All command line arguments (including addl_job_args)
+              command_line_args(dict): All CLI args
         Returns:
             Tuple of context, create_dockerfile
         """

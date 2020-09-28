@@ -72,10 +72,11 @@ def python_version_converter(python_version):
     """Return version that can be appended to name of worker image
 
     Args:
-        python_version(str): Python version as input by user or on the command line
+        python_version(str): Python version as input by user
+                            or on the command line
     Returns:
        "3" if major.minor  is 3.5
-       major.minor without the separating "." otherwise (e.g. 36, 37)
+       First 2 values w/o the separating "." otherwise (e.g. 36, 37)
     """
     # 3.x -> 3x; 3.x.y -> 3x
     if "." in python_version:

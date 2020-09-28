@@ -179,12 +179,10 @@ def test_get_context_from_defaults(default_context, job):
     basic_context = {
         "job_name": "test-job",
         "gcp_project": "test-gcp-project",
+        "use_defaults": True,
     }
 
-    ret_context, ret_create_dockerfile = job._get_context_from_defaults(
-        basic_context
-    )
-    default_context.pop("job_name")
+    ret_context, ret_create_dockerfile = job._get_user_input(basic_context)
 
     assert default_context == ret_context
     assert ret_create_dockerfile
@@ -253,6 +251,7 @@ def expected_overrides():
         "python_version": "37",
         "use_fnapi": False,
         "create_resources": False,
+        "job_name": "test-job",
     }
 
 
@@ -261,9 +260,9 @@ def test_get_context_from_defaults_overrides(
 ):
     # FYI: Click will pass in kwargs as a flat dict
     context_overrides["worker_machine_type"] = "n4-highmem-l33t"
-    ret_context, ret_create_dockerfile = job._get_context_from_defaults(
-        context_overrides
-    )
+    context_overrides["use_defaults"] = True
+
+    ret_context, ret_create_dockerfile = job._get_user_input(context_overrides)
 
     assert expected_overrides == ret_context
     assert not ret_create_dockerfile
@@ -304,26 +303,10 @@ def test_get_context_from_user_inputs(
         "gcp_project": "test-gcp-project",
     }
 
-    mock_validate_region = mocker.patch.object(job, "_validate_region")
-    mock_validate_worker_image = mocker.patch.object(
-        job, "_validate_worker_image"
-    )
-    ret_context, ret_dockerfile = job._get_context_from_user_inputs(
-        user_input_context
-    )
+    ret_context, ret_dockerfile = job._get_user_input(user_input_context)
 
     assert len(prompt_side_effect) == mock_prompt.call_count
 
-    exp_calls = [mocker.call("europe-west1")]
-    assert exp_calls == mock_validate_region.call_args_list
-    assert len(exp_calls) == mock_validate_region.call_count
-
-    # mock_validate_region.assert_called_once_with("europe-west1")
-    gcr_url = "gcr.io/test-gcp-project/test-job-worker"
-    mock_validate_worker_image.assert_called_once_with(gcr_url)
-
-    context.pop("job_name")
-    context["pipeline_options"].pop("project")
     context["use_fnapi"] = True
     context["create_resources"] = False
     assert context == ret_context
@@ -334,19 +317,11 @@ def test_get_context_from_user_inputs_no_prompts(
     mocker, context_overrides, expected_overrides, mock_prompt, job,
 ):
     context_overrides["machine_type"] = "n4-highmem-l33t"
-    mock_validate_region = mocker.patch.object(job, "_validate_region")
-    mock_validate_worker_image = mocker.patch.object(
-        job, "_validate_worker_image"
-    )
-    ret_context, ret_dockerfile = job._get_context_from_user_inputs(
-        context_overrides
-    )
 
-    expected_overrides["pipeline_options"].pop("project")
+    ret_context, ret_dockerfile = job._get_user_input(context_overrides)
+
     expected_overrides["python_version"] = "36"
     assert not mock_prompt.call_count
-    mock_validate_region.assert_called_once_with("us-central1")
-    mock_validate_worker_image.assert_called_once_with("gcr.io/foo/bar")
     assert not ret_dockerfile
     assert expected_overrides == ret_context
 
@@ -359,37 +334,32 @@ def test_get_context_from_user_inputs_no_prompts_image(
     context_overrides.pop("worker_image")
     context_overrides["machine_type"] = "n4-highmem-l33t"
 
-    mock_validate_region = mocker.patch.object(job, "_validate_region")
-    mock_validate_worker_image = mocker.patch.object(
-        job, "_validate_worker_image"
-    )
-    ret_context, ret_dockerfile = job._get_context_from_user_inputs(
-        context_overrides
-    )
+    ret_context, ret_dockerfile = job._get_user_input(context_overrides)
 
-    gcr_url = "gcr.io/test-gcp-project/test-job-worker"
     exp_pipeline_opts = expected_overrides["pipeline_options"]
-    exp_pipeline_opts.pop("project")
-    exp_pipeline_opts["worker_harness_container_image"] = gcr_url
+    exp_pipeline_opts[
+        "worker_harness_container_image"
+    ] = "gcr.io/test-gcp-project/test-job-worker"
 
     assert 1 == mock_prompt.call_count
-    mock_validate_region.assert_called_once_with("us-central1")
-    mock_validate_worker_image.assert_called_once_with(gcr_url)
     assert ret_dockerfile
     assert expected_overrides == ret_context
 
 
 @pytest.mark.parametrize("use_defaults", (True, False))
 def test_get_user_input(use_defaults, mocker, job):
-    ret_context = {"pipeline_options": {}}
-    mock_get_context_defaults = mocker.patch.object(
-        job, "_get_context_from_defaults"
+    create_args_mock = mocker.Mock()
+    mock_create_args_from_user_prompt = mocker.patch.object(
+        job, "_create_args_from_user_prompt"
     )
-    mock_get_context_defaults.return_value = (ret_context, True)
-    mock_get_context_user = mocker.patch.object(
-        job, "_get_context_from_user_inputs"
+    mock_create_args_from_user_prompt.return_value = create_args_mock
+    mock_create_args_from_dict = mocker.patch.object(
+        create.create_args.CreateJobArgs, "from_dict"
     )
-    mock_get_context_user.return_value = (ret_context, True)
+    mock_create_args_from_dict.return_value = create_args_mock
+    mock_create_context_from_create_job_args = mocker.patch.object(
+        job, "_create_context_from_create_job_args"
+    )
 
     input_kwargs = {
         "use_defaults": use_defaults,
@@ -397,11 +367,16 @@ def test_get_user_input(use_defaults, mocker, job):
         "gcp_project": "test-gcp-project",
     }
 
-    job._get_user_input(input_kwargs)
-    if use_defaults:
-        mock_get_context_defaults.assert_called_once_with(input_kwargs)
+    _, create_dockerfile = job._get_user_input(input_kwargs)
+
+    if not use_defaults:
+        mock_create_args_from_user_prompt.assert_called_once_with(input_kwargs)
     else:
-        mock_get_context_user.assert_called_once_with(input_kwargs)
+        mock_create_args_from_dict.assert_called_once_with(input_kwargs)
+
+    mock_create_context_from_create_job_args.assert_called_once_with(
+        create_args_mock
+    )
 
 
 @pytest.mark.parametrize(
@@ -581,6 +556,8 @@ def test_create_args_from_user_prompt(
     }
     create_job_args = job._create_args_from_user_prompt(command_line_args)
     assert len(prompt_responses) == mock_prompt.call_count
+    if not user_prompt_worker_image:
+        expected_create_job_args.worker_image = ""
     assert expected_create_job_args == create_job_args
 
 
@@ -591,7 +568,7 @@ def test_create_context_from_job_args(job):
     expected_context = {
         "job_name": "job-name",
         "pipeline_options": {
-            "gcp_project": "test-proj",
+            "project": "test-proj",
             "worker_harness_container_image": create_job_args.worker_image,
             "experiments": create_job_args.experiments,
             "region": create_job_args.region,

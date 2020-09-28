@@ -293,7 +293,7 @@ class CreateJob(object):
             "python_version": create_job_args.python_version,
             "use_fnapi": create_job_args.use_fnapi,
             "create_resources": create_job_args.create_resources,
-            "job_name": create_job_args.job_name
+            "job_name": create_job_args.job_name,
         }
         return context
 
@@ -636,19 +636,34 @@ class CreateJob(object):
         }
         return context, create_dockerfile
 
-    def _get_user_input(self, kwargs):
-        accept_defaults = kwargs["use_defaults"]
-        if accept_defaults:
-            context, create_dockerfile = self._get_context_from_defaults(
-                kwargs
-            )
-        else:
-            context, create_dockerfile = self._get_context_from_user_inputs(
-                kwargs
-            )
 
-        context["job_name"] = kwargs["job_name"]
-        context["pipeline_options"]["project"] = kwargs["gcp_project"]
+    def _get_user_input(self, command_line_args):
+        """Consolidates user input
+
+        Args:
+              command_line_args(dict): All command line arguments (including addl_job_args)
+        Returns:
+            Tuple of context, create_dockerfile
+        """
+        create_dockerfile = False
+        if not command_line_args.get("use_defaults"):
+            create_job_args = self._create_args_from_user_prompt(
+                command_line_args
+            )
+            if not create_job_args.worker_image:
+                create_dockerfile = True
+                create_job_args.worker_image = (
+                    create_job_args._default_worker_image()
+                )
+        else:
+            create_job_args = create_args.CreateJobArgs.from_dict(
+                command_line_args
+            )
+            if not command_line_args.get("worker_image"):
+                create_dockerfile = True
+
+        context = self._create_context_from_create_job_args(create_job_args)
+
         return context, create_dockerfile
 
     def _parse_unknown_args(self, user_args):

@@ -297,8 +297,6 @@ def test_create_reqs_file(use_fnapi, tmpdir, job):
     ret_reqs_contents = ret_reqs_file.read()
 
     expected_fixtures = os.path.join(FIXTURE_PATH, "expected")
-    is_fnapi_dir = "fnapi" if use_fnapi else "no_fnapi"
-    expected_fixtures = os.path.join(expected_fixtures, is_fnapi_dir)
 
     fixture = os.path.join(expected_fixtures, "job-requirements.txt")
     with open(fixture, "r") as f:

@@ -1,5 +1,5 @@
 ## -*- docker-image-name: "gcr.io/foo/bar" -*-
-FROM dataflow.gcr.io/v1beta3/python36-fnapi:2.19.0
+FROM dataflow.gcr.io/v1beta3/python36-fnapi:2.24.0
 
 WORKDIR /usr/src/app
 
@@ -18,4 +18,4 @@ COPY __init__.py \
      # Include any other non-Python files your job needs
      /usr/src/app/
 
-RUN pip install .
+RUN pip install .  --use-feature=2020-resolver

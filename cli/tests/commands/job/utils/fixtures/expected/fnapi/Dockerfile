@@ -1,5 +1,5 @@
 ## -*- docker-image-name: "gcr.io/foo/bar" -*-
-FROM dataflow.gcr.io/v1beta3/python36-fnapi:2.19.0
+FROM dataflow.gcr.io/v1beta3/python36-fnapi:2.24.0
 
 WORKDIR /usr/src/app
 RUN mkdir -p /usr/src/config
@@ -7,8 +7,7 @@ RUN mkdir -p /usr/src/config
 ENV GOOGLE_CLOUD_PROJECT=test-gcp-project \
     PYTHONPATH=/usr/src/app
 
-RUN pip install --upgrade pip setuptools && \
-    pip install klio-exec
+RUN pip install --upgrade pip setuptools
 
 ###############################################################
 # DO NOT EDIT ABOVE THIS LINE. Or you may break klio.         #
@@ -26,7 +25,7 @@ RUN pip install --upgrade pip setuptools && \
 ###############################################################
 
 COPY job-requirements.txt job-requirements.txt
-RUN pip install -r job-requirements.txt
+RUN pip install -r job-requirements.txt --use-feature=2020-resolver
 
 COPY __init__.py \
      run.py \

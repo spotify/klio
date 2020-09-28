@@ -24,30 +24,30 @@ pipeline_options:
   {%- endif %}
 job_config:
   allow_non_klio_messages: False
-  inputs:
-  {%- for item in klio.job_options.inputs %}
-    - topic: {{item.topic}}
-      subscription: {{item.subscription}}
-      data_location: {{item.data_location}}
-  {%- endfor %}
-  outputs:
-  {%- for item in klio.job_options.outputs %}
-    - topic: {{item.topic}}
-      data_location: {{item.data_location}}
-  {%- endfor %}
-  {%- if klio.job_options.dependencies %}
-  dependencies:
-  {%- for dep in klio.job_options.dependencies %}
-    - job_name: {{ dep.job_name }}
-      gcp_project: {{ dep.gcp_project }}
-      {%- if dep.input_topics %}
-      input_topics:
-      {%- for topic in dep.input_topics %}
-        - {{ topic }}
-      {%- endfor %}
-      {%- endif %}
-      {%- if dep.region %}
-      region: {{ dep.region }}
-      {%- endif %}
-  {%- endfor %}
-  {%- endif %}
+  events:
+    inputs:
+    {%- for item in klio.job_options.inputs %}
+      - type: pubsub
+        topic: {{item.topic}}
+        subscription: {{item.subscription}}
+    {%- endfor %}
+    outputs:
+    {%- for item in klio.job_options.outputs %}
+      - type: pubsub
+        topic: {{item.topic}}
+    {%- endfor %}
+  data:
+    inputs:
+    {%- for item in klio.job_options.inputs %}
+      - type: gcs
+        location: {{item.data_location}}
+        # Remove/set to false when job is ready to process input existence checks
+        skip_klio_existence_check: True
+    {%- endfor %}
+    outputs:
+    {%- for item in klio.job_options.outputs %}
+      - type: gcs
+        location: {{item.data_location}}
+        # Remove/set to false when job is ready to process output existence checks
+        skip_klio_existence_check: True
+    {%- endfor %}

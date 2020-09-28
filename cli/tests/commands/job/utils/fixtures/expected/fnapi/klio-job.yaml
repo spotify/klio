@@ -17,16 +17,22 @@ pipeline_options:
   runner: DataflowRunner
 job_config:
   allow_non_klio_messages: False
-  inputs:
-    - topic: projects/test-parent-gcp-project/topics/test-parent-job-output
-      subscription: projects/test-gcp-project/subscriptions/test-parent-job-output-test-job
-      data_location: gs://test-parent-gcp-project-output/test-parent-job
-  outputs:
-    - topic: projects/test-gcp-project/topics/test-job-output
-      data_location: gs://test-gcp-project-output/test-job
-  dependencies:
-    - job_name: test-parent-job
-      gcp_project: test-parent-gcp-project
-      input_topics:
-        - projects/test-grandparent-gcp-project/topics/test-grandparent-job-output
-      region: us-central1
+  events:
+    inputs:
+      - type: pubsub
+        topic: projects/test-parent-gcp-project/topics/test-parent-job-output
+        subscription: projects/test-gcp-project/subscriptions/test-parent-job-output-test-job
+    outputs:
+      - type: pubsub
+        topic: projects/test-gcp-project/topics/test-job-output
+  data:
+    inputs:
+      - type: gcs
+        location: gs://test-parent-gcp-project-output/test-parent-job
+        # Remove/set to false when job is ready to process input existence checks
+        skip_klio_existence_check: True
+    outputs:
+      - type: gcs
+        location: gs://test-gcp-project-output/test-job
+        # Remove/set to false when job is ready to process output existence checks
+        skip_klio_existence_check: True

@@ -7,3 +7,4 @@
 .. role:: blue
 .. role:: blueemph
 .. role:: underline
+.. role:: tagline

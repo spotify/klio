@@ -1,8 +1,8 @@
 :nosidebar:
 :nodocstoc:
 
-klio: some clever tagline
-=========================
+:tagline:`klio: smarter data pipelines for audio and ml`
+========================================================
 
 Klio is an ecosystem for processing audio files – or any binary files – easily and at scale. :doc:`Read more<userguide/index>`.
 

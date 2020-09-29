@@ -68,7 +68,7 @@ class MetricsRegistry(object):
             kwargs (dict): keyword arguments passed to each configured
                 relay clients' counter object.
         Returns:
-            `klio.metrics.dispatcher.CounterDispatcher` instance
+            dispatcher.CounterDispatcher: instance of a counter dispatcher
         """
         transform_name = kwargs.pop("transform", self._transform_name)
         key = "counter_{}_{}".format(name, transform_name)
@@ -98,7 +98,8 @@ class MetricsRegistry(object):
             value (int): starting value of gauge; defaults to 0
             kwargs (dict): keyword arguments passed to each configured
                 relay clients' gauge object.
-        Returns a dispatcher.GaugeDispatcher instance
+        Returns:
+            dispatcher.GaugeDispatcher: instance of a gauge dispatcher
         """
         transform_name = kwargs.pop("transform", self._transform_name)
         key = "gauge_{}_{}".format(name, transform_name)
@@ -129,7 +130,8 @@ class MetricsRegistry(object):
             timer_unit (str): desired unit of time; defaults to ns
             kwargs (dict): keyword arguments passed to each configured
                 relay clients' timer object.
-        Returns a dispatcher.TimerDispatcher instance
+        Returns:
+            dispatcher.TimerDispatcher: instance of a timer dispatcher
         """
         transform_name = kwargs.pop("transform", self._transform_name)
         key = "timer_{}_{}".format(name, transform_name)
@@ -156,7 +158,8 @@ class MetricsRegistry(object):
             metric (dispatcher.BaseMetricDispatcher): metric instance to
                 marshal.
 
-        Returns a dict of the metric's data.
+        Returns:
+            dict: the metric's data in dictionary form
         """
         data = {
             "type": metric.METRIC_TYPE,
@@ -178,8 +181,9 @@ class MetricsRegistry(object):
             metric_data (dict): dictionary-representation of a given
                 metric.
 
-        Returns an instance of dispatcher.BaseMetricDispatcher relevant
-            to metric type.
+        Returns:
+            dispatcher.BaseMetricDispatcher: a dispatcher relevant to
+            metric type.
         """
         metric_type = metric_data.pop("type", None)
         name = metric_data.pop("name", None)

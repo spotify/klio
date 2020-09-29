@@ -16,3 +16,6 @@
   color: #2D46B9;
   font-weight: bold;
 }
+.tagline {
+  font-variant-caps: all-small-caps;
+}

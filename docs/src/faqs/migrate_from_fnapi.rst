@@ -72,6 +72,7 @@ explicitly including non-Python files needed for a job (i.e. a model, a JSON sch
 
 .. todo:: Show example with internal & OS-level dependencies
 
+.. _new-manifest-in:
 
 New: ``MANIFEST.in``
 ^^^^^^^^^^^^^^^^^^^^

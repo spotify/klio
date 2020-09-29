@@ -5,6 +5,8 @@
 Manage
 ------
 
+.. _klio-job-create:
+
 .. click:: klio_cli.cli:create_job
     :prog: klio job create
     :nested: full

@@ -20,7 +20,7 @@ Klio is an ecosystem for processing audio files – or any binary files – easi
 
 .. container:: custom-button
 
-    :doc:`To the getting started guides<quickstart>`
+    :doc:`To the getting started guides<quickstart/index>`
 
 .. raw:: html
 
@@ -109,7 +109,7 @@ A collection of all the todos that we should probably address before we publicly
    :maxdepth: 3
    :hidden:
 
-   quickstart
+   quickstart/index
    User Guide <userguide/index>
    Reference <reference/index>
    FAQs <faqs/index>

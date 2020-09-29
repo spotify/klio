@@ -16,6 +16,7 @@
 import re
 
 import attr
+import click
 
 VALID_BEAM_PY_VERSIONS = ["3.5", "3.6", "3.7", "3.8"]
 VALID_BEAM_PY_VERSIONS_SHORT = [
@@ -186,7 +187,9 @@ class CreateJobArgs(object):
             # Default subscription depends on input topic,
             # so if a subscription isn't specified when the input topic is,
             # recalculate the default subscription
-            create_job_args.subscription = create_job_args.get_default("subscription")
+            create_job_args.subscription = create_job_args.get_default(
+                "subscription"
+            )
 
         return create_job_args
 
@@ -297,3 +300,220 @@ class CreateJobArgs(object):
         if isinstance(default, attr._make.Factory):
             return default.factory(self)
         return default
+
+
+class CreateJobPromptInput(object):
+    def __init__(self, cmd_line_args):
+        self.cmd_line_args = cmd_line_args
+        # set it to None so that when we call `parse`,
+        # it gives a hint that it's going
+        # to be mutated
+        self.create_job_args = None
+
+    def set_region(self):
+        region = self.cmd_line_args.get("region")
+        if not region:
+            region = click.prompt(
+                "Desired GCP Region",
+                default=self.create_job_args.get_default("region"),
+            )
+        self.create_job_args.region = region
+
+    def set_use_fnapi(self):
+        use_fnapi = self.cmd_line_args.get("use_fnapi")
+        if not use_fnapi:
+            use_fnapi = click.prompt(
+                "Use Apache Beam's FnAPI (experimental) [Y/n]",
+                type=click.Choice(["y", "Y", "n", "N"]),
+                default="y"
+                if self.create_job_args.get_default("use_fnapi") is True
+                else "n",
+                show_choices=False,
+                show_default=False,  # shown in prompt
+            )
+        self.create_job_args.use_fnapi = use_fnapi
+
+    def set_create_resources(self):
+        create_resources = self.cmd_line_args.get("create_resources")
+        if not create_resources:
+            create_resources = click.prompt(
+                "Create topics, buckets, and dashboards? [Y/n]",
+                type=click.Choice(["y", "Y", "n", "N"]),
+                default="n"
+                if self.create_job_args.create_resources is False
+                else "y",
+                show_choices=False,
+                show_default=False,  # shown in prompt
+            )
+        self.create_job_args.create_resources = create_resources
+
+    def set_experiments(self):
+        experiments = self.cmd_line_args.get("experiments")
+        if not experiments:
+            experiments = click.prompt(
+                "Beam experiments to enable",
+                default=",".join(self.create_job_args.experiments),
+            )
+        self.create_job_args.experiments = experiments
+
+    def set_num_workers(self):
+        num_workers = self.cmd_line_args.get("num_workers")
+        if not num_workers:
+            num_workers = click.prompt(
+                "Number of workers to run",
+                type=int,
+                default=self.create_job_args.num_workers,
+            )
+        self.create_job_args.num_workers = num_workers
+
+    def set_max_num_workers(self):
+        max_num_workers = self.cmd_line_args.get("max_num_workers")
+        if not max_num_workers:
+            max_num_workers = click.prompt(
+                "Maximum number of workers to run",
+                type=int,
+                default=self.create_job_args.max_num_workers,
+            )
+        self.create_job_args.max_num_workers = max_num_workers
+
+    def set_autoscaling_algorithm(self):
+        autoscaling_algorithm = self.cmd_line_args.get("autoscaling_algorithm")
+        if not autoscaling_algorithm:
+            autoscaling_algorithm = click.prompt(
+                "Autoscaling algorithm to use. "
+                "Can be NONE (default) or THROUGHPUT_BASED",
+                type=str,
+                default=self.create_job_args.autoscaling_algorithm,
+            )
+        self.create_job_args.autoscaling_algorithm = autoscaling_algorithm
+
+    def set_disk_size_gb(self):
+        disk_size_gb = self.cmd_line_args.get("disk_size_gb")
+        if not disk_size_gb:
+            disk_size_gb = click.prompt(
+                "Size of a worker disk (GB)",
+                type=int,
+                default=self.create_job_args.disk_size_gb,
+            )
+        self.create_job_args.disk_size_gb = disk_size_gb
+
+    def set_worker_machine_type(self):
+        worker_machine_type = self.cmd_line_args.get("machine_type")
+        if not worker_machine_type:
+            worker_machine_type = click.prompt(
+                "Type of GCP instance for the worker machine(s)",
+                default=self.create_job_args.worker_machine_type,
+            )
+        self.create_job_args.worker_machine_type = worker_machine_type
+
+    def set_worker_image_and_python_version(self):
+        worker_image = self.cmd_line_args.get("worker_image")
+        if not worker_image:
+            worker_image = click.prompt(
+                (
+                    "Docker image to use for the worker."
+                    " If none, a Dockerfile will"
+                    " be created for you"
+                ),
+                default="",
+            )
+        if not worker_image:
+            python_version = self.cmd_line_args.get("python_version")
+            if not python_version:
+                python_version = click.prompt(
+                    "Python major version ({})".format(
+                        ", ".join(VALID_BEAM_PY_VERSIONS)
+                    ),
+                    default=self.create_job_args.python_version,
+                )
+            self.create_job_args.python_version = python_version
+        # post-refactor change in behavior: worker_image
+        # is now set to the empty string if the user does not supply it
+        # rather than being filled in with the default worker image value
+        # this makes it possible to use this value later to decide
+        # if a Dockerfile is created or not
+        self.create_job_args.worker_image = worker_image
+
+    def set_staging_location(self):
+        staging_location = self.cmd_line_args.get("staging_location")
+        if not staging_location:
+            staging_location = click.prompt(
+                "Staging environment location",
+                default=self.create_job_args.staging_location,
+            )
+        self.create_job_args.staging_location = staging_location
+
+    def set_temp_location(self):
+        temp_location = self.cmd_line_args.get("temp_location")
+        if not temp_location:
+            temp_location = click.prompt(
+                "Temporary environment location",
+                default=self.create_job_args.temp_location,
+            )
+        self.create_job_args.temp_location = temp_location
+
+    def set_input_topic(self):
+        input_topic = self.cmd_line_args.get("input_topic")
+        if not input_topic:
+            input_topic = click.prompt(
+                "Input topic (usually your dependency's output topic)",
+                default=self.create_job_args.input_topic,
+            )
+        self.create_job_args.input_topic = input_topic
+
+    def set_output_topic(self):
+        output_topic = self.cmd_line_args.get("output_topic")
+        if not output_topic:
+            output_topic = click.prompt(
+                "Output topic", default=self.create_job_args.output_topic
+            )
+        self.create_job_args.output_topic = output_topic
+
+    def set_input_data_location(self):
+        input_data_location = self.cmd_line_args.get("input_data_location")
+        if not input_data_location:
+            input_data_location = click.prompt(
+                (
+                    "Location of job's input data "
+                    "(usually the location of your "
+                    "dependency's output data)"
+                ),
+                default=self.create_job_args.input_data_location,
+            )
+        self.create_job_args.input_data_location = input_data_location
+
+    def set_output_data_location(self):
+        output_data_location = self.cmd_line_args.get("output_data_location")
+        if not output_data_location:
+            output_data_location = click.prompt(
+                "Location of job's output",
+                default=self.create_job_args.output_data_location,
+            )
+        self.create_job_args.output_data_location = output_data_location
+
+    def set_subscription(self):
+        self.create_job_args.subscription = self.create_job_args.get_default(
+            "subscription"
+        )
+
+    def parse(self, create_job_args):
+        self.create_job_args = create_job_args
+        self.set_region()
+        self.set_use_fnapi()
+        self.set_create_resources()
+        self.set_experiments()
+        self.set_num_workers()
+        self.set_max_num_workers()
+        self.set_autoscaling_algorithm()
+        self.set_disk_size_gb()
+        self.set_worker_machine_type()
+        self.set_worker_image_and_python_version()
+        self.set_staging_location()
+        self.set_temp_location()
+        self.set_input_topic()
+        self.set_subscription()
+        self.set_output_topic()
+        self.set_input_data_location()
+        self.set_output_data_location()
+
+        return create_job_args

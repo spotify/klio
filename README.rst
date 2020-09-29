@@ -2,9 +2,9 @@
     :alt: Klio Logo
     :width: 70px
 
-==============================
-``klio``: some clever tag line
-==============================
+=================================================
+``klio``: Smarter data pipelines for audio and ML
+=================================================
 
 .. image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
     :target: https://opensource.org/licenses/Apache-2.0

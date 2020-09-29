@@ -102,6 +102,7 @@ extensions = [
     "sphinx.ext.napoleon",  # handle Google-style docstrings
     "sphinx.ext.autosummary",  # auto-gen summaries
     "collapsible_admon",  # custom extension from _ext dir
+    "sphinxcontrib.images",  # thumbnail images
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -163,6 +164,10 @@ html_theme_options = {
   "github_url": "https://github.com/spotify/klio",
   "twitter_url": "https://twitter.com/SpotifyEng",
   "show_prev_next": False,
+  # when there's group of thumbnails (like User Guide > Pipelines > Transforms)
+  # don't navigate to the next page automatically; allow to key left/right
+  # to view thumbnail carousel
+  "navigation_with_keys": False,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

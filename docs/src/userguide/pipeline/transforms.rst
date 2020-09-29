@@ -1,19 +1,31 @@
+Transforms
+==========
+
+.. todo::
+
+    write a section on implementing one's own transform
+
 .. _helper-transforms:
-
-Implementing Transforms
-=======================
-
-.. _helper_transforms:
 
 Helper Transforms
 -----------------
-Helper transforms aid existence checks, ping mode, and force re-generating output. These
-transforms can be imported from ``klio.transforms.helpers``.
+
+Helper transforms aid existence checks, ping mode, and force re-generating output.
+These transforms can be imported from ``klio.transforms.helpers``.
+Many are used by default in a Klio pipeline.
+
+.. _builtin-transforms:
+
+Built-in Transforms
+^^^^^^^^^^^^^^^^^^^
+
+Built-in transforms are used **by default** in a Klio pipeline, but can be turned off if needed.
+See :ref:`below <pipeline-using-builtins>` for an flow diagram of how these built-in transforms are used in a pipeline.
 
 .. _data-existence-checks:
 
 Data Existence Checks
-^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~
 
 For :ref:`data IO types <data-inputs-type>` of ``gcs``, Klio will perform the input
 existence check for you. Data input and output existence checks are configured by the
@@ -34,7 +46,7 @@ example-streaming-parent-job-output/f00b4r.ogg``.
 
 
 ``KlioGcsCheckInputExists``
-"""""""""""""""""""""""""""
+***************************
 
 :class:`KlioGcsCheckInputExists<klio.transforms.helpers.KlioGcsCheckInputExists>` is a `Composite
 Transform`_ to check the input data existence in GCS. The transform utilizes `Tagged Outputs`_ to
@@ -57,7 +69,7 @@ label output as either as ``not_found`` or ``found``.
             return input_data.found
 
 ``KlioGcsCheckOutputExists``
-""""""""""""""""""""""""""""
+****************************
 
 :class:`KlioGcsCheckOutputExists<klio.transforms.helpers.KlioGcsCheckOutputExists>` is a `Composite
 Transform`_ to check the output exists in GCS. The transform utilizes `Tagged Outputs`_ to label
@@ -80,10 +92,10 @@ output as either  ``not_found`` or ``found``.
 
 
 Data Filtering
-^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~
 
 ``KlioFilterPing``
-""""""""""""""""""
+******************
 
 :class:`KlioFilterPing <klio.transforms.helpers.KlioFilterPing>` is a `Composite Transform`_ to
 tag outputs if in :ref:`ping mode <ping-mode>` or not. The transform utilizes `Tagged Outputs`_
@@ -106,7 +118,7 @@ to label output as either ``pass_thru`` or ``process``.
 .. _filter-force:
 
 ``KlioFilterForce``
-"""""""""""""""""""
+*******************
 
 :class:`KlioFilterForce <klio.transforms.helpers.KlioFilterForce>` is a `Composite Transform`_ to
 filter if existing output should be :ref:`force-processed <force-mode>`. The transform will look
@@ -137,103 +149,18 @@ uses utilizes `Tagged Outputs`_ to label output as either ``pass_thru`` or``proc
             to_process = (output_exists.not_found, output_force.process)
 
 
-IO Helpers
-^^^^^^^^^^
+``KlioCheckRecipients``
+***********************
 
-``KlioWriteToEventOutput``
-""""""""""""""""""""""""""
+.. todo::
 
-:class:`KlioWriteToEventOutput <klio.transforms.helpers.KlioWriteToEventOutput>` is a `Composite
-Transform`_ to write to the configured event output. The transform is currently available for
-writing to ``file`` types and ``pubsub`` types.
+    fill me in
 
-.. code-block:: python
-
-    class KlioGcsFilterOutput(beam.PTransform):
-        """Klio composite transform to filter output data."""
-
-        def expand(self, pcoll):
-            # Check if output data exists
-            output_exists = pcoll | "Output Exists Filter" >> KlioGcsCheckOutputExists()
-
-            # Filter if existing output should be force-processed
-            output_force = output_exists.found | "Force Filter" >> KlioFilterForce()
-
-            # Handle items that should be sent directly to output
-            _ = output_force.pass_thru | "Passthru Found Output" >> KlioWriteToEventOutput()
-
-
-.. _transform-klio-drop:
-
-``KlioDrop``
-""""""""""""
-
-:class:`KlioDrop <klio.transforms.helpers.KlioDrop>` is a `Composite Transform`_ that will simply
-log and drop a ``KlioMessage``.
-
-.. code-block:: python
-
-    class KlioGcsFilterInput(beam.PTransform):
-        """Klio composite transform to drop input data that is not found
-        """
-
-        def expand(self, pcoll):
-            # Check if input data exists
-            input_data = pcoll | "Input Exists Filter" >> KlioGcsCheckInputExists()
-
-            # Drop the KlioMessage if data does not exist
-            _ = input_data.not_found | "Drop Not Found Data" >> KlioDrop()
-
-            # Do something with the found input data
-            return input_data.found
-
-
-Debugging Transforms
-^^^^^^^^^^^^^^^^^^^^
-
-
-``KlioDebugMessage``
-""""""""""""""""""""
-
-:class:`KlioDebugMessage <klio.transforms.helpers.KlioDebugMessage>` is a `Composite Transform`_
-that will log a ``KlioMessage`` at the given point in a pipeline. It can be used any number of
-times within a transform.
-
-.. code-block:: python
-
-    from klio.transforms import helpers
-
-    def run(in_pcol, config):
-        return (
-            in_pcol
-            | "1st debug" >> helpers.KlioDebugMessage()
-            | MyTransform()
-            | "2nd debug" >> helpers.KlioDebugMessage(prefix="[MyTransform Output]")
-            | MyOtherTransform()
-            | "3rd debug" >> helpers.KlioDebugMessage(
-                prefix="[MyOtherTransform Output]", log_level="ERROR"
-            )
-        )
-
-``KlioSetTrace``
-""""""""""""""""
-
-:class:`KlioSetTrace <klio.transforms.helpers.KlioSetTrace>` is a `Composite Transform`_ that will
-insert a trace point (via :func:`pdb.set_trace`) at a given point in a pipeline.
-
-.. code-block:: python
-
-    from klio.transforms import helpers
-
-    def run(in_pcol, config):
-        return in_pcol | helpers.KlioSetTrace() | MyTransform()
-
-
-Other Transforms
-^^^^^^^^^^^^^^^^
+Other Built-in Transforms
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``KlioUpdateAuditLog``
-""""""""""""""""""""""
+**********************
 
 :class:`KlioUpdateAuditLog <klio.transforms.helpers.KlioUpdateAuditLog>` is a `Composite
 Transform`_ that will update the audit log in the metadata of a :ref:`KlioMessage <klio-message>`
@@ -245,8 +172,11 @@ with the current job's :ref:`KlioJob`.
     skipped <skip-klio-read>`.
 
 
+IO Helper Transforms
+^^^^^^^^^^^^^^^^^^^^
+
 ``KlioTriggerUpstream``
-"""""""""""""""""""""""
+~~~~~~~~~~~~~~~~~~~~~~~
 
 ``KlioTriggerUpstream`` is a `Composite Transform`_ that will trigger an upstream streaming job.
 This is particularly useful when input data does not exist.
@@ -319,10 +249,100 @@ This is particularly useful when input data does not exist.
             skip_klio_existence_check: True
 
 
+``KlioWriteToEventOutput``
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`KlioWriteToEventOutput <klio.transforms.helpers.KlioWriteToEventOutput>` is a `Composite
+Transform`_ to write to the configured event output. The transform is currently available for
+writing to ``file`` types and ``pubsub`` types.
+
+.. code-block:: python
+
+    class KlioGcsFilterOutput(beam.PTransform):
+        """Klio composite transform to filter output data."""
+
+        def expand(self, pcoll):
+            # Check if output data exists
+            output_exists = pcoll | "Output Exists Filter" >> KlioGcsCheckOutputExists()
+
+            # Filter if existing output should be force-processed
+            output_force = output_exists.found | "Force Filter" >> KlioFilterForce()
+
+            # Handle items that should be sent directly to output
+            _ = output_force.pass_thru | "Passthru Found Output" >> KlioWriteToEventOutput()
+
+
+.. _transform-klio-drop:
+
+``KlioDrop``
+~~~~~~~~~~~~
+
+:class:`KlioDrop <klio.transforms.helpers.KlioDrop>` is a `Composite Transform`_ that will simply
+log and drop a ``KlioMessage``.
+
+.. code-block:: python
+
+    class KlioGcsFilterInput(beam.PTransform):
+        """Klio composite transform to drop input data that is not found
+        """
+
+        def expand(self, pcoll):
+            # Check if input data exists
+            input_data = pcoll | "Input Exists Filter" >> KlioGcsCheckInputExists()
+
+            # Drop the KlioMessage if data does not exist
+            _ = input_data.not_found | "Drop Not Found Data" >> KlioDrop()
+
+            # Do something with the found input data
+            return input_data.found
+
+
+Debugging Transforms
+^^^^^^^^^^^^^^^^^^^^
+
+
+``KlioDebugMessage``
+~~~~~~~~~~~~~~~~~~~~
+
+:class:`KlioDebugMessage <klio.transforms.helpers.KlioDebugMessage>` is a `Composite Transform`_
+that will log a ``KlioMessage`` at the given point in a pipeline. It can be used any number of
+times within a transform.
+
+.. code-block:: python
+
+    from klio.transforms import helpers
+
+    def run(in_pcol, config):
+        return (
+            in_pcol
+            | "1st debug" >> helpers.KlioDebugMessage()
+            | MyTransform()
+            | "2nd debug" >> helpers.KlioDebugMessage(prefix="[MyTransform Output]")
+            | MyOtherTransform()
+            | "3rd debug" >> helpers.KlioDebugMessage(
+                prefix="[MyOtherTransform Output]", log_level="ERROR"
+            )
+        )
+
+``KlioSetTrace``
+~~~~~~~~~~~~~~~~
+
+:class:`KlioSetTrace <klio.transforms.helpers.KlioSetTrace>` is a `Composite Transform`_ that will
+insert a trace point (via :func:`pdb.set_trace`) at a given point in a pipeline.
+
+.. code-block:: python
+
+    from klio.transforms import helpers
+
+    def run(in_pcol, config):
+        return in_pcol | helpers.KlioSetTrace() | MyTransform()
+
+
 .. _custom-existence-checks:
 
 Custom Data Existence Checks
 ----------------------------
+
 Klio by default handles these input and output existence checks. However Klio can also be
 configured to skip these checks if custom control is desired.
 
@@ -414,6 +434,50 @@ The composite transform can then be imported into the rest of the pipeline in th
 
         return out_pcol
 
+.. _pipeline-using-builtins:
+
+Pipeline Using Built-ins
+------------------------
+
+The diagram below shows the transforms that are invoked behind the scenes in every Klio pipeline.
+By setting the values ``skip_klio_read``, ``skip_klio_write``, and/or ``skip_klio_existence_check`` in a job's ``klio-job.yaml``, these transforms can be enabled or disabled.
+
+.. figure:: images/klio_exec_pipeline.png
+    :alt: Diagram of a Klio pipeline with included built-in transforms
+
+
+Please see the thumbnails below for a visual explanation of how each configuration variable impacts each transform.
+
+.. thumbnail:: images/klio_exec_pipeline_skip_input.png
+    :height: 100px
+    :width: 100px
+    :group: klio_exec_pipeline
+    :title: Skip automatic existence checks on input data
+
+
+.. thumbnail:: images/klio_exec_pipeline_skip_output.png
+    :height: 100px
+    :width: 100px
+    :group: klio_exec_pipeline
+    :title: Skip automatic existence checks on output data
+
+.. thumbnail:: images/klio_exec_pipeline_skip_read.png
+    :height: 100px
+    :width: 100px
+    :group: klio_exec_pipeline
+    :title: Skip automatic reading from event input
+
+.. thumbnail:: images/klio_exec_pipeline_skip_write.png
+    :height: 100px
+    :width: 100px
+    :group: klio_exec_pipeline
+    :title: Skip automatic writing to event output
+
+.. thumbnail:: images/klio_exec_pipeline_skip_read_skip_write.png
+    :height: 100px
+    :width: 100px
+    :group: klio_exec_pipeline
+    :title: Skip both automatic reading from event input and writing to event output
 
 .. _Composite Transform: https://beam.apache.org/documentation/programming-guide/#composite-transforms
 .. _Tagged Outputs: https://beam.apache.org/documentation/programming-guide/#additional-outputs

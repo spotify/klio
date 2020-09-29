@@ -1,7 +1,7 @@
 .. _klio-message:
 
-The Klio Message
-================
+Klio Message
+============
 
 The ``KlioMessage`` is protobuf data passed between transforms (and streaming jobs). Its data
 represents one unit of work for a transform.

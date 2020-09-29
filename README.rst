@@ -1,4 +1,4 @@
-.. image:: docs/src/_static/images/shitty_logo.png
+.. image:: docs/src/_static/images/shitty_logo_small.png
     :alt: Klio Logo
     :width: 70px
 

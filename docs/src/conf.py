@@ -104,6 +104,7 @@ extensions = [
     "collapsible_admon",  # custom extension from _ext dir
     "sphinxcontrib.images",  # thumbnail images
     "sphinxcontrib.spelling",  # spell check
+    "sphinx_click",  # auto-docs for Click commands
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -154,6 +155,8 @@ linkcheck_ignore = [
     r"https://github.com/spotify/klio*.",
     # TODO: remove me when on PyPI
     r"https://pypi.org/project/klio*.",
+    # ignore local links
+    r"\./.+\.html",
 ]
 
 # -- Options for HTML output -------------------------------------------------

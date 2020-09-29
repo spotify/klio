@@ -80,7 +80,7 @@ the nearest neighbors. From librosa's `tutorial <https://librosa.org/doc/latest/
     To avoid being biased by local continuity, we constrain similar frames to be
     separated by at least 2 seconds.
 
-    This suppresses sparse/non-repetetitive deviations from the average spectrum,
+    This suppresses sparse/non-repetitive deviations from the average spectrum,
     and works well to discard vocal elements.
 
 .. literalinclude:: ../../../../examples/audio_spectrograms/transforms.py
@@ -242,7 +242,7 @@ we can group all results by key.
 
     Notice how instead of ``magnitude``, we're piping ``magnitude.spectrogram`` to the transform
     ``beam.Map(transforms.create_key_from_element)``. This is because the ``GetMagnitude()``
-    transform has two outputs, both of which are "tagged". Beam allows tranforms to return more
+    transform has two outputs, both of which are "tagged". Beam allows transforms to return more
     than one output by way of `tagging <https://beam.apache.org/documentation/programming-guide/
     #additional-outputs>`_. The tags used in :class:`apache_beam.pvalue.TaggedOutput` in the yield
     statements of ``GetMagnitude()`` turn into attributes on the ``PCollection`` themselves.
@@ -321,7 +321,7 @@ And third, the spectrogram plot of the second mask:
    :end-before: flatten
 
 
-Finally, we need to flatten the output into a singlee :class:`PCollection
+Finally, we need to flatten the output into a single :class:`PCollection
 <apache_beam.pvalue.PCollection>` of :ref:`KlioMessages <klio-message>` (as Klio is not yet able to
 handle multiple output `PCollections` to multiple event outputs), as well as remove duplicate
 ``KlioMessages`` since there are now three "forks" of PCollections: the full spectrogram, the

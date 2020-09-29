@@ -70,7 +70,7 @@ explicitly including non-Python files needed for a job (i.e. a model, a JSON sch
         )
 
 
-.. todo:: Show example with internal & OS-level deps
+.. todo:: Show example with internal & OS-level dependencies
 
 
 New: ``MANIFEST.in``
@@ -146,7 +146,7 @@ Within ``job-requirements.txt``, add the package ``klio-exec`` if it's not alrea
 .. collapsible:: Why is this needed?
 
     It's not only required on the worker image to launch the job, Dataflow will need it when it
-    un-pickles your job code onto the worker. The worker needs access to the exact environment/
+    unpickles your job code onto the worker. The worker needs access to the exact environment/
     dependencies as the job had when it was launched.
 
 

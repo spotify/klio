@@ -36,7 +36,7 @@ If the desired execution mode is :ref:`top-down <top-down>`, update the recipien
 
     klio_message.metadata.intended_recipients.anyone.SetInParent()
 
-Or if the desired execusion mode is :ref:`bottom-up <bottom-up>`, update the recipients to include
+Or if the desired execution mode is :ref:`bottom-up <bottom-up>`, update the recipients to include
 the receiving job:
 
 .. code-block::

@@ -37,7 +37,7 @@ This continues until all jobs in a graph have been executed for a particular aud
 Bottom-Up Execution
 -------------------
 
-It's not always efficent or necessary to run every Klio job in the graph for a given file. Maybe
+It's not always efficient or necessary to run every Klio job in the graph for a given file. Maybe
 you just want to run a single job for a file, which sometimes means running the parent Klio jobs
 to fill in missing dependencies.
 

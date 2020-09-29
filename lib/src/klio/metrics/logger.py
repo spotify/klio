@@ -20,7 +20,7 @@ module through the :class:`MetricsLoggerClient` below.
 This implementation is used by default if no other metrics consumers are
 configured. It must be explicitly turned off.
 
-The default configuration in ``klio-info.yaml`` can be overriden:
+The default configuration in ``klio-info.yaml`` can be overwritten:
 
 .. code-block:: yaml
 

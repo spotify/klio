@@ -34,7 +34,7 @@ Klio-specific and :ref:`user-specified custom <custom-conf>` job configuration.
 
     Event inputs/outputs designate where to read/write KlioMessages.
 
-    The :doc:`KlioMessage <../pipeline/message>` contains a unique identifier of somesort that
+    The :doc:`KlioMessage <../pipeline/message>` contains a unique identifier of some sort that
     refers to a unit of work (e.g. file IDs, track IDs, etc.). This unique identifier can then be
     used to look up the binary data as configured in ``job_config.data`` for the job to process. A
     job's events can therefore be seen as "triggers" of work needing to be done on particular

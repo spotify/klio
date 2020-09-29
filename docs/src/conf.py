@@ -103,6 +103,7 @@ extensions = [
     "sphinx.ext.autosummary",  # auto-gen summaries
     "collapsible_admon",  # custom extension from _ext dir
     "sphinxcontrib.images",  # thumbnail images
+    "sphinxcontrib.spelling",  # spell check
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -206,3 +207,7 @@ intersphinx_mapping = {
     "https://matplotlib.org/": None,
     "https://googleapis.dev/python/pubsub/latest/": None,
 }
+
+
+# -- sphinxcontrib.spelling config
+spelling_word_list_filename="spelling_wordlist.txt"

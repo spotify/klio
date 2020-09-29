@@ -45,7 +45,7 @@ that will read in data depending on the type specified in the :ref:`event config
 
 
 A run function can contain a single or multiple transforms.
-All transforms are based on beam transforms but transforms can be extened to add customized logic.
+All transforms are based on beam transforms but transforms can be extended to add customized logic.
 Klio also provides :ref:`built-in transforms <builtin-transforms>` to aid with existence checks, data loading etc.
 
 

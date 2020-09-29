@@ -14,11 +14,12 @@ help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  html        to make standalone HTML files"
 	@echo "  linkcheck   to check all external links for integrity"
+	@echo "  spellcheck  to spell check documentation"
 	@echo "  livehtml    to build and serve HTML (reloads on changes)"
 	@echo "  stricthtml  to build HTML files in 'strict' mode"
 	@echo "  clean       to clean build directory"
 
-.PHONY: help clean html livehtml linkcheck
+.PHONY: help clean html livehtml linkcheck stricthtml spellcheck
 
 
 clean:
@@ -39,6 +40,12 @@ linkcheck:
 	@echo
 	@echo "Link check complete; look for any errors in the above output " \
 	      "or in $(BUILDDIR)/linkcheck/output.txt."
+
+spellcheck:
+	$(SPHINXBUILD) -b spelling -W $(ALLSPHINXOPTS) $(BUILDDIR)/spellcheck
+	@echo
+	@echo "Spell check complete; look for any errors in the above output " \
+	      "or in $(BUILDDIR)/spellcheck/."
 
 # sphinx-autobuild is required
 livehtml:

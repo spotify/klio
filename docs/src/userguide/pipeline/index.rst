@@ -40,7 +40,7 @@ Top Down and Bottom Up Execution
 Streaming Klio jobs are structured as directed acyclic graphs (DAGs) where parent jobs can trigger dependent child jobs.
 Klio support two modes of execution - :ref:`top-down <top-down>` and :ref:`bottom-up <bottom-up>`.
 Top-down execution is used when every step of the DAG should run for ever received klio message.
-Bottom-up execution is used to run a single job for a file and mising upstream dependencies will be recursively created.
+Bottom-up execution is used to run a single job for a file and missing upstream dependencies will be recursively created.
 
 
 

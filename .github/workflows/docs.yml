@@ -41,6 +41,12 @@ jobs:
         run: "sphinx-build -n -T -W -b html -d build/doctrees src src/html"
       - name: "Check broken links"
         run: "sphinx-build -n -T -W -b linkcheck -d build/docstrees src src/linkcheck"
+      # Un-comment if we want to add this to our build process; commenting it out
+      # for now because it might be too obtrusive
+      # - name: "Spell check docs"
+      #   run: |
+      #     sudo apt-get install -y libenchant
+      #     sphinx-build -n -T -W -b spelling -d build/docstrees src src/spellcheck
       - name: "Assert Apache License Headers & Copyright in docs/"
         run: |
           pip install apache-license-check

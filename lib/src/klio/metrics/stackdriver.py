@@ -74,7 +74,7 @@ class StackdriverLogMetricsClient(logger.MetricsLoggerClient):
 
         .. note::
 
-            Stackdriver counts loglines so initializing a
+            Stackdriver counts log lines so initializing a
             counter value is not supported .
 
         Args:
@@ -160,7 +160,7 @@ class StackdriverLogMetricsCounter(logger.LoggerCounter):
 
     .. note::
 
-        Stackdriver counts loglines so initializing a counter value is
+        Stackdriver counts log lines so initializing a counter value is
         not supported .
 
     Args:

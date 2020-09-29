@@ -268,9 +268,12 @@ class CreateJob(object):
         """
         create_dockerfile = False
         if not command_line_args.get("use_defaults"):
-            create_job_args = self._create_args_from_user_prompt(
-                command_line_args
+            create_job_args = create_args.CreateJobArgs(
+                gcp_project=command_line_args.get("gcp_project"),
+                job_name=command_line_args.get("job_name"),
             )
+            prompt_input = create_args.CreateJobPromptInput(command_line_args)
+            prompt_input.parse(create_job_args)
             if not create_job_args.worker_image:
                 create_dockerfile = True
                 create_job_args.worker_image = (

@@ -294,10 +294,15 @@ def test_get_context_from_user_inputs_no_prompts_image(
 @pytest.mark.parametrize("use_defaults", (True, False))
 def test_get_user_input(use_defaults, mocker, job):
     create_args_mock = mocker.Mock()
-    mock_create_args_from_user_prompt = mocker.patch.object(
-        job, "_create_args_from_user_prompt"
+    create_job_args_init = mocker.patch.object(create_args, "CreateJobArgs")
+    create_job_args_init.return_value = create_args_mock
+
+    create_job_prompt = mocker.Mock()
+    create_job_prompt_init = mocker.patch.object(
+        create_args, "CreateJobPromptInput"
     )
-    mock_create_args_from_user_prompt.return_value = create_args_mock
+    create_job_prompt_init.return_value = create_job_prompt
+
     mock_create_args_from_dict = mocker.patch.object(
         create.create_args.CreateJobArgs, "from_dict"
     )
@@ -315,7 +320,7 @@ def test_get_user_input(use_defaults, mocker, job):
     _, create_dockerfile = job._get_user_input(input_kwargs)
 
     if not use_defaults:
-        mock_create_args_from_user_prompt.assert_called_once_with(input_kwargs)
+        create_job_prompt.parse.assert_called_once_with(create_args_mock)
     else:
         mock_create_args_from_dict.assert_called_once_with(input_kwargs)
 

@@ -1001,3 +1001,88 @@ def test_create(
         )
     mock_create_readme.assert_called_once_with(ret_env, context, output_dir)
     assert 1 == len(caplog.records)
+
+
+def test_get_batch_user_context(job, mock_prompt):
+    kwargs = {"job_name": "test-job"}
+
+    event_input = "events-in"
+    data_input = "data-in"
+    event_output = "events-out"
+    data_output = "data-out"
+    mock_prompt.side_effect = [
+        event_input,
+        data_input,
+        event_output,
+        data_output
+    ]
+
+    ret_context = job._get_batch_user_input_job_context(kwargs)
+
+    expected_context = {
+        "inputs": [
+            {
+                "event_location": "events-in",
+                "data_location": "data-in"
+            }
+        ],
+        "outputs": [
+            {
+                "event_location": "events-out",
+                "data_location": "data-out"
+            }
+        ]
+    }
+    assert 4 == mock_prompt.call_count
+
+    assert expected_context == ret_context
+
+def test_get_batch_user_context_no_prompt(job, mock_prompt):
+    kwargs = {
+        "job_name": "test-job",
+        "batch_event_input": "input_ids.txt",
+        "batch_event_output": "output_ids.txt",
+        "batch_data_input": "input-data",
+        "batch_data_output": "output-data",
+    }
+    ret_context = job._get_batch_user_input_job_context(kwargs)
+
+    mock_prompt.assert_not_called()
+
+    expected_context = {
+        "inputs": [
+            {
+                "event_location": kwargs.get("batch_event_input"),
+                "data_location": kwargs.get("batch_data_input")
+            }
+        ],
+        "outputs": [
+            {
+                "event_location": kwargs.get("batch_event_output"),
+                "data_location": kwargs.get("batch_data_output")
+            }
+        ]
+    }
+    assert expected_context == ret_context
+
+def test_get_default_batch_job_context(job):
+    kwargs = {"job_name": "test-job"}
+
+    ret_context = job._get_default_batch_job_context(kwargs)
+
+    expected_context = {
+        "inputs": [
+            {
+                "event_location": "test-job_input_elements.txt",
+                "data_location": "test-job-input",
+            }
+        ],
+        "outputs": [
+            {
+                "event_location": "test-job_output_elements.txt",
+                "data_location": "test-job-output",
+            }
+        ]
+    }
+
+    assert expected_context == ret_context

@@ -512,6 +512,73 @@ class CreateJob(object):
         }
         return context, create_dockerfile
 
+    def _get_default_batch_job_context(self, kwargs):
+        default_batch_event_input = "{}_input_elements.txt".format(
+            kwargs.get("job_name")
+        )
+        default_batch_data_input = "{}-input".format(kwargs.get("job_name"))
+        default_batch_event_output = "{}_output_elements.txt".format(
+            kwargs.get("job_name")
+        )
+        default_batch_data_output = "{}-output".format(kwargs.get("job_name"))
+
+        job_context = {
+            "inputs": [
+                {
+                    "event_location": default_batch_event_input,
+                    "data_location": default_batch_data_input
+                }
+            ],
+            "outputs": [
+                {
+                    "event_location": default_batch_event_output,
+                    "data_location": default_batch_data_output
+                }
+            ]
+        }
+        return job_context
+
+    def _get_batch_user_input_job_context(self, kwargs):
+        default_batch_event_input = "{}_input_elements.txt".format(
+            kwargs.get("job_name")
+        )
+        batch_event_input = kwargs.get("batch_event_input")
+        if not batch_event_input:
+           batch_event_input = click.prompt("Batch event input file", default=default_batch_event_input)
+
+        default_batch_data_input = "{}-input".format(kwargs.get("job_name"))
+        batch_data_input = kwargs.get("batch_data_input")
+        if not batch_data_input:
+            batch_data_input = click.prompt("Batch data input directory", default=default_batch_data_input)
+
+        default_batch_event_output = "{}_output_elements.txt".format(
+            kwargs.get("job_name")
+        )
+        batch_event_output = kwargs.get("batch_event_output")
+        if not batch_event_output:
+            batch_event_output = click.prompt("Batch event output file", default=default_batch_event_output)
+
+        default_batch_data_output = "{}-output"
+        batch_data_output = kwargs.get("batch_data_output")
+        if not batch_data_output:
+            batch_data_output = click.prompt("Batch data output directory", default=default_batch_data_output)
+
+        job_context = {
+            "inputs": [
+                {
+                    "event_location": batch_event_input,
+                    "data_location": batch_data_input
+                }
+            ],
+            "outputs": [
+                {
+                    "event_location": batch_event_output,
+                    "data_location": batch_data_output
+                }
+            ]
+        }
+        return job_context
+
     def _get_streaming_user_input(self, kwargs):
         base_topic = self.BASE_TOPIC_TPL.format(**kwargs)
         default_input_topic = base_topic + "-input"

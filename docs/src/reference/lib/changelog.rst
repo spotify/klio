@@ -1,6 +1,7 @@
 Changelog
 =========
 
-.. todo::
+0.2.0 (2020-10-02)
+------------------
 
-    Write changelog for the ``klio`` package.
+Initial public release!

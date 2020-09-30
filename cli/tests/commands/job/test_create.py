@@ -297,8 +297,6 @@ def test_create_reqs_file(use_fnapi, tmpdir, job):
     ret_reqs_contents = ret_reqs_file.read()
 
     expected_fixtures = os.path.join(FIXTURE_PATH, "expected")
-    is_fnapi_dir = "fnapi" if use_fnapi else "no_fnapi"
-    expected_fixtures = os.path.join(expected_fixtures, is_fnapi_dir)
 
     fixture = os.path.join(expected_fixtures, "job-requirements.txt")
     with open(fixture, "r") as f:
@@ -337,17 +335,14 @@ def test_create_dockerfile(use_fnapi, tmpdir, job):
     assert expected == ret_dockerfile_contents
 
 
-@pytest.mark.parametrize("use_fnapi", (True, False))
-def test_create_readme(use_fnapi, tmpdir, job):
+def test_create_readme(tmpdir, job):
     output_dir = tmpdir.mkdir("testing").mkdir("test_job")
     env = job._get_environment()
-    context = {"job_name": "test-job", "use_fnapi": use_fnapi}
+    context = {"job_name": "test-job"}
 
     job._create_readme(env, context, output_dir.strpath)
 
     expected_fixtures = os.path.join(FIXTURE_PATH, "expected")
-    is_fnapi_dir = "fnapi" if use_fnapi else "no_fnapi"
-    expected_fixtures = os.path.join(expected_fixtures, is_fnapi_dir)
 
     ret_file = output_dir.join("README.md")
     ret_file_contents = ret_file.read()

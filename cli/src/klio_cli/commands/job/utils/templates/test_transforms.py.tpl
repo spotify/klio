@@ -6,33 +6,21 @@ Feel free to import what's needed, rewrite tests, etc.
 """
 import pytest
 
+from klio_core.proto import klio_pb2
+
 import transforms
 
 
 @pytest.fixture
-def helloklio_dofn():
-    """An instance of HelloKlio available for test functions.
-
-    See https://docs.pytest.org/en/latest/fixture.html for more info
-    on pytest fixtures.
-    """
-    return transforms.HelloKlio()
+def klio_msg():
+    msg = klio_pb2.KlioMessage()
+    msg.data.element = b"hello"
+    msg.version = klio_pb2.Version.V2
+    return msg.SerializeToString()
 
 
-def test_process(helloklio_dofn):
-    """`process` method returns expected message and logs expected lines."""
-    input_entity_id = "message"
-    expected = "message"
-    assert expected == helloklio_dofn.process(input_entity_id)
-
-
-def test_input_data_exists(helloklio_dofn):
-    """Assert input data does exist."""
-    input_exists = helloklio_dofn.input_data_exists("message")
-    assert input_exists is True
-
-
-def test_output_data_exists(helloklio_dofn):
-    """Assert output data does not exist."""
-    output_exists = helloklio_dofn.output_data_exists("message")
-    assert output_exists is False
+def test_process(klio_msg):
+    """Assert process method yields expected data."""
+    helloklio_dofn = transforms.HelloKlio()
+    output = helloklio_fn.process(klio_msg)
+    assert klio_msg == list(output)[0]

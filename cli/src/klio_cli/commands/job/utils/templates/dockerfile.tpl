@@ -1,5 +1,5 @@
 ## -*- docker-image-name: "{{ klio.pipeline_options.worker_harness_container_image }}" -*-
-FROM dataflow.gcr.io/v1beta3/python{{ klio.python_version }}-fnapi:2.19.0
+FROM dataflow.gcr.io/v1beta3/python{{ klio.python_version }}-fnapi:2.24.0
 
 WORKDIR /usr/src/app
 {%- if klio.use_fnapi %}
@@ -10,8 +10,7 @@ ENV GOOGLE_CLOUD_PROJECT={{klio.pipeline_options.project}} \
     PYTHONPATH=/usr/src/app
 
 {% if klio.use_fnapi -%}
-RUN pip install --upgrade pip setuptools && \
-    pip install klio-exec
+RUN pip install --upgrade pip setuptools
 
 ###############################################################
 # DO NOT EDIT ABOVE THIS LINE. Or you may break klio.         #
@@ -29,7 +28,7 @@ RUN pip install --upgrade pip setuptools && \
 ###############################################################
 
 COPY job-requirements.txt job-requirements.txt
-RUN pip install -r job-requirements.txt
+RUN pip install -r job-requirements.txt --use-feature=2020-resolver
 {%- else -%}
 RUN pip install --upgrade pip setuptools
 {%- endif %}
@@ -50,5 +49,5 @@ COPY __init__.py \
 ARG KLIO_CONFIG=klio-job.yaml
 COPY $KLIO_CONFIG /usr/src/config/.effective-klio-job.yaml
 {% else -%}
-RUN pip install .
+RUN pip install .  --use-feature=2020-resolver
 {% endif -%}

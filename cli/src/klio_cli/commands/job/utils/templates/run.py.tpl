@@ -10,7 +10,7 @@ import apache_beam as beam
 import transforms
 
 
-def run(input_pcol, job_config):
+def run(input_pcol, config):
     """REQUIRED: Main entrypoint in running a job's transform(s).
 
     Any Beam transforms that need to happen after a message is consumed
@@ -20,10 +20,11 @@ def run(input_pcol, job_config):
     Args:
         input_pcol: A Beam PCollection returned from
             ``beam.io.ReadFromPubSub``.
-        job_config (klio.KlioJobConfig): Job-related configuration as
-            defined in ``klio-job.yaml``.
+        config (klio.KlioConfig): Configuration as defined in
+            ``klio-job.yaml``.
     Returns:
-        A Beam PCollection that will be passed to ``beam.io.WriteToPubSub``.
+        apache_beam.pvalue.PCollection: PCollection that will be passed to
+        the output transform for the configured event output (if any).
     """
     output_pcol = input_pcol | beam.ParDo(transforms.HelloKlio())
     # <-- multiple Klio-based ParDo transforms are supported here -->

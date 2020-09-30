@@ -84,7 +84,7 @@ rst_prolog = """
 rst_epilog = """
 .. |klio-cli-version| replace:: {klio_cli_release}
 .. |klio-version| replace:: {klio_release}
-.. |klio-audio-version| replace:: {klio_release}
+.. |klio-audio-version| replace:: {klio_audio_release}
 .. |klio-exec-version| replace:: {klio_exec_release}
 .. |klio-core-version| replace:: {klio_core_release}
 .. |klio-devtools-version| replace:: {klio_devtools_release}

@@ -501,6 +501,18 @@ class CreateJob(object):
             "worker_machine_type": machine_type,
         }
 
+        job_context = self._get_streaming_user_input(kwargs)
+
+        context = {
+            "pipeline_options": pipeline_context,
+            "job_options": job_context,
+            "python_version": python_version,
+            "use_fnapi": use_fnapi,
+            "create_resources": create_resources,
+        }
+        return context, create_dockerfile
+
+    def _get_streaming_user_input(self, kwargs):
         base_topic = self.BASE_TOPIC_TPL.format(**kwargs)
         default_input_topic = base_topic + "-input"
         default_output_topic = base_topic + "-output"
@@ -561,14 +573,7 @@ class CreateJob(object):
         if dependencies is not None:
             job_context["dependencies"] = dependencies
 
-        context = {
-            "pipeline_options": pipeline_context,
-            "job_options": job_context,
-            "python_version": python_version,
-            "use_fnapi": use_fnapi,
-            "create_resources": create_resources,
-        }
-        return context, create_dockerfile
+        return job_context
 
     def _get_user_input(self, kwargs):
         accept_defaults = kwargs["use_defaults"]

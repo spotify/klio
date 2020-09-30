@@ -9,6 +9,22 @@ Klio Library
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
 
-   api/index
+   Transforms <api/transforms/index>
+   Metrics <api/metrics/index>
+   Message <api/message/index>
    changelog
+
+----
+
+Subpackages
+-----------
+
+.. currentmodule:: klio
+
+.. autosummary::
+
+    transforms
+    metrics
+    message

@@ -5,8 +5,8 @@
    :maxdepth: 1
    :hidden:
 
-   serializer
-   exceptions
+   Serializer <serializer>
+   Exceptions <exceptions>
 
 .. automodule:: klio.message
 

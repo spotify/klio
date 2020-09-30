@@ -1,5 +1,5 @@
-Klio Config
-===========
+``klio_core.config``
+====================
 
 .. automodule:: klio_core.config
 

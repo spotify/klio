@@ -5,11 +5,11 @@
    :maxdepth: 1
    :hidden:
 
-   client
-   logger
-   stackdriver
-   dispatcher
-   base
+   Client <client>
+   Logger <logger>
+   Stackdriver <stackdriver>
+   Dispatcher <dispatcher>
+   Base Classes <base>
 
 .. automodule:: klio.metrics
 

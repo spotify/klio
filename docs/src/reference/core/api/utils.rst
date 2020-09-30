@@ -1,5 +1,5 @@
-Klio Core Utils
-===============
+``klio_core.utils``
+===================
 
 .. automodule:: klio_core.utils
 

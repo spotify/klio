@@ -1,5 +1,5 @@
-Dataflow Client
-===============
+``klio_core.dataflow``
+======================
 
 .. automodule:: klio_core.dataflow
 

@@ -48,10 +48,12 @@ def test_get_environment(job):
         "dockerfile.tpl",
         "init.py.tpl",
         "job-requirements.txt.tpl",
+        "klio-job-batch.yaml.tpl",
         "klio-job.yaml.tpl",
         "run.py.tpl",
         "setup.py.tpl",
         "test_transforms.py.tpl",
+        "transforms-batch.py.tpl",
         "transforms.py.tpl",
     ]
     assert expected_templates == sorted(env.list_templates())
@@ -98,11 +100,30 @@ def test_write_template(tmpdir, job):
 
 
 @pytest.fixture
+def batch_job_context():
+    return {
+        "inputs": [
+            {
+                "event_location": "test-job_input_elements.txt",
+                "data_location": "test-job-input",
+            }
+        ],
+        "outputs": [
+            {
+                "event_location": "test-job_output_elements",
+                "data_location": "test-job-output",
+            }
+        ],
+    }
+
+
+@pytest.fixture
 def context():
     base_gcs = "gs://test-gcp-project-dataflow-tmp/test-job"
     gcr_url = "gcr.io/test-gcp-project/test-job-worker"
     return {
         "job_name": "test-job",
+        "job_type": "streaming",
         "python_version": "36",
         "pipeline_options": {
             "project": "test-gcp-project",
@@ -162,6 +183,7 @@ def default_context():
     gcr_url = "gcr.io/test-gcp-project/test-job-worker"
     return {
         "job_name": "test-job",
+        "job_type": "streaming",
         "python_version": "36",
         "use_fnapi": True,
         "create_resources": False,
@@ -202,12 +224,24 @@ def default_context():
     }
 
 
+@pytest.mark.parametrize("job_type", ("batch", "streaming"))
 @pytest.mark.parametrize("use_fnapi", (True, False))
-def test_create_job_config(use_fnapi, context, tmpdir, monkeypatch, job):
-    output_dir = tmpdir.mkdir("testing").mkdir("jobs").mkdir("test_job")
+def test_create_job_config(
+    use_fnapi, context, batch_job_context, tmpdir, monkeypatch, job, job_type
+):
+    output_dir = (
+        tmpdir.mkdir("testing")
+        .mkdir("jobs")
+        .mkdir("test-job-{}".format(job_type))
+    )
+
     env = job._get_environment()
 
+    if job_type == "batch":
+        context["job_options"] = batch_job_context
+
     context["use_fnapi"] = use_fnapi
+    context["job_type"] = job_type
     if not use_fnapi:
         monkeypatch.setitem(context["pipeline_options"], "experiments", [])
     job._create_job_config(env, context, output_dir.strpath)
@@ -216,23 +250,27 @@ def test_create_job_config(use_fnapi, context, tmpdir, monkeypatch, job):
     is_fnapi_dir = "fnapi" if use_fnapi else "no_fnapi"
     expected_fixtures = os.path.join(expected_fixtures, is_fnapi_dir)
 
-    fixture = os.path.join(expected_fixtures, "klio-job.yaml")
+    if job_type == "batch":
+        fixture = os.path.join(expected_fixtures, "klio-job-batch.yaml")
+    else:
+        fixture = os.path.join(expected_fixtures, "klio-job.yaml")
+
     with open(fixture, "r") as f:
         expected = yaml.safe_load(f)
-
     ret_file = output_dir.join("klio-job.yaml")
     ret_contents = yaml.safe_load(ret_file.read())
 
     assert expected == ret_contents
 
 
-def test_create_python_files(tmpdir, mocker, job):
+@pytest.mark.parametrize("job_type", ("batch", "streaming"))
+def test_create_python_files(tmpdir, mocker, job, job_type):
     output_dir = tmpdir.mkdir("testing").mkdir("jobs").mkdir("test_job")
     env = job._get_environment()
 
     dt_patch = "klio_cli.commands.job.create.datetime.datetime"
     with mock.patch(dt_patch, MockDatetime):
-        job._create_python_files(env, "test_job", "basic", output_dir.strpath)
+        job._create_python_files(env, "test_job", job_type, output_dir.strpath)
 
     ret_init_file = output_dir.join("__init__.py")
     ret_init_contents = ret_init_file.read()
@@ -244,7 +282,12 @@ def test_create_python_files(tmpdir, mocker, job):
     expected_fixtures = os.path.join(FIXTURE_PATH, "expected")
     init_fixture = os.path.join(expected_fixtures, "__init__.py")
     run_fixture = os.path.join(expected_fixtures, "run.py")
-    transforms_fixture = os.path.join(expected_fixtures, "transforms.py")
+    if job_type == "batch":
+        transforms_fixture = os.path.join(
+            expected_fixtures, "transforms-batch.py"
+        )
+    else:
+        transforms_fixture = os.path.join(expected_fixtures, "transforms.py")
     with open(init_fixture, "r") as f:
         expected_init = f.read()
 
@@ -426,6 +469,7 @@ def test_get_context_from_defaults(default_context, job):
 def context_overrides():
     return {
         "job_name": "test-job",
+        "job_type": "streaming",
         "gcp_project": "test-gcp-project",
         "worker_image": "gcr.io/foo/bar",
         "experiments": "beam_fn_api,another_experiment",
@@ -491,6 +535,7 @@ def expected_overrides():
         "python_version": "37",
         "use_fnapi": False,
         "create_resources": False,
+        "job_type": "streaming",
     }
 
 
@@ -622,6 +667,7 @@ def test_get_context_from_user_inputs(
 ):
     # mimicking user inputs for each prompt
     prompt_side_effect = [
+        "streaming",
         "europe-west1",
         "Y",
         "n",
@@ -929,6 +975,7 @@ def test_create(
         "job_name": "test-job",
         "use_fnapi": use_fnapi,
         "create_resources": create_resources,
+        "job_type": "streaming",
     }
 
     mock_get_user_input = mocker.patch.object(job, "_get_user_input")
@@ -974,9 +1021,9 @@ def test_create(
         ret_env, context, output_dir
     )
 
-    mode = context.get("mode", "basic")
+    job_type = context.get("job_type")
     mock_create_python_files.assert_called_once_with(
-        ret_env, package_name, mode, output_dir
+        ret_env, package_name, job_type, output_dir
     )
     if use_fnapi:
         mock_create_no_fnapi_files.assert_not_called()
@@ -1014,34 +1061,29 @@ def test_get_batch_user_context(job, mock_prompt):
         event_input,
         data_input,
         event_output,
-        data_output
+        data_output,
     ]
 
     ret_context = job._get_batch_user_input_job_context(kwargs)
 
     expected_context = {
         "inputs": [
-            {
-                "event_location": "events-in",
-                "data_location": "data-in"
-            }
+            {"event_location": "events-in", "data_location": "data-in"}
         ],
         "outputs": [
-            {
-                "event_location": "events-out",
-                "data_location": "data-out"
-            }
-        ]
+            {"event_location": "events-out", "data_location": "data-out"}
+        ],
     }
     assert 4 == mock_prompt.call_count
 
     assert expected_context == ret_context
 
+
 def test_get_batch_user_context_no_prompt(job, mock_prompt):
     kwargs = {
         "job_name": "test-job",
         "batch_event_input": "input_ids.txt",
-        "batch_event_output": "output_ids.txt",
+        "batch_event_output": "output_ids",
         "batch_data_input": "input-data",
         "batch_data_output": "output-data",
     }
@@ -1053,17 +1095,18 @@ def test_get_batch_user_context_no_prompt(job, mock_prompt):
         "inputs": [
             {
                 "event_location": kwargs.get("batch_event_input"),
-                "data_location": kwargs.get("batch_data_input")
+                "data_location": kwargs.get("batch_data_input"),
             }
         ],
         "outputs": [
             {
                 "event_location": kwargs.get("batch_event_output"),
-                "data_location": kwargs.get("batch_data_output")
+                "data_location": kwargs.get("batch_data_output"),
             }
-        ]
+        ],
     }
     assert expected_context == ret_context
+
 
 def test_get_default_batch_job_context(job):
     kwargs = {"job_name": "test-job"}
@@ -1079,10 +1122,10 @@ def test_get_default_batch_job_context(job):
         ],
         "outputs": [
             {
-                "event_location": "test-job_output_elements.txt",
+                "event_location": "test-job_output_elements",
                 "data_location": "test-job-output",
             }
-        ]
+        ],
     }
 
     assert expected_context == ret_context

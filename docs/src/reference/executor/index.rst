@@ -1,11 +1,10 @@
 Klio Executor
 =============
 
-*latest release*: |klio-exec-version| (:doc:`What's new? <changelog>`)
+:release:`latest release`: |klio-exec-version| (:doc:`What's new? <changelog>`)
 
-.. todo::
-
-    Write intro documentation for the ``klio-exec`` package.
+.. include:: ../../../../exec/README.rst
+    :start-after: start-klio-exec-intro
 
 
 .. toctree::

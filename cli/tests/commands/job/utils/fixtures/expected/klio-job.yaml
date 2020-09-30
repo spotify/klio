@@ -1,0 +1,37 @@
+job_name: test-job
+pipeline_options:
+  streaming: True
+  update: False
+  worker_harness_container_image: "gcr.io/test-gcp-project/test-job-worker"
+  project: test-gcp-project
+  region: europe-west1
+  staging_location: gs://test-gcp-project-dataflow-tmp/test-job/staging
+  temp_location: gs://test-gcp-project-dataflow-tmp/test-job/temp
+  num_workers: 2
+  max_num_workers: 2
+  autoscaling_algorithm: NONE
+  disk_size_gb: 32
+  worker_machine_type: n1-standard-2
+  runner: DataflowRunner
+  setup_file: setup.py  # relative to job root
+job_config:
+  allow_non_klio_messages: False
+  events:
+    inputs:
+      - type: pubsub
+        topic: projects/test-parent-gcp-project/topics/test-parent-job-output
+        subscription: projects/test-gcp-project/subscriptions/test-parent-job-output-test-job
+    outputs:
+      - type: pubsub
+        topic: projects/test-gcp-project/topics/test-job-output
+  data:
+    inputs:
+      - type: gcs
+        location: gs://test-parent-gcp-project-output/test-parent-job
+        # Remove/set to false when job is ready to process input existence checks
+        skip_klio_existence_check: True
+    outputs:
+      - type: gcs
+        location: gs://test-gcp-project-output/test-job
+        # Remove/set to false when job is ready to process output existence checks
+        skip_klio_existence_check: True

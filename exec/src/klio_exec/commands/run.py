@@ -197,11 +197,17 @@ class KlioPipeline(object):
             if os_value:
                 labels.append("{}={}".format(label, os_value))
 
+        deploy_user = os.environ.get("USER")
         if os.environ.get("CI", "").lower() == "true":
             # TODO: maybe provide way to allow something besides just "CI"
-            labels.append("deployed_by=CI")
-        elif os.environ.get("USER"):
-            labels.append("deployed_by={}".format(os.environ["USER"].lower()))
+            deploy_user = "ci"
+
+        if deploy_user:
+            deploy_label = "deployed_by={}".format(
+                KlioPipeline._get_clean_label_value(deploy_user)
+            )
+
+            labels.append(deploy_label)
 
         gcp_opts.labels = labels
 

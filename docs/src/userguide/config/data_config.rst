@@ -6,6 +6,8 @@ Data Configuration
 Input
 -----
 
+.. _data-config-gcs:
+
 Google Cloud Storage
 ^^^^^^^^^^^^^^^^^^^^
 

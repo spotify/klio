@@ -6,6 +6,8 @@ Event Configuration
 Input
 -----
 
+.. _event-config-pubsub:
+
 Google Pub/Sub
 ^^^^^^^^^^^^^^
 

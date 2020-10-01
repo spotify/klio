@@ -1,6 +1,7 @@
 CLI Changelog
 =============
 
-.. todo::
+1.0.0 (2020-10-02)
+------------------
 
-    Write a changelog for the ``klio-cli`` package.
+Initial public release!

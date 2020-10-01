@@ -191,7 +191,9 @@ pygments_style = "vs"
 todo_include_todos = True
 todo_emit_warnings = False
 todo_link_only = False
-
+# don't render todos in production docs
+if os.environ.get("READTHEDOCS"):
+    todo_include_todos = False
 
 # -- Autodoc config
 autodoc_default_options = {

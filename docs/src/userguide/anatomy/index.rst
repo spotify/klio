@@ -5,5 +5,6 @@ Anatomy of a Klio Job
 .. toctree::
    :maxdepth: 1
 
-   Overview <job>
+   job
+   files
    graph

@@ -676,5 +676,5 @@ class CreateJob(object):
             self._create_dockerfile(env, context, output_dir)
         self._create_readme(env, context, output_dir)
 
-        msg = "Klio job {} created successfully! :beer:".format(job_name)
+        msg = "Klio job {} created successfully! :tada:".format(job_name)
         logging.info(emoji.emojize(msg, use_aliases=True))

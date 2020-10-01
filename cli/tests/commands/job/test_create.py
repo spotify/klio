@@ -163,13 +163,13 @@ def default_context():
     return {
         "job_name": "test-job",
         "python_version": "36",
-        "use_fnapi": True,
+        "use_fnapi": False,
         "create_resources": False,
         "pipeline_options": {
             "project": "test-gcp-project",
             "region": "europe-west1",
             "worker_harness_container_image": gcr_url,
-            "experiments": ["beam_fn_api"],
+            "experiments": [],
             "staging_location": base_gcs + "/staging",
             "temp_location": base_gcs + "/temp",
             "num_workers": 2,

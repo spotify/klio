@@ -49,7 +49,7 @@ DEFAULTS = {
     "disk_size_gb": 32,
     "worker_machine_type": "n1-standard-2",
     "python_version": "3.6",
-    "use_fnapi": True,
+    "use_fnapi": False,
     "create_resources": False,
 }
 

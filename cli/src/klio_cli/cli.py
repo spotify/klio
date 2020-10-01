@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+"""Main entrypoint for creating, running, & maintaining a Klio job."""
 
 import collections
 import logging
@@ -67,18 +68,21 @@ def main():
     pass
 
 
-@main.group("job", help="Create and manage Klio jobs.")
+@main.group("job")
 def job():
+    """Create and manage Klio jobs."""
     pass
 
 
-@main.group("image", help="Manage a job's Docker image.")
+@main.group("image")
 def image():
+    """Manage a job's Docker image."""
     pass
 
 
-@main.group("message", help="Manage a job's message queue via Pub/Sub.")
+@main.group("message")
 def message():
+    """Manage a job's message queue via Pub/Sub."""
     pass
 
 
@@ -86,8 +90,8 @@ def message():
 @job.group(
     "profile",
     help=(
-        "Profile a job. NOTE: Requires klio-exec[debug] installed in the "
-        "job's Docker image."
+        "Profile a job.\n\n**NOTE:** Requires ``klio-exec[debug]`` installed "
+        "in the job's Docker image."
     ),
 )
 def profile():
@@ -156,20 +160,23 @@ def run_job(klio_config, config_meta, **kwargs):
 
 @job.command(
     "stop",
-    help="Cancel a currently running job. Note: Draining is not supported.",
+    help=(
+        "Cancel a currently running job.\n\n**NOTE:** Draining is not "
+        "supported."
+    ),
 )
 @options.job_dir
 @options.config_file
 @options.job_name(
     help=(
-        "Name of job, if neither `--job-dir` nor `--config-file` is not "
+        "Name of job, if neither ``--job-dir`` nor ``--config-file`` is not "
         "provided."
     )
 )
 @options.region
 @options.gcp_project(
     help=(
-        "Project of job, if neither `--job-dir` nor `--config-file` is not "
+        "Project of job, if neither ``--job-dir`` nor ``--config-file`` is not "
         "provided."
     )
 )
@@ -203,7 +210,7 @@ def stop_job(klio_config, config_meta, job_name, region, gcp_project):
     "deploy",
     help=(
         "Deploy a job. This will first cancel any currently running job of "
-        "the same name & region. Note: Draining is not supported."
+        "the same name & region.\n\n**NOTE:** Draining is not supported."
     ),
 )
 @options.image_tag
@@ -344,7 +351,7 @@ def test_job(
     short_help="Verify a job's required GCP resources exist.",
     help=(
         "Verifies all GCP resources and dependencies used in the job "
-        "so that the Klio Job as defined in the 'klio-info.yaml' can run "
+        "so that the Klio Job as defined in the ``klio-info.yaml`` can run "
         "properly in production."
     ),
 )
@@ -360,7 +367,7 @@ def verify_job(klio_config, config_meta, create_resources):
     short_help="Audit a job for common issues.",
     help=(
         "Audit a job for detect common issues via running tests with "
-        "additional mocking. NOTE: Additional arguments to pytest are "
+        "additional mocking.\n\n**NOTE:** Additional arguments to pytest are "
         "not supported."
     ),
 )
@@ -419,7 +426,7 @@ def show_job_config(job_dir, config_file):
     short_help="Set a configuration value for a Klio job.",
     help=(
         "Set a configuration value for a Klio job. Multiple "
-        "pairs of SECTION.PROPERTY=VALUE are accepted."
+        "pairs of ``SECTION.PROPERTY=VALUE`` are accepted."
     ),
 )
 @options.job_dir
@@ -462,11 +469,12 @@ def get_job_config(job_dir, config_file, section_property):
     short_help="Collect & view Dataflow profiling output from GCS.",
     help=(
         "Collect & view profiling output in GCS. Sorting and restrictions as "
-        "supported by `https://docs.python.org/3/library/profile.html"
-        "#the-stats-class`. NOTE: This requires running the Klio job on "
-        "Dataflow with `pipeline_options.profile_location` set to a GCS "
-        "GCS bucket, and either/both `pipeline_options.profile_cpu` and/or "
-        "`pipeline_options.profile_memory` set to `True` in `klio-job.yaml`."
+        "supported by `the stats class <https://docs.python.org/3/library/"
+        "profile.html#the-stats-class>`_. \n\n**NOTE:** This requires running "
+        "the Klio job on Dataflow with ``pipeline_options.profile_location`` "
+        "set to a GCS bucket, and either/both ``pipeline_options.profile_cpu``"
+        " and/or ``pipeline_options.profile_memory`` set to ``True`` in "
+        "``klio-job.yaml``."
     ),
 )
 @options.job_dir(mutex=["gcs_location", "input_file"])
@@ -594,7 +602,7 @@ def _profile(subcommand, klio_config, config_meta, **kwargs):
     help=(
         "File of entity IDs (separated by a new line character) with "
         "which to profile a Klio job. If file path is not absolute, it will be "
-        "treated relative to `--job-dir`."
+        "treated relative to ``--job-dir``."
     ),
 )
 @options.output_file(help="Output file for results. [default: stdout]")
@@ -621,7 +629,7 @@ def profile_memory(klio_config, config_meta, **kwargs):
     help=(
         "File of entity IDs (separated by a new line character) with "
         "which to profile a Klio job. If file path is not absolute, it will be "
-        "treated relative to `--job-dir`."
+        "treated relative to ``--job-dir``."
     ),
 )
 @options.output_file(help="Output file for results. [default: stdout]")
@@ -648,7 +656,7 @@ def profile_memory_per_line(klio_config, config_meta, **kwargs):
     help=(
         "File of entity IDs (separated by a new line character) with "
         "which to profile a Klio job. If file path is not absolute, it will be "
-        "treated relative to `--job-dir`."
+        "treated relative to ``--job-dir``."
     ),
 )
 @options.output_file(help="Output file for results. [default: stdout]")
@@ -664,8 +672,8 @@ def profile_cpu(klio_config, config_meta, **kwargs):
     short_help="Profile wall time per line.",
     help=(
         "Profile wall time by every line for every Klio-based transforms' "
-        "process method. NOTE: this uses the `line_profiler` package, not "
-        "Python's `timeit` module."
+        "process method. \n\n**NOTE:** this uses the ``line_profiler`` "
+        "package, not Python's ``timeit`` module."
     ),
 )
 @options.image_tag
@@ -674,7 +682,7 @@ def profile_cpu(klio_config, config_meta, **kwargs):
     help=(
         "File of entity IDs (separated by a new line character) with "
         "which to profile a Klio job. If file path is not absolute, it will be "
-        "treated relative to `--job-dir`."
+        "treated relative to ``--job-dir``."
     ),
 )
 @options.output_file(help="Output file for results. [default: stdout]")

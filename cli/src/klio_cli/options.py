@@ -38,11 +38,11 @@ class MutuallyExclusiveOption(click.Option):
         help_text = kwargs.get("help", "")
         if self.mut_ex_opts:
             mutex = [self._varname_to_opt_flag(m) for m in self.mut_ex_opts]
-            ex_str = ", ".join(mutex)
+            mutex_fmted = ["``{}``".format(m) for m in mutex]
+            ex_str = ", ".join(mutex_fmted)
             kwargs["help"] = help_text + (
-                " NOTE: This option is mutually exclusive with [{}].".format(
-                    ex_str
-                )
+                "\n\n**NOTE:** This option is mutually exclusive with "
+                "[{}].".format(ex_str)
             )
         super(MutuallyExclusiveOption, self).__init__(*args, **kwargs)
 
@@ -89,7 +89,7 @@ def job_dir(*args, **kwargs):
             "--job-dir",
             type=click.Path(exists=True),
             help=(
-                "Job directory where the job's `Dockerfile` is located. "
+                "Job directory where the job's ``Dockerfile`` is located. "
                 "Defaults current working directory."
             ),
             cls=MutuallyExclusiveOption,
@@ -112,8 +112,9 @@ def config_file(*args, **kwargs):
             "--config-file",
             type=click.Path(exists=False),
             help=(
-                "Path to config filename. If PATH is not absolute, it will be "
-                "treated relative to `--job-dir`. Defaults to `klio-job.yaml`."
+                "Path to config filename. If ``PATH`` is not absolute, it "
+                "will be treated relative to ``--job-dir``. Defaults to "
+                "``klio-job.yaml``."
             ),
             cls=MutuallyExclusiveOption,
             mutually_exclusive=mutually_exclusive,
@@ -132,7 +133,7 @@ def override(func):
         "--override",
         default=[],
         multiple=True,
-        help="override a config value, in the form 'key=value'",
+        help="Override a config value, in the form ``key=value``.",
     )(func)
 
 
@@ -143,9 +144,9 @@ def template(func):
         default=[],
         multiple=True,
         help=(
-            "set the value of a config template parameter"
-            ", in the form 'key=value'.  Any instance of '${key}' "
-            "in klio-job.yaml will be replaced with 'value'"
+            "Set the value of a config template parameter"
+            ", in the form ``key=value``.  Any instance of ``${key}`` "
+            "in ``klio-job.yaml`` will be replaced with ``value``."
         ),
     )(func)
 
@@ -154,7 +155,8 @@ def image_tag(func):
     return click.option(
         "--image-tag",
         default=None,
-        help="Docker image tag to use: defaults to the `git-sha[dirty?]`",
+        show_default="``git-sha[dirty?]``",
+        help="Docker image tag to use.",
     )(func)
 
 
@@ -163,7 +165,7 @@ def force_build(func):
         "--force-build",
         default=False,
         is_flag=True,
-        help="Build Docker image even if you already have it",
+        help="Build Docker image even if you already have it.",
     )(func)
 
 
@@ -172,7 +174,7 @@ def direct_runner(func):
         "--direct-runner",
         default=False,
         is_flag=True,
-        help="Run the job locally via the DirectRunner",
+        help="Run the job locally via the DirectRunner.",
     )(func)
 
 
@@ -207,7 +209,7 @@ def region(func):
     return click.option(
         "--region",
         help=(
-            "Region of job, if neither `--job-dir` nor `--config-file` is "
+            "Region of job, if neither ``--job-dir`` nor ``--config-file`` is "
             "not provided."
         ),
     )(func)
@@ -233,8 +235,8 @@ def create_resources(func):
         default=False,
         is_flag=True,
         help=(
-            "Create missing GCP resources based on 'klio-info.yaml'."
-            " Default: False"
+            "Create missing GCP resources based on ``klio-info.yaml``."
+            " Default: ``False``"
         ),
     )(func)
 
@@ -346,7 +348,7 @@ def since(func):
         show_default="1 hour ago",
         help=(
             "Start time, relative or absolute (interpreted by "
-            "dateparser.parse). "
+            "``dateparser.parse``). "
         ),
     )(func)
 
@@ -357,7 +359,8 @@ def until(func):
         default=None,
         show_default="now",
         help=(
-            "End time, relative or absolute (interpreted by dateparser.parse). "
+            "End time, relative or absolute (interpreted by "
+            "``dateparser.parse``). "
         ),
     )(func)
 
@@ -391,8 +394,8 @@ def sort_stats(func):
         type=click.Choice(SORT_STATS_KEY, case_sensitive=False),
         help=(
             "Sort output of profiling statistics as supported by "
-            "https://docs.python.org/3/library/profile.html#"
-            "pstats.Stats.sort_stats. Multiple `--sort-stats` invocations "
+            "`sort_stats <https://docs.python.org/3/library/profile.html#"
+            "pstats.Stats.sort_stats>`_. Multiple ``--sort-stats`` invocations "
             "are supported."
         ),
     )(func)
@@ -443,7 +446,7 @@ def plot_graph(func):
         is_flag=True,
         help=(
             "Plot memory profile using matplotlib. Saves to "
-            "klio_profile_memory_<YYYYMMDDhhmmss>.png."
+            "``klio_profile_memory_<YYYYMMDDhhmmss>.png``."
         ),
     )(func)
 
@@ -522,7 +525,10 @@ def top_down(func):
         "--top-down",
         default=False,
         is_flag=True,
-        help="Trigger an apex node and all child nodes below. Default: False",
+        help=(
+            "Trigger an apex node and all child nodes below. Default: "
+            "``False``"
+        ),
     )(func)
 
 
@@ -535,7 +541,7 @@ def bottom_up(func):
         is_flag=True,
         help=(
             "Trigger work for only this job and any required parent jobs, "
-            "but no sibling or child jobs. Default: True"
+            "but no sibling or child jobs. Default: ``True``"
         ),
     )(func)
 
@@ -549,6 +555,7 @@ def non_klio(func):
         help=(
             "Publish a free-form, non-Klio message to the targeted job. The "
             "targeted job must also support non-Klio messages. Mutually "
-            "exclusive with --force, --ping, and --bottom-up. Default: False"
+            "exclusive with ``--force``, ``--ping``, and ``--bottom-up``. "
+            "Default: ``False``"
         ),
     )(func)

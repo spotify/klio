@@ -82,9 +82,9 @@ def get_job_detail_no_topic():
 @pytest.mark.parametrize(
     "region,side_effect,exp_call_count,exp_log_count",
     (
-        (None, [list_jobs_with_duplicates(), {}, {}], 3, 1),
+        (None, [list_jobs_with_duplicates(), {}, {}], 13, 11),
         ("foo-region", [list_jobs(), {}, {}], 1, 0),
-        (None, Exception("nojob4u"), 3, 3),
+        (None, Exception("nojob4u"), 13, 13),
     ),
 )
 def test_find_job_by_name(

@@ -22,5 +22,5 @@ def klio_msg():
 def test_process(klio_msg):
     """Assert process method yields expected data."""
     helloklio_dofn = transforms.HelloKlio()
-    output = helloklio_fn.process(klio_msg)
+    output = helloklio_dofn.process(klio_msg)
     assert klio_msg == list(output)[0]

@@ -51,6 +51,7 @@ DEFAULTS = {
     "python_version": "3.6",
     "use_fnapi": False,
     "create_resources": False,
+    "job_type": "streaming",
 }
 
 
@@ -92,13 +93,15 @@ class CreateJob(object):
         logging.debug("Created {0}".format(output))
 
     def _create_job_config(self, env, context, job_dir):
-        config_tpl = env.get_template("klio-job.yaml.tpl")
-
+        if context.get("job_type") == "batch":
+            config_tpl = env.get_template("klio-job-batch.yaml.tpl")
+        else:
+            config_tpl = env.get_template("klio-job.yaml.tpl")
         template_context = {"klio": context}
         rendered_file = config_tpl.render(template_context)
         self._write_template(job_dir, "klio-job.yaml", rendered_file)
 
-    def _create_python_files(self, env, package_name, mode, output_dir):
+    def _create_python_files(self, env, package_name, job_type, output_dir):
         current_year = datetime.datetime.now().year
         template_context = {
             "klio": {"year": current_year, "package_name": package_name}
@@ -112,7 +115,10 @@ class CreateJob(object):
         run_rendered = run_tpl.render(template_context)
         self._write_template(output_dir, "run.py", run_rendered)
 
-        transforms_tpl = env.get_template("transforms.py.tpl")
+        if job_type == "batch":
+            transforms_tpl = env.get_template("transforms-batch.py.tpl")
+        else:
+            transforms_tpl = env.get_template("transforms.py.tpl")
         transforms_rendered = transforms_tpl.render(template_context)
         self._write_template(output_dir, "transforms.py", transforms_rendered)
 
@@ -202,6 +208,51 @@ class CreateJob(object):
             python_version = "3"
         return python_version
 
+    def _get_default_streaming_job_context(self, kwargs):
+        base_topic = self.BASE_TOPIC_TPL.format(**kwargs)
+        output_topic = kwargs.get("output_topic")
+        if not output_topic:
+            output_topic = base_topic + "-output"
+        output_location = kwargs.get("output_data_location")
+        if not output_location:
+            output_location = "gs://{gcp_project}-output/{job_name}".format(
+                **kwargs
+            )
+        input_topic = kwargs.get("input_topic")
+        if not input_topic:
+            input_topic = base_topic + "-input"
+
+        input_data_location = kwargs.get("input_data_location")
+        if not input_data_location:
+            input_data_location = "gs://{gcp_project}-input/{job_name}".format(
+                **kwargs
+            )
+        dependencies = kwargs.get("dependencies", [])
+
+        match = TOPIC_REGEX.match(input_topic)
+        topic_name = match.group("topic")
+        default_sub = (
+            "projects/{gcp_project}/subscriptions/{topic_name}-{job_name}"
+        )
+        default_sub = default_sub.format(topic_name=topic_name, **kwargs)
+        inputs = [
+            {
+                "topic": input_topic,
+                "subscription": default_sub,
+                "data_location": input_data_location,
+            }
+        ]
+
+        outputs = [{"topic": output_topic, "data_location": output_location}]
+
+        job_context = {
+            "inputs": inputs,
+            "outputs": outputs,
+            "dependencies": dependencies,
+        }
+
+        return job_context
+
     def _get_context_from_defaults(self, kwargs):
         def _get_worker_image():
             create_dockerfile = True
@@ -264,47 +315,11 @@ class CreateJob(object):
             ),
         }
 
-        base_topic = self.BASE_TOPIC_TPL.format(**kwargs)
-        output_topic = kwargs.get("output_topic")
-        if not output_topic:
-            output_topic = base_topic + "-output"
-        output_location = kwargs.get("output_data_location")
-        if not output_location:
-            output_location = "gs://{gcp_project}-output/{job_name}".format(
-                **kwargs
-            )
-        input_topic = kwargs.get("input_topic")
-        if not input_topic:
-            input_topic = base_topic + "-input"
-
-        input_data_location = kwargs.get("input_data_location")
-        if not input_data_location:
-            input_data_location = "gs://{gcp_project}-input/{job_name}".format(
-                **kwargs
-            )
-        dependencies = kwargs.get("dependencies", [])
-
-        match = TOPIC_REGEX.match(input_topic)
-        topic_name = match.group("topic")
-        default_sub = (
-            "projects/{gcp_project}/subscriptions/{topic_name}-{job_name}"
-        )
-        default_sub = default_sub.format(topic_name=topic_name, **kwargs)
-        inputs = [
-            {
-                "topic": input_topic,
-                "subscription": default_sub,
-                "data_location": input_data_location,
-            }
-        ]
-
-        outputs = [{"topic": output_topic, "data_location": output_location}]
-
-        job_context = {
-            "inputs": inputs,
-            "outputs": outputs,
-            "dependencies": dependencies,
-        }
+        job_type = kwargs.get("job_type", DEFAULTS["job_type"])
+        if job_type == "batch":
+            job_context = self._get_default_batch_job_context(kwargs)
+        else:
+            job_context = self._get_default_streaming_job_context(kwargs)
 
         python_version = kwargs.get(
             "python_version", DEFAULTS["python_version"]
@@ -317,6 +332,7 @@ class CreateJob(object):
             "python_version": python_version,
             "use_fnapi": use_fnapi,
             "create_resources": create_resources,
+            "job_type": job_type,
         }
 
         return context, create_dockerfile
@@ -379,6 +395,11 @@ class CreateJob(object):
         return dependencies
 
     def _get_context_from_user_inputs(self, kwargs):
+        job_type = kwargs.get("job_type") or click.prompt(
+            "Job Type",
+            type=click.Choice(["batch", "streaming"]),
+            default=DEFAULTS["job_type"],
+        )
         region = kwargs.get("region") or click.prompt(
             "Desired GCP Region", default=DEFAULTS["region"]
         )
@@ -501,6 +522,98 @@ class CreateJob(object):
             "worker_machine_type": machine_type,
         }
 
+        if job_type == "batch":
+            job_context = self._get_batch_user_input(kwargs)
+        else:
+            job_context = self._get_streaming_user_input(kwargs)
+
+        context = {
+            "pipeline_options": pipeline_context,
+            "job_options": job_context,
+            "python_version": python_version,
+            "use_fnapi": use_fnapi,
+            "create_resources": create_resources,
+            "job_type": job_type,
+        }
+        return context, create_dockerfile
+
+    def _get_default_batch_job_context(self, kwargs):
+        default_batch_event_input = "{}_input_elements.txt".format(
+            kwargs.get("job_name")
+        )
+        default_batch_data_input = "{}-input".format(kwargs.get("job_name"))
+        default_batch_event_output = "{}_output_elements".format(
+            kwargs.get("job_name")
+        )
+        default_batch_data_output = "{}-output".format(kwargs.get("job_name"))
+
+        job_context = {
+            "inputs": [
+                {
+                    "event_location": default_batch_event_input,
+                    "data_location": default_batch_data_input,
+                }
+            ],
+            "outputs": [
+                {
+                    "event_location": default_batch_event_output,
+                    "data_location": default_batch_data_output,
+                }
+            ],
+        }
+        return job_context
+
+    def _get_batch_user_input_job_context(self, kwargs):
+        default_batch_event_input = "{}_input_ids.txt".format(
+            kwargs.get("job_name")
+        )
+        batch_event_input = kwargs.get("batch_event_input")
+        if not batch_event_input:
+            batch_event_input = click.prompt(
+                "Batch event input file", default=default_batch_event_input
+            )
+
+        default_batch_data_input = "{}-input".format(kwargs.get("job_name"))
+        batch_data_input = kwargs.get("batch_data_input")
+        if not batch_data_input:
+            batch_data_input = click.prompt(
+                "Batch data input directory", default=default_batch_data_input
+            )
+
+        default_batch_event_output = "{}_output_elements".format(
+            kwargs.get("job_name")
+        )
+        batch_event_output = kwargs.get("batch_event_output")
+        if not batch_event_output:
+            batch_event_output = click.prompt(
+                "Batch event output file", default=default_batch_event_output
+            )
+
+        default_batch_data_output = "{}-output"
+        batch_data_output = kwargs.get("batch_data_output")
+        if not batch_data_output:
+            batch_data_output = click.prompt(
+                "Batch data output directory",
+                default=default_batch_data_output,
+            )
+
+        job_context = {
+            "inputs": [
+                {
+                    "event_location": batch_event_input,
+                    "data_location": batch_data_input,
+                }
+            ],
+            "outputs": [
+                {
+                    "event_location": batch_event_output,
+                    "data_location": batch_data_output,
+                }
+            ],
+        }
+        return job_context
+
+    def _get_streaming_user_input(self, kwargs):
         base_topic = self.BASE_TOPIC_TPL.format(**kwargs)
         default_input_topic = base_topic + "-input"
         default_output_topic = base_topic + "-output"
@@ -561,14 +674,7 @@ class CreateJob(object):
         if dependencies is not None:
             job_context["dependencies"] = dependencies
 
-        context = {
-            "pipeline_options": pipeline_context,
-            "job_options": job_context,
-            "python_version": python_version,
-            "use_fnapi": use_fnapi,
-            "create_resources": create_resources,
-        }
-        return context, create_dockerfile
+        return job_context
 
     def _get_user_input(self, kwargs):
         accept_defaults = kwargs["use_defaults"]
@@ -666,8 +772,8 @@ class CreateJob(object):
         self._create_job_directory(output_dir)
         self._create_job_config(env, context, output_dir)
 
-        mode = context.get("mode", "basic")
-        self._create_python_files(env, package_name, mode, output_dir)
+        job_type = context["job_type"]
+        self._create_python_files(env, package_name, job_type, output_dir)
         if not context["use_fnapi"]:
             context["package_name"] = package_name
             self._create_no_fnapi_files(env, context, output_dir)

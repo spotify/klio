@@ -1,0 +1,28 @@
+job_name: test-job
+version: 2
+pipeline_options:
+  streaming: False
+  worker_harness_container_image: "gcr.io/test-gcp-project/test-job-worker"
+  project: test-gcp-project
+  runner: DirectRunner
+  setup_file: setup.py  # relative to job root
+job_config:
+  allow_non_klio_messages: False
+  events:
+    inputs:
+      - type: file
+        location: test-job_input_elements.txt
+    outputs:
+      - type: file
+        location: test-job_output_elements
+  data:
+    inputs:
+      - type: file
+        location: test-job-input
+        # Remove/set to false when job is ready to process input existence checks
+        skip_klio_existence_check: True
+    outputs:
+      - type: file
+        location: test-job-output
+        # Remove/set to false when job is ready to process output existence checks
+        skip_klio_existence_check: True

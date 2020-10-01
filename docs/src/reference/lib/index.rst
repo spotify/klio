@@ -1,11 +1,10 @@
 Klio Library
-=============
+============
 
-*latest release*: |klio-version| (:doc:`What's new? <changelog>`)
+:release:`latest release`: |klio-version| (:doc:`What's new? <changelog>`)
 
-.. todo::
-
-    Write intro documentation the ``klio`` package.
+.. include:: ../../../../lib/README.rst
+    :start-after: start-klio-lib-intro
 
 
 .. toctree::

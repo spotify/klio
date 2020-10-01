@@ -1,11 +1,10 @@
 Klio Development Tools
 ======================
 
-*latest release*: |klio-devtools-version| (:doc:`What's new? <changelog>`)
+:release:`latest release`: |klio-devtools-version| (:doc:`What's new? <changelog>`)
 
-.. todo::
-
-    Write intro documentation for the ``klio-devtools`` package.
+.. include:: ../../../../devtools/README.rst
+    :start-after: start-klio-devtools-intro
 
 
 .. toctree::

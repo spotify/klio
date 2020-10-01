@@ -19,3 +19,8 @@
 .tagline {
   font-variant-caps: all-small-caps;
 }
+.release {
+  color: #00aa55;
+  font-style: italic;
+  font-weight: bold;
+}

@@ -45,7 +45,8 @@ class DataflowClient(object):
             job_name (str): Name of Dataflow job.
             gcp_project (str): GCP project in which to search.
             region (str): Region in which to search. Defaults to
-                searching all regions in :attr:`variables.DATAFLOW_REGIONS`.
+                searching all regions in
+                :attr:`klio_core.variables.DATAFLOW_REGIONS`.
         Returns:
             dict or None: If found, ``dict`` of job summary results. Otherwise,
             ``None``.
@@ -105,7 +106,8 @@ class DataflowClient(object):
             job_name (str): Name of Dataflow job.
             gcp_project (str): GCP project in which to search.
             region (str): Region in which to search. Defaults to
-                searching all regions in :attr:`variables.DATAFLOW_REGIONS`.
+                searching all regions in
+                :attr:`klio_core.variables.DATAFLOW_REGIONS`.
         Returns:
             dict or None: If found, ``dict`` of detailed job results.
             Otherwise, ``None``.
@@ -148,7 +150,8 @@ class DataflowClient(object):
             job_name (str): Name of Dataflow job.
             gcp_project (str): GCP project in which to search.
             region (str): Region in which to search. Defaults to
-                searching all regions in :attr:`variables.DATAFLOW_REGIONS`.
+                searching all regions in
+                :attr:`klio_core.variables.DATAFLOW_REGIONS`.
         Returns:
             str or None: If found, input topic of job. Otherwise, ``None``.
         """

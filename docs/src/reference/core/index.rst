@@ -15,6 +15,7 @@ Klio Core
    Core Utils <api/utils>
    Dataflow Client <api/dataflow>
    Exceptions <api/exceptions>
+   api/variables
    changelog
 
 ----
@@ -65,6 +66,21 @@ Klio Core
 
     DataflowClient
     get_dataflow_client
+
+
+:doc:`api/variables`
+--------------------
+
+.. automodule:: klio_core.variables
+   :noindex:
+
+.. currentmodule:: klio_core.variables
+
+.. autosummary::
+    :nosignatures:
+
+    DATAFLOW_REGIONS
+
 
 
 :doc:`api/exceptions`

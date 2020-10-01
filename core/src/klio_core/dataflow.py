@@ -22,6 +22,7 @@ import random
 from googleapiclient import discovery
 
 from klio_core import utils
+from klio_core import variables
 
 
 class DataflowClient(object):
@@ -31,10 +32,6 @@ class DataflowClient(object):
         api_version (str): Version of Dataflow REST API. Defaults to
             ``v1b3``.
     """
-
-    # TODO: allow for all regions supported by Dataflow
-    DEFAULT_REGIONS = ("europe-west1", "asia-east1", "us-central1")
-    """Default tuple of regions/locations for which to query."""
 
     def __init__(self, api_version=None):
         _api_version = api_version or "v1b3"
@@ -48,13 +45,13 @@ class DataflowClient(object):
             job_name (str): Name of Dataflow job.
             gcp_project (str): GCP project in which to search.
             region (str): Region in which to search. Defaults to
-                searching all regions in :attr:`DEFAULT_REGIONS`.
+                searching all regions in :attr:`variables.DATAFLOW_REGIONS`.
         Returns:
             dict or None: If found, ``dict`` of job summary results. Otherwise,
             ``None``.
         """
         if not region:
-            regions = DataflowClient.DEFAULT_REGIONS
+            regions = variables.DATAFLOW_REGIONS
         else:
             regions = (region,)
 
@@ -108,7 +105,7 @@ class DataflowClient(object):
             job_name (str): Name of Dataflow job.
             gcp_project (str): GCP project in which to search.
             region (str): Region in which to search. Defaults to
-                searching all regions in :attr:`DEFAULT_REGIONS`.
+                searching all regions in :attr:`variables.DATAFLOW_REGIONS`.
         Returns:
             dict or None: If found, ``dict`` of detailed job results.
             Otherwise, ``None``.
@@ -151,7 +148,7 @@ class DataflowClient(object):
             job_name (str): Name of Dataflow job.
             gcp_project (str): GCP project in which to search.
             region (str): Region in which to search. Defaults to
-                searching all regions in :attr:`DEFAULT_REGIONS`.
+                searching all regions in :attr:`variables.DATAFLOW_REGIONS`.
         Returns:
             str or None: If found, input topic of job. Otherwise, ``None``.
         """

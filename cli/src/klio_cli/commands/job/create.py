@@ -23,6 +23,8 @@ import click
 import emoji
 import jinja2
 
+from klio_core import variables
+
 from klio_cli.commands.job.utils import gcp_setup
 
 
@@ -34,8 +36,6 @@ TOPIC_REGEX = re.compile(
     r"^projects/(?P<project>[a-z0-9-]{6,30})/"
     r"topics/(?P<topic>[a-zA-Z0-9-_.~+%]{3,255})"
 )
-# TODO: include all dataflow-supported GCP regions
-GCP_REGIONS = ["europe-west1", "us-central1", "asia-east1"]
 VALID_BEAM_PY_VERSIONS = ["3.5", "3.6", "3.7"]
 VALID_BEAM_PY_VERSIONS_SHORT = [
     "".join(p.split(".")) for p in VALID_BEAM_PY_VERSIONS
@@ -162,8 +162,8 @@ class CreateJob(object):
         return
 
     def _validate_region(self, region):
-        if region not in GCP_REGIONS:
-            regions = ", ".join(GCP_REGIONS)
+        if region not in variables.DATAFLOW_REGIONS:
+            regions = ", ".join(variables.DATAFLOW_REGIONS)
             msg = '"{0}" is not a valid region. Available: {1}'.format(
                 region, regions
             )
@@ -676,5 +676,5 @@ class CreateJob(object):
             self._create_dockerfile(env, context, output_dir)
         self._create_readme(env, context, output_dir)
 
-        msg = "Klio job {} created successfully! :beer:".format(job_name)
+        msg = "Klio job {} created successfully! :tada:".format(job_name)
         logging.info(emoji.emojize(msg, use_aliases=True))

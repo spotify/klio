@@ -93,10 +93,6 @@ Releases
    * ``klio-core``: |klio-core-version| (:doc:`What's new? <reference/core/changelog>`)
    * ``klio-devtools``: |klio-devtools-version| (:doc:`What's new? <reference/devtools/changelog>`)
 
-TODOs
------
-
-A collection of all the todos that we should probably address before we publicly release.
 
 .. the `todolist` directive below collects all todos in our docs and lists them here to make them super obvious
 

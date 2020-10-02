@@ -76,7 +76,7 @@ META_FILE = read(META_PATH)
 INSTALL_REQUIRES = [
     # 2.22 added DirectRunner support for `DoFn.setup`
     "apache-beam>2.21.0",
-    "klio>=0.2.0.alpha0",
+    "klio>=0.2.0",
     "librosa",
     "numpy",
     "matplotlib",

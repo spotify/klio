@@ -87,7 +87,7 @@ INSTALL_REQUIRES = [
     "google-cloud-storage<1.30.0",
     # API breaking change w google-cloud-monitoring
     "googleapis-common-protos<1.50.0",
-    "klio-core>=0.2.0.alpha0",
+    "klio-core>=0.2.0",
     "protobuf",
     "pyyaml",
     "setuptools",

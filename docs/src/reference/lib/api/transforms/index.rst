@@ -26,6 +26,7 @@
     set_klio_context
     inject_klio_context
     serialize_klio_message
+    profile
 
 
 :doc:`helpers`

@@ -13,10 +13,9 @@
 # limitations under the License.
 #
 
+import collections
 import contextlib
 import functools
-import imp
-import inspect
 import logging
 import os
 import subprocess
@@ -35,14 +34,12 @@ except ImportError:  # pragma: no cover
     )
     raise SystemExit(1)
 
-from apache_beam.options import pipeline_options
-
-from klio import transforms as klio_transforms
+from klio.transforms import decorators
+from klio_core.proto import klio_pb2
 
 from klio_exec.commands.utils import cpu_utils
 from klio_exec.commands.utils import memory_utils
 from klio_exec.commands.utils import profile_utils
-from klio_exec.commands.utils import wrappers
 
 
 @contextlib.contextmanager
@@ -60,17 +57,50 @@ def smart_open(filename=None, fmode=None):
             fh.close()
 
 
+class StubIOSubMapper(object):
+    def __init__(self, input_pcol):
+        def fake_constructor(*args, **kwargs):
+            return input_pcol
+
+        # normally this is a map of io-name -> transform class.  Instead we'll
+        # just have every possible name return our pretend constructor that
+        # returns our pre-constructed transform
+        self.input = collections.defaultdict(lambda: fake_constructor)
+        self.output = {}  # no outputs
+
+
+class StubIOMapper(object):
+    def __init__(self, input_pcol, iterations):
+
+        repeated_input = input_pcol | beam.FlatMap(lambda x: [x] * iterations)
+
+        self.batch = StubIOSubMapper(repeated_input)
+        self.streaming = StubIOSubMapper(repeated_input)
+
+    @staticmethod
+    def from_input_file(file_path, iterations):
+        transform = beam.io.ReadFromText(file_path)
+        return StubIOMapper(transform, iterations)
+
+    @staticmethod
+    def from_entity_ids(id_list, iterations):
+        transform = beam.Create(id_list)
+        return StubIOMapper(transform, iterations)
+
+
 class KlioPipeline(object):
     DEFAULT_FILE_PREFIX = "klio_profile_{what}_{ts}"
     TRANSFORMS_PATH = "./transforms.py"
 
-    def __init__(self, input_file=None, output_file=None, entity_ids=None):
+    def __init__(
+        self, klio_config, input_file=None, output_file=None, entity_ids=None
+    ):
         self.input_file = input_file
         self.output_file = output_file
         self.entity_ids = entity_ids
-        self._prof = None
         self._stream = None
         self._now_str = time.strftime("%Y%m%d%H%M%S", time.localtime())
+        self.klio_config = klio_config
 
     def _get_output_png_file(self, what, temp_output):
         output_file_base = self.output_file
@@ -118,43 +148,37 @@ class KlioPipeline(object):
 
         return subprocess.Popen(cmd)
 
-    def _wrap_memory_per_line(self, transforms, get_maximum):
-        wrapper = memory_utils.KMemoryLineProfiler.wrap_per_element
-        if get_maximum:
-            wrapper = functools.partial(
-                memory_utils.KMemoryLineProfiler.wrap_maximum, self._prof
-            )
+    def _get_cpu_line_profiler(self):
+        return cpu_utils.KLineProfiler()
 
-        for txf in transforms:
-            process_method = getattr(txf, "process")
-            process_method = wrapper(process_method, stream=self._stream)
-            setattr(txf, "process", process_method)
-            yield txf
+    def _profile_wall_time_per_line(self, iterations, **_):
+        profiler = self._get_cpu_line_profiler()
+        decorators.ACTIVE_PROFILER = profiler
 
-    def _wrap_wall_time(self, transforms):
-        for txf in transforms:
-            process_method = getattr(txf, "process")
-            process_method = self._prof(process_method)
-            setattr(txf, "process", process_method)
-            yield txf
-
-    def _profile_wall_time_per_line(self, transforms, iterations, **_):
-        self._prof = cpu_utils.KLineProfiler()
-        wrapped_transforms = self._wrap_wall_time(transforms)
-
-        self._run_pipeline(wrapped_transforms, iterations=iterations)
+        self._run_pipeline(iterations=iterations)
 
         if self.output_file:
-            return self._prof.print_stats(self.output_file, output_unit=1)
+            return profiler.print_stats(self.output_file, output_unit=1)
 
         # output_unit = 1 second, meaning the numbers in "Time" and
         # "Per Hit" columns are in seconds
-        self._prof.print_stats(output_unit=1)
+        profiler.print_stats(output_unit=1)
 
-    def _profile_memory_per_line(self, transforms, get_maximum=False):
-        self._prof = memory_utils.KMemoryLineProfiler(backend="psutil")
-        wrapped_transforms = self._wrap_memory_per_line(
-            transforms, get_maximum
+    def _get_memory_line_profiler(self):
+        return memory_utils.KMemoryLineProfiler(backend="psutil")
+
+    def _get_memory_line_wrapper(self, profiler, get_maximum):
+        wrapper = memory_utils.KMemoryLineProfiler.wrap_per_element
+        if get_maximum:
+            wrapper = functools.partial(
+                memory_utils.KMemoryLineProfiler.wrap_maximum, profiler
+            )
+        return wrapper
+
+    def _profile_memory_per_line(self, get_maximum=False):
+        profiler = self._get_memory_line_profiler()
+        decorators.ACTIVE_PROFILER = self._get_memory_line_wrapper(
+            profiler, get_maximum
         )
 
         # "a"ppend if output per element; "w"rite (once) for maximum.
@@ -167,10 +191,10 @@ class KlioPipeline(object):
 
         with smart_open(self.output_file, fmode=fmode) as f:
             self._stream = f
-            self._run_pipeline(wrapped_transforms)
+            self._run_pipeline()
 
             if get_maximum:
-                memory_profiler.show_results(self._prof, stream=self._stream)
+                memory_profiler.show_results(profiler, stream=self._stream)
 
     def _profile_memory(self, **kwargs):
         # Profile the memory while the pipeline runs in another process
@@ -225,60 +249,58 @@ class KlioPipeline(object):
             )
             return output_png
 
-    def _run_pipeline(self, transforms, iterations=None, **_):
+    def _get_user_pipeline(self, config, io_mapper):
+        runtime_config = collections.namedtuple(
+            "RuntimeConfig",
+            ["image_tag", "direct_runner", "update", "blocking"],
+        )(None, True, False, True)
+
+        from klio_exec.commands.run import KlioPipeline as KP
+
+        return KP("profile_job", config, runtime_config, io_mapper)
+
+    def _get_user_config(self):
+        self.klio_config.pipeline_options.runner = "direct"
+        self.klio_config.job_config.events.outputs = {}
+        return self.klio_config
+
+    @staticmethod
+    def _entity_id_to_message(entity_id):
+        message = klio_pb2.KlioMessage()
+        message.data.element = bytes(entity_id, "UTF-8")
+        message.metadata.intended_recipients.anyone.SetInParent()
+        message.version = klio_pb2.Version.V2
+        return message
+
+    def _get_io_mapper(self, iterations):
+        if self.input_file:
+            return StubIOMapper.from_input_file(self.input_file, iterations)
+        else:
+            messages = []
+            for entity_id in self.entity_ids:
+                message = self._entity_id_to_message(entity_id)
+                messages.append(message.SerializeToString())
+            return StubIOMapper.from_entity_ids(messages, iterations)
+
+    def _run_pipeline(self, iterations=None, **_):
         if not iterations:
             iterations = 1
-        transforms = wrappers.print_user_exceptions(transforms)
-        options = pipeline_options.PipelineOptions()
-        options.view_as(pipeline_options.StandardOptions).runner = "direct"
-        options.view_as(pipeline_options.SetupOptions).save_main_session = True
 
-        pipeline = beam.Pipeline(options=options)
+        io_mapper = self._get_io_mapper(iterations)
+        config = self._get_user_config()
 
-        if self.input_file:
-            entity_ids = pipeline.apply(
-                beam.io.ReadFromText(self.input_file), pipeline
-            )
-        else:
-            entity_ids = pipeline.apply(beam.Create(self.entity_ids), pipeline)
-
-        scaled_entity_ids = entity_ids.apply(
-            beam.FlatMap(lambda x: [x] * iterations)
-        )
-
-        for transform in transforms:
-            scaled_entity_ids.apply(beam.ParDo(transform()))
-
-        result = pipeline.run()
-        # since on direct runner
-        result.wait_until_finish()
-
-    def _get_transforms(self):
-        transforms_module = imp.load_source(
-            "transforms", KlioPipeline.TRANSFORMS_PATH
-        )
-        # TODO: temporary! remove me once profiling is supported for v2
-        if not hasattr(klio_transforms, "KlioBaseDoFn"):
-            logging.error("Profiling V2 klio jobs is not yet available.")
-            raise SystemExit(1)
-
-        for attribute in dir(transforms_module):
-            obj = getattr(transforms_module, attribute)
-            if inspect.isclass(obj) and issubclass(
-                obj, klio_transforms.KlioBaseDoFn
-            ):
-                yield obj
+        pipeline = self._get_user_pipeline(config, io_mapper)
+        pipeline.run()
 
     def profile(self, what, **kwargs):
-        transforms = self._get_transforms()
 
         if what == "run":
-            return self._run_pipeline(transforms, **kwargs)
+            return self._run_pipeline(**kwargs)
         elif what == "cpu":
             return self._profile_cpu(**kwargs)
         elif what == "memory":
             return self._profile_memory(**kwargs)
         elif what == "memory_per_line":
-            return self._profile_memory_per_line(transforms, **kwargs)
+            return self._profile_memory_per_line(**kwargs)
         elif what == "timeit":
-            return self._profile_wall_time_per_line(transforms, **kwargs)
+            return self._profile_wall_time_per_line(**kwargs)

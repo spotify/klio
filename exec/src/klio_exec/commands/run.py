@@ -71,10 +71,16 @@ class EventIOMapper(object):
 
 
 class KlioPipeline(object):
-    def __init__(self, job_name, config, runtime_conf):
+    def __init__(
+        self, job_name, config, runtime_conf, event_io_mapper=EventIOMapper
+    ):
         self.job_name = job_name
         self.config = config
         self.runtime_conf = runtime_conf
+        if self.config.pipeline_options.streaming:
+            self._io_mapper = event_io_mapper.streaming
+        else:
+            self._io_mapper = event_io_mapper.batch
 
     @property
     def _has_event_inputs(self):
@@ -103,12 +109,6 @@ class KlioPipeline(object):
     @property
     def _has_multi_data_outputs(self):
         return len(self.config.job_config.data.outputs) > 1
-
-    @property
-    def _io_mapper(self):
-        if not self.config.pipeline_options.streaming:
-            return EventIOMapper.batch
-        return EventIOMapper.streaming
 
     def _set_setup_options(self, options):
         setup_options = options.view_as(pipeline_options.SetupOptions)

@@ -415,7 +415,15 @@ def test_require_profile_input_data(
 
 @pytest.mark.parametrize("input_file", (None, "input-data.txt"))
 @pytest.mark.parametrize("show_logs", (True, False))
-def test_run_profile_pipeline(input_file, show_logs, cli_runner, mocker):
+def test_run_profile_pipeline(
+    input_file,
+    show_logs,
+    cli_runner,
+    mocker,
+    patch_klio_config,
+    patch_get_config,
+    klio_config,
+):
     mock_req_prof_input_data = mocker.patch.object(
         cli, "_require_profile_input_data"
     )
@@ -434,12 +442,11 @@ def test_run_profile_pipeline(input_file, show_logs, cli_runner, mocker):
 
         result = cli_runner.invoke(cli.profile_job, cli_inputs)
 
-    assert "true" == os.environ["KLIO_TEST_MODE"]
     assert 0 == result.exit_code
 
     mock_req_prof_input_data.assert_called_once_with(input_file, ())
     mock_klio_pipeline.assert_called_once_with(
-        input_file=input_file, entity_ids=()
+        input_file=input_file, entity_ids=(), klio_config=klio_config
     )
     mock_klio_pipeline.return_value.profile.assert_called_once_with(what="run")
 
@@ -470,6 +477,9 @@ def test_profile_memory(
     multiproc,
     cli_runner,
     mocker,
+    patch_klio_config,
+    patch_get_config,
+    klio_config,
 ):
     mock_req_prof_input_data = mocker.patch.object(
         cli, "_require_profile_input_data"
@@ -503,7 +513,6 @@ def test_profile_memory(
 
         result = cli_runner.invoke(cli.profile_job, cli_inputs)
 
-    assert "true" == os.environ["KLIO_TEST_MODE"]
     assert 0 == result.exit_code
 
     mock_req_prof_input_data.assert_called_once_with(
@@ -513,6 +522,7 @@ def test_profile_memory(
         input_file=input_file,
         output_file=output_file,
         entity_ids=entity_ids or (),
+        klio_config=klio_config,
     )
     exp_kwargs = {
         "include_children": inc_child,
@@ -546,6 +556,9 @@ def test_profile_memory_per_line(
     show_logs,
     cli_runner,
     mocker,
+    patch_klio_config,
+    patch_get_config,
+    klio_config,
 ):
     mock_req_prof_input_data = mocker.patch.object(
         cli, "_require_profile_input_data"
@@ -575,7 +588,6 @@ def test_profile_memory_per_line(
         result = cli_runner.invoke(cli.profile_job, cli_inputs)
 
     assert 0 == result.exit_code
-    assert "true" == os.environ["KLIO_TEST_MODE"]
 
     if not show_logs:
         mock_logging_disable.assert_called_once_with(cli.logging.CRITICAL)
@@ -589,6 +601,7 @@ def test_profile_memory_per_line(
         input_file=input_file,
         output_file=output_file,
         entity_ids=entity_ids or (),
+        klio_config=klio_config,
     )
 
     mock_klio_pipeline.return_value.profile.assert_called_once_with(
@@ -612,6 +625,9 @@ def test_profile_cpu(
     interval,
     cli_runner,
     mocker,
+    patch_klio_config,
+    patch_get_config,
+    klio_config,
 ):
     mock_req_prof_input_data = mocker.patch.object(
         cli, "_require_profile_input_data"
@@ -641,7 +657,6 @@ def test_profile_cpu(
 
         result = cli_runner.invoke(cli.profile_job, cli_inputs)
 
-    assert "true" == os.environ["KLIO_TEST_MODE"]
     assert 0 == result.exit_code
 
     mock_req_prof_input_data.assert_called_once_with(
@@ -651,6 +666,7 @@ def test_profile_cpu(
         input_file=input_file,
         output_file=output_file,
         entity_ids=entity_ids or (),
+        klio_config=klio_config,
     )
     exp_kwargs = {
         "interval": interval or 0.1,
@@ -680,6 +696,9 @@ def test_profile_wall_time(
     show_logs,
     cli_runner,
     mocker,
+    patch_klio_config,
+    patch_get_config,
+    klio_config,
 ):
     mock_req_prof_input_data = mocker.patch.object(
         cli, "_require_profile_input_data"
@@ -707,7 +726,6 @@ def test_profile_wall_time(
         result = cli_runner.invoke(cli.profile_job, cli_inputs)
 
     assert 0 == result.exit_code
-    assert "true" == os.environ["KLIO_TEST_MODE"]
 
     if not show_logs:
         mock_logging_disable.assert_called_once_with(cli.logging.CRITICAL)
@@ -721,6 +739,7 @@ def test_profile_wall_time(
         input_file=input_file,
         output_file=output_file,
         entity_ids=entity_ids or (),
+        klio_config=klio_config,
     )
 
     exp_iterations = iterations or 10

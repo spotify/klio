@@ -702,3 +702,62 @@ def retry(
         exception_message=exception_message,
         **kwargs,
     )
+
+
+# this is set by the exec profile command when it's time to profile stuff.
+# When set, this should be a 1-arg function that takes another function as
+# input and returns a wrapped version of it with profiling
+ACTIVE_PROFILER = None
+
+
+@_utils.experimental()
+def profile(func_or_meth):
+    """Decorator to mark a function/method for profiling.  This is used in
+    conjunction with the ``klio job profile`` commands to selectively profile
+    parts of your pipeline.  This decorator can be added to any function or
+    method, but when using with other Klio decorators such as ``@handle_klio``
+    it **must** be the last decorator applied.
+
+    When running/testing a job normally and not profiling, this decorator has
+    no effect.
+
+    .. code-block:: python
+
+        @handle_klio
+        @profile
+        def my_map_func(ctx, item):
+            ctx.logger.info(f"Received {item.element} with {item.payload}")
+
+        class MyDoFn(beam.DoFn):
+            @handle_klio
+            @profile
+            def process(self, item):
+                self._klio.logger.info(
+                    f"Received {item.element} with {item.payload}"
+                )
+
+        @profile
+        def my_nonklio_map_func(item):
+            print(f"Received {item}!")
+    """
+
+    if ACTIVE_PROFILER is not None:
+        decorated = ACTIVE_PROFILER(func_or_meth)
+
+        @functools.wraps(func_or_meth)
+        def inner_method(self, *args, **kwargs):
+            return decorated(self, *args, **kwargs)
+
+        @functools.wraps(func_or_meth)
+        def inner_func(*args, **kwargs):
+            return decorated(*args, **kwargs)
+
+        # This is needed even though we treat them the same, other decorators
+        # need to do the same check and won't work if we don't propagate the
+        # `self` arg (which is not done by functools.wraps)
+        if __is_method(func_or_meth):
+            return inner_method
+        else:
+            return inner_func
+
+    return func_or_meth

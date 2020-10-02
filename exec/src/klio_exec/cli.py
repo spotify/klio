@@ -166,7 +166,7 @@ def _require_profile_input_data(input_file, entity_ids):
     ),
 )
 def profile_job():
-    os.environ["KLIO_TEST_MODE"] = "true"
+    pass
 
 
 # hidden command to only be invoked via a subprocess from
@@ -174,9 +174,15 @@ def profile_job():
 @profile_job.command("run-pipeline", hidden=True)
 @options.input_file
 @options.show_logs
+@options.config_file
 @click.argument("entity_ids", nargs=-1, required=False)
-def _run_pipeline(input_file, show_logs, entity_ids):
+def _run_pipeline(input_file, show_logs, entity_ids, config_file):
+
     from klio_exec.commands import profile
+
+    config_path = config_file or "klio-job.yaml"
+    config_data = _get_config(config_path)
+    klio_config = config.KlioConfig(config_data)
 
     # safety check, even though it should be invoked by another klioexec
     # command
@@ -186,7 +192,7 @@ def _run_pipeline(input_file, show_logs, entity_ids):
         logging.disable(logging.CRITICAL)
 
     klio_pipeline = profile.KlioPipeline(
-        input_file=input_file, entity_ids=entity_ids
+        klio_config=klio_config, input_file=input_file, entity_ids=entity_ids
     )
     klio_pipeline.profile(what="run")
 
@@ -206,6 +212,7 @@ def _run_pipeline(input_file, show_logs, entity_ids):
 @options.input_file
 @options.output_file
 @options.show_logs
+@options.config_file
 @click.argument("entity_ids", nargs=-1, required=False)
 def profile_memory(
     interval,
@@ -216,13 +223,22 @@ def profile_memory(
     plot_graph,
     show_logs,
     entity_ids,
+    config_file,
 ):
+
     from klio_exec.commands import profile
+
+    config_path = config_file or "klio-job.yaml"
+    config_data = _get_config(config_path)
+    klio_config = config.KlioConfig(config_data)
 
     _require_profile_input_data(input_file, entity_ids)
 
     klio_pipeline = profile.KlioPipeline(
-        input_file=input_file, output_file=output_file, entity_ids=entity_ids
+        klio_config=klio_config,
+        input_file=input_file,
+        output_file=output_file,
+        entity_ids=entity_ids,
     )
     kwargs = {
         "include_children": include_children,
@@ -249,11 +265,22 @@ def profile_memory(
 @options.input_file
 @options.output_file
 @options.show_logs
+@options.config_file
 @click.argument("entity_ids", nargs=-1, required=False)
 def profile_memory_per_line(
-    get_maximum, per_element, input_file, output_file, show_logs, entity_ids
+    get_maximum,
+    per_element,
+    input_file,
+    output_file,
+    show_logs,
+    entity_ids,
+    config_file,
 ):
     from klio_exec.commands import profile
+
+    config_path = config_file or "klio-job.yaml"
+    config_data = _get_config(config_path)
+    klio_config = config.KlioConfig(config_data)
 
     _require_profile_input_data(input_file, entity_ids)
 
@@ -261,7 +288,10 @@ def profile_memory_per_line(
         logging.disable(logging.CRITICAL)
 
     klio_pipeline = profile.KlioPipeline(
-        input_file=input_file, output_file=output_file, entity_ids=entity_ids
+        klio_config=klio_config,
+        input_file=input_file,
+        output_file=output_file,
+        entity_ids=entity_ids,
     )
     klio_pipeline.profile(what="memory_per_line", get_maximum=get_maximum)
 
@@ -279,16 +309,30 @@ def profile_memory_per_line(
 @options.output_file
 @options.plot_graph
 @options.show_logs
+@options.config_file
 @click.argument("entity_ids", nargs=-1, required=False)
 def profile_cpu(
-    interval, input_file, output_file, plot_graph, show_logs, entity_ids
+    interval,
+    input_file,
+    output_file,
+    plot_graph,
+    show_logs,
+    entity_ids,
+    config_file,
 ):
     from klio_exec.commands import profile
+
+    config_path = config_file or "klio-job.yaml"
+    config_data = _get_config(config_path)
+    klio_config = config.KlioConfig(config_data)
 
     _require_profile_input_data(input_file, entity_ids)
 
     klio_pipeline = profile.KlioPipeline(
-        input_file=input_file, output_file=output_file, entity_ids=entity_ids
+        klio_config=klio_config,
+        input_file=input_file,
+        output_file=output_file,
+        entity_ids=entity_ids,
     )
     kwargs = {
         "interval": interval,
@@ -313,11 +357,16 @@ def profile_cpu(
 @options.output_file
 @options.iterations
 @options.show_logs
+@options.config_file
 @click.argument("entity_ids", nargs=-1, required=False)
 def profile_wall_time(
-    input_file, output_file, iterations, show_logs, entity_ids
+    input_file, output_file, iterations, show_logs, entity_ids, config_file
 ):
     from klio_exec.commands import profile
+
+    config_path = config_file or "klio-job.yaml"
+    config_data = _get_config(config_path)
+    klio_config = config.KlioConfig(config_data)
 
     _require_profile_input_data(input_file, entity_ids)
 
@@ -325,7 +374,10 @@ def profile_wall_time(
         logging.disable(logging.CRITICAL)
 
     klio_pipeline = profile.KlioPipeline(
-        input_file=input_file, output_file=output_file, entity_ids=entity_ids
+        klio_config=klio_config,
+        input_file=input_file,
+        output_file=output_file,
+        entity_ids=entity_ids,
     )
     klio_pipeline.profile(what="timeit", iterations=iterations)
 

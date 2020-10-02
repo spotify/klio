@@ -11,7 +11,7 @@
     :alt: Apache Licensed
 
 .. image:: https://readthedocs.org/projects/klio/badge/?version=latest
-:target: https://klio.readthedocs.io/en/latest/?badge=latest
+    :target: https://klio.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
 .. image:: https://slackin.spotify.com/badge.svg

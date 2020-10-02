@@ -11,7 +11,7 @@ The ``klio`` Library
 
 .. start-klio-lib-intro
 
-The library for implementing Klio-ified Apache Beam transforms with `decorators <https://spotify-klio-klio.readthedocs-hosted.com/en/latest/userguide/pipeline/utilities>`_, `helper transforms <https://spotify-klio-klio.readthedocs-hosted.com/en/latest/userguide/pipeline/transforms.html>`_, and leverage Klio's `message-handling logic <https://spotify-klio-klio.readthedocs-hosted.com/en/latest/userguide/pipeline/message.html>`_.
+The library for implementing Klio-ified Apache Beam transforms with `decorators <https://klio.readthedocs.io/en/latest/userguide/pipeline/utilities.html>`_, `helper transforms <https://klio.readthedocs.io/en/latest/userguide/pipeline/transforms.html>`_, and leverage Klio's `message-handling logic <https://klio.readthedocs.io/en/latest/userguide/pipeline/message.html>`_.
 
-As the ``klio`` library is not meant to be installed directly, check out the `installation guide <https://spotify-klio-klio.readthedocs-hosted.com/en/latest/quickstart/installation.html>`_ for how to setup installation.
-There is also the `user guide <https://spotify-klio-klio.readthedocs-hosted.com/en/latest/userguide/index.html>`_ and the `API documentation <https://spotify-klio-klio.readthedocs-hosted.com/en/latest/reference/lib/api/index.html>`_ for more information.
+As the ``klio`` library is not meant to be installed directly, check out the `installation guide <https://klio.readthedocs.io/en/latest/quickstart/installation.html>`_ for how to setup installation.
+There is also the `user guide <https://klio.readthedocs.io/en/latest/userguide/index.html>`_ and the `API documentation <https://klio.readthedocs.io/en/latest/reference/lib/index.html>`_ for more information.

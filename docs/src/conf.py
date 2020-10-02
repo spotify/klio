@@ -151,10 +151,6 @@ nitpick_ignore = [
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-linkcheck_ignore
 linkcheck_ignore = [
     r"https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs#configuration.load",
-    # TODO: remove me when the repo is public
-    r"https://github.com/spotify/klio*.",
-    # TODO: remove me when on PyPI
-    r"https://pypi.org/project/klio*.",
     # ignore local links
     r"\./.+\.html",
 ]

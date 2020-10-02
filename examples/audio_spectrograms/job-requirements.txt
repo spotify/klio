@@ -4,74 +4,103 @@
 #
 #    pip-compile job-requirements.in
 #
-apache-beam[gcp]==2.24.0  # via -r job-requirements.in
-appdirs==1.4.4            # via pooch
-audioread==2.1.8          # via librosa
-avro-python3==1.9.2.1     # via apache-beam
-cachetools==3.1.1         # via apache-beam, google-auth
-certifi==2020.6.20        # via requests
-cffi==1.14.2              # via google-crc32c, soundfile
-chardet==3.0.4            # via requests
-crcmod==1.7               # via apache-beam
-decorator==4.4.2          # via librosa
-dill==0.3.1.1             # via apache-beam
-docopt==0.6.2             # via hdfs
-fastavro==0.23.6          # via apache-beam
-fasteners==0.15           # via google-apitools
-future==0.18.2            # via apache-beam
-google-api-core[grpc,grpcgcp]==1.22.2  # via google-cloud-bigquery, google-cloud-bigtable, google-cloud-core, google-cloud-datastore, google-cloud-dlp, google-cloud-language, google-cloud-pubsub, google-cloud-spanner, google-cloud-videointelligence, google-cloud-vision
-google-apitools==0.5.31   # via apache-beam
-google-auth==1.21.2       # via apache-beam, google-api-core
-google-cloud-bigquery==1.27.2  # via apache-beam
-google-cloud-bigtable==1.4.0  # via apache-beam
-google-cloud-core==1.4.1  # via apache-beam, google-cloud-bigquery, google-cloud-bigtable, google-cloud-datastore, google-cloud-spanner
-google-cloud-datastore==1.15.0  # via apache-beam
-google-cloud-dlp==1.0.0   # via apache-beam
-google-cloud-language==1.3.0  # via apache-beam
-google-cloud-pubsub==1.7.0  # via apache-beam
-google-cloud-spanner==1.19.0  # via apache-beam
-google-cloud-videointelligence==1.15.0  # via apache-beam
-google-cloud-vision==1.0.0  # via apache-beam
-google-crc32c==1.0.0      # via google-resumable-media
-google-resumable-media==1.0.0  # via google-cloud-bigquery
-googleapis-common-protos[grpc]==1.52.0  # via google-api-core, grpc-google-iam-v1
-grpc-google-iam-v1==0.12.3  # via google-cloud-bigtable, google-cloud-pubsub, google-cloud-spanner
-grpcio-gcp==0.2.2         # via apache-beam, google-api-core
-grpcio==1.32.0            # via apache-beam, google-api-core, googleapis-common-protos, grpc-google-iam-v1, grpcio-gcp
-hdfs==2.5.8               # via apache-beam
-httplib2==0.17.4          # via apache-beam, google-apitools, oauth2client
-idna==2.10                # via requests
-joblib==0.16.0            # via librosa, scikit-learn
-librosa==0.8.0            # via -r job-requirements.in
-llvmlite==0.34.0          # via numba
-mock==2.0.0               # via apache-beam
-monotonic==1.5            # via fasteners
-numba==0.51.2             # via librosa, resampy
-numpy==1.19.2             # via apache-beam, librosa, numba, pyarrow, resampy, scikit-learn, scipy
-oauth2client==3.0.0       # via apache-beam, google-apitools
-packaging==20.4           # via pooch
-pbr==5.5.0                # via mock
-pooch==1.2.0              # via librosa
-protobuf==3.13.0          # via apache-beam, google-api-core, googleapis-common-protos
-pyarrow==0.17.1           # via apache-beam
-pyasn1-modules==0.2.8     # via google-auth, oauth2client
-pyasn1==0.4.8             # via oauth2client, pyasn1-modules, rsa
-pycparser==2.20           # via cffi
-pydot==1.4.1              # via apache-beam
-pymongo==3.11.0           # via apache-beam
-pyparsing==2.4.7          # via packaging, pydot
-python-dateutil==2.8.1    # via apache-beam
-pytz==2020.1              # via apache-beam, fastavro, google-api-core
-requests==2.24.0          # via apache-beam, google-api-core, hdfs, pooch
-resampy==0.2.2            # via librosa
-rsa==4.6                  # via google-auth, oauth2client
-scikit-learn==0.23.2      # via librosa
-scipy==1.5.2              # via librosa, resampy, scikit-learn
-six==1.15.0               # via fasteners, google-api-core, google-apitools, google-auth, google-cloud-bigquery, google-resumable-media, grpcio, hdfs, mock, oauth2client, packaging, protobuf, python-dateutil, resampy
-soundfile==0.10.3.post1   # via librosa
-threadpoolctl==2.1.0      # via scikit-learn
-typing-extensions==3.7.4.3  # via apache-beam
-urllib3==1.25.10          # via requests
+apache-beam==2.24.0
+appdirs==1.4.4
+async-timeout==3.0.1
+attrs==20.2.0
+audioread==2.1.8
+avro-python3==1.9.2.1
+boltons==20.2.1
+cachetools==3.1.1
+certifi==2020.6.20
+cffi==1.14.3
+chardet==3.0.4
+click==7.1.2
+crcmod==1.7
+cycler==0.10.0
+decorator==4.4.2
+dill==0.3.1.1
+docopt==0.6.2
+face==20.1.1
+fastavro==0.23.6
+fasteners==0.15
+future==0.18.2
+glom==20.8.0
+google-api-core==1.20.1
+google-api-python-client==1.11.0
+google-apitools==0.5.31
+google-auth==1.22.0
+google-auth-httplib2==0.0.4
+google-cloud-bigquery==1.25.0
+google-cloud-bigtable==1.5.0
+google-cloud-core==1.4.1
+google-cloud-datastore==1.15.1
+google-cloud-dlp==1.0.0
+google-cloud-language==1.3.0
+google-cloud-pubsub==1.4.0
+google-cloud-spanner==1.19.0
+google-cloud-videointelligence==1.15.0
+google-cloud-vision==1.0.0
+google-resumable-media==0.5.1
+googleapis-common-protos==1.52.0
+grpc-google-iam-v1==0.12.3
+grpcio==1.32.0
+grpcio-gcp==0.2.2
+hdfs==2.5.8
+httplib2==0.17.4
+idna==2.10
+idna-ssl==1.1.0
+importlib-metadata==2.0.0
+iniconfig==1.0.1
+joblib==0.16.0
+kiwisolver==1.2.0
+klio==0.2.0
+klio-audio==0.1.0
+klio-core==0.2.0
+klio-exec==0.2.0
+librosa==0.8.0
+llvmlite==0.34.0
+matplotlib==3.3.2
+mock==2.0.0
+monotonic==1.5
+multidict==4.7.6
+numba==0.51.2
+numpy==1.19.2
+oauth2client==3.0.0
+packaging==20.4
+pbr==5.5.0
+Pillow==7.2.0
+pluggy==0.13.1
+pooch==1.2.0
+protobuf==3.13.0
+psutil==5.7.2
+py==1.9.0
+pyarrow==0.17.1
+pyasn1==0.4.8
+pyasn1-modules==0.2.8
+pycparser==2.20
+pydot==1.4.1
+pymongo==3.11.0
+pyparsing==2.4.7
+pytest==6.1.0
+pytest-mock==3.3.1
+python-dateutil==2.8.1
+pytz==2020.1
+PyYAML==5.3.1
+requests==2.24.0
+resampy==0.2.2
+rsa==4.6
+scikit-learn==0.23.2
+scipy==1.5.2
+six==1.15.0
+SoundFile==0.10.3.post1
+threadpoolctl==2.1.0
+toml==0.10.1
+typing-extensions==3.7.4.3
+uritemplate==3.0.1
+urllib3==1.25.10
+yarl==1.6.0
+zipp==3.2.0
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

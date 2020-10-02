@@ -1,6 +1,4 @@
 apache-beam[gcp]==2.24.0
 librosa
-# TODO: uncomment once available on PyPI
-# klio
-# klio-exec
-# klio-audio
+klio-exec
+klio[audio]

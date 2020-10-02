@@ -15,8 +15,8 @@
 """Example of custom data existence checks implementation.
 
 Please see the full walk-through here:
-https://spotify-klio-klio.readthedocs-hosted.com/en/latest/userguide/
-examples/custom_data_ext_checks.html
+https://klio.readthedocs.io/en/latest/userguide/
+    examples/custom_data_ext_checks.html
 """
 
 import apache_beam as beam

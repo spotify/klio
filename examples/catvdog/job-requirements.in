@@ -1,6 +1,6 @@
-apache-beam[gcp]==2.22.0
+apache-beam[gcp]==2.24.0
 Keras
 tensorflow
-livelossplot
-efficientnet
 numpy
+pillow
+klio-exec>=0.2.0

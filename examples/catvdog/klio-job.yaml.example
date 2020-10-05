@@ -20,6 +20,7 @@ job_config:
   events:
     inputs:
       - type: pubsub
+        topic: projects/$GCP_PROJECT/topics/catvdog-input
         subscription: projects/$GCP_PROJECT/subscriptions/catvdog-input-catvdog
     outputs:
       - type: pubsub
@@ -28,7 +29,12 @@ job_config:
     inputs:
       - type: gcs
         location: gs://$GCP_PROJECT-input/catvdog
+        file_suffix: .jpg
     outputs:
       - type: gcs
         location: gs://$GCP_PROJECT-output/catvdog
+        file_suffix: .jpg
+        # as of klio-exec 0.2.0, multiple outputs aren't supported
+        # TODO: update me once it is supported!
+        skip_klio_existence_check: True
   model_file: model.h5  # relative to job directory

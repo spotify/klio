@@ -13,55 +13,41 @@
 # limitations under the License.
 #
 
-import enum
 import os
 import tempfile
-import threading
 
+import apache_beam as beam
 import numpy as np
 import tensorflow as tf
+
 from apache_beam.io.gcp import gcsio
 from keras.models import load_model
 from keras.preprocessing import image as kimage
 
-from klio import transforms
+from klio.transforms import decorators
 
 
-class CatVDog(transforms.KlioBaseDoFn):
+class CatVDog(beam.DoFn):
     """Classify cat vs dog based off github.com/gsurma/image_classifier"""
 
     IMAGE_WIDTH = 200
     IMAGE_HEIGHT = 200
     CLASSES = {0: "cat", 1: "dog"}
-    _thread_local = threading.local()
 
+    @decorators.set_klio_context
     def __init__(self):
-        self.input_loc = self._klio.config.job_config.inputs[0].data_location
-        self.output_loc = self._klio.config.job_config.outputs[0].data_location
+        self.input_loc = self._klio.config.job_config.data.inputs[0].location
+        self.output_loc = self._klio.config.job_config.data.outputs[0].location
         self.model_file = self._klio.config.job_config.as_dict()["model_file"]
+        self.gcs_client = None
+        self.model = None
 
-    @property
-    def gcs_client(self):
-        # Note: DirectRunner does not support a `setup` method. If just
-        # running with DataflowRunner, this can be moved into a `setup`
-        # method without any threadlocal lookups.
-        client = getattr(self._thread_local, "gcs_client", None)
-        if not client:
-            self._thread_local.gcs_client = gcsio.GcsIO()
-        return self._thread_local.gcs_client
+    def setup(self):
+        """Setup instance variables that are not pickle-able"""
+        self.gcs_client = gcsio.GcsIO()
+        self.model = tf.keras.models.load_model(self.model_file)
 
-    @property
-    def model(self):
-        # Note: DirectRunner does not support a `setup` method. If just
-        # running with DataflowRunner, this can be moved into a `setup`
-        # method without any threadlocal lookups.
-        m = getattr(self._thread_local, "model", None)
-        if not m:
-            self._thread_local.model = tf.keras.models.load_model(
-                self.model_file
-            )
-        return self._thread_local.model
-
+    @decorators.set_klio_context
     def download_image(self, filename):
         """Download a given image from GCS.
 
@@ -100,6 +86,7 @@ class CatVDog(transforms.KlioBaseDoFn):
 
         return img_tensor
 
+    @decorators.set_klio_context
     def upload_image(self, local_file, classification, filename):
         """Upload a given image to GCS.
 
@@ -116,7 +103,8 @@ class CatVDog(transforms.KlioBaseDoFn):
                 dest.write(source.read())
         self._klio.logger.info("Uploaded file to %s" % remote_dir)
 
-    def process(self, entity_id):
+    @decorators.handle_klio
+    def process(self, data):
         """Predict whether a given image ID is a cat or a dog.
 
         This is the main entry point for a Beam/Klio transform.
@@ -125,70 +113,73 @@ class CatVDog(transforms.KlioBaseDoFn):
         to its classified folder in a GCS bucket.
 
         Args:
-            entity_id (str): unique file identifier of an image to
-                classify.
+            data (KlioMessage.data): data attribute of a KlioMessage including
+                fields ``element`` and ``payload``.
         Returns:
-            entity_id (str): unique file identifier of an image that has
-                been classified.
+            data (KlioMessage.data): data attribute of the incoming KlioMessage
+            as there is no need to pass state to the downstream transform
+            within the pipeline.
         """
-        self._klio.logger.info("Received {} from PubSub".format(entity_id))
-        filename = "{}.jpg".format(entity_id)
+        image_id = data.element.decode("utf-8")
+        self._klio.logger.info("Received {} from PubSub".format(image_id))
+        filename = "{}.jpg".format(image_id)
 
         # download image
         input_file = self.download_image(filename)
 
         # load & predict image
-        loaded_image = self.load_image(input_file)
+        loaded_image = self.load_image(input_file.name)
         prediction = self.model.predict_classes(loaded_image)
         prediction = CatVDog.CLASSES[prediction[0][0]]
         self._klio.logger.info(
-            "Predicted {} for {}".format(prediction, entity_id)
+            "Predicted {} for {}".format(prediction, image_id)
         )
 
         # save image to particular output directory
         self.upload_image(input_file, prediction, filename)
 
-        # return original entity ID for downstream processing
-        return entity_id
+        # return original data for any downstream processing
+        yield data
 
-    def input_data_exists(self, entity_id):
-        """Check if input data exists in GCS for a given entity ID.
 
-        Before invoking the `process` method with the received
-        `entity_id`, klio will call this method. If input data does not
-        exist, klio will trigger the configured parent job (if any).
+class CatVDogOutputCheck(beam.DoFn):
+    """Custom output data existence check to handle two output directories"""
 
-        Args:
-            entity_id (str): unique image file ID.
-        Returns
-            (bool): whether or not image exists in the configured
-                input bucket.
-        """
-        filename = "{}.jpg".format(entity_id)
-        filepath = os.path.join(self.input_loc, filename)
-        exists = self.gcs_client.exists(filepath)
-        return exists
+    def setup(self):
+        """Setup instance variables that are not pickle-able"""
+        self.gcs_client = gcsio.GcsIO()
 
-    def output_data_exists(self, entity_id):
-        """Check if output data exists in GCS for a given entity ID.
-
-        Before invoking the `process` method with the received
-        `entity_id`, klio will call this method. If output data already
-        exists and the `--force` flag from `klio message publish` was
-        not provided, klio will not invoke the `process` method and
-        effectively pass through the `entity_id` to the output pubsub
-        topic.
+    @decorators.handle_klio
+    def process(self, data):
+        """Detect if data for an element exists in one of two dirs in a bucket.
 
         Args:
-            entity_id (str): unique image file ID.
-        Returns
-            (bool): whether or not image exists in the configured
-                output bucket.
+            data (KlioMessage.data): data attribute of a KlioMessage including
+                fields ``element`` and ``payload``.
+        Returns:
+            apache_beam.pvalue.TaggedOutput: data tagged with either
+            ``found`` or ``not_found``.
         """
-        filename = "{}.jpg".format(entity_id)
-        dog_filepath = os.path.join(self.output_loc, "dog", filename)
-        if self.gcs_client.exists(dog_filepath):
-            return True
+        element = data.element.decode("utf-8")
 
-        cat_filepath = os.path.join(self.output_loc, "cat", filename)
-        return self.gcs_client.exists(cat_filepath)
+        oc = self._klio.config.job_config.data.outputs[0]
+        subdirs = ("cat", "dog")
+
+        outputs_exist = []
+
+        for subdir in subdirs:
+            path = f"{oc.location}/{subdir}/{element}{oc.file_suffix}"
+            self._klio.logger.info(f"Checking output in {path}")
+            exists = self.gcs_client.exists(path)
+            outputs_exist.append(exists)
+            if exists:
+                self._klio.logger.info(f"Output exists at {path}")
+            else:
+                self._klio.logger.info(
+                    f"Output does not exist for {element} in {subdir}"
+                )
+
+        if any(outputs_exist):
+            yield beam.pvalue.TaggedOutput("found", data)
+        else:
+            yield beam.pvalue.TaggedOutput("not_found", data)

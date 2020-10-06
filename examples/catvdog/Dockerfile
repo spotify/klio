@@ -1,14 +1,13 @@
-FROM apache/beam_python3.6_sdk:2.22.0
+FROM apache/beam_python3.6_sdk:2.24.0
 
 WORKDIR /usr/src/app
 
 ENV PYTHONPATH=/usr/src/app
 
-RUN pip install --upgrade pip setuptools && \
-    pip install klio-exec
+RUN pip install --upgrade pip setuptools
 
 COPY job-requirements.txt job-requirements.txt
-RUN pip install -r job-requirements.txt
+RUN pip install -r job-requirements.txt --use-feature=2020-resolver
 
 COPY __init__.py \
      run.py \

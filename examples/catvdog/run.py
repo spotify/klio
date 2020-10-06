@@ -15,6 +15,8 @@
 
 import apache_beam as beam
 
+from klio.transforms import helpers
+
 import transforms
 
 
@@ -34,5 +36,16 @@ def run(input_pcol, config):
     Returns:
         A Beam PCollection that will be passed to ``beam.io.WriteToPubSub``.
     """
-    output_pcol = input_pcol | beam.ParDo(transforms.CatVDog())
-    return output_pcol
+    output_data = (
+        input_pcol
+        | beam.ParDo(transforms.CatVDogOutputCheck()).with_outputs()
+    )
+
+    output_force = output_data.found | helpers.KlioFilterForce()
+
+    to_input_check = (
+        (output_data.not_found, output_force.process)
+        | beam.Flatten()
+    )
+    to_process = to_input_check | helpers.KlioGcsCheckInputExists()
+    return to_process.found | beam.ParDo(transforms.CatVDog())

@@ -46,7 +46,7 @@ div.admonition-todo > p.admonition-title::before {
 .bd-sidebar .nav>li>ul>li>ul>.active:hover>a, .bd-sidebar .nav>li>ul>li>ul>.active>a,
 .bd-sidebar .nav>li>ul>li>ul>.active:hover>a, .bd-sidebar .nav>li>ul>li>ul>.active>a:hover {
     font-weight: 600;
-    color: #00aa55;
+    color: #0074FF;
 }
 .bd-sidebar .nav>li>ul>li>ul {
   list-style-type: none;

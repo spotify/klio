@@ -12,9 +12,9 @@ Before we begin, it will be helpful to understand the basics of `Google Pub/Sub`
 
 Specifically, you should know the following topics:
 
-* What are Pub/Sub :greenemph:`topics`, :greenemph:`subscriptions` and :greenemph:`messages`, and how they work. This `Pub/Sub overview`_ may be helpful, as well as this `interactive tutorial`_.
-* What Beam :blueemph:`PCollections` and :blueemph:`PTransforms` are, and how to write :blueemph:`Beam pipelines`. Learn by reading `this overview`_, walking through the `Beam Quickstart for Python`_, and working through Beam's `word count tutorial`_. There is also a talk on `Streaming data processing pipelines in Python with Apache Beam`_ (YouTube video).
-* How to :greenemph:`launch a Beam job on Dataflow` (a runner for Beam jobs). You can familiarize yourself with this `quickstart`_.
+* What are Pub/Sub :violetemph:`topics`, :violetemph:`subscriptions` and :violetemph:`messages`, and how they work. This `Pub/Sub overview`_ may be helpful, as well as this `interactive tutorial`_.
+* What Beam :violetemph:`PCollections` and :violetemph:`PTransforms` are, and how to write :violetemph:`Beam pipelines`. Learn by reading `this overview`_, walking through the `Beam Quickstart for Python`_, and working through Beam's `word count tutorial`_. There is also a talk on `Streaming data processing pipelines in Python with Apache Beam`_ (YouTube video).
+* How to :violetemph:`launch a Beam job on Dataflow` (a runner for Beam jobs). You can familiarize yourself with this `quickstart`_.
 
 All set? Let's get started with the :doc:`installation <installation>`!
 

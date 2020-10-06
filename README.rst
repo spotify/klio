@@ -1,6 +1,5 @@
-.. image:: docs/src/_static/images/shitty_logo_small.png
+.. image:: docs/src/_static/images/logo_small.png
     :alt: Klio Logo
-    :width: 70px
 
 =================================================
 ``klio``: Smarter data pipelines for audio and ML
@@ -43,8 +42,7 @@
 
 .. defining roles used here so that github ignores them when rendering the README.
 
-.. role:: blueemph
-.. role:: greenemph
+.. role:: violetemph
 
 
 What is Klio?
@@ -52,11 +50,11 @@ What is Klio?
 
 .. start-intro
 
-Klio is an :blueemph:`ecosystem` that allows you to process audio files – or any binary files – easily and at scale.
+Klio is an :violetemph:`ecosystem` that allows you to process audio files – or any binary files – easily and at scale.
 
-Klio jobs are :greenemph:`opinionated` data pipelines in Python (streaming or batch) built upon `Apache Beam <https://beam.apache.org/>`_ and tuned for audio and binary file processing.
+Klio jobs are :violetemph:`opinionated` data pipelines in Python (streaming or batch) built upon `Apache Beam <https://beam.apache.org/>`_ and tuned for audio and binary file processing.
 
-Klio was built by Spotify to run our large-scale :blueemph:`audio intelligence systems` and is used by teams of engineers and audio researchers to help develop and deploy next generation audio algorithms.
+Klio was built by Spotify to run our large-scale :violetemph:`audio intelligence systems` and is used by teams of engineers and audio researchers to help develop and deploy next generation audio algorithms.
 
 .. end-intro
 

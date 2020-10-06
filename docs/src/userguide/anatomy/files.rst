@@ -32,8 +32,8 @@ Python Files
 
 ``__init__.py`` helps the Python executable find the path where the other Python files are.
 
-For :greenemph:`non-FnAPI jobs`, a ``setup.py`` file is generated to define how the job should be packaged so the configured runner can appropriately install it.
-This is also where job-specific :greenemph:`system-level dependencies` should be declared when the FnAPI is not used.
+For :violetemph:`non-FnAPI jobs`, a ``setup.py`` file is generated to define how the job should be packaged so the configured runner can appropriately install it.
+This is also where job-specific :violetemph:`system-level dependencies` should be declared when the FnAPI is not used.
 See :ref:`new-setup-py` for more information.
 
 Dependency Declaration
@@ -44,7 +44,7 @@ Dependency Declaration
 ``Dockerfile`` describes a Docker image that will be used for launching a Klio job, regardless of the configured runner. It is setup to install the packages you specify in ``job-requirements.txt``.
 
 
-For :greenemph:`FnAPI jobs`, it is also where job-specific :greenemph:`system-level dependencies` should be declared (i.e. ``apt-get install ffmpeg``) and whatever else required to setup a job's environment.
+For :violetemph:`FnAPI jobs`, it is also where job-specific :violetemph:`system-level dependencies` should be declared (i.e. ``apt-get install ffmpeg``) and whatever else required to setup a job's environment.
 
 Configuration
 -------------
@@ -56,7 +56,7 @@ Read more about a job's configuration :doc:`here <../config/index>`.
 Other Files
 -----------
 
-For :greenemph:`non-FnAPI jobs`, a ``MANIFEST.in`` is generated that declares files needed for job installation (i.e. ``job-requirements.txt``) but not needed at runtime.
+For :violetemph:`non-FnAPI jobs`, a ``MANIFEST.in`` is generated that declares files needed for job installation (i.e. ``job-requirements.txt``) but not needed at runtime.
 See :ref:`new-manifest-in` for more information.
 
 ``README.md`` is initially populated with setup instructions on how to get a job running, but should be used however needed.

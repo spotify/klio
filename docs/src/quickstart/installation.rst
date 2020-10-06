@@ -17,7 +17,7 @@ Google Cloud SDK Setup
 
 .. attention::
 
-    A Klio streaming job is :greenemph:`dependent` on `Google Cloud Pub/Sub`_ and `Google Cloud Storage`_ (GCS).
+    A Klio streaming job is :violetemph:`dependent` on `Google Cloud Pub/Sub`_ and `Google Cloud Storage`_ (GCS).
 
     To create the job's relevant dependencies, you need to set up an account with Google Cloud Platform, create a project and enable those services for said project.
 
@@ -32,10 +32,10 @@ Once it has installed, set up the Google Cloud SDK by running:
 
     $ gcloud init
 
-Next you will be asked to choose the :blueemph:`account` and :blueemph:`project ID` you would like to use.
+Next you will be asked to choose the :violetemph:`account` and :violetemph:`project ID` you would like to use.
 Enter in the account you used to set up GCP and the project you created which is enabled with Google Cloud Pub/Sub and Google Cloud Storage.
 
-Lastly, :greenemph:`authorize` Google Cloud for application **and** Docker access by running:
+Lastly, :violetemph:`authorize` Google Cloud for application **and** Docker access by running:
 
 .. code-block:: sh
 

@@ -1,0 +1,84 @@
+/* HK-Grotesk-Light - 100 normal */
+@font-face {
+  font-family: 'HK-Grotesk';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100;
+  src:
+    local('HK Grotesk Light'),
+    local('HK-Grotesk Light'),
+    local('HK-Grotesk-Light'),
+    url('../fonts/HKGrotesk-Light.woff') format('woff');
+}
+/* HK-Grotesk-Regular - 300 normal */
+@font-face {
+  font-family: 'HK-Grotesk';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300;
+  src:
+    local('HK Grotesk Regular'),
+    local('HK-Grotesk Regular'),
+    local('HK-Grotesk-Regular'),
+    url('../fonts/HKGrotesk-Regular.woff') format('woff');
+}
+/* HK-Grotesk-Italic - 300 italic */
+@font-face {
+  font-family: 'HK-Grotesk';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 300;
+  src:
+    local('HK Grotesk Italic'),
+    local('HK-Grotesk Italic'),
+    local('HK-Grotesk-Italic'),
+    url('../fonts/HKGrotesk-Italic.woff') format('woff');
+}
+/* HK-Grotesk-Medium - 400 normal */
+@font-face {
+  font-family: 'HK-Grotesk';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src:
+    local('HK Grotesk Medium'),
+    local('HK-Grotesk Medium'),
+    local('HK-Grotesk-Medium'),
+    url('../fonts/HKGrotesk-Medium.woff') format('woff');
+}
+/* HK-Grotesk-SemiBold - 500 normal */
+@font-face {
+  font-family: 'HK-Grotesk';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src:
+    local('HK Grotesk SemiBold'),
+    local('HK-Grotesk SemiBold'),
+    local('HK-Grotesk-SemiBold'),
+    url('../fonts/HKGrotesk-SemiBold.woff') format('woff');
+}
+/* HK-Grotesk-Bold - 700 normal */
+@font-face {
+  font-family: 'HK-Grotesk';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src:
+    local('HK Grotesk Bold'),
+    local('HK-Grotesk Bold'),
+    local('HK-Grotesk-Bold'),
+    url('../fonts/HKGrotesk-Bold.woff') format('woff');
+}
+/* HK-Grotesk-BoldItalic - 700 italic */
+@font-face {
+  font-family: 'HK-Grotesk';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 700;
+  src:
+    local('HK Grotesk BoldItalic'),
+    local('HK-Grotesk BoldItalic'),
+    local('HK-Grotesk-BoldItalic'),
+    url('../fonts/HKGrotesk-BoldItalic.woff') format('woff');
+}

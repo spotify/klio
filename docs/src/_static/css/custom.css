@@ -90,3 +90,7 @@ blockquote p {
   padding: 0 1.4rem;
   margin-top: .4em;
 }
+
+.header-style, h1, h2, h3, h4, h5, h6 {
+  font-family: HK-Grotesk;
+}

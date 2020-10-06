@@ -1,6 +1,5 @@
-.. image:: docs/src/_static/images/shitty_logo_small.png
+.. image:: docs/src/_static/images/logo_small.png
     :alt: Klio Logo
-    :width: 70px
 
 =================================================
 ``klio``: Smarter data pipelines for audio and ML

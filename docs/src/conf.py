@@ -161,7 +161,7 @@ linkcheck_ignore = [
 # a list of builtin themes.
 #
 html_theme = "pydata_sphinx_theme"
-html_logo = "_static/images/shitty_logo.png"
+html_logo = "_static/images/logo.png"
 html_theme_options = {
   "github_url": "https://github.com/spotify/klio",
   "twitter_url": "https://twitter.com/SpotifyEng",
@@ -178,7 +178,7 @@ html_theme_options = {
 html_static_path = ["_static"]
 html_css_files = ["css/custom.css", "css/colors.css", "css/roles.css"]  # relative to _static
 html_js_files = ["js/custom.js"]  # relative to _static
-html_favicon = "_static/images/k_favicon.png"
+html_favicon = "_static/images/favicon.png"
 pygments_style = "vs"
 
 # -- Extention configuration

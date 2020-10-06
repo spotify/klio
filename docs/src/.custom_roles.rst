@@ -1,11 +1,9 @@
 .. Custom roles for Sphinx for stylizing text
 .. Each role must have a respective class defined in the roles.css file in _static/css
 .. Include this rst file via the rst_prolog in conf.py
-.. Usage: :green:`this is green text` and this is not green
-.. role:: green
-.. role:: greenemph
-.. role:: blue
-.. role:: blueemph
+.. Usage: :violet:`this is violet text` and this is not violet
+.. role:: violet
+.. role:: violetemph
 .. role:: underline
 .. role:: tagline
 .. role:: release

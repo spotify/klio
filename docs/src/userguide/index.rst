@@ -21,29 +21,29 @@ Why Klio?
 
 Klio enables:
 
-* Organizations to build media processing systems that :greenemph:`share tooling & infrastructure` between production systems and research teams;
-* An architecture that encourages :greenemph:`reusable` jobs and :greenemph:`shared` outputs, lowering maintenance and recomputation costs;
-* Continuous, :greenemph:`event-driven processing` of rapidly growing catalogues of content.
+* Organizations to build media processing systems that :violetemph:`share tooling & infrastructure` between production systems and research teams;
+* An architecture that encourages :violetemph:`reusable` jobs and :violetemph:`shared` outputs, lowering maintenance and recomputation costs;
+* Continuous, :violetemph:`event-driven processing` of rapidly growing catalogues of content.
 
 It lets organizations that do their own research (e.g. machine learning on audio) move faster by enabling:
 
-* Researchers to benefit from working with the :blueemph:`same infrastructure` as engineers responsible for production systems as well as :blueemph:`processing power` for complete catalogues of content;
-* Engineers have a :blueemph:`simpler framework` to directly productionize large media processing jobs produced by researchers when they’re already using the same frameworks for development;
-* Organizations to benefit from these pipelines immediately as they add new content, allowing new content to be :blueemph:`processed immediately` on ingestion through a streaming pipeline and for backfills to be handled as a batch job with the :blueemph:`same code`.
+* Researchers to benefit from working with the :violetemph:`same infrastructure` as engineers responsible for production systems as well as :violetemph:`processing power` for complete catalogues of content;
+* Engineers have a :violetemph:`simpler framework` to directly productionize large media processing jobs produced by researchers when they’re already using the same frameworks for development;
+* Organizations to benefit from these pipelines immediately as they add new content, allowing new content to be :violetemph:`processed immediately` on ingestion through a streaming pipeline and for backfills to be handled as a batch job with the :violetemph:`same code`.
 
 What are Klio Pipelines?
 ------------------------
 
 A Klio pipeline:
 
-* use :greenemph:`reference identifiers` to audio files from event inputs (e.g. `Google Pub/Sub`_),
+* use :violetemph:`reference identifiers` to audio files from event inputs (e.g. `Google Pub/Sub`_),
 * download those files onto worker machines,
-* run :blueemph:`processing algorithms` (e.g. `librosa`_, `ffmpeg`_, trained ML models, anything) over these files,
+* run :violetemph:`processing algorithms` (e.g. `librosa`_, `ffmpeg`_, trained ML models, anything) over these files,
 * then save the resulting output to the data store of choice.
 
 Processing algorithms can be ML-based or otherwise, as long as they are defined or otherwise can be wrapped in Python. Klio jobs can scale up to process an entire corpus of media, or down to a single item for fast iteration.
 
-:greenemph:`Streaming` Klio jobs are wired up via :greenemph:`a messaging queue` [#fn1]_ to create complex processing :doc:`directed acyclic graphs <anatomy/graph>` - even across teams, much like backend services.
+:violetemph:`Streaming` Klio jobs are wired up via :violetemph:`a messaging queue` [#fn1]_ to create complex processing :doc:`directed acyclic graphs <anatomy/graph>` - even across teams, much like backend services.
 
 
 Why is it called Klio?

@@ -11,7 +11,7 @@ This guide will show you how to set up your development environment to implement
 Create a New Klio Job
 ---------------------
 
-:blueemph:`First`, initialize the ``klio_quickstart`` project directory for ``git``:
+:violetemph:`First`, initialize the ``klio_quickstart`` project directory for ``git``:
 
 .. code-block::
 
@@ -22,7 +22,7 @@ Create a New Klio Job
     If the |klio-cli|_ was installed via :ref:`option 2 <install-option-2>` or :ref:`option 3 <install-option-3>`, make sure you're ``klio-cli`` virtualenv is activated.
 
 
-:blueemph:`Next`, within your project directory, run the following command:
+:violetemph:`Next`, within your project directory, run the following command:
 
 .. code-block:: sh
 
@@ -36,7 +36,7 @@ After responding to the prompts, Klio will:
 4. Create a `Google Stackdriver`_ dashboard in the provided GCP project for you to monitor runtime job metrics.
 5. Create required files within the current working directory.
 
-:blueemph:`Then`, commit the created job files into ``git``:
+:violetemph:`Then`, commit the created job files into ``git``:
 
 .. code-block::
 
@@ -51,7 +51,7 @@ Run the New Klio Job
 
     If the |klio-cli|_ was installed via :ref:`option 2 <install-option-2>` or :ref:`option 3 <install-option-3>`, make sure you're ``klio-cli`` virtualenv is activated.
 
-:blueemph:`First`, to run the job using DirectRunner:
+:violetemph:`First`, to run the job using DirectRunner:
 
 .. code-block::
 
@@ -65,7 +65,7 @@ To know it started successfully, you should see a log line containing
 
     Running pipeline with DirectRunner
 
-:blueemph:`Next`, in another terminal:
+:violetemph:`Next`, in another terminal:
 
 .. code-block::
 

@@ -11,11 +11,11 @@ The ``klio-devtools`` Package
 
 .. defining roles used here so that github ignores them when rendering the README.
 
-.. role:: greenemph
+.. role:: violetemph
 
 .. start-klio-devtools-intro
 
 A collection of utilities to help aid the development of Klio.
-This is meant to be used by :greenemph:`developers` and :greenemph:`contributors` of Klio, not by users for Klio jobs.
+This is meant to be used by :violetemph:`developers` and :violetemph:`contributors` of Klio, not by users for Klio jobs.
 
 If you're interested in contributing to Klio, please check out our `contributor's guide <https://klio.readthedocs.io/en/latest/contributors.html>`_.

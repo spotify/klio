@@ -2,25 +2,18 @@
 .underline {
   text-decoration: underline;
 }
-.green {
-  color: #00aa55;
+.violet {
+  color: #A11FFF;
 }
-.greenemph {
-  color: #00aa55;
-  font-weight: bold;
-}
-.blue {
-  color: #2D46B9;
-}
-.blueemph {
-  color: #2D46B9;
+.violetemph {
+  color: #A11FFF;
   font-weight: bold;
 }
 .tagline {
   font-variant-caps: all-small-caps;
 }
 .release {
-  color: #00aa55;
+  color: #A11FFF;
   font-style: italic;
   font-weight: bold;
 }

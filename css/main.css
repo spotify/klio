@@ -1,0 +1,92 @@
+body {
+  background-color: #000;
+  color: #fff;
+  font-family: "HK-Grotesk";
+}
+h1 {
+  font-size: 70px;
+}
+p.lead {
+  font-size: 30px;
+}
+p {
+  font-size: 20px;
+}
+footer > .container > p {
+  font-size: 16px;
+}
+button:focus {
+  outline: none;
+}
+button.gradient {
+  font-size: 1rem;
+  padding: .5rem 3rem;
+  color: #fff;
+  border: solid 2px transparent;
+  border-radius: 100rem;
+  background-image: linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 0)), linear-gradient(101deg, #0074FF, #D49CFF);
+  background-origin: border-box;
+  background-clip: content-box, border-box;
+  box-shadow: 2px 1000px 1px #000 inset;
+}
+button.gradient:hover {
+  box-shadow: none;
+  color: #fff;
+}
+/* overrides of bootstrap */
+.navbar-dark {
+  background-color: #000 !important;
+  box-shadow: none;
+}
+.navbar-dark .navbar-toggler {
+  border: none;
+}
+/* custom ish */
+.below-fold {
+  background: linear-gradient(90deg, rgba(0, 116, 255, 0.3) 0%, rgba(0, 0, 0, 0) 100%);
+}
+.made-with-footer {
+  color: rgba(30,215,96, .6);
+}
+.made-with-footer:hover {
+  color: rgba(30,215,96, .6);
+  text-decoration: none;
+}
+.copyright {
+  color: rgba(255, 255, 255, .3);
+}
+.get-started {
+  background: linear-gradient(90deg, #0074FF 1.8%, #D49CFF 100%);
+  border: none;
+  border-radius: 100px;
+  color: #000;
+  padding-left: 3em;
+  padding-right: 3em;
+}
+.shove-down {
+  padding-top: 150px;
+}
+.shove-down-sm {
+  padding-top: 70px;
+}
+@media (max-width: 576px) {
+  .shove-down {
+    padding-top: 10px;
+  }
+  .shove-down-sm {
+    padding-top: 30px;
+  }
+  h1 {
+    font-size: 45px;
+  }
+  p.lead {
+    font-size: 24px;
+  }
+}
+/* size when the nav buttons get collapsed into menu toggle */
+@media (max-width: 768px) {
+  button.gradient {
+    font-size: 1rem;
+    padding: .1rem 3rem;
+  }
+}

@@ -1,9 +1,9 @@
 .. image:: docs/src/_static/images/logo_small.png
     :alt: Klio Logo
 
-=================================================
-``klio``: Smarter data pipelines for audio and ML
-=================================================
+==========================================
+``klio``: Smarter data pipelines for audio
+==========================================
 
 .. image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
     :target: https://opensource.org/licenses/Apache-2.0

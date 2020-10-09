@@ -56,6 +56,9 @@ from klio_devtools.commands import develop
     help="Path to klio repo",
     required=True,
 )
+@click.option(
+    "--exclude", help="exclude installing a particular package", multiple=True,
+)
 def develop_job(job_dir, config_file, **kwargs):
     job_dir, config_path = cli_utils.get_config_job_dir(job_dir, config_file)
     config_data = config_utils.get_config_by_path(config_path)
@@ -74,6 +77,6 @@ def develop_job(job_dir, config_file, **kwargs):
     )
 
     klio_pipeline = develop.DevelopKlioContainer(
-        job_dir, conf, runtime_config, kwargs["klio_path"],
+        job_dir, conf, runtime_config, kwargs["klio_path"], kwargs["exclude"]
     )
     klio_pipeline.run()

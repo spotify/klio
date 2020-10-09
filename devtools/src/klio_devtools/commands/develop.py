@@ -23,17 +23,25 @@ from klio_cli.commands import base
 
 class DevelopKlioContainer(base.BaseDockerizedPipeline):
     DOCKER_LOGGER_NAME = "klio.develop"
-    PIP_CMD = "pip install -e /usr/src/{pkg}"
+    PIP_CMD = "pip install --use-feature=2020-resolver -e /usr/src/{pkg}"
     # order is important - klio-core doesn't depend on any other
     # internal libraries; klio depends on klio-core; klio-exec depends
     # on klio-core & klio
     PKGS = ("klio-core", "klio", "klio-exec", "klio-audio")
 
     def __init__(
-        self, job_dir, klio_config, docker_runtime_config, klio_path,
+        self,
+        job_dir,
+        klio_config,
+        docker_runtime_config,
+        klio_path,
+        exclude_pkgs,
     ):
         super().__init__(job_dir, klio_config, docker_runtime_config)
         self.klio_path = klio_path
+        self.install_pkgs = [
+            pkg for pkg in self.PKGS if pkg not in exclude_pkgs
+        ]
 
     def _run_docker_container(self, runflags):
         """
@@ -42,10 +50,9 @@ class DevelopKlioContainer(base.BaseDockerizedPipeline):
         """
         container = self._docker_client.containers.create(**runflags)
         container.start()
-        for pkg in self.PKGS:
-            _, output = container.exec_run(
-                self.PIP_CMD.format(pkg=pkg), tty=True, stream=True
-            )
+
+        def run_and_log(cmd):
+            _, output = container.exec_run(cmd, tty=True, stream=True)
             for line in output:
                 try:
                     self._docker_logger.info(line.decode("utf-8").strip("\n"))
@@ -53,6 +60,10 @@ class DevelopKlioContainer(base.BaseDockerizedPipeline):
                     # sometimes there's a decode error for a log line, but it
                     # shouldn't stop the setup
                     pass
+
+        run_and_log("pip install --upgrade pip setuptools")
+        for pkg in self.install_pkgs:
+            run_and_log(self.PIP_CMD.format(pkg=pkg))
 
         # need to use lower-level Docker API client in order to start
         # an interactive terminal inside the running container

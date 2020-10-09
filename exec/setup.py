@@ -112,6 +112,8 @@ PYTHON_REQUIRES = ">=3.5, <3.9"
 AUDIT_PLUGIN_PATH = "klio_exec.commands.audit_steps."
 AUDIT_PLUGINS = [
     "tempfile=" + AUDIT_PLUGIN_PATH + "tempfile_usage:_init",
+    "multithreaded_tf=" + AUDIT_PLUGIN_PATH + "multithreaded_tf:_init",
+    "numpy_broken_blas=" + AUDIT_PLUGIN_PATH + "numpy_broken_blas:_init",
 ]
 
 

@@ -16,6 +16,8 @@ Hello, Klio!
     :start-after: start-intro
     :end-before: end-intro
 
+.. include:: /.current_status.rst
+
 Why Klio?
 ---------
 

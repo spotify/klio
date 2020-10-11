@@ -3,6 +3,8 @@ Klio Audio
 
 :release:`latest release`: |klio-audio-version| (:doc:`What's new? <changelog>`)
 
+.. include:: /.current_status.rst
+
 .. include:: ../../../../audio/README.rst
     :start-after: start-klio-audio-intro
 

@@ -3,6 +3,8 @@ Klio Core
 
 :release:`latest release`: |klio-core-version| (:doc:`What's new? <changelog>`)
 
+.. include:: /.current_status.rst
+
 .. include:: ../../../../core/README.rst
     :start-after: start-klio-core-intro
 

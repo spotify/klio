@@ -8,6 +8,8 @@ Quick Start
     installation
     hello_klio
 
+.. include:: /.current_status.rst
+
 Before we begin, it will be helpful to understand the basics of `Google Pub/Sub`_ and `Apache Beam's Python SDK`_ before getting started.
 
 Specifically, you should know the following topics:

@@ -1,0 +1,6 @@
+.. admonition:: Current Status
+    :class: caution
+
+    Klio is currently under **rapid development**.
+    This means that APIs and features will evolve.
+    It is recommended that teams who adopt Klio today upgrade their installation as new releases become available, as backwards compatibility is not yet guaranteed.

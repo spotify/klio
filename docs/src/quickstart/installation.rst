@@ -1,6 +1,8 @@
 Installation
 ============
 
+.. include:: /.current_status.rst
+
 Requirements
 ------------
 

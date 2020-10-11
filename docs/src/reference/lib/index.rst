@@ -3,6 +3,8 @@ Klio Library
 
 :release:`latest release`: |klio-version| (:doc:`What's new? <changelog>`)
 
+.. include:: /.current_status.rst
+
 .. include:: ../../../../lib/README.rst
     :start-after: start-klio-lib-intro
 

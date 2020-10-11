@@ -12,6 +12,8 @@ Reference
    Core <core/index>
    Dev Tools <devtools/index>
 
+.. include:: /.current_status.rst
+
 This reference guide contains a detailed description of the API of all the Klio libraries. The
 reference describes how the helper transforms, decorators, and other public functionality works and
 which parameters can be used. It assumes an understanding of key concepts of Klio and `Apache

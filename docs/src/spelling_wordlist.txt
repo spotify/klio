@@ -6,6 +6,7 @@ GaugeDispatcher
 Kleio
 KlioMessage
 KlioMessages
+Kubeflow
 Makefile
 PCollection
 PCollections
@@ -80,6 +81,7 @@ rst
 run
 runtime
 schemas
+scikit
 spectrogram
 spectrograms
 spotify
@@ -98,5 +100,6 @@ unpickles
 unserialization
 userguide
 utils
+vCPUs
 virtualenv
 virtualenvs

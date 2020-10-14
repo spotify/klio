@@ -18,13 +18,8 @@ import tempfile
 from klio_exec.commands.audit_steps import tempfile_usage
 
 
-def test_tempfile_usage(mocker, monkeypatch):
-    mock_emit_error = mocker.Mock()
-    monkeypatch.setattr(
-        tempfile_usage.TempFileUsage, "emit_error", mock_emit_error
-    )
-
-    inst = tempfile_usage.TempFileUsage("job/dir", "config", "tw")
+def test_tempfile_usage(klio_config, mock_emit_error, mocker, monkeypatch):
+    inst = tempfile_usage.TempFileUsage("job/dir", klio_config, "tw")
 
     assert "TemporaryFile" == tempfile.TemporaryFile.__name__  # sanity check
 

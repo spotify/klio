@@ -81,7 +81,7 @@ INSTALL_REQUIRES = [
     "glom",
     "google-api-core>1.18.0,<1.21.0",
     "google-api-python-client>=1.10.0",
-    "google-cloud-monitoring",
+    "google-cloud-monitoring<2.0.0",
     # API breaking change w google-api-core
     "google-cloud-pubsub<=1.4.0",
     "google-cloud-storage<1.30.0",

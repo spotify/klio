@@ -94,3 +94,11 @@ blockquote p {
 .header-style, h1, h2, h3, h4, h5, h6 {
   font-family: HK-Grotesk;
 }
+
+/*
+  "Social Service" icons.
+  Make Github icon light mode.
+*/
+i.fa-github-square::before {
+	color: #f8f9fa;
+}

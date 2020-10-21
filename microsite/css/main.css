@@ -4,7 +4,7 @@ body {
   font-family: "HK-Grotesk";
 }
 h1 {
-  font-size: 70px;
+  font-size: 74px;
 }
 p.lead {
   font-size: 30px;
@@ -19,7 +19,8 @@ button:focus {
   outline: none;
 }
 button.gradient {
-  font-size: 1rem;
+  font-size: .875rem;
+  letter-spacing: 1.5px;
   padding: .5rem 3rem;
   color: #fff;
   border: solid 2px transparent;
@@ -32,6 +33,12 @@ button.gradient {
 button.gradient:hover {
   box-shadow: none;
   color: #fff;
+}
+@media (min-width: 992px) {
+  .navbar-expand-lg .navbar-nav .nav-link {
+      padding-right: 0.4rem;
+      padding-left: 0.4rem;
+  }
 }
 /* overrides of bootstrap */
 .navbar-dark {
@@ -69,6 +76,27 @@ button.gradient:hover {
 .shove-down-sm {
   padding-top: 70px;
 }
+.animated-icons {
+  max-width: 15%;
+  height: auto;
+}
+.logo {
+  max-width: 150%;
+  width: 150%;
+  height: auto;
+}
+.navbar-brand {
+  padding-left: 2em;
+  padding-top: 1em;
+}
+.navbar-nav {
+  padding-right: 2em;
+  padding-top: .75em;
+}
+.navbar-toggler {
+  padding-right: 2em;
+  padding-top: 1em;
+}
 @media (max-width: 576px) {
   .shove-down {
     padding-top: 10px;
@@ -89,4 +117,9 @@ button.gradient:hover {
     font-size: 1rem;
     padding: .1rem 3rem;
   }
+  .animated-icons {
+    max-width: 25%;
+    height: auto;
+  }
 }
+

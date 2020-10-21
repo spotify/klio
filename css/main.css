@@ -78,7 +78,9 @@ button.gradient:hover {
 }
 .animated-icons {
   max-width: 15%;
-  height: auto;
+  max-height: 15%;
+  width: 15%;
+  height: 15%;
 }
 .logo {
   max-width: 150%;
@@ -119,7 +121,9 @@ button.gradient:hover {
   }
   .animated-icons {
     max-width: 25%;
-    height: auto;
+    max-height: 25%;
+    width: 25%;
+    height: 25%;
   }
 }
 

@@ -23,7 +23,8 @@ Each directory is its own Python package (except for ``docs``, ``examples``, and
     ├── examples/
     ├── exec/
     ├── integration/
-    └── lib/
+    ├── lib/
+    └── microsite/
 
 The ``klio-cli`` (user-facing) commands essentially wrap ``klio-exec`` (non-user-facing) commands.
 ``klio-cli $CMD`` sets up the run context needed to correctly run ``klio-exec $CMD`` inside the
@@ -251,3 +252,71 @@ To view them locally
     (klio-docs) $ make clean && make livehtml
 
 Then navigate to ``http://localhost:8888`` in your browser.
+
+
+Microsite
+---------
+
+The Klio `microsite/landing page <https://spotify.github.io/klio>`_ is a simple static site that uses `Bootstrap 4.5 <https://getbootstrap.com/docs/4.5/getting-started/introduction/>`_.
+For now, it is not managed by any tooling (npm, gulp, etc); HTML, CSS, etc is maintained by hand.
+
+
+Local Development
+^^^^^^^^^^^^^^^^^
+
+1. In ``microsite/index.html``, add ``<script src="js/reload.min.js"></script>`` to the bottom after the ``</body>`` closing tag.
+
+.. caution::
+
+    Be sure to remove this addition when committing changes.
+
+2. Run the following to view the site locally:
+
+.. code-block:: sh
+
+    # in the microsite/ directory
+    $ no virtualenv needed
+    $ python -m http.server 8888
+
+3. Navigate to ``http://localhost:8888`` in your browser. Any change made to files in the ``microsite/`` should be automatically reloaded (although CSS changes *may* need a manual browser refresh).
+
+
+Deployment
+^^^^^^^^^^
+
+Deployment is setup **automatically** with a `designated workflow <https://github.com/spotify/klio/blob/master/.github/workflows/microsite.yml>`_.
+The instructions below is in case the workflow is failing, or manual deployment is needed.
+
+
+.. admonition:: FYI
+    :class: tip
+
+    The microsite is deployed to the ``gh-pages`` branch, created as an `orphaned branch <https://git-scm.com/docs/git-checkout#Documentation/git-checkout.txt---orphanltnewbranchgt>`_ from ``master``.
+    The contents of the ``microsite/`` directory on ``master`` are mirrored in the root directory in ``gh-pages``.
+
+Manual Deployment
+~~~~~~~~~~~~~~~~~
+
+After changes to ``microsite/`` have been merged into ``master``:
+
+.. code-block:: sh
+
+    $ git fetch
+    $ git checkout gh-pages
+    $ git checkout master microsite
+
+    # move all contents of microsite/ to root
+    $ mv microsite/css/* css/
+    $ mv microsite/fonts/* fonts/
+    $ mv microsite/images/* images/
+    $ mv microsite/js/* js/
+    $ mv microsite/index.html .
+
+    # remove microsite
+    $ rm -rf microsite
+
+    # commit & push
+    $ git commit -am {{ commit message }}
+    $ git push origin gh-pages
+
+It may take a few minutes for GitHub pages to update.

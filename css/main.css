@@ -20,10 +20,10 @@ button:focus {
 }
 button.gradient {
   font-size: .875rem;
-  letter-spacing: 1.5px;
-  padding: .5rem 3rem;
+  letter-spacing: .07em;
+  padding: .4rem 2.5rem;
   color: #fff;
-  border: solid 2px transparent;
+  border: solid .25em transparent;
   border-radius: 100rem;
   background-image: linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 0)), linear-gradient(101deg, #0074FF, #D49CFF);
   background-origin: border-box;

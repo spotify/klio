@@ -106,3 +106,6 @@ i.fa-github-square::before {
 .logo {
   height: 75% !important;
 }
+body {
+  font-family: "Helvetica Neue" !important;
+}

@@ -153,6 +153,8 @@ linkcheck_ignore = [
     r"https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs#configuration.load",
     # ignore local links
     r"\./.+\.html",
+    # temp ignore reference to new workflow
+    r"https://github.com/spotify/klio/blob/master/.github/workflows/microsite.yml",
 ]
 
 # -- Options for HTML output -------------------------------------------------

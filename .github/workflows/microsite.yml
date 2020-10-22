@@ -1,0 +1,25 @@
+# Changes to `microsite/` on master should be moved to gh-pages
+name: Deploy Microsite
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'microsite/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Deploy
+        # docs: https://github.com/peaceiris/actions-gh-pages#options
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./microsite  # source dir (on master)
+          keep_files: true
+          # uncomment when ready
+          # cname: klio.io

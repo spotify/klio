@@ -49,6 +49,7 @@
       <div class="row">
       {%- endif %}
         {%- if meta is defined and meta is not none and 'nosidebar' in meta %}
+        <div class="col-12 col-md-3"></div>
         {%- else %}
           {% block docs_sidebar %}
           <div class="col-12 col-md-3 bd-sidebar">
@@ -57,16 +58,16 @@
           {% endblock %}
         {%- endif %}
 
+        <div class="d-none d-xl-block col-xl-2 bd-toc">
         {%- if meta is defined and meta is not none and 'nodocstoc' in meta %}
         {%- else %}
           {% block docs_toc %}
-          <div class="d-none d-xl-block col-xl-2 bd-toc">
               {% if not (meta is not none and 'notoc' in meta) %}
                 {%- include "docs-toc.html" %}
               {% endif %}
-          </div>
           {% endblock %}
         {%- endif %}
+        </div>
 
           {% block docs_main %}
           <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">

@@ -102,3 +102,10 @@ blockquote p {
 i.fa-github-square::before {
 	color: #f8f9fa;
 }
+
+.logo {
+  height: 75% !important;
+}
+body {
+  font-family: "Helvetica Neue" !important;
+}

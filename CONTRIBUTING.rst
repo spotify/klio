@@ -257,7 +257,7 @@ Then navigate to ``http://localhost:8888`` in your browser.
 Microsite
 ---------
 
-The Klio `microsite/landing page <https://spotify.github.io/klio>`_ is a simple static site that uses `Bootstrap 4.5 <https://getbootstrap.com/docs/4.5/getting-started/introduction/>`_.
+The Klio `microsite/landing page <https://klio.io>`_ is a simple static site that uses `Bootstrap 4.5 <https://getbootstrap.com/docs/4.5/getting-started/introduction/>`_.
 For now, it is not managed by any tooling (npm, gulp, etc); HTML, CSS, etc is maintained by hand.
 
 

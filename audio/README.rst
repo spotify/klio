@@ -18,8 +18,11 @@ The ``klio-audio`` Library
 
     To make use of ``klio-audio``, add ``klio[audio]`` in your ``job-requirements.txt`` file so that it is installed in your job's Docker image.
 
-As the ``klio-audio`` library is not meant to be installed directly, check out the `installation guide <https://klio.readthedocs.io/en/latest/quickstart/installation.html>`_ for how to setup installation.
-There is also the `user guide <https://klio.readthedocs.io/en/latest/userguide/index.html>`_ and the `API documentation <https://klio.readthedocs.io/en/latest/reference/audio/index.html>`_ for more information.
+As the ``klio-audio`` library is not meant to be installed directly, check out the `installation
+guide <https://docs.klio.io/en/latest/quickstart/installation.html>`_ for how to setup
+installation.
+There is also the `user guide <https://docs.klio.io/en/latest/userguide/index.html>`_ and the `API
+documentation <https://docs.klio.io/en/latest/reference/audio/index.html>`_ for more information.
 
 
 .. _GCS: https://cloud.google.com/storage/docs

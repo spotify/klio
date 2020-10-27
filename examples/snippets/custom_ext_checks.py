@@ -15,7 +15,7 @@
 """Example of custom data existence checks implementation.
 
 Please see the full walk-through here:
-https://klio.readthedocs.io/en/latest/userguide/
+https://docs.klio.io/en/latest/userguide/
     examples/custom_data_ext_checks.html
 """
 

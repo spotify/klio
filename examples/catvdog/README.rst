@@ -4,7 +4,7 @@ Cat and Dog Image Classifier
 Requirements
 ------------
 
-* Follow the documented `installation instructions <https://klio.readthedocs.io/en/latest/quickstart/installation.html>`_.
+* Follow the documented `installation instructions <https://docs.klio.io/en/latest/quickstart/installation.html>`_.
 * Python 3.6+
 
 Run

@@ -10,7 +10,7 @@
     :alt: Apache Licensed
 
 .. image:: https://readthedocs.org/projects/klio/badge/?version=latest
-    :target: https://klio.readthedocs.io/en/latest/?badge=latest
+    :target: https://docs.klio.io/en/latest/?badge=latest
     :alt: Documentation Status
 
 .. image:: https://slackin.spotify.com/badge.svg
@@ -58,12 +58,12 @@ Klio was built by Spotify to run our large-scale :violetemph:`audio intelligence
 
 .. end-intro
 
-Read more about Klio `here <https://klio.readthedocs.io/en/latest/userguide/index.html>`_.
+Read more about Klio `here <https://docs.klio.io/en/latest/userguide/index.html>`_.
 
 Get Started
 -----------
 
-Check out our `Quick Start <https://klio.readthedocs.io/en/latest/quickstart/index.html>`_ guide on how to start using Klio.
+Check out our `Quick Start <https://docs.klio.io/en/latest/quickstart/index.html>`_ guide on how to start using Klio.
 
 
 Resources
@@ -71,10 +71,10 @@ Resources
 
 .. start-resources
 
-* Have a look at our `complete documentation <https://klio.readthedocs.io/en/latest/index.html>`_.
-* Check out our `contributors' guide <https://klio.readthedocs.io/en/latest/contributors.html>`_.
+* Have a look at our `complete documentation <https://docs.klio.io/en/latest/index.html>`_.
+* Check out our `contributors' guide <https://docs.klio.io/en/latest/contributors.html>`_.
 * Join the ``#klio`` channel in the `Spotify FOSS Slack organization <https://slackin.spotify.com>`_.
-* Read up on some of our `FAQs <https://klio.readthedocs.io/en/latest/faqs/index.html>`_.
+* Read up on some of our `FAQs <https://docs.klio.io/en/latest/faqs/index.html>`_.
 * Review our `Code of Conduct <https://github.com/spotify/klio/blob/master/CODE_OF_CONDUCT.rst>`_ - this is how we roll.
 
 .. end-resources

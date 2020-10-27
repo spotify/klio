@@ -11,7 +11,7 @@ The ``klio-core`` Package
 
 .. start-klio-core-intro
 
-A library of common utilities, including the Klio `protobuf definitions <https://klio.readthedocs.io/en/latest/userguide/pipeline/message.html>`_ and configuration parsing.
+A library of common utilities, including the Klio `protobuf definitions <https://docs.klio.io/en/latest/userguide/pipeline/message.html>`_ and configuration parsing.
 
-As the ``klio-core`` package is not meant to be installed directly, check out the `installation guide <https://klio.readthedocs.io/en/latest/quickstart/installation.html>`_ for how to setup installation.
-There is also the `user guide <https://klio.readthedocs.io/en/latest/userguide/index.html>`_ and the `API documentation <https://klio.readthedocs.io/en/latest/reference/core/index.html>`_ for more information.
+As the ``klio-core`` package is not meant to be installed directly, check out the `installation guide <https://docs.klio.io/en/latest/quickstart/installation.html>`_ for how to setup installation.
+There is also the `user guide <https://docs.klio.io/en/latest/userguide/index.html>`_ and the `API documentation <https://docs.klio.io/en/latest/reference/core/index.html>`_ for more information.

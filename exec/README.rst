@@ -16,8 +16,8 @@ The executor – meant to not be used directly by the user – is a CLI that lau
 Many commands from the ``klio-cli`` directly wrap to commands in the executor: a ``klio-cli`` command will set up the Docker context needed to correctly run the pipeline via the associated command with ``klio-exec``.
 The Docker context includes mounting the job directory, sets up environment variables, mounting credentials, etc.
 
-As the ``klio-exec`` package is not meant to be installed directly, check out the `installation guide <https://klio.readthedocs.io/en/latest/quickstart/installation.html>`_ for how to setup installation.
-There is also the `user guide <https://klio.readthedocs.io/en/latest/userguide/index.html>`_ and the `API documentation <https://klio.readthedocs.io/en/latest/reference/executor/api.html>`_ for more information.
+As the ``klio-exec`` package is not meant to be installed directly, check out the `installation guide <https://docs.klio.io/en/latest/quickstart/installation.html>`_ for how to setup installation.
+There is also the `user guide <https://docs.klio.io/en/latest/userguide/index.html>`_ and the `API documentation <https://docs.klio.io/en/latest/reference/executor/api.html>`_ for more information.
 
 
 .. _"driver": https://beam.apache.org/documentation/programming-guide/#overview

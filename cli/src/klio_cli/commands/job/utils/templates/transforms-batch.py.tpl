@@ -20,10 +20,10 @@ class HelloKlio(beam.DoFn):
         log + drop the Klio message.
 
         For information on the Klio message, see
-        https://klio.readthedocs.io/en/latest/userguide/pipeline/message.html
+        https://docs.klio.io/en/latest/userguide/pipeline/message.html
 
         For information on yielding other information other than ``data``, see
-        https://klio.readthedocs.io/en/latest/userguide/pipeline/state.html
+        https://docs.klio.io/en/latest/userguide/pipeline/state.html
 
         Args:
             data (KlioMessage.data): The data of the Klio message, which

@@ -1,5 +1,5 @@
 ## -*- docker-image-name: "gcr.io/foo/bar" -*-
-FROM dataflow.gcr.io/v1beta3/python36-fnapi:2.24.0
+FROM apache/beam_python3.6_sdk:2.24.0
 
 WORKDIR /usr/src/app
 

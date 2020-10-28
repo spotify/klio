@@ -1,5 +1,5 @@
 ## -*- docker-image-name: "{{ klio.pipeline_options.worker_harness_container_image }}" -*-
-FROM dataflow.gcr.io/v1beta3/python{{ klio.python_version }}-fnapi:2.24.0
+FROM apache/beam_python{{ klio.python_version }}_sdk:2.24.0
 
 WORKDIR /usr/src/app
 {%- if klio.use_fnapi %}

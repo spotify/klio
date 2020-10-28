@@ -419,8 +419,8 @@ def test_validate_region_raises(job):
 @pytest.mark.parametrize(
     "input_version,exp_output_version",
     (
-        ("3.5", "3"),
-        ("3.5.1", "3"),
+        ("3.5", "3.5"),
+        ("3.5.1", "3.5"),
         ("3.6", "3.6"),
         ("3.6.1", "3.6"),
         ("3.7", "3.7"),

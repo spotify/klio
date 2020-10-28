@@ -199,10 +199,6 @@ class CreateJob(object):
         if python_version not in VALID_BEAM_PY_VERSIONS:
             raise click.BadParameter(invalid_err_msg)
 
-        # Dataflow's 3.5 image is just "python3" while 3.6 and 3.7 are
-        # "python36" and "python37"
-        if python_version == "3.5":
-            python_version = "3"
         return python_version
 
     def _get_default_streaming_job_context(self, kwargs):

@@ -37,9 +37,7 @@ TOPIC_REGEX = re.compile(
     r"topics/(?P<topic>[a-zA-Z0-9-_.~+%]{3,255})"
 )
 VALID_BEAM_PY_VERSIONS = ["3.5", "3.6", "3.7"]
-VALID_BEAM_PY_VERSIONS_SHORT = [
-    "".join(p.split(".")) for p in VALID_BEAM_PY_VERSIONS
-]
+
 DEFAULTS = {
     "region": "europe-west1",
     "experiments": "beam_fn_api",
@@ -195,17 +193,12 @@ class CreateJob(object):
         if len(python_version) < 2 or len(python_version) > 5:
             raise click.BadParameter(invalid_err_msg)
 
-        # 3.x -> 3x; 3.x.y -> 3x
-        if "." in python_version:
-            python_version = "".join(python_version.split(".")[:2])
+        # keep only the major and minor version information
+        python_version = ".".join(python_version.split(".")[:2])
 
-        if python_version not in VALID_BEAM_PY_VERSIONS_SHORT:
+        if python_version not in VALID_BEAM_PY_VERSIONS:
             raise click.BadParameter(invalid_err_msg)
 
-        # Dataflow's 3.5 image is just "python3" while 3.6 and 3.7 are
-        # "python36" and "python37"
-        if python_version == "35":
-            python_version = "3"
         return python_version
 
     def _get_default_streaming_job_context(self, kwargs):

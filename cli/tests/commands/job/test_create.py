@@ -124,7 +124,7 @@ def context():
     return {
         "job_name": "test-job",
         "job_type": "streaming",
-        "python_version": "36",
+        "python_version": "3.6",
         "pipeline_options": {
             "project": "test-gcp-project",
             "region": "europe-west1",
@@ -184,7 +184,7 @@ def default_context():
     return {
         "job_name": "test-job",
         "job_type": "streaming",
-        "python_version": "36",
+        "python_version": "3.6",
         "use_fnapi": False,
         "create_resources": False,
         "pipeline_options": {
@@ -357,7 +357,7 @@ def test_create_dockerfile(use_fnapi, tmpdir, job):
             "worker_harness_container_image": "gcr.io/foo/bar",
             "project": "test-gcp-project",
         },
-        "python_version": "36",
+        "python_version": "3.6",
         "use_fnapi": use_fnapi,
         "create_resources": False,
     }
@@ -419,15 +419,12 @@ def test_validate_region_raises(job):
 @pytest.mark.parametrize(
     "input_version,exp_output_version",
     (
-        ("3.5", "3"),
-        ("3.5.1", "3"),
-        ("35", "3"),
-        ("3.6", "36"),
-        ("3.6.1", "36"),
-        ("36", "36"),
-        ("3.7", "37"),
-        ("3.7.1", "37"),
-        ("37", "37"),
+        ("3.5", "3.5"),
+        ("3.5.1", "3.5"),
+        ("3.6", "3.6"),
+        ("3.6.1", "3.6"),
+        ("3.7", "3.7"),
+        ("3.7.1", "3.7"),
     ),
 )
 def test_parse_python_version(input_version, exp_output_version, job):
@@ -487,7 +484,7 @@ def context_overrides():
         "dependencies": [
             {"job_name": "parent-job", "gcp_project": "parent-gcp-project"}
         ],
-        "python_version": "37",
+        "python_version": "3.7",
         "use_fnapi": "n",
         "create_resources": "n",
     }
@@ -532,7 +529,7 @@ def expected_overrides():
                 {"job_name": "parent-job", "gcp_project": "parent-gcp-project"}
             ],
         },
-        "python_version": "37",
+        "python_version": "3.7",
         "use_fnapi": False,
         "create_resources": False,
         "job_type": "streaming",
@@ -678,7 +675,7 @@ def test_get_context_from_user_inputs(
         32,
         "n1-standard-2",
         "",
-        "36",
+        "3.6",
         "gs://test-gcp-project-dataflow-tmp/test-job/staging",
         "gs://test-gcp-project-dataflow-tmp/test-job/temp",
         "projects/test-parent-gcp-project/topics/test-parent-job-output",
@@ -749,7 +746,7 @@ def test_get_context_from_user_inputs_no_prompts(
     )
 
     expected_overrides["pipeline_options"].pop("project")
-    expected_overrides["python_version"] = "36"
+    expected_overrides["python_version"] = "3.6"
     assert not mock_prompt.call_count
     assert not mock_confirm.call_count
     mock_validate_region.assert_called_once_with("us-central1")
@@ -806,7 +803,7 @@ def test_get_context_from_user_inputs_dependency_settings(
     )
 
     expected_overrides["pipeline_options"].pop("project")
-    expected_overrides["python_version"] = "36"
+    expected_overrides["python_version"] = "3.6"
 
     assert not mock_prompt.call_count
     assert 1 == mock_confirm.call_count

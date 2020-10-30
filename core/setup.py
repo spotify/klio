@@ -154,9 +154,10 @@ INSTALL_REQUIRES = [
     "click",
     "glom",
     "google-api-python-client",
-    "google-api-core",  # TODO: try and remove
+    "google-api-core>=1.21.0",  # TODO: try and remove
+    "google-cloud-core>=1.4.1",
     "google-cloud-pubsub",  # TODO: try and remove
-    "protobuf",
+    "protobuf>=3.12.0",
     "pyyaml",
     "six",
     "attrs",

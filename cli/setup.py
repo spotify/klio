@@ -151,21 +151,18 @@ PROJECT_URLS = {
 }
 META_FILE = read(META_PATH)
 INSTALL_REQUIRES = [
+    "klio-core>=0.2.0",
     "click",
     "dateparser",
     "docker",
     "emoji",
     "jinja2",
     "glom",
-    "google-api-core>1.18.0,<1.21.0",
-    "google-api-python-client>=1.10.0",
-    "google-cloud-monitoring<2.0.0",
-    # API breaking change w google-api-core
-    "google-cloud-pubsub<=1.4.0",
-    "google-cloud-storage<1.30.0",
-    # API breaking change w google-cloud-monitoring
-    "googleapis-common-protos<1.50.0",
-    "klio-core>=0.2.0",
+    "google-api-core",
+    "google-api-python-client",
+    "google-cloud-monitoring",
+    "google-cloud-pubsub",
+    "google-cloud-storage",
     "protobuf",
     "pyyaml",
     "setuptools",

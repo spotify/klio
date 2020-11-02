@@ -18,4 +18,4 @@ The ``klio-devtools`` Package
 A collection of utilities to help aid the development of Klio.
 This is meant to be used by :violetemph:`developers` and :violetemph:`contributors` of Klio, not by users for Klio jobs.
 
-If you're interested in contributing to Klio, please check out our `contributor's guide <https://klio.readthedocs.io/en/latest/contributors.html>`_.
+If you're interested in contributing to Klio, please check out our `contributor's guide <https://docs.klio.io/en/latest/contributors.html>`_.

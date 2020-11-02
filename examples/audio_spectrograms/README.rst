@@ -9,5 +9,5 @@ This example adapts the `librosa <https://librosa.org/>`_ `example
 for separating vocals from instrumental, and then generates and saves
 spectrograms based off of the separated files.
 
-Please refer to the `accompanying walk-through <https://klio.readthedocs.io/en
+Please refer to the `accompanying walk-through <https://docs.klio.io/en
 /latest/userguide/examples/audio_spec.html>`_.

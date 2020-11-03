@@ -70,7 +70,21 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: Implementation :: CPython",
     "License :: OSI Approved :: Apache Software License",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Multimedia",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Image Processing",
 ]
+KEYWORDS = ["klio", "apache", "beam", "audio"]
+PROJECT_URLS = {
+    "Documentation": "https://docs.klio.io",
+    "Bug Tracker": "https://github.com/spotify/klio/issues",
+    "Source Code": "https://github.com/spotify/klio"
+}
 META_FILE = read(META_PATH)
 INSTALL_REQUIRES = [
     "click",
@@ -115,6 +129,8 @@ setup(
     version=find_meta("version"),
     description=find_meta("description"),
     url=find_meta("uri"),
+    project_urls=PROJECT_URLS,
+    keywords=KEYWORDS,
     author=find_meta("author"),
     author_email=find_meta("email"),
     maintainer=find_meta("author"),

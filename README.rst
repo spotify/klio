@@ -40,7 +40,9 @@
    :alt: Latest version of klio-core on PyPI
 
 
-.. defining roles used here so that github ignores them when rendering the README.
+.. defining roles used here so that github & PyPI project page ignores them when rendering the README.
+
+.. start-long-desc
 
 .. role:: violetemph
 

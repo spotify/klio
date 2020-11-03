@@ -105,7 +105,7 @@ def warn_if_py2_job(job_dir):
     if from_image in py2_dataflow_images:
         msg = (
             "Python 2 support in Klio is deprecated. Please upgrade "
-            "to Python 3.5+."
+            "to Python 3.6+."
         )
         warnings.warn(msg, category=UserWarning)
 

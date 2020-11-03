@@ -65,7 +65,6 @@ CLASSIFIERS = [
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS :: MacOS X",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.5",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
@@ -107,8 +106,8 @@ EXTRAS_REQUIRE["dev"] = (
     EXTRAS_REQUIRE["debug"] +
     ["bumpversion", "wheel"]
 )
-# support 3.5, 3.6, 3.7, & 3.8, matching Beam's support
-PYTHON_REQUIRES = ">=3.5, <3.9"
+# support 3.6, 3.7, & 3.8, matching Beam's support
+PYTHON_REQUIRES = ">=3.6, <3.9"
 AUDIT_PLUGIN_PATH = "klio_exec.commands.audit_steps."
 AUDIT_PLUGINS = [
     "tempfile=" + AUDIT_PLUGIN_PATH + "tempfile_usage:_init",

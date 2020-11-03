@@ -7,6 +7,15 @@ Klio Audio
 
 .. include:: ../../../../audio/README.rst
     :start-after: start-klio-audio-intro
+    :end-before: end-klio-audio-intro
+
+.. admonition:: Installation
+    :class: tip
+
+    To make use of ``klio-audio``, add ``klio[audio]`` in your ``job-requirements.txt`` file so that it is installed in your job's Docker image.
+
+.. include:: ../../../../audio/README.rst
+    :start-after: start-klio-audio-install
 
 .. toctree::
    :maxdepth: 1

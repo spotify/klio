@@ -16,6 +16,7 @@
 import os
 
 import click
+import klio_core.options as core_options
 
 from klio_cli import cli as main_cli
 from klio_cli import options
@@ -41,7 +42,7 @@ from klio_devtools.commands import develop
 )
 @options.job_dir
 @options.config_file
-@options.image_tag
+@core_options.image_tag(default=None, show_default="``git-sha[dirty?]``")
 @options.runtime
 @click.option(
     "--klio-path",

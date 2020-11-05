@@ -37,6 +37,28 @@ Klio Core
     KlioJobConfig
     KlioPipelineConfig
 
+:doc:`api/utils`
+----------------
+
+.. automodule:: klio_core.options
+   :noindex:
+
+.. currentmodule:: klio_core.options
+
+.. autosummary::
+
+    image_tag
+    direct_runner
+    update
+    show_logs
+    inteval
+    include_children
+    multiprocess
+    plot_graph
+    maximum
+    per_element
+    iterations
+
 
 :doc:`api/utils`
 ----------------

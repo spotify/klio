@@ -22,6 +22,7 @@ import click
 import yaml
 
 from klio_core import config
+import klio_core.options as core_options
 
 from klio_exec import options
 from klio_exec.commands import audit
@@ -75,10 +76,10 @@ def _compare_runtime_to_buildtime_config(runtime_config_path):
 
 
 @main.command("run")
-@options.image_tag
-@options.direct_runner
+@core_options.image_tag
+@core_options.direct_runner
 @options.blocking
-@options.update
+@core_options.update
 @options.config_file
 def run_pipeline(image_tag, direct_runner, update, config_file, blocking):
     config_path = config_file or "klio-job.yaml"
@@ -173,7 +174,7 @@ def profile_job():
 # `klioexec profile memory` or `klioexec profile cpu`
 @profile_job.command("run-pipeline", hidden=True)
 @options.input_file
-@options.show_logs
+@core_options.show_logs
 @options.config_file
 @click.argument("entity_ids", nargs=-1, required=False)
 def _run_pipeline(input_file, show_logs, entity_ids, config_file):
@@ -205,13 +206,13 @@ def _run_pipeline(input_file, show_logs, entity_ids, config_file):
         "Klio-based transforms."
     ),
 )
-@options.interval
-@options.include_children
-@options.multiprocess
-@options.plot_graph
+@core_options.interval
+@core_options.include_children
+@core_options.multiprocess
+@core_options.plot_graph
 @options.input_file
 @options.output_file
-@options.show_logs
+@core_options.show_logs
 @options.config_file
 @click.argument("entity_ids", nargs=-1, required=False)
 def profile_memory(
@@ -260,11 +261,11 @@ def profile_memory(
         "method."
     ),
 )
-@options.maximum
-@options.per_element
+@core_options.maximum
+@core_options.per_element(show_default="True")
 @options.input_file
 @options.output_file
-@options.show_logs
+@core_options.show_logs
 @options.config_file
 @click.argument("entity_ids", nargs=-1, required=False)
 def profile_memory_per_line(
@@ -304,11 +305,11 @@ def profile_memory_per_line(
         "Klio-based transforms."
     ),
 )
-@options.interval
+@core_options.interval
 @options.input_file
 @options.output_file
-@options.plot_graph
-@options.show_logs
+@core_options.plot_graph
+@core_options.show_logs
 @options.config_file
 @click.argument("entity_ids", nargs=-1, required=False)
 def profile_cpu(
@@ -355,8 +356,8 @@ def profile_cpu(
 )
 @options.input_file
 @options.output_file
-@options.iterations
-@options.show_logs
+@core_options.iterations
+@core_options.show_logs
 @options.config_file
 @click.argument("entity_ids", nargs=-1, required=False)
 def profile_wall_time(

@@ -22,6 +22,8 @@ import warnings
 
 import click
 
+import klio_core.options as core_options
+
 from klio_cli import __version__ as version
 from klio_cli import options
 from klio_cli.commands import image as image_commands
@@ -109,7 +111,7 @@ def configuration():
 # `klio image` commands
 #####
 @image.command("build", help="Build the Docker worker image.")
-@options.image_tag
+@core_options.image_tag(default=None, show_default="``git-sha[dirty?]``")
 @cli_utils.with_klio_config
 def build_image(klio_config, config_meta, **kwargs):
     if not kwargs.get("image_tag"):
@@ -124,7 +126,7 @@ def build_image(klio_config, config_meta, **kwargs):
 # `klio job` commands
 #####
 @job.command("run", help="Run a klio job.")
-@options.image_tag
+@core_options.image_tag(default=None, show_default="``git-sha[dirty?]``")
 @options.runtime
 @cli_utils.with_klio_config
 def run_job(klio_config, config_meta, **kwargs):
@@ -213,7 +215,7 @@ def stop_job(klio_config, config_meta, job_name, region, gcp_project):
         "the same name & region.\n\n**NOTE:** Draining is not supported."
     ),
 )
-@options.image_tag
+@core_options.image_tag(default=None, show_default="``git-sha[dirty?]``")
 @options.runtime
 @cli_utils.with_klio_config
 def deploy_job(klio_config, config_meta, **kwargs):
@@ -308,7 +310,7 @@ def delete_job(klio_config, config_meta):
     # set this so that pytest options can be pass-thru
     context_settings=dict(ignore_unknown_options=True),
 )
-@options.image_tag
+@core_options.image_tag(default=None, show_default="``git-sha[dirty?]``")
 @options.force_build
 @click.argument("pytest_args", nargs=-1, type=click.UNPROCESSED)
 @cli_utils.with_klio_config
@@ -372,7 +374,7 @@ def verify_job(klio_config, config_meta, create_resources):
     ),
 )
 @options.force_build
-@options.image_tag
+@core_options.image_tag(default=None, show_default="``git-sha[dirty?]``")
 @options.list_steps
 @cli_utils.with_klio_config
 def audit_job(klio_config, config_meta, force_build, image_tag, list_steps):
@@ -592,12 +594,12 @@ def _profile(subcommand, klio_config, config_meta, **kwargs):
         "Klio-based transforms."
     ),
 )
-@options.image_tag
+@core_options.image_tag(default=None, show_default="``git-sha[dirty?]``")
 @options.force_build
-@options.interval
-@options.include_children
-@options.multiprocess
-@options.plot_graph
+@core_options.interval
+@core_options.include_children
+@core_options.multiprocess
+@core_options.plot_graph
 @options.input_file(
     help=(
         "File of entity IDs (separated by a new line character) with "
@@ -606,7 +608,7 @@ def _profile(subcommand, klio_config, config_meta, **kwargs):
     ),
 )
 @options.output_file(help="Output file for results. [default: stdout]")
-@options.show_logs
+@core_options.show_logs
 @click.argument("entity_ids", nargs=-1, required=False)
 @cli_utils.with_klio_config
 def profile_memory(klio_config, config_meta, **kwargs):
@@ -621,9 +623,9 @@ def profile_memory(klio_config, config_meta, **kwargs):
         "method."
     ),
 )
-@options.maximum
-@options.per_element
-@options.image_tag
+@core_options.maximum
+@core_options.per_element(show_default=True)
+@core_options.image_tag(default=None, show_default="``git-sha[dirty?]``")
 @options.force_build
 @options.input_file(
     help=(
@@ -633,7 +635,7 @@ def profile_memory(klio_config, config_meta, **kwargs):
     ),
 )
 @options.output_file(help="Output file for results. [default: stdout]")
-@options.show_logs
+@core_options.show_logs
 @click.argument("entity_ids", nargs=-1, required=False)
 @cli_utils.with_klio_config
 def profile_memory_per_line(klio_config, config_meta, **kwargs):
@@ -648,10 +650,10 @@ def profile_memory_per_line(klio_config, config_meta, **kwargs):
         "Klio-based transforms."
     ),
 )
-@options.image_tag
+@core_options.image_tag(default=None, show_default="``git-sha[dirty?]``")
 @options.force_build
-@options.interval
-@options.plot_graph
+@core_options.interval
+@core_options.plot_graph
 @options.input_file(
     help=(
         "File of entity IDs (separated by a new line character) with "
@@ -660,7 +662,7 @@ def profile_memory_per_line(klio_config, config_meta, **kwargs):
     ),
 )
 @options.output_file(help="Output file for results. [default: stdout]")
-@options.show_logs
+@core_options.show_logs
 @click.argument("entity_ids", nargs=-1, required=False)
 @cli_utils.with_klio_config
 def profile_cpu(klio_config, config_meta, **kwargs):
@@ -676,7 +678,7 @@ def profile_cpu(klio_config, config_meta, **kwargs):
         "package, not Python's ``timeit`` module."
     ),
 )
-@options.image_tag
+@core_options.image_tag(default=None, show_default="``git-sha[dirty?]``")
 @options.force_build
 @options.input_file(
     help=(
@@ -686,8 +688,8 @@ def profile_cpu(klio_config, config_meta, **kwargs):
     ),
 )
 @options.output_file(help="Output file for results. [default: stdout]")
-@options.iterations
-@options.show_logs
+@core_options.iterations
+@core_options.show_logs
 @click.argument("entity_ids", nargs=-1, required=False)
 @cli_utils.with_klio_config
 def profile_timeit(klio_config, config_meta, **kwargs):

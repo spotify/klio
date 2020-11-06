@@ -22,8 +22,8 @@ from klio_cli import cli as main_cli
 from klio_cli import options
 from klio_cli.cli import main
 from klio_cli.utils import cli_utils
-from klio_cli.utils import config_utils
 from klio_core import config
+from klio_core import utils as core_utils
 
 from klio_devtools.commands import develop
 
@@ -61,8 +61,8 @@ from klio_devtools.commands import develop
     "--exclude", help="exclude installing a particular package", multiple=True,
 )
 def develop_job(job_dir, config_file, **kwargs):
-    job_dir, config_path = cli_utils.get_config_job_dir(job_dir, config_file)
-    config_data = config_utils.get_config_by_path(config_path)
+    job_dir, config_path = core_utils.get_config_job_dir(job_dir, config_file)
+    config_data = core_utils.get_config_by_path(config_path)
     conf = config.KlioConfig(config_data)
 
     git_sha = cli_utils.get_git_sha(job_dir, kwargs.get("image_tag"))

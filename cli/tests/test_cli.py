@@ -22,10 +22,10 @@ import pytest
 from click import testing
 
 from klio_core import config as kconfig
+from klio_core import utils as core_utils
 
 from klio_cli import cli
 from klio_cli.utils import cli_utils
-from klio_cli.utils import config_utils
 
 
 def assert_execution_success(result):
@@ -42,11 +42,11 @@ class MockKlioConfig(object):
     def __init__(self, mocker, monkeypatch, patch_os_getcwd):
 
         self.mock_get_config = mocker.patch.object(
-            config_utils, "get_config_by_path"
+            core_utils, "get_config_by_path"
         )
         self.mock_get_config_job_dir = mocker.Mock()
         monkeypatch.setattr(
-            cli.cli_utils, "get_config_job_dir", self.mock_get_config_job_dir
+            cli.core_utils, "get_config_job_dir", self.mock_get_config_job_dir
         )
 
         self.patch_os_getcwd = patch_os_getcwd
@@ -60,7 +60,7 @@ class MockKlioConfig(object):
 
         self.mock_warn_if_py2_job = self.mocker.Mock()
         self.monkeypatch.setattr(
-            cli.cli_utils, "warn_if_py2_job", self.mock_warn_if_py2_job
+            cli.core_utils, "warn_if_py2_job", self.mock_warn_if_py2_job
         )
 
         self.mock_get_config_job_dir.return_value = (
@@ -70,7 +70,7 @@ class MockKlioConfig(object):
 
         self.mock_get_config.return_value = config_data
 
-        self.meta = cli_utils.KlioConfigMeta(
+        self.meta = core_utils.KlioConfigMeta(
             job_dir=self.patch_os_getcwd,
             config_file=config_override,
             config_path=config_override or config_file,
@@ -79,7 +79,7 @@ class MockKlioConfig(object):
         self.klio_config = kconfig.KlioConfig(config_data)
 
         self.mock_klio_config = self.mocker.patch.object(
-            cli_utils.config, "KlioConfig"
+            core_utils.config, "KlioConfig"
         )
         self.mock_klio_config.return_value = self.klio_config
 
@@ -133,14 +133,14 @@ def config_file(patch_os_getcwd):
 @pytest.fixture
 def mock_warn_if_py2_job(mocker, monkeypatch):
     mock_warn = mocker.Mock()
-    monkeypatch.setattr(cli.cli_utils, "warn_if_py2_job", mock_warn)
+    monkeypatch.setattr(cli.core_utils, "warn_if_py2_job", mock_warn)
     return mock_warn
 
 
 @pytest.fixture
 def mock_get_config_job_dir(mocker, monkeypatch):
     mock = mocker.Mock()
-    monkeypatch.setattr(cli.cli_utils, "get_config_job_dir", mock)
+    monkeypatch.setattr(cli.core_utils, "get_config_job_dir", mock)
     return mock
 
 
@@ -460,7 +460,7 @@ def test_run_job_raises(
     mock_get_git_sha,
 ):
     mock_run = mocker.patch.object(cli.job_commands.run.RunPipeline, "run")
-    mock_get_config = mocker.patch.object(config_utils, "get_config_by_path")
+    mock_get_config = mocker.patch.object(core_utils, "get_config_by_path")
 
     cli_inputs = ["job", "run", "--image-tag", "foobar"]
 
@@ -614,7 +614,7 @@ def test_deploy_job_raises(
     mock_get_git_sha,
 ):
     mock_run = mocker.patch.object(cli.job_commands.run.RunPipeline, "run")
-    mock_get_config = mocker.patch.object(config_utils, "get_config_by_path")
+    mock_get_config = mocker.patch.object(core_utils, "get_config_by_path")
 
     cli_inputs = ["job", "deploy", "--image-tag", "foobar"]
 
@@ -695,11 +695,11 @@ def test_test_job(
             ],
         },
     }
-    mock_get_config = mocker.patch.object(config_utils, "get_config_by_path")
+    mock_get_config = mocker.patch.object(core_utils, "get_config_by_path")
     # deepcopy since KlioConfig will pop keys
     mock_get_config.return_value = config_data
     conf = kconfig.KlioConfig(copy.deepcopy(config_data))
-    mock_klio_config = mocker.patch.object(cli_utils.config, "KlioConfig")
+    mock_klio_config = mocker.patch.object(core_utils.config, "KlioConfig")
     mock_klio_config.return_value = conf
 
     result = runner.invoke(cli.main, cli_inputs)
@@ -757,7 +757,7 @@ def test_verify(
         patch_os_getcwd,
         conf_override or config_file,
     )
-    mock_get_config = mocker.patch.object(config_utils, "get_config_by_path")
+    mock_get_config = mocker.patch.object(core_utils, "get_config_by_path")
 
     config = {
         "job_name": "klio-job-name",
@@ -832,7 +832,7 @@ def test_collect_profiling_data(
     }
     if not gcs_location:
         config["pipeline_options"] = {"profile_location": "gs://foo"}
-    mock_get_config = mocker.patch.object(config_utils, "get_config_by_path")
+    mock_get_config = mocker.patch.object(core_utils, "get_config_by_path")
     mock_get_config.return_value = config
 
     exp_exit_code = 0
@@ -902,7 +902,7 @@ def test_collect_profiling_data_raises(
         "job_config": {"events": {}, "data": {}},
         "pipeline_options": {},
     }
-    mock_get_config = mocker.patch.object(config_utils, "get_config_by_path")
+    mock_get_config = mocker.patch.object(core_utils, "get_config_by_path")
     mock_get_config.return_value = config
 
     cli_inputs = ["job", "profile", "collect-profiling-data"]
@@ -1324,7 +1324,7 @@ def test_publish_raises_non_klio_config(
     mock_publish = mocker.patch.object(
         cli.message_commands.publish, "publish_messages"
     )
-    mock_get_config = mocker.patch.object(config_utils, "get_config_by_path")
+    mock_get_config = mocker.patch.object(core_utils, "get_config_by_path")
 
     cli_inputs = ["message", "publish", "deadb33f", "--non-klio"]
 

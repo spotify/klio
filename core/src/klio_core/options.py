@@ -16,9 +16,6 @@
 import click
 
 
-#####
-# utils for options
-#####
 class MutuallyExclusiveOption(click.Option):
     """
     Helper class to validate and document mutual exclusivity between options.
@@ -69,6 +66,7 @@ class MutuallyExclusiveOption(click.Option):
 
 def image_tag(*args, **kwargs):
     """Docker image tag to use."""
+
     def wrapper(func):
         return click.option(
             "--image-tag", help="Docker image tag to use", **kwargs
@@ -114,7 +112,7 @@ def show_logs(func):
 
 
 #####
-# options for `klio job profile memory`
+# options for `<cmd> profile memory`
 #####
 def interval(func):
     """Sampling period (in seconds)."""
@@ -171,7 +169,7 @@ def plot_graph(func):
 
 
 #####
-# options for `klio job profile memory-per-line`
+# options for `<cmd> profile memory-per-line`
 #####
 def maximum(func):
     """
@@ -195,6 +193,7 @@ def maximum(func):
 
 def per_element(*args, **kwargs):
     """Print memory useage per line for each input element processed"""
+
     def wrapper(func):
         return click.option(
             "--per-element",
@@ -212,7 +211,7 @@ def per_element(*args, **kwargs):
 
 
 #####
-# options for `klio job profile timeit`
+# options for `<cmd> profile timeit`
 #####
 def iterations(func):
     """Number of times to execute each entity ID provided."""
@@ -224,3 +223,93 @@ def iterations(func):
         type=int,
         help="Number of times to execute each entity ID provided.",
     )(func)
+
+
+################################
+# options for config overrides
+################################
+
+
+def override(func):
+    """Override a config value, in the form ``key=value``."""
+    return click.option(
+        "-O",
+        "--override",
+        default=[],
+        multiple=True,
+        help="Override a config value, in the form ``key=value``.",
+    )(func)
+
+
+def template(func):
+    """
+    Set the value of a config template parameter in the form ``key=value``.
+    Any instance of ``${key}`` in ``klio-job.yaml`` will be replaced
+    with ``value``.
+    """
+    return click.option(
+        "-T",
+        "--template",
+        default=[],
+        multiple=True,
+        help=(
+            "Set the value of a config template parameter"
+            ", in the form ``key=value``.  Any instance of ``${key}`` "
+            "in ``klio-job.yaml`` will be replaced with ``value``."
+        ),
+    )(func)
+
+
+def config_file(*args, **kwargs):
+    """Path to config filename. If ``PATH`` is not absolute,
+    it will be treated relative to ``--job-dir``.
+    Defaults to ``klio-job.yaml``.
+    """
+    mutually_exclusive = kwargs.get("mutex", [])
+
+    def wrapper(func):
+        return click.option(
+            "-c",
+            "--config-file",
+            type=click.Path(exists=False),
+            help=(
+                "Path to config filename. If ``PATH`` is not absolute, it "
+                "will be treated relative to ``--job-dir``. Defaults to "
+                "``klio-job.yaml``."
+            ),
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=mutually_exclusive,
+        )(func)
+
+    # allows @options.foo to be used without parens (i.e. no need to do
+    # `@options.foo()`) when there are no args/kwargs provided
+    if args:
+        return wrapper(args[0])
+    return wrapper
+
+
+def job_dir(*args, **kwargs):
+    """
+    Job directory where the job's ``Dockerfile`` is located.
+    Defaults current working directory.
+    """
+    mutually_exclusive = kwargs.get("mutex", [])
+
+    def wrapper(func):
+        return click.option(
+            "-j",
+            "--job-dir",
+            type=click.Path(exists=True),
+            help=(
+                "Job directory where the job's ``Dockerfile`` is located. "
+                "Defaults current working directory."
+            ),
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=mutually_exclusive,
+        )(func)
+
+    # allows @options.foo to be used without parens (i.e. no need to do
+    # `@options.foo()`) when there are no args/kwargs provided
+    if args:
+        return wrapper(args[0])
+    return wrapper

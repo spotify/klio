@@ -21,8 +21,8 @@ import os
 import click
 import yaml
 
-from klio_core import config
 import klio_core.options as core_options
+from klio_core import config
 
 from klio_exec import options
 from klio_exec.commands import audit

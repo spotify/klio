@@ -15,9 +15,18 @@
 """Utility functions for use within the Klio ecosystem."""
 
 import functools
+import logging
+import os
+import warnings
+
+import attr
+import yaml
 
 from google.api_core import exceptions as gapi_exceptions
 from google.cloud import pubsub
+
+from klio_core import config
+from klio_core import options
 
 
 def _name(name):
@@ -119,3 +128,122 @@ def get_publisher(topic):
 def enum(*sequential, **named):
     enums = dict(zip(sequential, range(len(sequential))), **named)
     return type("Enum", (), enums)
+
+
+#############################
+# Config utils
+#############################
+
+
+def get_config_by_path(config_filepath, parse_yaml=True):
+    try:
+        with open(config_filepath) as f:
+            if parse_yaml:
+                return yaml.safe_load(f)
+            else:
+                return f.read()
+    except IOError:
+        logging.error("Could not read config file {0}".format(config_filepath))
+        raise SystemExit(1)
+
+
+#############################
+# Cli/exec utils
+#############################
+def warn_if_py2_job(job_dir):
+    dockerfile_path = os.path.join(job_dir, "Dockerfile")
+    from_line = None
+    with open(dockerfile_path, "r") as f:
+        for line in f.readlines():
+            if line.startswith("FROM"):
+                from_line = line
+                break
+    if not from_line:
+        # not having a FROM line will break elsewhere, so no need to take
+        # care of it here
+        return
+
+    py2_dataflow_images = [
+        "dataflow.gcr.io/v1beta3/python",
+        "dataflow.gcr.io/v1beta3/python-base",
+        "dataflow.gcr.io/v1beta3/python-fnapi",
+    ]
+    from_image = from_line.lstrip("FROM ").split(":")[0]
+    if from_image in py2_dataflow_images:
+        msg = (
+            "Python 2 support in Klio is deprecated. Please upgrade "
+            "to Python 3.5+."
+        )
+        warnings.warn(msg, category=UserWarning)
+
+
+def get_config_job_dir(job_dir, config_file):
+    if job_dir and config_file:
+        config_file = os.path.join(job_dir, config_file)
+
+    elif not job_dir:
+        job_dir = os.getcwd()
+
+    job_dir = os.path.abspath(job_dir)
+
+    if not config_file:
+        config_file = os.path.join(job_dir, "klio-job.yaml")
+
+    return job_dir, config_file
+
+
+@attr.attrs
+class KlioConfigMeta(object):
+
+    # resolved directory of job
+    job_dir = attr.attrib()
+
+    # resolved path to config file
+    config_path = attr.attrib()
+
+    # user-override of config file (may be None)
+    config_file = attr.attrib()
+
+
+def with_klio_config(func):
+    """Decorator for commands to automatically handle a number of options
+    regarding config, and provide a properly constructed KlioConfig as an
+    argument named `klio_config`.
+
+    Be aware this is a function wrapper and must come after any other
+    decorators for click options, arguments, etc.
+    """
+
+    @options.override
+    @options.template
+    @options.job_dir
+    @options.config_file
+    def wrapper(*args, **kwargs):
+        raw_overrides = kwargs.pop("override")
+        raw_templates = kwargs.pop("template")
+        job_dir = kwargs.pop("job_dir")
+        config_file = kwargs.pop("config_file")
+        job_dir, config_path = get_config_job_dir(job_dir, config_file)
+
+        warn_if_py2_job(job_dir)
+
+        raw_config_data = get_config_by_path(config_path)
+
+        processed_config_data = config.KlioConfigPreprocessor.process(
+            raw_config_data=raw_config_data,
+            raw_template_list=raw_templates,
+            raw_override_list=raw_overrides,
+        )
+
+        meta = KlioConfigMeta(
+            job_dir=job_dir, config_file=config_file, config_path=config_path,
+        )
+
+        conf = config.KlioConfig(processed_config_data)
+
+        kwargs["klio_config"] = conf
+        kwargs["config_meta"] = meta
+
+        func(*args, **kwargs)
+
+    return functools.update_wrapper(wrapper, func)

@@ -43,7 +43,7 @@ def test_warn_if_py2_job(image, patch_os_getcwd, mocker):
 
     warn_msg = (
         "Python 2 support in Klio is deprecated. "
-        "Please upgrade to Python 3.5+"
+        "Please upgrade to Python 3.6+"
     )
     with pytest.warns(UserWarning, match=warn_msg):
         cli_utils.warn_if_py2_job(patch_os_getcwd)

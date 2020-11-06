@@ -36,7 +36,7 @@ TOPIC_REGEX = re.compile(
     r"^projects/(?P<project>[a-z0-9-]{6,30})/"
     r"topics/(?P<topic>[a-zA-Z0-9-_.~+%]{3,255})"
 )
-VALID_BEAM_PY_VERSIONS = ["3.5", "3.6", "3.7"]
+VALID_BEAM_PY_VERSIONS = ["3.6", "3.7", "3.8"]
 
 DEFAULTS = {
     "region": "europe-west1",
@@ -189,7 +189,7 @@ class CreateJob(object):
             "{}".format(python_version, ", ".join(VALID_BEAM_PY_VERSIONS))
         )
 
-        # valid examples: 35, 3.5, 3.5.6
+        # valid examples: 36, 3.6, 3.6.6
         if len(python_version) < 2 or len(python_version) > 5:
             raise click.BadParameter(invalid_err_msg)
 

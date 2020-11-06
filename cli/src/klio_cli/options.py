@@ -365,7 +365,7 @@ def until(func):
     )(func)
 
 
-# https://docs.python.org/3.5/library/profile.html#pstats.Stats.sort_stats
+# https://docs.python.org/3.6/library/profile.html#pstats.Stats.sort_stats
 # unfortunately, can't get this dynamically <3.7 (@lynn)
 SORT_STATS_KEY = [
     "calls",

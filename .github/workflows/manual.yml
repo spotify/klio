@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       python-version:
-        description: 'Python Version (3.5, 3.6, 3.7 or 3.8)'
+        description: 'Python Version (3.6, 3.7 or 3.8)'
         required: true
         default: '3.6'
       package:

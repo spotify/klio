@@ -68,6 +68,46 @@ Install via `pipx`_:
     # confirm installation
     $ klio --version
 
+
+.. admonition:: See an error while installing?
+    :class: hint
+
+    When running ``pipx install klio-cli``, you may come across `a dependency mismatch error <https://github.com/spotify/klio/issues/113>`_, something like this:
+
+    .. code-block:: console
+
+        ERROR: After October 2020 you may experience errors when installing or updating packages. This is because pip will change the way that it resolves dependency conflicts.
+
+        We recommend you use --use-feature=2020-resolver to test your packages with the new resolver before it becomes the default.
+
+        google-api-python-client 1.12.5 requires google-api-core<2dev,>=1.21.0, but you'll have google-api-core 1.20.1 which is incompatible.
+        klio-core 0.2.0 requires google-api-python-client<1.12,>=1.10.0, but you'll have google-api-python-client 1.12.5 which is incompatible.
+        Could not find package klio-cli. Is the name correct?
+
+    or like this:
+
+    .. code-block:: console
+
+        ERROR: After October 2020 you may experience errors when installing or updating packages. This is because pip will change the way that it resolves dependency conflicts.
+
+        We recommend you use --use-feature=2020-resolver to test your packages with the new resolver before it becomes the default.
+
+        google-api-python-client 1.12.5 requires google-api-core<2dev,>=1.21.0, but you'll have google-api-core 1.20.1 which is incompatible.
+        klio-core 0.2.0 requires google-api-python-client<1.12,>=1.10.0, but you'll have google-api-python-client 1.12.5 which is incompatible.
+        Internal error with venv metadata inspection.
+
+        Unable to install klio-cli.
+        Check the name or spec for errors, and verify that it can be installed with pip.
+
+    **Fix:** Try re-running the command with the added argument:
+
+    .. code-block:: sh
+
+        pipx install klio-cli --pip-args="--use-feature=2020-resolver"
+
+
+    **Still failing to install?** Please let us know by `filing an issue <https://github.com/spotify/klio/issues/new>`_.
+
 ``pipx`` installs ``klio-cli`` into the local user space within its own virtualenv, so it's accessible no matter the current working directory or if a ``virtualenv`` is activated.
 
 .. _install-option-2:
@@ -93,15 +133,24 @@ First, setup a new ``virtualenv``:
     $ source klio-cli/bin/activate
     (klio-cli) $
 
+    # update pip & setuptools within the virtualenv
+    (klio-cli) $ pip install --upgrade pip setuptools
+
 
 Then install |klio-cli|_:
 
 .. code-block:: sh
 
     # within the activate virtualenv
-    (klio-cli) $ pip install klio-cli
+    (klio-cli) $ pip install klio-cli --use-feature=2020-resolver
     # confirm installation
     (klio-cli) $ klio --version
+
+
+.. collapsible:: Why the flag "``--feature=2020-resolver``"?
+
+    The ``klio-cli`` libraries on which it depends have their own dependencies that can sometimes have conflicting versions.
+    The Klio dev team has found that the new ``pip`` `resolver <https://discuss.python.org/t/announcement-pip-20-2-release/4863>`_ (as of version ``20.2``) can help fix those conflicts.
 
 .. _install-option-3:
 
@@ -122,15 +171,24 @@ First, setup a new ``virtualenv`` with ``pyenv-virtualenv``:
     $ pyenv activate klio-cli
     (klio-cli) $
 
+    # update pip & setuptools within the virtualenv
+    (klio-cli) $ pip install --upgrade pip setuptools
+
 
 Then install |klio-cli|_:
 
 .. code-block:: sh
 
     # within the activate virtualenv
-    (klio-cli) $ pip install klio-cli
+    (klio-cli) $ pip install klio-cli --use-feature=2020-resolver
     # confirm installation
     (klio-cli) $ klio --version
+
+
+.. collapsible:: Why the flag "``--feature=2020-resolver``"?
+
+    The ``klio-cli`` libraries on which it depends have their own dependencies that can sometimes have conflicting versions.
+    The Klio dev team has found that the new ``pip`` `resolver <https://discuss.python.org/t/announcement-pip-20-2-release/4863>`_ (as of version ``20.2``) can help fix those conflicts.
 
 
 .. _git: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git

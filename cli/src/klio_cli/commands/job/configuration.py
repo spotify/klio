@@ -20,8 +20,7 @@ import glom
 import yaml
 
 from klio_core import config as kconfig
-
-from klio_cli.utils import config_utils
+from klio_core import utils as core_utils
 
 
 class IndentListDumper(yaml.Dumper):
@@ -50,7 +49,7 @@ class IndentListDumper(yaml.Dumper):
 class EffectiveJobConfig(object):
     def __init__(self, config_path):
         self.config_path = config_path
-        self.config_data = config_utils.get_config_by_path(self.config_path)
+        self.config_data = core_utils.get_config_by_path(self.config_path)
 
     def _get_effective_config(self):
         conf = kconfig.KlioConfig(self.config_data)

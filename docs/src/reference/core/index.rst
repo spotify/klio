@@ -39,7 +39,7 @@ Klio Core
     KlioPipelineConfig
 
 :doc:`api/options`
-----------------
+------------------
 
 .. automodule:: klio_core.options
    :noindex:
@@ -76,6 +76,9 @@ Klio Core
     set_global
     get_global
     delete_global
+    get_config_by_path
+    get_config_job_dir
+    with_klio_config
 
 
 :doc:`api/dataflow`

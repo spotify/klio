@@ -1,5 +1,5 @@
 ``klio_core.options``
-===================
+=====================
 
 .. automodule:: klio_core.options
 

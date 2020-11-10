@@ -26,7 +26,8 @@ Meta-KEPs
 
 *KEPs about KEPs or Processes*
 
-(None, yet.)
+* :doc:`kep-001`
+* :doc:`kep-template`
 
 
 Accepted KEPs
@@ -41,8 +42,7 @@ Open KEPs
 
 *Under consideration*
 
-* `KEP 1: Purpose & Process <https://github.com/spotify/klio/pull/117>`_
-* `KEP X: KEP X: Template & Instructions <https://github.com/spotify/klio/pull/117>`_
+(None, yet.)
 
 Finished KEPs
 -------------

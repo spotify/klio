@@ -3,7 +3,7 @@ KEP 1: Purpose & Process
 
 :Author: `Lynn Root`_
 :Type: Process
-:Status: Draft
+:Status: Active
 :Created: 2020-11-09
 
 

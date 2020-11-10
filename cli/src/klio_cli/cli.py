@@ -139,9 +139,6 @@ def run_job(klio_config, config_meta, **kwargs):
         config_meta.job_dir, kwargs.get("image_tag")
     )
     image_tag = kwargs.get("image_tag") or git_sha
-    if config_meta.config_file:
-        basename = os.path.basename(config_meta.config_file)
-        image_tag = "{}-{}".format(image_tag, basename)
 
     runtime_config = DockerRuntimeConfig(
         image_tag=image_tag,

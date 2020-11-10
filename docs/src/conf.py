@@ -153,8 +153,9 @@ linkcheck_ignore = [
     r"https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs#configuration.load",
     # ignore local links
     r"\./.+\.html",
-    # temp ignore file not added to master yet
-    r"https://github.com/spotify/klio/blob/master/RELEASING.rst",
+    # temp ignore reference to keps
+    r"https://github.com/spotify/klio/tree/master/docs/src/keps",
+    r"https://docs.klio.io/en/latest/keps/",
 ]
 
 # -- Options for HTML output -------------------------------------------------

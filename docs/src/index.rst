@@ -109,6 +109,7 @@ Releases
    Reference <reference/index>
    FAQs <faqs/index>
    Contributing <contributors>
+   KEPs <keps/index>
 
 
 Indices and tables

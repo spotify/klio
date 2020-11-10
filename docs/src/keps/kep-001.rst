@@ -1,0 +1,209 @@
+KEP 1: Purpose & Process
+========================
+
+:Author: `Lynn Root`_
+:Type: Process
+:Status: Draft
+:Created: 2020-11-09
+
+
+
+What is a KEP?
+--------------
+
+KEP stands for Klio Enhancement Proposal. A KEP is a design document that: provides information to the Klio community; describes a new feature for the Klio ecosystem; or describes a new process.
+Similar to `standard RFCs`_), a KEP should provide a concise technical specification and rationale for a proposed feature.
+Inspiration was taken from `Backstage's ADRs`_, `Python's PEPs`_, `Jupyter's JEPs`_, `NumPy's NEPs`_, and `OpenJDK's JEPs`_.
+
+We intend KEPs to be the primary mechanism for proposing major new features, for collecting community input on an issue, and for documenting the design decisions that have gone into the Klio ecosystem. The KEP author is responsible for building consensus within the community and documenting dissenting opinions.
+
+Because the KEPs are maintained as text files in a versioned repository, their revision history is the historical record of the feature proposal [1]_.
+
+
+Types
+-----
+
+There are three kinds of KEPs:
+
+1. A **Standards Track** KEP describes a new feature or implementation for Klio.
+
+2. An **Informational** KEP describes a Klio design issue, or provides general guidelines or information to the Python community, but does not propose a new feature. Informational KEPs do not necessarily represent a Klio community consensus or recommendation, so users and implementers are free to ignore Informational KEPs or follow their advice.
+
+3. A **Process** KEP describes a process surrounding Klio, or proposes a change to (or an event in) a process. Process KEPs are like Standards Track KEPs but apply to areas other than the Klio language itself. They may propose an implementation, but not to Klio's codebase. Examples include procedures, guidelines, changes to the decision-making process, and changes to the tools or environment used in Klio development. Any meta-KEP is also considered a Process KEP.
+
+Proposal Statuses
+-----------------
+
+See :ref:`review-resolution` to understand a KEP's lifecycle through these statuses.
+
+Draft
+    A KEP has a ``Draft`` status when a new idea is being fleshed out, soliciting feedback, and addressing initial concerns.
+
+Accepted (Standards Track only) or Active
+    A Standards Track KEP has been ``Accepted`` but not yet implemented.
+    An Informational or Process KEP is considered ``Active``.
+
+Deferred
+    A KEP can be placed in ``Deferred`` when no progress is being made, or otherwise needs to be put on hold.
+
+Final
+    A KEP is ``Final`` when the reference implementation of the KEP is complete and incorporated into the source code.
+
+Provisional
+    ``Provisional`` KEPs are provisionally accepted and reference implementation can begin, but still require additional feedback.
+
+Rejected
+    A KEP may be ``Rejected`` after its discussion reveals it may not be a good idea.
+
+
+Withdrawn
+    Similar to ``Rejected``, the KEP author themselves has decided that the KEP is a bad idea.
+
+Superseded
+    A KEP can have a ``Superseded`` status when another KEP renders it obsolute.
+
+
+
+Workflow
+--------
+
+The KEP process begins with a new idea for Klio.
+It is highly recommended that a single KEP contain a single key proposal or new idea.
+Small enhancements or patches often don't need a KEP and can be injected into the Klio development workflow with a pull request to the `Klio repo`_.
+The more focused the KEP, the more successful it tends to be. If in doubt, split your KEP into several well-focused ones.
+
+Each KEP must have a champion: someone who writes the KEP using the style and format described below, shepherds the discussions in the appropriate forums, and attempts to build consensus around the idea.
+The KEP champion (a.k.a. Author) should first attempt to ascertain whether the idea is suitable for a KEP.
+This may include posting to the #klio channel in the `Spotify FOSS Slack Organization`_.
+
+The proposal should be submitted as a draft KEP via a GitHub `pull request`_ to the ``docs/src/keps`` directory with the name ``kep-<n>.rst`` where ``<n>`` is an appropriately assigned three-digit number (e.g., ``kep-001.rst``).
+Chose the next available KEP number, e.g. if the last KEP is 1, the new proposed one should be 2.
+Do not recycle KEP numbers.
+The draft must use the template defined in  :doc:`kep-template`.
+
+At the earliest convenience, the PR should be merged when its status is updated from ``Draft`` (regardless of whether it is accepted during discussion).
+Additional PRs may be made by the Author to update or expand the KEP, or by maintainers to set its status, discussion URL, etc.
+
+A Standards Track KEP consist of two parts: a design document and a reference implementation.
+It is generally recommended that at least a prototype implementation be co-developed with the KEP, as ideas that sound good in principle sometimes turn out to be impractical when subjected to the test of implementation.
+Often it makes sense for the prototype implementation to be made available as PR to the Klio repo (making sure to appropriately mark the PR as a ``WIP``).
+
+
+.. _review-resolution:
+
+Review and Resolution
+^^^^^^^^^^^^^^^^^^^^^
+
+KEPs are discussed on their respective pull request. The possible paths of the status of KEPs are as follows:
+
+.. figure:: assets/kep_workflow.png
+    :alt: KEP Workflow
+
+    *KEP Workflow*
+
+
+All KEPs should be created as a new pull request against the ``master`` branch with the ``Draft`` status and the `"kep" GitHub tag`_.
+When a status is updated from ``Draft``, the author should update its status in the PR before merging it into ``master``.
+
+Eventually, after discussion, there may be a consensus that the KEP should be accepted – see the next section for details.
+Usually, at this point the status becomes ``Accepted`` for Standards Track-type KEPs, or ``Active`` for Process- or Informational-type KEPs.
+A ``Draft`` KEP may also be ``Rejected`` or ``Withdrawn`` if the discussion necessitates it.
+
+Once a Standards Track KEP has been ``Accepted``, the reference implementation must be completed.
+When the reference implementation is complete and incorporated into the main source code repository, the status will be changed to ``Final``.
+
+To allow gathering of additional design and interface feedback before committing to long term stability for a feature or API, a KEP may also be marked as ``Provisional``.
+This is short for "Provisionally Accepted", and indicates that the proposal has been accepted for inclusion in the reference implementation, but additional user feedback is needed before the full design can be considered "Final".
+Unlike regular accepted KEPs, provisionally accepted KEPs may still be ``Rejected`` or ``Withdrawn`` even after the related changes have been included in a Klio release.
+
+Wherever possible, it is considered preferable to reduce the scope of a proposal to avoid the need to rely on the ``Provisional`` status (e.g. by deferring some features to later KEPs), as this status can lead to version compatibility challenges in the wider Klio ecosystem.
+
+A KEP can also be assigned status ``Deferred``.
+The KEP author or a core developer can assign the KEP this status when no progress is being made on the KEP.
+
+A KEP can also be ``Rejected``.
+Perhaps after all is said and done it was not a good idea.
+It is still important to have a record of this fact.
+The ``Withdrawn`` status is similar: it means that the KEP author themselves has decided that the KEP is actually a bad idea, or has accepted that a competing proposal is a better alternative.
+
+When a KEP is ``Accepted``, ``Rejected``, or ``Withdrawn``, the KEP should be updated accordingly.
+In addition to updating the status field, at the very least the ``Resolution`` header should be added with a link to the relevant PR thread.
+
+KEPs can also be ``Superseded`` by a different KEP, rendering the original obsolete.
+The ``Replaced-By`` and ``Replaces`` headers should be added to the original and new KEPs respectively.
+
+Process- and Informational-type KEPs may also have a status of ``Active`` if they are never meant to be completed, e.g. KEP 1 (this KEP).
+
+
+How a KEP becomes Accepted
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A KEP is ``Accepted`` by consensus of all interested `core contributors`_.
+We need a concrete way to tell whether consensus has been reached.
+When you think a KEP is ready to accept, make a comment on the PR, pinging `@spotify/klio-devs`_ and asking if there are any objections within 7 days (or longer) from the comment.
+
+If all `@spotify/klio-devs`_ have subsequently approved the PR, or there have been no substantive objections by the given deadline, then the KEP can officially be marked ``Accepted`` (if it's a Standards Track type) or ``Active`` by updating the PR and merging.
+If there are substantive objections, then the KEP remains in ``Draft`` state (and therefore an open PR), discussion continues as normal, and it can be proposed for acceptance again later once the objections are resolved.
+
+Maintenance
+^^^^^^^^^^^
+
+In general, Standards track KEPs are no longer modified after they have reached the ``Final`` state as the code and project documentation are considered the ultimate reference for the implemented feature.
+However, finalized Standards track KEPs may be updated as needed.
+
+Process KEPs may be updated over time to reflect changes to development practices and other details.
+The precise process followed in these cases will depend on the nature and purpose of the KEP being updated.
+
+
+Format and Template
+-------------------
+
+KEPs are UTF-8 encoded text files using the `reStructuredText format`_.
+Please see :doc:`KEP X — Template and Instructions <kep-template>` and the `reStructuredText Primer`_ for more information.
+We use `Sphinx`_ to convert KEPs to HTML for viewing on the web [2]_.
+
+
+Header Preamble
+^^^^^^^^^^^^^^^
+
+Each KEP must begin with a header preamble.
+The headers must appear in the following order. Headers marked with ``*`` are optional.
+All other headers are required.
+
+.. code-block:: rst
+
+      :Author: <list of authors' names and optionally, GitHub handles>
+      :Status: <Draft | Active | Accepted | Deferred | Rejected |
+               Withdrawn | Final | Superseded>
+      :Type: <Standards Track | Process>
+      :Created: <date created on, in yyyy-mm-dd format>
+    * :Requires: <KEP number(s) & link(s)>
+    * :Replaces: <KEP number & link>
+    * :Replaced-By: <KEP number & link>
+    * :Resolution: <url>
+
+
+
+References and Footnotes
+------------------------
+
+.. [1] This historical record is available by the normal ``git`` commands for retrieving older revisions, and can also be browsed on `GitHub <https://github.com/spotify/klio/tree/master/docs/src/keps>`_.
+.. [2] The URL for viewing KEPs on the web is https://docs.klio.io/en/latest/keps/.
+
+
+.. _Lynn Root: https://github.com/econchick
+.. _standard RFCs:  https://en.wikipedia.org/wiki/Request_for_Comments
+.. _Backstage's ADRs: https://backstage.io/docs/architecture-decisions/adrs-adr001
+.. _Python's PEPs: https://www.python.org/dev/peps/pep-0001
+.. _Jupyter's JEPs: https://github.com/jupyter/enhancement-proposals
+.. _NumPy's NEPs: https://numpy.org/neps/
+.. _OpenJDK's JEPs: http://openjdk.java.net/jeps/0
+.. _Klio repo: https://github.com/spotify/klio
+.. _Spotify FOSS Slack Organization: https://slackin.spotify.com/
+.. _pull request: https://github.com/spotify/klio/pulls
+.. _core contributors: https://github.com/orgs/spotify/teams/klio-devs
+.. _@spotify/klio-devs: https://github.com/orgs/spotify/teams/klio-devs
+.. _reStructuredText format: http://docutils.sourceforge.net/rst.html
+.. _reStructuredText Primer: https://www.sphinx-doc.org/en/stable/rest.html
+.. _Sphinx: https://www.sphinx-doc.org/en/stable/
+.. _"kep" GitHub tag: https://github.com/spotify/klio/labels/kep

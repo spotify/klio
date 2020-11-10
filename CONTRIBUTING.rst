@@ -320,3 +320,9 @@ After changes to ``microsite/`` have been merged into ``master``:
     $ git push origin gh-pages
 
 It may take a few minutes for GitHub pages to update.
+
+
+Creating a Package Release
+--------------------------
+
+Instructions on how to release a new version of a Klio package can be found `here <https://github.com/spotify/klio/blob/master/RELEASING.rst>`_.

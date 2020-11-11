@@ -26,6 +26,7 @@ import yaml
 from klio.transforms import core as klio_transforms_core
 from klio_core import config
 from klio_core import options as core_options
+from klio_core import utils as core_utils
 
 from klio_exec import options
 from klio_exec.commands import audit
@@ -66,33 +67,29 @@ def _compare_runtime_to_buildtime_config(runtime_config_path):
 @core_options.direct_runner
 @options.blocking
 @core_options.update
-@options.config_file
-def run_pipeline(image_tag, direct_runner, update, config_file, blocking):
-    config_path = config_file or "klio-job.yaml"
-    config_data = _get_config(config_path)
-
-    if direct_runner:
-        config_data["pipeline_options"]["runner"] = "direct"
-
-    job_name = config_data["job_name"]
-    conf_obj = config.KlioConfig(config_data)
+@core_utils.with_klio_config
+def run_pipeline(
+    image_tag, direct_runner, update, klio_config, config_meta, blocking
+):
 
     # RunConfig ensures config is pickled and sent to worker.  Note this
     # depends on save_main_session being True
-    klio_transforms_core.RunConfig.set(conf_obj)
+    klio_transforms_core.RunConfig.set(klio_config)
 
     # This can only be imported after RunConfig is set since it will end up
     # importing classes that may (or do) attempt to read it
     from klio_exec.commands import run
 
     if update is None:  # if it's not explicitly set in CLI, look at config
-        update = conf_obj.pipeline_options.update
+        update = klio_config.pipeline_options.update
     if blocking is None:  # if it's not explicitly set in CLI, look at config
-        blocking = conf_obj.job_config.blocking
+        blocking = klio_config.job_config.blocking
 
     runtime_conf = RuntimeConfig(image_tag, direct_runner, update, blocking)
 
-    klio_pipeline = run.KlioPipeline(job_name, conf_obj, runtime_conf)
+    klio_pipeline = run.KlioPipeline(
+        klio_config.job_name, klio_config, runtime_conf
+    )
     klio_pipeline.run()
 
 

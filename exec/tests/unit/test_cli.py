@@ -22,17 +22,24 @@ import yaml
 
 from click import testing
 
+from klio_core import _testing as core_testing
 from klio_core import config as kconfig
 
 
-def assert_execution_success(result):
-    """Helper for testing CLI commands that emits errors if execution failed"""
-    if result.exception:
-        if result.stdout:
-            print("captured stdout: {}".format(result.stdout))
-        raise result.exception
+@pytest.fixture
+def patch_os_getcwd(monkeypatch, tmpdir):
+    test_dir = str(tmpdir.mkdir("testing"))
+    monkeypatch.setattr(os, "getcwd", lambda: test_dir)
+    return test_dir
 
-    assert 0 == result.exit_code
+
+@pytest.fixture
+def mock_klio_config(mocker, monkeypatch, patch_os_getcwd):
+    mock = core_testing.MockKlioConfig(
+        cli, mocker, monkeypatch, patch_os_getcwd
+    )
+    mock.setup(_config(), "klio-job.yaml")
+    return mock
 
 
 @pytest.fixture
@@ -179,10 +186,8 @@ def test_run_pipeline(
     update,
     blocking,
     cli_runner,
-    klio_config,
-    patch_get_config,
+    mock_klio_config,
     patch_run_basic_pipeline,
-    patch_klio_config,
 ):
     runtime_conf = cli.RuntimeConfig(
         image_tag=None, direct_runner=False, update=None, blocking=None
@@ -210,7 +215,8 @@ def test_run_pipeline(
         runtime_conf._replace(blocking=False)
 
     result = cli_runner.invoke(cli.run_pipeline, cli_inputs)
-    assert 0 == result.exit_code
+    core_testing.assert_execution_success(result)
+    mock_klio_config.assert_calls()
 
     patch_run_basic_pipeline.assert_called_once_with()
 
@@ -222,10 +228,8 @@ def test_run_pipeline_conf_override(
     config_file_override,
     cli_runner,
     config,
-    klio_config,
-    patch_get_config,
+    mock_klio_config,
     patch_run_basic_pipeline,
-    patch_klio_config,
     caplog,
     tmpdir,
     monkeypatch,
@@ -233,7 +237,7 @@ def test_run_pipeline_conf_override(
 
     cli_inputs = []
 
-    temp_dir = tmpdir.mkdir("testing")
+    temp_dir = tmpdir.mkdir("testing123")
     temp_dir_str = str(temp_dir)
     monkeypatch.setattr(os, "getcwd", lambda: temp_dir_str)
 
@@ -246,8 +250,13 @@ def test_run_pipeline_conf_override(
         with open(exp_conf_file, "w") as f:
             yaml.dump(config, f)
 
+        mock_klio_config.setup(_config(), "klio-job.yaml", exp_conf_file)
+    else:
+        mock_klio_config.setup(_config(), "klio-job.yaml")
+
     result = cli_runner.invoke(cli.run_pipeline, cli_inputs)
-    assert 0 == result.exit_code
+    core_testing.assert_execution_success(result)
+    mock_klio_config.assert_calls()
 
     patch_run_basic_pipeline.assert_called_once_with()
 
@@ -315,7 +324,7 @@ def test_test_job(
 
     result = cli_runner.invoke(cli.test_job, pytest_args)
 
-    assert_execution_success(result)
+    core_testing.assert_execution_success(result)
     assert "true" == os.environ["KLIO_TEST_MODE"]
 
     mock_test.assert_called_once_with(pytest_args)

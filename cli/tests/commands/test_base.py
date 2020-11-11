@@ -252,7 +252,9 @@ def test_setup_docker_image(
         mock_build_docker_image.assert_not_called()
 
 
-def test_check_docker_setup(base_pipeline, mocker, monkeypatch):
+def test_check_docker_setup(
+    base_pipeline, mock_docker_client, mocker, monkeypatch
+):
     mock_check_docker_conn = mocker.Mock()
     monkeypatch.setattr(
         base.docker_utils, "check_docker_connection", mock_check_docker_conn
@@ -262,6 +264,10 @@ def test_check_docker_setup(base_pipeline, mocker, monkeypatch):
         base.docker_utils,
         "check_dockerfile_present",
         mock_check_dockerfile_present,
+    )
+
+    monkeypatch.setattr(
+        base.docker, "from_env", mock_docker_client,
     )
 
     base_pipeline._check_docker_setup()

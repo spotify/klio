@@ -148,6 +148,13 @@ to process.
 More information about configuring pub/sub can be found in the
 :ref:`event-config-pubsub` event config section.
 
+Google BigQuery
+^^^^^^^^^^^^^^^
+
+Only supported in batch mode.
+
+Klio supports BigQuery columns as event inputs. More information about configuring BigQuery table inputs can be found in the :ref:`event-config-bigquery` event config section.
+
 
 Data I/O
 --------

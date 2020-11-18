@@ -524,6 +524,83 @@ def test_verify_subscription_and_topic_exceptions(
     assert expected == actual
 
 
+mock_gcs_event_config = {
+    "type": "gcs",
+    "location": "gs://some/events.txt",
+    "io_type": kconfig._io.KlioIOType.EVENT,
+    "io_direction": kconfig._io.KlioIODirection.INPUT,
+}
+mock_gcs_event = kconfig._io.KlioReadFileConfig.from_dict(
+    mock_gcs_event_config
+)
+
+mock_bq_event_config = {
+    "type": "bq",
+    "project": "sigint",
+    "dataset": "test-data",
+    "table": "test-table",
+    "io_type": kconfig._io.KlioIOType.EVENT,
+    "io_direction": kconfig._io.KlioIODirection.INPUT,
+}
+mock_bq_event = kconfig._io.KlioBigQueryEventInput.from_dict(
+    mock_bq_event_config
+)
+
+mock_avro_event_config = {
+    "type": "avro",
+    "io_type": kconfig._io.KlioIOType.EVENT,
+    "io_direction": kconfig._io.KlioIODirection.INPUT,
+}
+mock_avro_event = kconfig._io.KlioReadAvroEventConfig.from_dict(
+    mock_avro_event_config
+)
+
+
+@pytest.mark.parametrize(
+    "mock_event_input", ((mock_gcs_event), (mock_bq_event), (mock_avro_event),)
+)
+def test_unverified_event_inputs(
+    mocker,
+    caplog,
+    mock_storage,
+    mock_publisher,
+    mock_sub,
+    klio_config,
+    mock_event_input,
+):
+    mock_verify_gcs_bucket = mocker.patch.object(
+        verify.VerifyJob, "_verify_gcs_bucket"
+    )
+    mock_verify_sub = mocker.patch.object(
+        verify.VerifyJob, "_verify_subscription_and_topic"
+    )
+    job = verify.VerifyJob(klio_config, False)
+    job._publisher_client = mock_publisher
+    job._storage_client = mock_storage
+    job._subscriber_client = mock_sub
+    job.klio_config.pipeline_options.project = "sigint"
+
+    job.klio_config.job_config.events.inputs = [mock_event_input]
+
+    data_config = {
+        "type": "gcs",
+        "location": "test",
+        "io_type": kconfig._io.KlioIOType.DATA,
+        "io_direction": kconfig._io.KlioIODirection.INPUT,
+    }
+    job.klio_config.job_config.data.inputs = [
+        kconfig._io.KlioGCSInputDataConfig.from_dict(data_config)
+    ]
+    mock_verify_gcs_bucket.return_value = True
+
+    actual = job._verify_inputs()
+
+    mock_verify_sub.assert_not_called()
+    mock_verify_gcs_bucket.assert_called_with("test")
+    assert actual
+    assert 3 == len(caplog.records)
+
+
 @pytest.mark.parametrize(
     "unverified_bucket, unverified_topic, unverified_sub",
     (

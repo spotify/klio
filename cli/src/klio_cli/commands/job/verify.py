@@ -255,7 +255,10 @@ class VerifyJob(object):
 
         logging.info("Verifying your event inputs...")
 
-        for _input in event_inputs:
+        pubsub_event_inputs = [
+            _i for _i in event_inputs if _i.name == "pubsub"
+        ]
+        for _input in pubsub_event_inputs:
             input_topic = _input.topic
             input_subscription = _input.subscription
 
@@ -277,14 +280,21 @@ class VerifyJob(object):
                     )
                 )
 
-        logging.info(
-            "You have {} unverified input buckets, {} unverified input "
-            "topics and {} unverified input subscriptions".format(
-                unverified_bucket_count,
-                unverified_topic_count,
-                unverified_sub_count,
+        if len(pubsub_event_inputs):
+            logging.info(
+                "You have {} unverified input buckets, {} unverified input "
+                "topics and {} unverified input subscriptions".format(
+                    unverified_bucket_count,
+                    unverified_topic_count,
+                    unverified_sub_count,
+                )
             )
-        )
+        else:
+            logging.info(
+                "You have {} unverified input buckets".format(
+                    unverified_bucket_count,
+                )
+            )
 
         if (
             unverified_bucket_count

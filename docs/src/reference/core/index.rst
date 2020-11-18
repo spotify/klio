@@ -18,6 +18,7 @@ Klio Core
    Dataflow Client <api/dataflow>
    Exceptions <api/exceptions>
    api/variables
+   api/options
    changelog
 
 ----
@@ -37,6 +38,28 @@ Klio Core
     KlioJobConfig
     KlioPipelineConfig
 
+:doc:`api/options`
+------------------
+
+.. automodule:: klio_core.options
+   :noindex:
+
+.. currentmodule:: klio_core.options
+
+.. autosummary::
+
+    image_tag
+    direct_runner
+    update
+    show_logs
+    interval
+    include_children
+    multiprocess
+    plot_graph
+    maximum
+    per_element
+    iterations
+
 
 :doc:`api/utils`
 ----------------
@@ -53,6 +76,9 @@ Klio Core
     set_global
     get_global
     delete_global
+    get_config_by_path
+    get_config_job_dir
+    with_klio_config
 
 
 :doc:`api/dataflow`

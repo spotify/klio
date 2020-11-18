@@ -151,6 +151,7 @@ PROJECT_URLS = {
 }
 META_FILE = read(META_PATH)
 INSTALL_REQUIRES = [
+    "click",
     "glom",
     "google-api-python-client>=1.10.0,<1.12",
     "google-api-core>1.18.0,<1.21.0",  # TODO: try and remove
@@ -164,6 +165,7 @@ EXTRAS_REQUIRE = {
     "docs": ["sphinx", "interrogate"],
     "tests": [
         "coverage",
+        "mock",  # for py2 - remove when dropping support
         "pytest>=4.3.0",  # 4.3.0 dropped last use of `convert`
         "pytest-cov",
         "pytest-mock",

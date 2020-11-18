@@ -751,6 +751,73 @@ def test_verify_inputs_logs(
     assert expected_log_count == len(caplog.records)
 
 
+mock_gcs_output_event_config = {
+    "type": "gcs",
+    "location": "gs://some/events.txt",
+    "io_type": kconfig._io.KlioIOType.EVENT,
+    "io_direction": kconfig._io.KlioIODirection.OUTPUT,
+}
+mock_gcs_output_event = kconfig._io.KlioWriteFileConfig.from_dict(
+    mock_gcs_event_config
+)
+mock_bq_output_event_config = {
+    "type": "bq",
+    "project": "sigint",
+    "dataset": "test-data",
+    "table": "test-table",
+    "schema": {"fields": [{"name": "n", "type": "t", "mode": "m"}]},
+    "io_type": kconfig._io.KlioIOType.EVENT,
+    "io_direction": kconfig._io.KlioIODirection.OUTPUT,
+}
+
+mock_bq_output_event = kconfig._io.KlioBigQueryEventOutput.from_dict(
+    mock_bq_output_event_config
+)
+
+
+@pytest.mark.parametrize(
+    "mock_event_output", ((mock_gcs_output_event), (mock_bq_output_event),)
+)
+def test_unverified_event_outputs(
+    mocker,
+    caplog,
+    klio_config,
+    mock_event_output,
+    mock_storage,
+    mock_publisher,
+):
+    mock_verify_gcs_bucket = mocker.patch.object(
+        verify.VerifyJob, "_verify_gcs_bucket"
+    )
+    mock_verify_pub_topic = mocker.patch.object(
+        verify.VerifyJob, "_verify_pub_topic"
+    )
+    job = verify.VerifyJob(klio_config, False)
+    job._publisher_client = mock_publisher
+    job._storage_client = mock_storage
+
+    job.klio_config.job_config.events.outputs = [mock_event_output]
+
+    data_config = {
+        "type": "gcs",
+        "location": "test",
+        "io_type": kconfig._io.KlioIOType.DATA,
+        "io_direction": kconfig._io.KlioIODirection.OUTPUT,
+    }
+    job.klio_config.job_config.data.outputs = [
+        kconfig._io.KlioGCSOutputDataConfig.from_dict(data_config)
+    ]
+
+    mock_verify_gcs_bucket.return_value = True
+
+    actual = job._verify_outputs()
+
+    assert actual
+    mock_verify_pub_topic.assert_not_called()
+    mock_verify_gcs_bucket.assert_called_with("test")
+    assert 3 == len(caplog.records)
+
+
 @pytest.mark.parametrize(
     "unverified_gcs, unverified_topic",
     ((False, False), (True, False), (True, True), (False, True)),

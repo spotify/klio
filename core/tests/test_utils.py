@@ -180,6 +180,9 @@ def test_warn_if_py2_job(image, patch_os_getcwd, mocker):
 
     m_open = mock.mock_open(read_data=dockerfile)
     mock_open = mocker.patch("klio_core.utils.open", m_open)
+    m_is_file = mocker.Mock()
+    m_is_file.return_value = True
+    mock_is_file = mocker.patch("klio_core.utils.os.path.isfile", m_is_file)
 
     warn_msg = (
         "Python 2 support in Klio is deprecated. "
@@ -189,11 +192,15 @@ def test_warn_if_py2_job(image, patch_os_getcwd, mocker):
         utils.warn_if_py2_job(patch_os_getcwd)
 
     exp_read_file = os.path.join(patch_os_getcwd, "Dockerfile")
+    mock_is_file.assert_called_once_with(exp_read_file)
     mock_open.assert_called_once_with(exp_read_file, "r")
 
 
 @pytest.mark.parametrize("has_from_line", (True, False))
-def test_warn_if_py2_job_no_warn(has_from_line, patch_os_getcwd, mocker):
+@pytest.mark.parametrize("file_exists", (True, False))
+def test_warn_if_py2_job_no_warn(
+    has_from_line, file_exists, patch_os_getcwd, mocker
+):
     from_line = "\n"
     if has_from_line:
         from_line = "FROM dataflow.gcr.io/v1beta3/python36-fnapi:1.2.3\n"
@@ -206,11 +213,16 @@ def test_warn_if_py2_job_no_warn(has_from_line, patch_os_getcwd, mocker):
 
     m_open = mock.mock_open(read_data=dockerfile)
     mock_open = mocker.patch("klio_core.utils.open", m_open)
+    m_is_file = mocker.Mock()
+    m_is_file.return_value = file_exists
+    mock_is_file = mocker.patch("klio_core.utils.os.path.isfile", m_is_file)
 
     utils.warn_if_py2_job(patch_os_getcwd)
 
     exp_read_file = os.path.join(patch_os_getcwd, "Dockerfile")
-    mock_open.assert_called_once_with(exp_read_file, "r")
+    mock_is_file.assert_called_once_with(exp_read_file)
+    if file_exists:
+        mock_open.assert_called_once_with(exp_read_file, "r")
 
 
 @pytest.mark.parametrize(

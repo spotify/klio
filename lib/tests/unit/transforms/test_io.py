@@ -19,6 +19,7 @@ import os
 import tempfile
 
 import apache_beam as beam
+import pytest
 
 from apache_beam.testing import test_pipeline
 
@@ -116,3 +117,37 @@ def test_read_from_avro():
         )
 
     assert io_transforms.KlioReadFromAvro._REQUIRES_IO_READ_WRAP is True
+
+
+def test_bigquery_mapper_generate_klio_message():
+
+    mapper = io_transforms._KlioReadFromBigQueryMapper()
+    message = mapper._generate_klio_message()
+
+    assert message.version == klio_pb2.Version.V2
+    assert (
+        message.metadata.intended_recipients.WhichOneof("recipients")
+        == "anyone"
+    )
+
+
+@pytest.mark.parametrize(
+    "klio_message_columns,row,expected",
+    (
+        (["one_column"], {"a": "A", "b": "B", "one_column": "value"}, "value"),
+        (
+            ["a", "b"],
+            {"a": "A", "b": "B", "c": "C"},
+            json.dumps({"a": "A", "b": "B"}),
+        ),
+        (None, {"a": "A", "b": "B"}, json.dumps({"a": "A", "b": "B"})),
+    ),
+)
+def test_bigquery_mapper_map_row_element(klio_message_columns, row, expected):
+    mapper = io_transforms._KlioReadFromBigQueryMapper(
+        klio_message_columns=klio_message_columns
+    )
+
+    actual = mapper._map_row_element(row)
+
+    assert actual == expected

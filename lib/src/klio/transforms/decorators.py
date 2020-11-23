@@ -23,10 +23,11 @@ import types
 import apache_beam as beam
 from apache_beam import pvalue
 
+from klio import utils as kutils
 from klio.message import serializer
 from klio.transforms import _retry as kretry
 from klio.transforms import _timeout as ktimeout
-from klio.transforms import _utils
+from klio.transforms import _utils as txf_utils
 from klio.transforms import core
 
 
@@ -309,6 +310,52 @@ def _inject_klio_context(func_or_meth):
     return func_wrapper
 
 
+def __get_thread_limiter(max_thread_count, thread_limiter):
+    # max_thread_count=None or True will default to CPU count
+    # max_thread_count=False will turn off thread limits
+    if max_thread_count is not None and thread_limiter is not None:
+        # raise a runtime error so it actually crashes klio/beam rather than
+        # just continue processing elements
+        raise RuntimeError(
+            "`max_thread_count` and `thread_limiter` are mutually exclusive "
+            "arguments."
+        )
+
+    if thread_limiter is not None:
+        if not isinstance(thread_limiter, kutils.ThreadLimiter):
+            # raise a runtime error so it actually crashes klio/beam rather than
+            # just continue processing elements
+            raise RuntimeError(
+                "'thread_limiter' must be an instance of `klio.utils."
+                "ThreadLimiter`."
+            )
+
+    if max_thread_count is not None and not isinstance(max_thread_count, bool):
+        if not isinstance(max_thread_count, int):
+            # raise a runtime error so it actually crashes klio/beam rather than
+            # just continue processing elements
+            raise RuntimeError(
+                "Invalid type for handle_klio 'max_thread_count'. Expected an "
+                "`int` or None, got `%s`." % type(max_thread_count).__name__
+            )
+
+    if isinstance(max_thread_count, int) and max_thread_count <= 0:
+        # raise a runtime error so it actually crashes klio/beam rather than
+        # just continue processing elements
+        raise RuntimeError(
+            "'max_thread_count' must be greater than 0. Set 'max_thread_count' "
+            "to `False` to turn off thread limitations. Set 'max_thread_count' "
+            "to `None` to default to the current number of CPUs."
+        )
+
+    if thread_limiter is None:
+        thread_limiter = kutils.ThreadLimiter(
+            max_thread_count=max_thread_count
+        )
+
+    return thread_limiter
+
+
 def _handle_klio(func_or_meth):
     @functools.wraps(func_or_meth)
     def method_wrapper(self, *args, **kwargs):
@@ -464,6 +511,35 @@ def _retry(
             return method_wrapper
         return func_wrapper
 
+    return inner
+
+
+def _limit_threads(
+    *args, max_thread_count=None, thread_limiter=None, **kwargs
+):
+    thread_limiter = __get_thread_limiter(max_thread_count, thread_limiter)
+
+    def inner(func_or_meth):
+        # Unfortunately these two wrappers can't be abstracted into
+        # one wrapper - the `self` arg apparently can not be abstracted
+        @functools.wraps(func_or_meth)
+        def method_wrapper(self, *args, **kwargs):
+            with thread_limiter:
+                return func_or_meth(self, *args, **kwargs)
+
+        @functools.wraps(func_or_meth)
+        def func_wrapper(*args, **kwargs):
+            with thread_limiter:
+                return func_or_meth(*args, **kwargs)
+
+        if __is_method(func_or_meth):
+            return method_wrapper
+        return func_wrapper
+
+    # allows @limit_threads to be used without parens (i.e. no need to do
+    # `@limit_threads()`) when there are no args/kwargs provided
+    if args and callable(args[0]):
+        return inner(args[0])
     return inner
 
 
@@ -761,3 +837,11 @@ def profile(func_or_meth):
             return inner_func
 
     return func_or_meth
+
+
+@txf_utils.experimental()
+def limit_threads(*args, max_thread_count=None, thread_limiter=None, **kwargs):
+    """TODO: docstrings"""
+    return _limit_threads(
+        *args, max_thread_count=None, thread_limiter=None, **kwargs
+    )

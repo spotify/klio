@@ -356,42 +356,55 @@ def __get_thread_limiter(max_thread_count, thread_limiter):
     return thread_limiter
 
 
-def _handle_klio(func_or_meth):
-    @functools.wraps(func_or_meth)
-    def method_wrapper(self, *args, **kwargs):
-        with _klio_context() as ctx:
-            setattr(self, "_klio", ctx)
+def _handle_klio(*args, max_thread_count=None, thread_limiter=None, **kwargs):
+    thread_limiter = __get_thread_limiter(max_thread_count, thread_limiter)
 
-        # SO. HACKY. We check to see if this method is named "expand"
-        # to designate  if the class is a Composite-type transform
-        # (rather than a DoFn with a "process" method).
-        # A Composite transform handles a pcoll / pipeline,
-        # not the individual elements, and therefore doesn't need
-        # to be given a KlioMessage. It should only need the KlioContext
-        # attached.
-        if func_or_meth.__name__ == "expand":
-            return func_or_meth(self, *args, **kwargs)
+    def inner(func_or_meth):
+        @functools.wraps(func_or_meth)
+        def method_wrapper(self, *args, **kwargs):
+            with thread_limiter:
+                with _klio_context() as ctx:
+                    setattr(self, "_klio", ctx)
 
-        wrapper = __serialize_klio_message
-        # Only the process method of a DoFn is a generator - otherwise
-        # beam can't pickle a generator
-        if __is_dofn_process_method(self, func_or_meth):
-            wrapper = __serialize_klio_message_generator
+                # SO. HACKY. We check to see if this method is named "expand"
+                # to designate  if the class is a Composite-type transform
+                # (rather than a DoFn with a "process" method).
+                # A Composite transform handles a pcoll / pipeline,
+                # not the individual elements, and therefore doesn't need
+                # to be given a KlioMessage. It should only need the KlioContext
+                # attached.
+                if func_or_meth.__name__ == "expand":
+                    return func_or_meth(self, *args, **kwargs)
 
-        incoming_item = args[0]
-        args = args[1:]
-        return wrapper(self, func_or_meth, incoming_item, *args, **kwargs)
+                wrapper = __serialize_klio_message
+                # Only the process method of a DoFn is a generator - otherwise
+                # beam can't pickle a generator
+                if __is_dofn_process_method(self, func_or_meth):
+                    wrapper = __serialize_klio_message_generator
 
-    @functools.wraps(func_or_meth)
-    def func_wrapper(incoming_item, *args, **kwargs):
-        with _klio_context() as ctx:
-            return __serialize_klio_message(
-                ctx, func_or_meth, incoming_item, *args, **kwargs
-            )
+                incoming_item = args[0]
+                args = args[1:]
+                return wrapper(
+                    self, func_or_meth, incoming_item, *args, **kwargs
+                )
 
-    if __is_method(func_or_meth):
-        return method_wrapper
-    return func_wrapper
+        @functools.wraps(func_or_meth)
+        def func_wrapper(incoming_item, *args, **kwargs):
+            with thread_limiter:
+                with _klio_context() as ctx:
+                    return __serialize_klio_message(
+                        ctx, func_or_meth, incoming_item, *args, **kwargs
+                    )
+
+        if __is_method(func_or_meth):
+            return method_wrapper
+        return func_wrapper
+
+    # allows @handle_klio to be used without parens (i.e. no need to do
+    # `@handle_klio()`) when there are no args/kwargs provided
+    if args and callable(args[0]):
+        return inner(args[0])
+    return inner
 
 
 def _timeout(seconds=None, exception=None, exception_message=None):
@@ -605,8 +618,9 @@ def inject_klio_context(*args, **kwargs):
     return _inject_klio_context(*args, **kwargs)
 
 
-@_utils.experimental()
-def handle_klio(*args, **kwargs):
+# TODO: Update docstrings w/ new kwargs & examples
+@txf_utils.experimental()
+def handle_klio(*args, max_thread_count=None, thread_limiter=None, **kwargs):
     """Serialize & deserialize incoming PCollections as a KlioMessage.
 
     Behind the scenes, this generates :class:`KlioContext
@@ -638,7 +652,12 @@ def handle_klio(*args, **kwargs):
                 kms_config = self._klio.config.job_config.kms_config
                 return pcoll | MyKMSTransform(**kms_config)
     """
-    return _handle_klio(*args, **kwargs)
+    return _handle_klio(
+        *args,
+        max_thread_count=max_thread_count,
+        thread_limiter=thread_limiter,
+        **kwargs
+    )
 
 
 @_utils.experimental()

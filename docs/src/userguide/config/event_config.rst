@@ -17,17 +17,17 @@ Consuming KlioMessages from `Google Pub/Sub`_ is supported for all runners.
 
 Example configuration for `Google Pub/Sub`_:
 
-    .. code-block:: yaml
+.. code-block:: yaml
 
-        name: my-cool-job
-        pipeline_options:
-          streaming: True
-        job_config:
-          events:
+    name: my-cool-job
+    pipeline_options:
+      streaming: True
+    job_config:
+        events:
             inputs:
-              - type: pubsub
-                topic: my-parent-output-topic
-                subscription: my-input-subscription
+                - type: pubsub
+                  topic: my-parent-output-topic
+                  subscription: my-input-subscription
 
 .. option:: job_config.events.inputs[].type
 
@@ -100,14 +100,14 @@ Custom
 
 Example configuration for a custom event input that is not supported by Klio:
 
-    .. code-block:: yaml
+.. code-block:: yaml
 
-        name: my-cool-job
-        job_config:
-          events:
+    name: my-cool-job
+    job_config:
+        events:
             inputs:
-              - type: custom
-                some_key: some_value
+                - type: custom
+                  some_key: some_value
 
 .. option:: job_config.events.inputs[].type
 
@@ -312,16 +312,16 @@ Publishing KlioMessages to `Google Pub/Sub`_ is supported for all runners.
 
 Example configuration for `Google Pub/Sub`_:
 
-    .. code-block:: yaml
+.. code-block:: yaml
 
-        name: my-cool-job
-        pipeline_options:
-          streaming: True
-        job_config:
-          events:
-            outputs:
-              - type: pubsub
-                topic: my-output-topic
+    name: my-cool-job
+    pipeline_options:
+        streaming: True
+    job_config:
+        events:
+        outputs:
+            - type: pubsub
+              topic: my-output-topic
 
 .. option:: job_config.events.outputs[].type
 
@@ -352,14 +352,14 @@ Custom
 
 Example configuration for a custom event input that is not supported by Klio:
 
-    .. code-block:: yaml
+.. code-block:: yaml
 
-        name: my-cool-job
-        job_config:
-          events:
+    name: my-cool-job
+    job_config:
+        events:
             outputs:
-              - type: custom
-                some_key: some_value
+            - type: custom
+              some_key: some_value
 
 .. option:: job_config.events.outputs[].type
 

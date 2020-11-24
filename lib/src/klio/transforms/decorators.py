@@ -183,10 +183,30 @@ def __serialize_klio_message_generator(
 
     else:
         if isinstance(payload, types.GeneratorType):
-            for pl in payload:
-                yield from __from_klio_message_generator(
-                    self, kmsg, pl, incoming_item
+            try:
+                for pl in payload:
+                    yield from __from_klio_message_generator(
+                        self, kmsg, pl, incoming_item
+                    )
+            # This exception block will the execute
+            # if the pl item is an Exception
+            except Exception as err:
+                func_path = self.__class__.__name__ + "." + meth.__name__
+                log_msg, exc_info = __get_user_error_message(
+                    err, func_path, kmsg
                 )
+                self._klio.logger.error(log_msg, exc_info=exc_info)
+                # This will catch an exception present in the generator
+                # containing items yielded by a function/method
+                # decorated by @handle_klio.
+                # Following items in the generator will be ignored
+                # since an exception has already been detected.
+                # We won't try to serialize kmsg to bytes since
+                # something already went wrong.
+                yield pvalue.TaggedOutput("drop", incoming_item)
+                # explicitly return so that Beam doesn't call `next` and
+                # executes the next `yield`
+                return
         else:
             yield from __from_klio_message_generator(
                 self, kmsg, payload, incoming_item

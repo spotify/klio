@@ -168,6 +168,8 @@ def test_job_property(thread_local_ret, mocker, monkeypatch):
         mock_func.assert_not_called()
         assert klio_ns._thread_local.klio_job == ret_value
 
+    klio_ns._thread_local.klio_job = None
+
 
 @pytest.mark.parametrize("thread_local_ret", (True, False))
 def test_metrics_property(thread_local_ret, mocker, monkeypatch):

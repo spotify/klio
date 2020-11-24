@@ -255,7 +255,10 @@ class VerifyJob(object):
 
         logging.info("Verifying your event inputs...")
 
-        for _input in event_inputs:
+        pubsub_event_inputs = [
+            _i for _i in event_inputs if _i.name == "pubsub"
+        ]
+        for _input in pubsub_event_inputs:
             input_topic = _input.topic
             input_subscription = _input.subscription
 
@@ -277,14 +280,21 @@ class VerifyJob(object):
                     )
                 )
 
-        logging.info(
-            "You have {} unverified input buckets, {} unverified input "
-            "topics and {} unverified input subscriptions".format(
-                unverified_bucket_count,
-                unverified_topic_count,
-                unverified_sub_count,
+        if len(pubsub_event_inputs):
+            logging.info(
+                "You have {} unverified input buckets, {} unverified input "
+                "topics and {} unverified input subscriptions".format(
+                    unverified_bucket_count,
+                    unverified_topic_count,
+                    unverified_sub_count,
+                )
             )
-        )
+        else:
+            logging.info(
+                "You have {} unverified input buckets".format(
+                    unverified_bucket_count,
+                )
+            )
 
         if (
             unverified_bucket_count
@@ -319,7 +329,10 @@ class VerifyJob(object):
 
         logging.info("Verifying your event outputs...")
 
-        for output in event_outputs:
+        pubsub_event_outputs = [
+            _i for _i in event_outputs if _i.name == "pubsub"
+        ]
+        for output in pubsub_event_outputs:
             output_topic = output.topic
 
             if output_topic is not None:
@@ -329,11 +342,20 @@ class VerifyJob(object):
             else:
                 logging.error("There is no topic for {}".format(output))
 
-        logging.info(
-            "You have {} unverified output buckets and {} unverified output "
-            "topics".format(unverified_bucket_count, unverified_topic_count)
-        )
-
+        if pubsub_event_outputs:
+            logging.info(
+                "You have {} unverified output buckets "
+                "and {} unverified output "
+                "topics".format(
+                    unverified_bucket_count, unverified_topic_count
+                )
+            )
+        else:
+            logging.info(
+                "You have {} unverified output buckets".format(
+                    unverified_bucket_count
+                )
+            )
         if unverified_bucket_count + unverified_topic_count == 0:
             return True
         return False

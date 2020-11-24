@@ -119,6 +119,59 @@ def test_read_from_avro():
     assert io_transforms.KlioReadFromAvro._REQUIRES_IO_READ_WRAP is True
 
 
+def assert_expected_klio_msg_from_avro_write(element):
+    file_path_read = os.path.join(FIXTURE_PATH, "elements_text_file.txt")
+    with open(file_path_read, "rb") as fr:
+        expected_elements = fr.read().splitlines()
+    message = klio_pb2.KlioMessage()
+    message.ParseFromString(element)
+    assert message.data.element in expected_elements
+
+
+def test_write_to_avro():
+
+    file_path_read = os.path.join(FIXTURE_PATH, "elements_text_file.txt")
+
+    with tempfile.TemporaryDirectory() as tmp_path:
+        with test_pipeline.TestPipeline() as p:
+
+            p | io_transforms.KlioReadFromText(
+                file_path_read
+            ) | io_transforms.KlioWriteToAvro(file_path_prefix=tmp_path)
+
+        files = glob.glob(tmp_path + "*")
+        assert len(files) > 0
+        assert (
+            os.path.isfile(os.path.join(tmp_path, file_name))
+            for file_name in files
+        )
+
+        with test_pipeline.TestPipeline() as p2:
+            p2 | io_transforms.KlioReadFromAvro(
+                file_pattern=(tmp_path + "*")
+            ) | beam.Map(assert_expected_klio_msg_from_avro_write)
+
+
+def test_avro_io_immutability():
+
+    initial_data_path = os.path.join(FIXTURE_PATH, "twitter.avro")
+
+    with tempfile.TemporaryDirectory() as tmp_path:
+        with test_pipeline.TestPipeline() as p:
+
+            p | io_transforms.KlioReadFromAvro(
+                initial_data_path
+            ) | io_transforms.KlioWriteToAvro(
+                file_path_prefix=tmp_path, num_shards=0
+            )
+
+        with test_pipeline.TestPipeline() as p2:
+
+            p2 | io_transforms.KlioReadFromAvro(
+                file_pattern=tmp_path + "*"
+            ) | beam.Map(assert_expected_klio_msg_from_avro)
+
+
 def test_bigquery_mapper_generate_klio_message():
 
     mapper = io_transforms._KlioReadFromBigQueryMapper()

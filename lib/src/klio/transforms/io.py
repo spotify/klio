@@ -17,9 +17,9 @@ import json
 import os
 
 import apache_beam as beam
-
 from apache_beam.io import avroio as beam_avroio
 from apache_beam.io.gcp import bigquery as beam_bq
+from fastavro import parse_schema
 
 from klio_core.proto import klio_pb2
 
@@ -334,7 +334,15 @@ class _KlioFastAvroSource(beam_avroio._FastAvroSource):
             message = klio_pb2.KlioMessage()
             message.version = klio_pb2.Version.V2
             message.metadata.intended_recipients.anyone.SetInParent()
-            message.data.element = bytes(json.dumps(record).encode("utf-8"))
+            # If an element is sent then we set the element
+            # to handle event reading
+            # If "element" is not present then we stuff the record
+            # into the message element
+            message.data.element = (
+                record["element"]
+                if "element" in record
+                else bytes(json.dumps(record).encode("utf-8"))
+            )
             yield message.SerializeToString()
 
 
@@ -398,3 +406,97 @@ class KlioReadFromAvro(beam.io.ReadFromAvro):
             file_pattern = location
 
         return file_pattern
+
+
+# note: fast avro is default for py3 on beam
+class _KlioFastAvroSink(beam_avroio._FastAvroSink):
+    def write_record(self, writer, encoded_element):
+        message = klio_pb2.KlioMessage()
+        message.ParseFromString(encoded_element)
+        record = {"element": message.data.element}
+        super(_KlioFastAvroSink, self).write_record(
+            writer=writer, value=record
+        )
+
+
+# Note of caution: In the past problems have arisen due to
+# changes to internal beam classes.
+# If this occurs, consider writing this as a custom PTransform
+# that bundles a ``beam.Map`` with the standard ``WriteToAvro``
+# Refer to ``KlioReadFromBigQuery`` as an example.
+class KlioWriteToAvro(beam.io.WriteToAvro):
+    """Write avro to a local directory or GCS bucket.
+
+    ``KlioMessage.data.element`` data is parsed out
+    and dumped into arvo format.
+
+    Args:
+      file_path_prefix (str): The file path to write to
+      location (str): local or GCS path to write to
+      schema (str): The schema to use, as returned by avro.schema.parse
+      codec (str): The codec to use for block-level compression.
+            defaults to 'deflate'
+      file_name_suffix (str): Suffix for the files written.
+      num_shards (int): The number of files (shards) used for output.
+      shard_name_template (str): template string for shard number and count
+      mime_type (str): The MIME type to use for the produced files.
+        Defaults to "application/x-avro"
+    """
+
+    KLIO_SCHEMA_OBJ = {
+        "namespace": "klio.avro",
+        "type": "record",
+        "name": "KlioMessage",
+        "fields": [{"name": "element", "type": "bytes"}],
+    }
+
+    def __init__(
+        self,
+        file_path_prefix=None,
+        location=None,
+        schema=parse_schema(KLIO_SCHEMA_OBJ),
+        codec="deflate",
+        file_name_suffix="",
+        num_shards=0,
+        shard_name_template=None,
+        mime_type="application/x-avro",
+    ):
+
+        file_path = self._get_file_path(file_path_prefix, location)
+
+        super(KlioWriteToAvro, self).__init__(
+            file_path_prefix=file_path,
+            schema=schema,
+            codec=codec,
+            file_name_suffix=file_name_suffix,
+            num_shards=num_shards,
+            shard_name_template=shard_name_template,
+            mime_type=mime_type,
+            use_fastavro=True,
+        )
+
+        self._sink = _KlioFastAvroSink(
+            file_path,
+            schema,
+            codec,
+            file_name_suffix,
+            num_shards,
+            shard_name_template,
+            mime_type,
+        )
+
+    def _get_file_path(self, file_path_prefix, location):
+        # TODO: this should be a validator in klio_core.config
+        if not any([file_path_prefix, location]):
+            raise KlioMissingConfiguration(
+                "Must configure at least one of the following keys when "
+                "writing to avro: `file_path_prefix`, `location`."
+            )
+
+        if all([file_path_prefix, location]):
+            file_path_prefix = os.path.join(location, file_path_prefix)
+
+        elif file_path_prefix is None:
+            file_path_prefix = location
+
+        return file_path_prefix

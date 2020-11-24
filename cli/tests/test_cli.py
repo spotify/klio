@@ -21,6 +21,7 @@ import pytest
 
 from click import testing
 
+from klio_core import _testing as core_testing
 from klio_core import config as kconfig
 from klio_core import utils as core_utils
 
@@ -28,77 +29,11 @@ from klio_cli import cli
 from klio_cli.utils import cli_utils
 
 
-def assert_execution_success(result):
-    """Helper for testing CLI commands that emits errors if execution failed"""
-    if result.exception:
-        if result.stdout:
-            print("captured stdout: {}".format(result.stdout))
-        raise result.exception
-
-    assert 0 == result.exit_code
-
-
-class MockKlioConfig(object):
-    def __init__(self, mocker, monkeypatch, patch_os_getcwd):
-
-        self.mock_get_config = mocker.patch.object(
-            core_utils, "get_config_by_path"
-        )
-        self.mock_get_config_job_dir = mocker.Mock()
-        monkeypatch.setattr(
-            cli.core_utils, "get_config_job_dir", self.mock_get_config_job_dir
-        )
-
-        self.patch_os_getcwd = patch_os_getcwd
-        self.mocker = mocker
-        self.monkeypatch = monkeypatch
-
-    def setup(self, config_data, config_file, config_override=None):
-        self.config_override = config_override
-        self.config_data = config_data
-        self.config_file = config_file
-
-        self.mock_warn_if_py2_job = self.mocker.Mock()
-        self.monkeypatch.setattr(
-            cli.core_utils, "warn_if_py2_job", self.mock_warn_if_py2_job
-        )
-
-        self.mock_get_config_job_dir.return_value = (
-            self.patch_os_getcwd,
-            config_override or config_file,
-        )
-
-        self.mock_get_config.return_value = config_data
-
-        self.meta = core_utils.KlioConfigMeta(
-            job_dir=self.patch_os_getcwd,
-            config_file=config_override,
-            config_path=config_override or config_file,
-        )
-
-        self.klio_config = kconfig.KlioConfig(config_data)
-
-        self.mock_klio_config = self.mocker.patch.object(
-            core_utils.config, "KlioConfig"
-        )
-        self.mock_klio_config.return_value = self.klio_config
-
-        return self.klio_config
-
-    def assert_calls(self):
-        self.mock_get_config_job_dir.assert_called_once_with(
-            None, self.config_override
-        )
-        self.mock_get_config.assert_called_once_with(
-            self.config_override or self.config_file
-        )
-        self.mock_klio_config.assert_called_once_with(self.config_data)
-        self.mock_warn_if_py2_job.assert_called_once_with(self.patch_os_getcwd)
-
-
 @pytest.fixture
 def mock_klio_config(mocker, monkeypatch, patch_os_getcwd):
-    return MockKlioConfig(mocker, monkeypatch, patch_os_getcwd)
+    return core_testing.MockKlioConfig(
+        cli, mocker, monkeypatch, patch_os_getcwd
+    )
 
 
 @pytest.fixture
@@ -238,7 +173,7 @@ def test_build_image(
 
     result = runner.invoke(cli.main, cli_inputs)
 
-    assert_execution_success(result)
+    core_testing.assert_execution_success(result)
     assert "" == result.output
 
     if image_tag:
@@ -270,7 +205,7 @@ def test_create_job(runner, mock_create, patch_os_getcwd):
         "--use-defaults",
     ]
     result = runner.invoke(cli.main, cli_inputs)
-    assert_execution_success(result)
+    core_testing.assert_execution_success(result)
     assert "" == result.output
 
     known_kwargs = {
@@ -286,7 +221,7 @@ def test_create_job_prompts(runner, mock_create, patch_os_getcwd):
     prompt_inputs = ["test-job", "test-gcp-project"]
     inputs = "\n".join(prompt_inputs)
     result = runner.invoke(cli.main, cli_inputs, input=inputs)
-    assert_execution_success(result)
+    core_testing.assert_execution_success(result)
 
     exp_output = (
         "Name of your new job: {0}\n"
@@ -316,7 +251,7 @@ def test_create_job_unknown_args(runner, mock_create, patch_os_getcwd):
         "test-input-topic",
     ]
     result = runner.invoke(cli.main, cli_inputs)
-    assert_execution_success(result)
+    core_testing.assert_execution_success(result)
     assert "" == result.output
 
     unknown_args = ("--input-topic", "test-input-topic")
@@ -367,7 +302,7 @@ def test_delete_job(
     if config_override:
         cli_inputs.extend(["--config-file", config_override])
     result = runner.invoke(cli.main, cli_inputs)
-    assert_execution_success(result)
+    core_testing.assert_execution_success(result)
     assert "" == result.output
 
     mock_klio_config.assert_calls()
@@ -441,7 +376,7 @@ def test_run_job(
 
     result = runner.invoke(cli.main, cli_inputs)
 
-    assert_execution_success(result)
+    core_testing.assert_execution_success(result)
     assert "" == result.output
 
     mock_run.assert_called_once_with()
@@ -518,7 +453,7 @@ def test_stop_job(
 
     result = runner.invoke(cli.main, cli_inputs)
 
-    assert_execution_success(result)
+    core_testing.assert_execution_success(result)
     assert "" == result.output
 
     mock_klio_config.assert_calls()
@@ -592,7 +527,7 @@ def test_deploy_job(
 
     result = runner.invoke(cli.main, cli_inputs)
 
-    assert_execution_success(result)
+    core_testing.assert_execution_success(result)
     assert "" == result.output
 
     mock_get_git_sha.assert_called_once_with(patch_os_getcwd, image_tag)
@@ -704,7 +639,7 @@ def test_test_job(
 
     result = runner.invoke(cli.main, cli_inputs)
 
-    assert_execution_success(result)
+    core_testing.assert_execution_success(result)
     assert "" == result.output
 
     exp_image_tag = image_tag or mock_get_git_sha.return_value
@@ -779,7 +714,7 @@ def test_verify(
         cli_inputs.extend(["--config-file", conf_override])
 
     result = runner.invoke(cli.main, cli_inputs)
-    assert_execution_success(result)
+    core_testing.assert_execution_success(result)
 
     mock_get_config_job_dir.assert_called_once_with(None, conf_override)
     mock_get_config.assert_called_once_with(conf_override or config_file)
@@ -1034,7 +969,7 @@ def test_profile_memory(runner, mocker, minimal_mock_klio_config):
 
     result = runner.invoke(cli.profile_memory, [])
 
-    assert_execution_success(result)
+    core_testing.assert_execution_success(result)
 
     exp_kwargs = {
         "image_tag": None,
@@ -1060,7 +995,7 @@ def test_profile_memory_per_line(runner, mocker, minimal_mock_klio_config):
     mock_profile = mocker.patch.object(cli, "_profile")
     result = runner.invoke(cli.profile_memory_per_line, [])
 
-    assert_execution_success(result)
+    core_testing.assert_execution_success(result)
 
     exp_kwargs = {
         "get_maximum": False,
@@ -1085,7 +1020,7 @@ def test_profile_cpu(runner, mocker, minimal_mock_klio_config):
 
     result = runner.invoke(cli.profile_cpu, [])
 
-    assert_execution_success(result)
+    core_testing.assert_execution_success(result)
 
     exp_kwargs = {
         "interval": 0.1,
@@ -1112,7 +1047,7 @@ def test_profile_timeit(
 
     result = runner.invoke(cli.profile_timeit, [])
 
-    assert_execution_success(result)
+    core_testing.assert_execution_success(result)
 
     exp_kwargs = {
         "iterations": 10,
@@ -1201,7 +1136,7 @@ def test_publish(
 
     result = runner.invoke(cli.main, cli_inputs)
 
-    assert_execution_success(result)
+    core_testing.assert_execution_success(result)
     assert "" == result.output
 
     mock_publish.assert_called_once_with(

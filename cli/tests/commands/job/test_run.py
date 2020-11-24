@@ -197,8 +197,7 @@ def test_get_environment(run_pipeline):
 
 
 @pytest.mark.parametrize(
-    "config_file,exp_config_flags",
-    ((None, []), ("klio-job2.yaml", ["--config-file", "klio-job2.yaml"])),
+    "config_file", (None, "klio-job2.yaml"),
 )
 @pytest.mark.parametrize(
     "image_tag,exp_image_flags",
@@ -219,7 +218,6 @@ def test_get_command(
     image_tag,
     exp_image_flags,
     config_file,
-    exp_config_flags,
     run_pipeline,
     monkeypatch,
 ):
@@ -236,7 +234,6 @@ def test_get_command(
     exp_command.extend(exp_update_flag)
     exp_command.extend(exp_runner_flag)
     exp_command.extend(exp_image_flags)
-    exp_command.extend(exp_config_flags)
 
     assert sorted(exp_command) == sorted(run_pipeline._get_command())
 

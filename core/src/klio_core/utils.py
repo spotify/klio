@@ -247,6 +247,9 @@ def with_klio_config(func):
 #############################
 def warn_if_py2_job(job_dir):
     dockerfile_path = os.path.join(job_dir, "Dockerfile")
+    if not os.path.isfile(dockerfile_path):
+        return
+
     from_line = None
     with open(dockerfile_path, "r") as f:
         for line in f.readlines():

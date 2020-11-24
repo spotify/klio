@@ -35,6 +35,7 @@ class RunPipeline(base.BaseDockerizedPipeline):
     ):
         super().__init__(job_dir, klio_config, docker_runtime_config)
         self.run_job_config = run_job_config
+        self.requires_config_file = True
 
     @staticmethod
     def _try_container_kill(container):
@@ -114,14 +115,6 @@ class RunPipeline(base.BaseDockerizedPipeline):
             self.run_job_config.update is False
         ):  # don't do anything if `None`
             command.append("--no-update")
-
-        if self.docker_runtime_config.config_file_override:
-            command.extend(
-                [
-                    "--config-file",
-                    self.docker_runtime_config.config_file_override,
-                ]
-            )
 
         return command
 

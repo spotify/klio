@@ -183,77 +183,87 @@ class _KlioReadFromBigQueryMapper(object):
 # documentation will be shown, excluding our new parameter.
 class KlioReadFromBigQuery(beam.PTransform, _KlioTransformMixin):
     """Read data from BigQuery.
-      This PTransform uses a BigQuery export job to take a snapshot of the table
-      on GCS, and then reads from each produced file. File format is Avro by
-      default.
+
+    This PTransform uses a BigQuery export job to take a snapshot of the table
+    on GCS, and then reads from each produced file. File format is Avro by
+    default.
+
     Args:
-      table (str, callable, ValueProvider): The ID of the table, or a callable
-        that returns it. The ID must contain only letters ``a-z``, ``A-Z``,
-        numbers ``0-9``, or underscores ``_``. If dataset argument is
-        :data:`None` then the table argument must contain the entire table
-        reference specified as: ``'DATASET.TABLE'``
-        or ``'PROJECT:DATASET.TABLE'``. If it's a callable, it must receive one
-        argument representing an element to be written to BigQuery, and return
-        a TableReference, or a string table name as specified above.
-      dataset (str): The ID of the dataset containing this table or
-        :data:`None` if the table reference is specified entirely by the table
-        argument.
-      project (str): The ID of the project containing this table.
-      klio_message_columns (list): A list of fields (``str``) that should
-        be assigned to ``KlioMessage.data.element``.
+        table (str, callable, ValueProvider): The ID of the table, or a callable
+            that returns it. The ID must contain only letters ``a-z``, ``A-Z``,
+            numbers ``0-9``, or underscores ``_``. If dataset argument is
+            :data:`None` then the table argument must contain the entire table
+            reference specified as: ``'DATASET.TABLE'``
+            or ``'PROJECT:DATASET.TABLE'``.
+            If it's a callable, it must receive one argument representing an
+            element to be written to BigQuery, and return
+            a TableReference, or a string table name as specified above.
+        dataset (str): The ID of the dataset containing this table or
+            :data:`None` if the table reference is specified entirely by
+            the table argument.
+        project (str): The ID of the project containing this table.
+        klio_message_columns (list): A list of fields (``str``) that should
+            be assigned to ``KlioMessage.data.element``.
 
-        .. note::
+            .. note::
 
-            If more than one field is provided, the results including the
-            column names will be serialized to JSON before assigning to
-            ``KlioMessage.data.element``. (e.g. ``'{"field1": "foo",
-            "field2": bar"}'``). If only one field is provided, just the
-            value will be assigned to ``KlioMessage.data.element``.
+                If more than one field is provided, the results including the
+                column names will be serialized to JSON before assigning to
+                ``KlioMessage.data.element``. (e.g. ``'{"field1": "foo",
+                "field2": bar"}'``). If only one field is provided, just the
+                value will be assigned to ``KlioMessage.data.element``.
 
-      query (str, ValueProvider): A query to be used instead of arguments
-        table, dataset, and project.
-      validate (bool): If :data:`True`, various checks will be done when source
-        gets initialized (e.g., is table present?). This should be
-        :data:`True` for most scenarios in order to catch errors as early as
-        possible (pipeline construction instead of pipeline execution). It
-        should be :data:`False` if the table is created during pipeline
-        execution by a previous step.
-      coder (~apache_beam.coders.coders.Coder): The coder for the table
-        rows. If :data:`None`, then the default coder is
-        _JsonToDictCoder, which will interpret every row as a JSON
-        serialized dictionary.
-      use_standard_sql (bool): Specifies whether to use BigQuery's standard SQL
-        dialect for this query. The default value is :data:`False`.
-        If set to :data:`True`, the query will use BigQuery's updated SQL
-        dialect with improved standards compliance.
-        This parameter is ignored for table inputs.
-      flatten_results (bool): Flattens all nested and repeated fields in the
-        query results. The default value is :data:`True`.
-      kms_key (str): Optional Cloud KMS key name for use when creating new
-        temporary tables.
-      gcs_location (str, ValueProvider): The name of the Google Cloud Storage
-        bucket where the extracted table should be written as a string or
-        a :class:`~apache_beam.options.value_provider.ValueProvider`. If
-        :data:`None`, then the temp_location parameter is used.
-      bigquery_job_labels (dict): A dictionary with string labels to be passed
-        to BigQuery export and query jobs created by this transform. See:
-        https://cloud.google.com/bigquery/docs/reference/rest/v2/\
-                Job#JobConfiguration
-      use_json_exports (bool): By default, this transform works by exporting
-        BigQuery data into Avro files, and reading those files. With this
-        parameter, the transform will instead export to JSON files. JSON files
-        are slower to read due to their larger size.  When using JSON exports,
-        the BigQuery types for DATE, DATETIME, TIME, and TIMESTAMP will be
-        exported as strings. This behavior is consistent with BigQuerySource.
-        When using Avro exports, these fields will be exported as native Python
-        types (datetime.date, datetime.datetime, datetime.datetime,
-        and datetime.datetime respectively). Avro exports are recommended.
-        To learn more about BigQuery types, and Time-related type
-        representations, see: https://cloud.google.com/bigquery/docs/reference/\
-                standard-sql/data-types
-        To learn more about type conversions between BigQuery and Avro, see:
-        https://cloud.google.com/bigquery/docs/loading-data-cloud-storage-avro\
-                #avro_conversions
+        query (str, ValueProvider): A query to be used instead of arguments
+            table, dataset, and project.
+        validate (bool): If :data:`True`, various checks will be done when
+            source gets initialized (e.g., is table present?).
+            This should be :data:`True` for most scenarios
+            in order to catch errors as early as possible
+            (pipeline construction instead of pipeline execution).
+            It should be :data:`False` if the table is created during pipeline
+            execution by a previous step.
+        coder (~apache_beam.coders.coders.Coder): The coder for the table
+            rows. If :data:`None`, then the default coder is
+            _JsonToDictCoder, which will interpret every row as a JSON
+            serialized dictionary.
+        use_standard_sql (bool): Specifies whether to use BigQuery's standard
+            SQL dialect for this query. The default value is :data:`False`.
+            If set to :data:`True`, the query will use BigQuery's updated SQL
+            dialect with improved standards compliance.
+            This parameter is ignored for table inputs.
+        flatten_results (bool): Flattens all nested and repeated fields in the
+            query results. The default value is :data:`True`.
+        kms_key (str): Optional Cloud KMS key name for use when creating new
+            temporary tables.
+        gcs_location (str, ValueProvider): The name of the Google Cloud Storage
+            bucket where the extracted table should be written as a string or
+            a :class:`~apache_beam.options.value_provider.ValueProvider`. If
+            :data:`None`, then the temp_location parameter is used.
+        bigquery_job_labels (dict): A dictionary with string labels to be passed
+            to BigQuery export and query jobs created by this transform. See:
+            https://cloud.google.com/bigquery/docs/reference/rest/v2/\
+Job#JobConfiguration
+        use_json_exports (bool): By default, this transform works by exporting
+            BigQuery data into Avro files, and reading those files. With this
+            parameter, the transform will instead export to JSON files.
+            JSON files are slower to read due to their larger size.
+            When using JSON exports,
+            the BigQuery types for DATE, DATETIME, TIME, and TIMESTAMP will be
+            exported as strings.
+
+            This behavior is consistent with BigQuerySource.
+            When using Avro exports,
+            these fields will be exported as native Python
+            types (datetime.date, datetime.datetime, datetime.datetime,
+            and datetime.datetime respectively). Avro exports are recommended.
+            To learn more about BigQuery types, and Time-related type
+            representations,
+            see:
+            https://cloud.google.com/bigquery/docs/reference/standard-sql/\
+data-types
+            To learn more about type conversions between BigQuery and Avro, see:
+            https://cloud.google.com/bigquery/docs/loading-data-cloud-\
+storage-avro#avro_conversions
      """
 
     def __init__(self, *args, klio_message_columns=None, **kwargs):

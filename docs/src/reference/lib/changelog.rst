@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.2.1 (2020-11-24)
+------------------------
+
+Fixed
+*****
+
+* Handling of exceptions yielded by functions/methods decorated with @handle_klio
+* KlioReadFromBigQuery rewritten as reader + map transform
+
 0.2.0.post1 (2020-11-02)
 ------------------------
 

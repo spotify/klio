@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.2.1.post (2020-11-30)
+------------------------
+
+Fixed
+*****
+
+* Requires klio-core<0.2.1,>=0.2.0 to prevent useage of 0.2.1 until dependent code is released
+* Klio lib requires changes not yet released in klio-core
+
 0.2.1 (2020-11-24)
 ------------------------
 

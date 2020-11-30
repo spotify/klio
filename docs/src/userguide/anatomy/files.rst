@@ -10,13 +10,13 @@ There are a handful of files that are required for a Klio job, which the ``klio 
 
     .
     ├── Dockerfile
-    ├── MANIFEST.in          # for non-FnAPI jobs
+    ├── MANIFEST.in
     ├── README.md
     ├── __init__.py
     ├── job-requirements.txt
     ├── klio-job.yaml
     ├── run.py
-    ├── setup.py             # for non-FnAPI jobs
+    ├── setup.py
     ├── test_transforms.py
     └── transforms.py
 
@@ -32,9 +32,8 @@ Python Files
 
 ``__init__.py`` helps the Python executable find the path where the other Python files are.
 
-For :violetemph:`non-FnAPI jobs`, a ``setup.py`` file is generated to define how the job should be packaged so the configured runner can appropriately install it.
-This is also where job-specific :violetemph:`system-level dependencies` should be declared when the FnAPI is not used.
-See :ref:`new-setup-py` for more information.
+``setup.py`` file defines how the job should be packaged so the configured runner can appropriately install it.
+This is also where job-specific :violetemph:`system-level dependencies` should be declared.
 
 Dependency Declaration
 ----------------------
@@ -43,8 +42,6 @@ Dependency Declaration
 
 ``Dockerfile`` describes a Docker image that will be used for launching a Klio job, regardless of the configured runner. It is setup to install the packages you specify in ``job-requirements.txt``.
 
-
-For :violetemph:`FnAPI jobs`, it is also where job-specific :violetemph:`system-level dependencies` should be declared (i.e. ``apt-get install ffmpeg``) and whatever else required to setup a job's environment.
 
 Configuration
 -------------
@@ -56,11 +53,31 @@ Read more about a job's configuration :doc:`here <../config/index>`.
 Other Files
 -----------
 
-For :violetemph:`non-FnAPI jobs`, a ``MANIFEST.in`` is generated that declares files needed for job installation (i.e. ``job-requirements.txt``) but not needed at runtime.
-See :ref:`new-manifest-in` for more information.
+``MANIFEST.in`` declares files needed for job installation (i.e. ``job-requirements.txt``) but not needed at runtime.
+
+.. collapsible:: Why is this needed?
+
+    The ``MANIFEST.in`` file must include any file required to *install* your job as a Python
+    package (but not needed to run your job; those files are declared under ``data_files``
+    in ``setup.py`` as referred above).
+
+    When Klio launches the job for Dataflow, Dataflow will locally create a `source distribution`_
+    of your job by running ``python setup.py sdist``. When running this, Python will tar together
+    the files declared in ``setup.py`` as well as any non-Python files defined in `MANIFEST.in`_
+    into a file called ``workflow.tar.gz`` (as named by Dataflow to then be uploaded).
+
+    Then, on the worker, Dataflow will run ``pip install workflow.tar.gz``. ``pip`` will actually
+    build a `wheel`_, installing packages defined in ``job-requirements.txt`` (and running any
+    other custom commands defined in ``setup.py``). After the installation of the package via
+    ``pip install workflow.tar.gz``, ``job-requirements.txt`` will effectively be gone and
+    inaccessible to the job's code. Building a wheel ignores ``MANIFEST.in``, but includes all the
+    files declared in ``setup.py``, the ones actually needed for running the Klio job.
 
 ``README.md`` is initially populated with setup instructions on how to get a job running, but should be used however needed.
 
 
 
 .. _requirements file: https://pip.pypa.io/en/stable/user_guide/#requirements-files
+.. _source distribution: https://packaging.python.org/guides/distributing-packages-using-setuptools/#source-distributions
+.. _MANIFEST.in: https://packaging.python.org/guides/distributing-packages-using-setuptools/#manifest-in
+.. _wheel: https://packaging.python.org/guides/distributing-packages-using-setuptools/#wheels

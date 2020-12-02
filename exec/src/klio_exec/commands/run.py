@@ -280,6 +280,13 @@ class KlioPipeline(object):
                 pipeline_opts.requirements_file
             )
 
+            if fnapi_enabled:
+                logging.warn(
+                    "Support for batch jobs using the 'beam_fn_api' "
+                    "experiment is still in development. "
+                    "Use with caution."
+                )
+
             if not any([fnapi_enabled, setup_file_exists, reqs_file_exists]):
                 logging.error(
                     "setup.py and/or requirements file either "

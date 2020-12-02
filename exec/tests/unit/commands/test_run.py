@@ -276,6 +276,22 @@ def test_verify_packaging_for_batch_raises(
         assert 1 == len(caplog.records)
 
 
+def test_verify_packaging_for_batch_warns(mocker, caplog):
+    mock_config = mocker.Mock()
+    mock_config.pipeline_options = mocker.Mock()
+    mock_config.pipeline_options.streaming = False
+    mock_config.pipeline_options.experiments = ["beam_fn_api"]
+    mock_config.pipeline_options.setup_file = None
+    mock_config.pipeline_options.requirements_file = None
+
+    kpipe = run.KlioPipeline("test-job", mock_config, mocker.Mock())
+
+    kpipe._verify_packaging()
+
+    assert 1 == len(caplog.records)
+    assert "WARNING" == caplog.records[0].levelname
+
+
 @pytest.mark.parametrize(
     "setup_file,reqs_file",
     (

@@ -203,8 +203,9 @@ def test_get_image_tag(image, tag, expected_image):
     assert expected_image == actual_image
 
 
+@pytest.mark.parametrize("streaming", (True, False))
 @pytest.mark.parametrize(
-    "exp,setup_file,requirements_file",
+    "exp,setup_file, requirements_file",
     [
         ("beam_fn_api", None, None),
         (None, "setup.py", None),
@@ -212,19 +213,24 @@ def test_get_image_tag(image, tag, expected_image):
         (None, None, "requirements.txt"),
     ],
 )
-def test_verify_packaging(exp, setup_file, requirements_file, mocker):
+def test_verify_packaging(
+    exp, setup_file, requirements_file, streaming, mocker
+):
     mock_config = mocker.Mock()
     mock_config.pipeline_options = mocker.Mock()
     mock_config.pipeline_options.experiments = [exp]
     mock_config.pipeline_options.setup_file = setup_file
     mock_config.pipeline_options.requirements_file = requirements_file
+    mock_config.pipeline_options.streaming = streaming
+    mock_path_exists = mocker.patch.object(os.path, "exists")
+    mock_path_exists.return_value = True
 
     kpipe = run.KlioPipeline("test-job", mock_config, mocker.Mock())
 
     kpipe._verify_packaging()
 
 
-def test_verify_packaging_raises(mocker):
+def test_verify_packaging_with_both_packagaing_systems_raises(mocker):
     mock_config = mocker.Mock()
     mock_config.pipeline_options = mocker.Mock()
     mock_config.pipeline_options.experiments = ["beam_fn_api"]
@@ -234,6 +240,56 @@ def test_verify_packaging_raises(mocker):
 
     with pytest.raises(SystemExit):
         kpipe._verify_packaging()
+
+
+@pytest.mark.parametrize(
+    "has_setup_file, setup_file_exists", ((True, False), (False, False),)
+)
+@pytest.mark.parametrize(
+    "has_reqs_file, reqs_file_exists", ((True, False), (False, False),)
+)
+def test_verify_packaging_for_batch_raises(
+    mocker,
+    caplog,
+    has_setup_file,
+    setup_file_exists,
+    has_reqs_file,
+    reqs_file_exists,
+):
+    mock_config = mocker.Mock()
+    mock_config.pipeline_options = mocker.Mock()
+    mock_config.pipeline_options.streaming = False
+    mock_config.pipeline_options.experiments = []
+    if has_setup_file:
+        mock_config.pipeline_options.setup_file = "setup.py"
+    if has_reqs_file:
+        mock_config.pipeline_options.requirements_file = "requirements.txt"
+
+    mock_path_exists = mocker.patch.object(os.path, "exists")
+    mock_path_exists.side_effect = [setup_file_exists, reqs_file_exists]
+
+    kpipe = run.KlioPipeline("test-job", mock_config, mocker.Mock())
+
+    with pytest.raises(SystemExit):
+        kpipe._verify_packaging()
+
+        assert 1 == len(caplog.records)
+
+
+def test_verify_packaging_for_batch_warns(mocker, caplog):
+    mock_config = mocker.Mock()
+    mock_config.pipeline_options = mocker.Mock()
+    mock_config.pipeline_options.streaming = False
+    mock_config.pipeline_options.experiments = ["beam_fn_api"]
+    mock_config.pipeline_options.setup_file = None
+    mock_config.pipeline_options.requirements_file = None
+
+    kpipe = run.KlioPipeline("test-job", mock_config, mocker.Mock())
+
+    kpipe._verify_packaging()
+
+    assert 1 == len(caplog.records)
+    assert "WARNING" == caplog.records[0].levelname
 
 
 @pytest.mark.parametrize(

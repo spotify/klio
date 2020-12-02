@@ -272,6 +272,28 @@ class KlioPipeline(object):
             )
             raise SystemExit(1)
 
+        if not pipeline_opts.streaming:
+            setup_file_exists = has_setup_file and os.path.exists(
+                pipeline_opts.setup_file
+            )
+            reqs_file_exists = has_reqs_file and os.path.exists(
+                pipeline_opts.requirements_file
+            )
+
+            if fnapi_enabled:
+                logging.warn(
+                    "Support for batch jobs using the 'beam_fn_api' "
+                    "experiment is still in development. "
+                    "Use with caution."
+                )
+
+            if not any([fnapi_enabled, setup_file_exists, reqs_file_exists]):
+                logging.error(
+                    "setup.py and/or requirements file either "
+                    "unspecified or not found."
+                )
+                raise SystemExit(1)
+
     def _setup_data_io_filters(self, in_pcol, label_prefix=None):
         # label prefixes are required for multiple inputs (to avoid label
         # name collisions in Beam)

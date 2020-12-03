@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.2.2.post (2020-12-03)
+------------------------
+
+Fixed
+*****
+
+* Requires klio-core>=0.2.1 now that dependent changes have been released in new core version
+
+
 0.2.1.post (2020-11-30)
 ------------------------
 

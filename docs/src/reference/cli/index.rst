@@ -58,8 +58,8 @@ Klio CLI
 
 
 .. |image| replace:: ``image``
-.. _image: ./image.html
+.. _image: ./api/cli/image.html
 .. |job| replace:: ``job``
-.. _job: ./job.html
+.. _job: ./api/cli/job.html
 .. |message| replace:: ``message``
-.. _message: ./message.html
+.. _message: ./api/cli/message.html

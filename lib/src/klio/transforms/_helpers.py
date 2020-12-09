@@ -54,6 +54,18 @@ class TaggedStates(enum.Enum):
     DEFAULT = "tag_not_set"
 
 
+class KlioConfigRuntimeError(RuntimeError):
+    """Config error that should crash the job at startup."""
+
+    pass
+
+
+class KlioUnsupportedConfigError(KlioConfigRuntimeError):
+    """User-defined config is unsupported."""
+
+    pass
+
+
 # Only serializes to a KlioMessage; we deserialize within the process
 # method itself since we also have to tag the output (too difficult to
 # serialize output that's already tagged)
@@ -169,7 +181,7 @@ class _KlioInputDataMixin(object):
         if len(self._klio.config.job_config.data.inputs) > 1:
             # raise a runtime error so it actually crashes klio/beam rather than
             # just continue processing elements
-            raise RuntimeError(
+            raise KlioUnsupportedConfigError(
                 "Multiple inputs configured in "
                 "`klio-job.yaml::job_config.data.inputs` are not supported "
                 "for data existence checks."
@@ -180,7 +192,7 @@ class _KlioInputDataMixin(object):
         if len(self._klio.config.job_config.data.inputs) == 0:
             # raise a runtime error so it actually crashes klio/beam rather than
             # just continue processing elements
-            raise RuntimeError(
+            raise KlioConfigRuntimeError(
                 "Input data existence checks require input data to be "
                 "configured in `klio-job.yaml::job_config.data.inputs`."
             )
@@ -205,7 +217,7 @@ class _KlioOutputDataMixin(object):
         if len(self._klio.config.job_config.data.outputs) > 1:
             # raise a runtime error so it actually crashes klio/beam rather than
             # just continue processing elements
-            raise RuntimeError(
+            raise KlioUnsupportedConfigError(
                 "Multiple outputs configured in "
                 "`klio-job.yaml::job_config.data.outputs` are not supported "
                 "for data existence checks."
@@ -217,7 +229,7 @@ class _KlioOutputDataMixin(object):
         if len(self._klio.config.job_config.data.outputs) == 0:
             # raise a runtime error so it actually crashes klio/beam rather than
             # just continue processing elements
-            raise RuntimeError(
+            raise KlioConfigRuntimeError(
                 "Output data existence checks require output data to be "
                 "configured in `klio-job.yaml::job_config.data.outputs`."
             )

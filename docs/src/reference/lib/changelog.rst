@@ -1,7 +1,16 @@
 Changelog
 =========
 
-0.2.2.post (2020-12-03)
+0.2.2 (UNRELEASED)
+------------------
+
+Fixed
+*****
+
+* Allow for support of empty ``job_config.data`` values for the built-in helper filter transforms.
+
+
+0.2.1.post2 (2020-12-03)
 ------------------------
 
 Fixed
@@ -10,7 +19,7 @@ Fixed
 * Requires klio-core>=0.2.1 now that dependent changes have been released in new core version
 
 
-0.2.1.post (2020-11-30)
+0.2.1.post1 (2020-11-30)
 ------------------------
 
 Fixed

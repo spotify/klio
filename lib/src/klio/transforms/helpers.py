@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import collections
 import logging
 
 import apache_beam as beam
@@ -24,6 +25,10 @@ from klio.message import serializer
 from klio.transforms import _helpers
 from klio.transforms import decorators
 from klio.transforms import io as io_transforms
+
+
+_StubDataConfig = collections.namedtuple("_StubDataConfig", ["ping", "force"])
+"""Stub data config when helpers are used without job_config.data configured."""
 
 
 class KlioGcsCheckInputExists(
@@ -46,6 +51,20 @@ class KlioFilterPing(
     _helpers._KlioInputDataMixin, _helpers._KlioBaseDataExistenceCheck
 ):
     """Klio transform to tag outputs if in ping mode or not."""
+
+    stub_config = _StubDataConfig(ping=False, force=False)
+
+    @property
+    def _data_config(self):
+        try:
+            return super()._data_config
+        except _helpers.KlioConfigRuntimeError:
+            # This error happens when users don't have anything configured in
+            # `job_config.data.inputs`.
+            # We want to allow folks to use this transform without needing
+            # to unnecessarily define anything for `job_config.data.inputs`
+            # so we just return a stub config with the defaults set.
+            return self.stub_config
 
     def ping(self, kmsg):
         global_ping = self._data_config.ping
@@ -71,6 +90,20 @@ class KlioFilterForce(
     _helpers._KlioOutputDataMixin, _helpers._KlioBaseDataExistenceCheck
 ):
     """Klio transform to tag outputs if in force mode or not."""
+
+    stub_config = _StubDataConfig(ping=False, force=False)
+
+    @property
+    def _data_config(self):
+        try:
+            return super()._data_config
+        except _helpers.KlioConfigRuntimeError:
+            # This error happens when users don't have anything configured in
+            # `job_config.data.outputs`.
+            # We want to allow folks to use this transform without needing
+            # to unnecessarily define anything for `job_config.data.outputs`
+            # so we just return a stub config with the defaults set.
+            return self.stub_config
 
     def force(self, kmsg):
         global_force = self._data_config.force

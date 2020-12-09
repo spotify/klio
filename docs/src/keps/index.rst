@@ -10,6 +10,7 @@ Specifically, it contains Klio Enhancement Proposals (KEPs) – suggested change
     :hidden:
 
     kep-001
+    kep-002
     kep-template
 
 
@@ -35,7 +36,7 @@ Accepted KEPs
 
 *Implementation in progress*
 
-(None, yet.)
+* :doc:`kep-002`
 
 Open KEPs
 ---------

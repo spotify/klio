@@ -321,9 +321,11 @@ def test_delete_job(
         (True, True, "klio-job2.yaml", "foobar"),
     ),
 )
+@pytest.mark.parametrize("is_job_dir_override", (False, True))
 def test_run_job(
     runner,
     mocker,
+    tmpdir,
     is_gcp,
     direct_runner,
     image_tag,
@@ -331,6 +333,7 @@ def test_run_job(
     config_file,
     mock_get_git_sha,
     mock_klio_config,
+    is_job_dir_override,
 ):
     mock_run = mocker.patch.object(cli.job_commands.run.RunPipeline, "run")
     mock_run.return_value = 0
@@ -360,7 +363,14 @@ def test_run_job(
             ],
         },
     }
-    mock_klio_config.setup(config_data, config_file, config_override)
+    job_dir_override = None
+    if is_job_dir_override:
+        temp_dir = tmpdir.mkdir("testing12345")
+        job_dir_override = str(temp_dir)
+
+    mock_klio_config.setup(
+        config_data, config_file, config_override, job_dir_override
+    )
 
     cli_inputs = ["job", "run"]
     if image_tag:
@@ -369,6 +379,8 @@ def test_run_job(
         cli_inputs.append("--direct-runner")
     if config_override:
         cli_inputs.extend(["--config-file", config_override])
+    if job_dir_override:
+        cli_inputs.extend(["--job-dir", job_dir_override])
 
     exp_image_tag = image_tag or mock_get_git_sha.return_value
     if config_override:
@@ -379,6 +391,7 @@ def test_run_job(
     core_testing.assert_execution_success(result)
     assert "" == result.output
 
+    mock_klio_config.assert_calls()
     mock_run.assert_called_once_with()
     mock_get_git_sha.assert_called_once_with(
         mock_klio_config.meta.job_dir, image_tag
@@ -420,8 +433,6 @@ def test_stop_job(
     mock_stop,
     mocker,
     config_file,
-    mock_get_config_job_dir,
-    patch_os_getcwd,
     pipeline_config_dict,
     mock_klio_config,
 ):

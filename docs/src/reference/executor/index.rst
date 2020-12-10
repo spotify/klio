@@ -10,7 +10,12 @@ Klio Executor
 
 
 .. toctree::
-   :maxdepth: 1
+    :maxdepth: 1
+    :hidden:
 
-   api
-   changelog
+    CLI <self>
+    changelog
+
+.. click:: klio_exec.cli:main
+    :prog: klioexec
+    :nested: full

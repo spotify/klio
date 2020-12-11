@@ -1,12 +1,13 @@
 Changelog
 =========
 
-0.2.2 (UNRELEASED)
+0.2.2 (2020-12-11)
 ------------------
 
 Fixed
 *****
 
+* Added support for writing an avro file via ``KlioWriteToAvro``
 * Allow for support of empty ``job_config.data`` values for the built-in helper filter transforms.
 
 

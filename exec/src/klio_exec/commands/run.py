@@ -276,10 +276,6 @@ class KlioPipeline(object):
             setup_file_exists = has_setup_file and os.path.exists(
                 pipeline_opts.setup_file
             )
-            reqs_file_exists = has_reqs_file and os.path.exists(
-                pipeline_opts.requirements_file
-            )
-
             if fnapi_enabled:
                 logging.warn(
                     "Support for batch jobs using the 'beam_fn_api' "
@@ -287,12 +283,18 @@ class KlioPipeline(object):
                     "Use with caution."
                 )
 
-            if not any([fnapi_enabled, setup_file_exists, reqs_file_exists]):
-                logging.error(
-                    "setup.py and/or requirements file either "
-                    "unspecified or not found."
-                )
-                raise SystemExit(1)
+            if not any([fnapi_enabled, setup_file_exists]):
+                if has_reqs_file:
+                    logging.warn(
+                        "Klio jobs are multi-module. "
+                        "Thus, a setup.py file is required "
+                        "in addition to a requirements.txt file"
+                    )
+                else:
+                    logging.error(
+                        "setup.py file either unspecified or not found."
+                    )
+                    raise SystemExit(1)
 
     def _setup_data_io_filters(self, in_pcol, label_prefix=None):
         # label prefixes are required for multiple inputs (to avoid label

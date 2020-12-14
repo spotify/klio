@@ -227,7 +227,11 @@ def test_verify_packaging(
 
     kpipe = run.KlioPipeline("test-job", mock_config, mocker.Mock())
 
-    kpipe._verify_packaging()
+    if not streaming and not any([requirements_file, setup_file, exp]):
+        with pytest.raises(SystemExit):
+            kpipe._verify_packaging()
+    else:
+        kpipe._verify_packaging()
 
 
 def test_verify_packaging_with_both_packagaing_systems_raises(mocker):
@@ -245,28 +249,19 @@ def test_verify_packaging_with_both_packagaing_systems_raises(mocker):
 @pytest.mark.parametrize(
     "has_setup_file, setup_file_exists", ((True, False), (False, False),)
 )
-@pytest.mark.parametrize(
-    "has_reqs_file, reqs_file_exists", ((True, False), (False, False),)
-)
 def test_verify_packaging_for_batch_raises(
-    mocker,
-    caplog,
-    has_setup_file,
-    setup_file_exists,
-    has_reqs_file,
-    reqs_file_exists,
+    mocker, caplog, has_setup_file, setup_file_exists,
 ):
     mock_config = mocker.Mock()
     mock_config.pipeline_options = mocker.Mock()
     mock_config.pipeline_options.streaming = False
+    mock_config.pipeline_options.requirements_file = None
     mock_config.pipeline_options.experiments = []
     if has_setup_file:
         mock_config.pipeline_options.setup_file = "setup.py"
-    if has_reqs_file:
-        mock_config.pipeline_options.requirements_file = "requirements.txt"
 
     mock_path_exists = mocker.patch.object(os.path, "exists")
-    mock_path_exists.side_effect = [setup_file_exists, reqs_file_exists]
+    mock_path_exists.return_value = setup_file_exists
 
     kpipe = run.KlioPipeline("test-job", mock_config, mocker.Mock())
 

@@ -21,6 +21,7 @@ from apache_beam import pvalue
 
 from klio_core.proto import klio_pb2
 
+from klio import utils as kutils
 from klio.message import serializer
 from klio.transforms import _helpers
 from klio.transforms import decorators
@@ -183,7 +184,7 @@ class KlioDrop(beam.DoFn, metaclass=_helpers._KlioBaseDoFnMetaclass):
 
     WITH_OUTPUTS = False
 
-    @decorators._handle_klio
+    @decorators._handle_klio(max_thread_count=kutils.ThreadLimit.NONE)
     def process(self, kmsg):
         self._klio.logger.info(
             "Dropping KlioMessage - can not process '%s' any further."
@@ -617,7 +618,7 @@ class KlioTriggerUpstream(beam.PTransform):
         lmtd.trigger_children_of.CopyFrom(current_job)
         return serializer.from_klio_message(kmsg)
 
-    @decorators._handle_klio
+    @decorators._handle_klio(max_thread_count=kutils.ThreadLimit.NONE)
     def log(self, data):
         """Log KlioMessage being published to upstream job.
 

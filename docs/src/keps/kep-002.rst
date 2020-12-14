@@ -3,12 +3,8 @@ KEP 2: Thread Management
 
 :Author: `Lynn Root`_
 :Type: Standards Track
-:Status: Accepted
+:Status: Final
 :Created: 2020-11-10
-
-.. todo::
-
-    Update status to "Final" for when the PR is merged
 
 Abstract
 --------

@@ -638,6 +638,8 @@ def handle_klio(*args, max_thread_count=None, thread_limiter=None, **kwargs):
 
         See examples below on how to adjust this behavior.
 
+        Learn more about Klio's thread concurrency management
+        :ref:`in the User Guide <klio-concurrency-mgmt>`.
 
     If decorating a class method, the ``KlioContext`` will be attached
     to the ``self`` argument of the class instance.

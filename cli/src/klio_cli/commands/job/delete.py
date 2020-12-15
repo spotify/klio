@@ -103,7 +103,9 @@ class DeleteJob(object):
         for subscription in subscriptions:
             logging.info("Deleting subscription {}".format(subscription))
             try:
-                client.delete_subscription(subscription)
+                client.delete_subscription(
+                    request={"subscription": subscription}
+                )
             except Exception:
                 logging.error(
                     "Failed to delete subscription {}".format(subscription),
@@ -118,7 +120,7 @@ class DeleteJob(object):
         for topic in topics:
             logging.info("Deleting topic {}".format(topic))
             try:
-                client.delete_topic(topic)
+                client.delete_topic(request={"topic": topic})
             except Exception:
                 logging.error(
                     "Failed to delete topic {}".format(topic), exc_info=True

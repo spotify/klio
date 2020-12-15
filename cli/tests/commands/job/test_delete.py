@@ -207,7 +207,11 @@ def test_delete_subscription(
     mock_subscriber.return_value.delete_subscription.side_effect = effect
     delete_job_inst._delete_subscriptions(["a", "b", "c"])
     mock_subscriber.return_value.delete_subscription.assert_has_calls(
-        [mocker.call("a"), mocker.call("b"), mocker.call("c")]
+        [
+            mocker.call(request={"subscription": "a"}),
+            mocker.call(request={"subscription": "b"}),
+            mocker.call(request={"subscription": "c"}),
+        ]
     )
     assert 3 == mock_subscriber.return_value.delete_subscription.call_count
     assert record_count == len(caplog.records)
@@ -220,7 +224,11 @@ def test_delete_topic(
     mock_publisher.return_value.delete_topic.side_effect = effect
     delete_job_inst._delete_topics(["a", "b", "c"])
     mock_publisher.return_value.delete_topic.assert_has_calls(
-        [mocker.call("a"), mocker.call("b"), mocker.call("c")]
+        [
+            mocker.call(request={"topic": "a"}),
+            mocker.call(request={"topic": "b"}),
+            mocker.call(request={"topic": "c"}),
+        ]
     )
     assert 3 == mock_publisher.return_value.delete_topic.call_count
     assert record_count == len(caplog.records)

@@ -38,7 +38,7 @@ def generate_group_meta(project, job_name, region):
 def get_stackdriver_group_url(project, job_name, region):
     client = monitoring.GroupServiceClient()
     name, dashboard_name = generate_group_meta(project, job_name, region)
-    groups = client.list_groups(name)
+    groups = client.list_groups(request={"name": name})
 
     for group in groups:
         if group.display_name == dashboard_name:
@@ -62,7 +62,7 @@ def create_stackdriver_group(project, job_name, region):
     }
 
     try:
-        group = client.create_group(name, group)
+        group = client.create_group(request={"name": name, "group": group})
     except Exception as e:
         msg = (
             "Could not create a Stackdriver for job '{}': {}. "
@@ -91,9 +91,11 @@ def delete_stackdriver_group(project, job_name, region):
     name, dashboard_name = generate_group_meta(project, job_name, region)
 
     try:
-        for group in client.list_groups(name):
+        for group in client.list_groups(request={"name": name}):
             if group.display_name == dashboard_name:
-                client.delete_group(group.name, recursive=True)
+                client.delete_group(
+                    request={"name": group.name, "recursive": True}
+                )
                 msg = "Deleted dashboard '{}' for job '{}'".format(
                     dashboard_name, job_name
                 )

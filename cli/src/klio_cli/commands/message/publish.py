@@ -28,7 +28,7 @@ def _create_publisher(topic):
     client = pubsub.PublisherClient()
 
     try:
-        client.get_topic(topic)
+        client.get_topic(request={"topic": topic})
     except gapi_exceptions.NotFound:
         msg = (
             ":persevere: Topic '{}' not found. Is there a running job "

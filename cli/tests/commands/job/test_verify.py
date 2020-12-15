@@ -477,7 +477,9 @@ def test_verify_subscription_and_topic(
         )
     else:
         actual = job._verify_subscription_and_topic(test_sub, upstream_topic,)
-        mock_sub.get_subscription.assert_called_once_with(test_sub)
+        mock_sub.get_subscription.assert_called_once_with(
+            request={"subscription": test_sub}
+        )
 
     expected = True, True
 

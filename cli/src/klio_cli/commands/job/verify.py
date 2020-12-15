@@ -208,7 +208,9 @@ class VerifyJob(object):
                     )
                     logging.info("Successfully created your subscription.")
                 else:
-                    self.subscriber_client.get_subscription(sub)
+                    self.subscriber_client.get_subscription(
+                        request={"subscription": sub}
+                    )
                     logging.info("Subscription %s exists" % sub)
             except api_ex.AlreadyExists:
                 logging.info("Subscription {} exists".format(sub))

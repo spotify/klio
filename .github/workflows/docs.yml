@@ -36,7 +36,12 @@ jobs:
           python -m site
           python -m pip install --upgrade pip setuptools
           python -m pip install --upgrade -r requirements.txt
-          python -m pip install --upgrade -r klio-requirements.txt
+          python -m pip install -e ../core/
+          python -m pip install -e ../cli/
+          python -m pip install -e ../devtools/
+          python -m pip install -e ../lib/
+          python -m pip install -e ../exec/
+          python -m pip install -e ../audio/
       - name: "Build docs"
         run: "sphinx-build -n -T -W -b html -d build/doctrees src src/html"
       - name: "Check broken links"

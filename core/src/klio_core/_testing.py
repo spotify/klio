@@ -45,10 +45,20 @@ class MockKlioConfig(object):
         self.mocker = mocker
         self.monkeypatch = monkeypatch
 
-    def setup(self, config_data, config_file, config_override=None):
+    def setup(
+        self,
+        config_data,
+        config_file,
+        config_override=None,
+        job_dir_override=None,
+    ):
         self.config_override = config_override
+        self.job_dir_override = job_dir_override
         self.config_data = config_data
         self.config_file = config_file
+
+        self.effective_job_dir = self.job_dir_override or self.patch_os_getcwd
+        self.effective_config_path = config_override or config_file
 
         self.mock_warn_if_py2_job = self.mocker.Mock()
         self.monkeypatch.setattr(
@@ -58,16 +68,16 @@ class MockKlioConfig(object):
         )
 
         self.mock_get_config_job_dir.return_value = (
-            self.patch_os_getcwd,
-            config_override or config_file,
+            self.effective_job_dir,
+            self.effective_config_path,
         )
 
         self.mock_get_config.return_value = config_data
 
         self.meta = core_utils.KlioConfigMeta(
-            job_dir=self.patch_os_getcwd,
+            job_dir=self.effective_job_dir,
             config_file=config_override,
-            config_path=config_override or config_file,
+            config_path=self.effective_config_path,
         )
 
         self.klio_config = kconfig.KlioConfig(config_data)
@@ -81,10 +91,12 @@ class MockKlioConfig(object):
 
     def assert_calls(self):
         self.mock_get_config_job_dir.assert_called_once_with(
-            None, self.config_override
+            self.job_dir_override, self.config_override
         )
         self.mock_get_config.assert_called_once_with(
-            self.config_override or self.config_file
+            self.effective_config_path
         )
         self.mock_klio_config.assert_called_once_with(self.config_data)
-        self.mock_warn_if_py2_job.assert_called_once_with(self.patch_os_getcwd)
+        self.mock_warn_if_py2_job.assert_called_once_with(
+            self.effective_job_dir
+        )

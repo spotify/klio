@@ -85,7 +85,9 @@ def test_private_get_publisher(mock_publisher):
     ret_publisher = utils._get_publisher("a-topic")
 
     mock_publisher.assert_called_once_with()
-    mock_publisher.return_value.create_topic.assert_called_once_with("a-topic")
+    mock_publisher.return_value.create_topic.assert_called_once_with(
+        request={"name": "a-topic"}
+    )
 
     assert mock_publisher.return_value == ret_publisher
 
@@ -97,7 +99,7 @@ def test_private_get_publisher_topic_exists(mock_publisher):
     ret_publisher = utils._get_publisher("a-topic")
 
     mock_publisher.assert_called_once_with()
-    client.create_topic.assert_called_once_with("a-topic")
+    client.create_topic.assert_called_once_with(request={"name": "a-topic"})
 
     assert client == ret_publisher
 
@@ -110,7 +112,7 @@ def test_private_get_publisher_raises(mock_publisher):
         utils._get_publisher("a-topic")
 
     mock_publisher.assert_called_once_with()
-    client.create_topic.assert_called_once_with("a-topic")
+    client.create_topic.assert_called_once_with(request={"name": "a-topic"})
 
 
 @pytest.mark.parametrize("in_globals", (True, False))

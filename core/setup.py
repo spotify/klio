@@ -156,7 +156,7 @@ INSTALL_REQUIRES = [
     "google-api-python-client",
     "google-api-core>=1.21.0",  # TODO: try and remove
     "google-cloud-core>=1.4.1",
-    "google-cloud-pubsub",  # TODO: try and remove
+    "google-cloud-pubsub>=2.0.0",  # TODO: try and remove
     "protobuf>=3.12.0",
     "pyyaml",
     "six",

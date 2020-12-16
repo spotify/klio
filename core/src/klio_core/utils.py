@@ -94,7 +94,7 @@ def get_or_initialize_global(name, initializer):
 def _get_publisher(topic):
     publisher = pubsub.PublisherClient()
     try:
-        publisher.create_topic(topic)
+        publisher.create_topic(request={"name": topic})
     except gapi_exceptions.AlreadyExists:
         pass
 

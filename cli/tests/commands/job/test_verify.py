@@ -420,9 +420,13 @@ def test_verify_pub_topic(klio_config, mock_publisher, create_resources):
     actual = job._verify_pub_topic(test_topic, input)
 
     if create_resources:
-        mock_publisher.create_topic.assert_called_once_with(test_topic)
+        mock_publisher.create_topic.assert_called_once_with(
+            request={"name": test_topic}
+        )
     else:
-        mock_publisher.get_topic.assert_called_once_with(test_topic)
+        mock_publisher.get_topic.assert_called_once_with(
+            request={"topic": test_topic}
+        )
 
     assert actual is True
 
@@ -469,11 +473,13 @@ def test_verify_subscription_and_topic(
     if create_resources:
         actual = job._verify_subscription_and_topic(test_sub, upstream_topic,)
         mock_sub.create_subscription.assert_called_once_with(
-            name=test_sub, topic=upstream_topic
+            request={"name": test_sub, "topic": upstream_topic}
         )
     else:
         actual = job._verify_subscription_and_topic(test_sub, upstream_topic,)
-        mock_sub.get_subscription.assert_called_once_with(test_sub)
+        mock_sub.get_subscription.assert_called_once_with(
+            request={"subscription": test_sub}
+        )
 
     expected = True, True
 

@@ -73,7 +73,9 @@ def test_get_stackdriver_group_url(sd_client, groups, job_name, exp_ret):
         )
 
     assert exp_url == ret_url
-    sd_client.list_groups.assert_called_once_with("projects/test-gcp-project")
+    sd_client.list_groups.assert_called_once_with(
+        request={"name": "projects/test-gcp-project"}
+    )
 
 
 def test_get_stackdriver_group_url_raises(sd_client):
@@ -104,7 +106,7 @@ def test_create_stackdriver_group(sd_client, groups, caplog):
         "filter": "resource.metadata.name=starts_with(test-job-name-0)",
     }
     sd_client.create_group.assert_called_once_with(
-        "projects/test-gcp-project", group_arg
+        request={"name": "projects/test-gcp-project", "group": group_arg}
     )
     assert 1 == len(caplog.records)
 

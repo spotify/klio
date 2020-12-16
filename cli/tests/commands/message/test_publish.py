@@ -83,7 +83,7 @@ def test_create_publisher(mock_publisher):
     ret_publisher = publish._create_publisher("a-topic")
 
     mock_publisher.assert_called_once_with()
-    client.get_topic.assert_called_once_with("a-topic")
+    client.get_topic.assert_called_once_with(request={"topic": "a-topic"})
 
     expected = functools.partial(client.publish, topic="a-topic")
     assert expected.func == ret_publisher.func
@@ -97,7 +97,7 @@ def test_create_publisher_topic_not_found(mock_publisher):
         publish._create_publisher("a-topic")
 
     mock_publisher.assert_called_once_with()
-    client.get_topic.assert_called_once_with("a-topic")
+    client.get_topic.assert_called_once_with(request={"topic": "a-topic"})
 
 
 def test_create_publisher_raises(mock_publisher):
@@ -108,7 +108,7 @@ def test_create_publisher_raises(mock_publisher):
         publish._create_publisher("a-topic")
 
     mock_publisher.assert_called_once_with()
-    client.get_topic.assert_called_once_with("a-topic")
+    client.get_topic.assert_called_once_with(request={"topic": "a-topic"})
 
 
 def test_get_current_klio_job(klio_job_config, expected_klio_job):

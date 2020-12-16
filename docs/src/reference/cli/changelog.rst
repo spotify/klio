@@ -1,6 +1,14 @@
 CLI Changelog
 =============
 
+1.0.3 (2020-12-16)
+------------------
+
+Fixed
+*****
+Fixes "Invalid constructor input" errors in verify, delete, and message commands.
+
+
 1.0.2 (2020-12-03)
 ------------------
 

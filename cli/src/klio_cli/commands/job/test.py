@@ -19,6 +19,10 @@ from klio_cli.commands import base
 class TestPipeline(base.BaseDockerizedPipeline):
     DOCKER_LOGGER_NAME = "klio.job.test"
 
+    def __init__(self, job_dir, klio_config, docker_runtime_config):
+        super().__init__(job_dir, klio_config, docker_runtime_config)
+        self.requires_config_file = False
+
     def _get_environment(self):
         envs = super()._get_environment()
         envs["KLIO_TEST_MODE"] = "true"

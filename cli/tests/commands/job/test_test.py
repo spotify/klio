@@ -43,3 +43,7 @@ def test_get_environment(test_pipeline):
 
 def test_get_command(test_pipeline):
     assert ["test", "py", "args"] == test_pipeline._get_command(["py", "args"])
+
+
+def test_requires_config_setting(test_pipeline):
+    assert not test_pipeline.requires_config_file

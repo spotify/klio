@@ -198,6 +198,7 @@ class _KlioTagMessageVersion(
 ):
     WITH_OUTPUTS = True
 
+    @decorators._set_klio_context
     def process(self, klio_message):
         # In batch, the read transform produces a KlioMessage. However, in
         # streaming, it's still bytes. And for some reason this isn't
@@ -205,7 +206,9 @@ class _KlioTagMessageVersion(
         # TODO: maybe create a read/write klio pub/sub transform to do
         # this for us.
         if not isinstance(klio_message, klio_pb2.KlioMessage):
-            klio_message = serializer.to_klio_message(klio_message)
+            klio_message = serializer.to_klio_message(
+                klio_message, self._klio.config, self._klio.logger
+            )
 
         if klio_message.version == klio_pb2.Version.V2:
             yield pvalue.TaggedOutput("v2", klio_message.SerializeToString())
@@ -241,8 +244,11 @@ class _KlioV1CheckRecipients(
         )
         return False
 
+    @decorators._set_klio_context
     def process(self, raw_message):
-        klio_message = serializer.to_klio_message(raw_message)
+        klio_message = serializer.to_klio_message(
+            raw_message, self._klio.config, self._klio.logger
+        )
         if self._should_process(klio_message):
             yield pvalue.TaggedOutput(
                 _helpers.TaggedStates.PROCESS.value, raw_message
@@ -305,8 +311,11 @@ class KlioCheckRecipients(
 
         return True
 
+    @decorators._set_klio_context
     def process(self, raw_message):
-        klio_message = serializer.to_klio_message(raw_message)
+        klio_message = serializer.to_klio_message(
+            raw_message, self._klio.config, self._klio.logger
+        )
         if self._should_process(klio_message):
             # the message could have updated, so let's re-serialize to a new
             # raw message
@@ -341,7 +350,9 @@ class KlioUpdateAuditLog(beam.DoFn, metaclass=_helpers._KlioBaseDoFnMetaclass):
 
     @decorators._set_klio_context
     def process(self, raw_message):
-        klio_message = serializer.to_klio_message(raw_message)
+        klio_message = serializer.to_klio_message(
+            raw_message, self._klio.config, self._klio.logger
+        )
         audit_log_item = self._create_audit_item()
         klio_message.metadata.job_audit_log.extend([audit_log_item])
 
@@ -387,7 +398,9 @@ class KlioDebugMessage(beam.PTransform):
 
     @decorators._set_klio_context
     def print_debug(self, raw_message):
-        klio_message = serializer.to_klio_message(raw_message)
+        klio_message = serializer.to_klio_message(
+            raw_message, self._klio.config, self._klio.logger
+        )
         self._klio.logger.log(
             self.log_level, "{}{}".format(self.prefix, klio_message)
         )

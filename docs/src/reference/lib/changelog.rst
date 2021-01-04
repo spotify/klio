@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.2.3 (2021-01-04)
+------------------
+
+Fixed
+*****
+
+* Fixed non-Klio -> Klio message parsing.
+* Fixed calling of ``to_klio_message`` in helper transforms.
+
 0.2.2 (2020-12-11)
 ------------------
 

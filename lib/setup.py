@@ -180,7 +180,7 @@ setup(
     name=NAME,
     version=find_meta("version"),
     description=find_meta("description"),
-    long_description=get_long_description("executor"),
+    long_description=get_long_description("lib"),
     long_description_content_type="text/x-rst",
     url=find_meta("uri"),
     project_urls=PROJECT_URLS,

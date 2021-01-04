@@ -1,6 +1,14 @@
 CLI Changelog
 =============
 
+1.0.4 (2021-01-04)
+------------------
+
+Fixed
+*****
+Fixes "klioexec: error: unrecognized arguments: --config-file" error in
+test command.
+
 1.0.3 (2020-12-16)
 ------------------
 

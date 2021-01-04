@@ -107,6 +107,7 @@ def test_to_klio_message_allow_non_kmsg(klio_config, logger, monkeypatch):
     expected = klio_pb2.KlioMessage()
     expected.data.element = incoming
     expected.version = klio_pb2.Version.V2
+    expected.metadata.intended_recipients.anyone.SetInParent()
 
     actual_message = serializer.to_klio_message(incoming, klio_config, logger)
 

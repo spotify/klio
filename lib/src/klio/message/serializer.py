@@ -92,6 +92,10 @@ def to_klio_message(incoming_message, kconfig=None, logger=None):
             # We are assuming that we have been given "raw" data that is not in
             # the form of a serialized KlioMessage.
             parsed_message.data.element = incoming_message
+            # default to set recipients to anyone - can't know who the
+            # appropriate recipient is when it's not a real klio msg
+            parsed_message.metadata.intended_recipients.anyone.SetInParent()
+            parsed_message.version = klio_pb2.Version.V2
         else:
             logger.error(
                 "Can not parse incoming message. To support non-Klio "

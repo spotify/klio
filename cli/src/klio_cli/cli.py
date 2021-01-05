@@ -403,7 +403,7 @@ def audit_job(klio_config, config_meta, force_build, image_tag, list_steps):
 # `klio job config` subcommands
 #####
 def _job_config(job_dir, config_file, verb, *args, **kwargs):
-    _, config_path = cli_utils.get_config_job_dir(job_dir, config_file)
+    _, config_path = core_utils.get_config_job_dir(job_dir, config_file)
 
     effective_job_config = job_commands.configuration.EffectiveJobConfig(
         config_path

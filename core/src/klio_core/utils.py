@@ -222,17 +222,15 @@ def with_klio_config(func):
 
         raw_config_data = get_config_by_path(config_path)
 
-        processed_config_data = config.KlioConfigPreprocessor.process(
-            raw_config_data=raw_config_data,
-            raw_template_list=raw_templates,
-            raw_override_list=raw_overrides,
+        conf = config.KlioConfig(
+            raw_config_data,
+            raw_templates=raw_templates,
+            raw_overrides=raw_overrides,
         )
 
         meta = KlioConfigMeta(
             job_dir=job_dir, config_file=config_file, config_path=config_path,
         )
-
-        conf = config.KlioConfig(processed_config_data)
 
         kwargs["klio_config"] = conf
         kwargs["config_meta"] = meta

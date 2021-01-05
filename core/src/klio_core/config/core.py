@@ -18,6 +18,7 @@ import logging
 import attr
 
 from klio_core.config import _io as io
+from klio_core.config import _preprocessing as preprocessing
 from klio_core.config import _utils as utils
 
 logger = logging.getLogger("klio")
@@ -82,6 +83,24 @@ class KlioConfig(BaseKlioConfig):
             configuration.
         job_config (KlioJobConfig): Job-related configuration.
     """
+
+    def __init__(
+        self,
+        raw_config_data,
+        raw_overrides=None,
+        raw_templates=None,
+        config_skip_preprocessing=False,
+        **kwargs
+    ):
+        if config_skip_preprocessing:
+            processed_config = raw_config_data
+        else:
+            processed_config = preprocessing.KlioConfigPreprocessor.process(
+                raw_config_data=raw_config_data,
+                raw_template_list=raw_templates or [],
+                raw_override_list=raw_overrides or [],
+            )
+        return super().__init__(processed_config, **kwargs)
 
     # re-defining as_dict just to have its docstring.
     def as_dict(self):
@@ -161,12 +180,12 @@ class KlioJobConfig(object):
 
     def _parse_io(self, config_dict):
         event_inputs = self._create_config_objects(
-            config_dict.get("events", {}).get("inputs", []),
+            config_dict.get("events", {}).get("inputs", {}),
             io.KlioIOType.EVENT,
             io.KlioIODirection.INPUT,
         )
         event_outputs = self._create_config_objects(
-            config_dict.get("events", {}).get("outputs", []),
+            config_dict.get("events", {}).get("outputs", {}),
             io.KlioIOType.EVENT,
             io.KlioIODirection.OUTPUT,
         )
@@ -175,12 +194,12 @@ class KlioJobConfig(object):
         )
 
         data_inputs = self._create_config_objects(
-            config_dict.get("data", {}).get("inputs", []),
+            config_dict.get("data", {}).get("inputs", {}),
             io.KlioIOType.DATA,
             io.KlioIODirection.INPUT,
         )
         data_outputs = self._create_config_objects(
-            config_dict.get("data", {}).get("outputs", []),
+            config_dict.get("data", {}).get("outputs", {}),
             io.KlioIOType.DATA,
             io.KlioIODirection.OUTPUT,
         )
@@ -216,7 +235,7 @@ class KlioJobConfig(object):
             ]
         )
         objs = []
-        for config in configs:
+        for name, config in configs.items():
             type_name = config["type"].lower()
             if type_name not in options:
                 raise Exception(

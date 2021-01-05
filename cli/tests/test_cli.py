@@ -664,7 +664,9 @@ def test_test_job(
         mock_get_git_sha.assert_not_called()
 
     mock_get_config.assert_called_once_with(conf_override or config_file)
-    mock_klio_config.assert_called_once_with(config_data)
+    mock_klio_config.assert_called_once_with(
+        config_data, raw_overrides=(), raw_templates=()
+    )
     exp_docker_runtime_config = cli.DockerRuntimeConfig(
         image_tag=exp_image_tag,
         force_build=False,

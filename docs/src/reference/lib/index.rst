@@ -16,6 +16,7 @@ Klio Library
    Transforms <api/transforms/index>
    Metrics <api/metrics/index>
    Message <api/message/index>
+   Utilities <api/utils/index>
    changelog
 
 ----
@@ -30,3 +31,4 @@ Subpackages
     transforms
     metrics
     message
+    utils

@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.2.4 (UNRELEASED)
+------------------
+
+Added
+*****
+
+* Add thread limiting context manager utility (See `KEP 2: Thread Management <https://docs.klio.io/en/latest/keps/kep-002.html>`_).
+
+
 0.2.3 (2021-01-04)
 ------------------
 
@@ -10,13 +19,19 @@ Fixed
 * Fixed non-Klio -> Klio message parsing.
 * Fixed calling of ``to_klio_message`` in helper transforms.
 
+
 0.2.2 (2020-12-11)
 ------------------
+
+Added
+*****
+
+* Added support for writing an avro file via ``KlioWriteToAvro``
+
 
 Fixed
 *****
 
-* Added support for writing an avro file via ``KlioWriteToAvro``
 * Allow for support of empty ``job_config.data`` values for the built-in helper filter transforms.
 
 

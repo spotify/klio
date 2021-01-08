@@ -143,7 +143,6 @@ class KlioJobConfig(object):
     """
 
     ATTRIBS_TO_SKIP = ["version", "job_name"]
-    USER_ATTRIBS = []
 
     # required attributes
     job_name = utils.field(type=str, repr=True)
@@ -157,6 +156,7 @@ class KlioJobConfig(object):
     def __config_post_init__(self, config_dict):
         self._raw = config_dict
         self._scanned_io_subclasses = None
+        self.USER_ATTRIBS = []
 
         self._parse_io(config_dict)
 
@@ -322,7 +322,6 @@ class KlioPipelineConfig(object):
     """
 
     ATTRIBS_TO_SKIP = ["version"]
-    USER_ATTRIBS = []
 
     job_name = utils.field(repr=True, type=str)
     version = utils.field(type=int)
@@ -399,6 +398,7 @@ class KlioPipelineConfig(object):
             self.labels.append(self.label)
 
         self.max_num_workers = max(2, self.num_workers)
+        self.USER_ATTRIBS = []
 
         if self.worker_disk_type is not None:
             self.worker_disk_type = WORKER_DISK_TYPE_URL.format(

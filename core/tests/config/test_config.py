@@ -13,6 +13,10 @@
 # limitations under the License.
 #
 
+import copy
+import inspect
+
+import dill
 import pytest
 
 from klio_core import config
@@ -535,3 +539,47 @@ def test_pubsub_event_input_topic_subscription():
         io.KlioPubSubEventInput.from_dict(
             config_dict, io.KlioIOType.EVENT, io.KlioIODirection.INPUT
         )
+
+
+def test_config_pickling(config_dict, final_config_dict):
+    # This test attempts to verify that class-level attributes aren't used as
+    # instance attributes, since they are not pickled, which can result in
+    # missing/wrong values when config is unpickled on dataflow workers
+
+    def get_class_attributes(cls):
+        attrs = {}
+        for key in cls.__dict__:
+            value = getattr(cls, key)
+            is_fn = inspect.ismethod(value) or inspect.isfunction(value)
+            if not key.startswith("__") and not is_fn:
+                attrs[key] = copy.copy(value)
+        return attrs
+
+    classes = [
+        config.KlioConfig,
+        config.KlioJobConfig,
+        config.KlioPipelineConfig,
+    ]
+
+    cls_attribs = {}
+
+    for cls in classes:
+        cls_attribs[cls] = get_class_attributes(cls)
+
+    klio_config = config.KlioConfig(
+        config_dict, config_skip_preprocessing=True
+    )
+
+    pickled = dill.dumps(klio_config)
+
+    # reset any class-level attributes back to whatever value they had before
+    # instantiating KlioConfig
+    for cls, keyvals in cls_attribs.items():
+        for key, value in keyvals.items():
+            setattr(cls, key, value)
+
+    unpickled = dill.loads(pickled)
+
+    actual = unpickled.as_dict()
+
+    assert final_config_dict == actual

@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.2.2 (UNRELEASED)
+------------------
+
+Fixed
+*****
+
+* fix config bug that skipped preprocessing (overrides, templates) of dict parsed from YAML
+
 0.2.1 (2020-12-03)
 ------------------
 

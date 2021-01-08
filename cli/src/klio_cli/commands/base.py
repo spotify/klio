@@ -182,7 +182,7 @@ class BaseDockerizedPipeline(object):
                 prefix="/tmp/", mode="w", delete=False
             )
             yaml.dump(
-                self.klio_config._raw,
+                self.klio_config.as_dict(),
                 stream=self.materialized_config_file,
                 Dumper=configuration.IndentListDumper,
                 default_flow_style=False,

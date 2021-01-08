@@ -96,7 +96,9 @@ class MockKlioConfig(object):
         self.mock_get_config.assert_called_once_with(
             self.effective_config_path
         )
-        self.mock_klio_config.assert_called_once_with(self.config_data)
+        self.mock_klio_config.assert_called_once_with(
+            self.config_data, raw_overrides=(), raw_templates=()
+        )
         self.mock_warn_if_py2_job.assert_called_once_with(
             self.effective_job_dir
         )

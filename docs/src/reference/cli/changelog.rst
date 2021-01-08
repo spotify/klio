@@ -1,6 +1,13 @@
 CLI Changelog
 =============
 
+1.0.5 (UNRELEASED)
+------------------
+
+Fixed
+*****
+* Fixed a runtime bug in ``klio job config`` commands
+
 1.0.4 (2021-01-04)
 ------------------
 

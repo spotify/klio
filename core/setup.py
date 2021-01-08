@@ -170,6 +170,7 @@ EXTRAS_REQUIRE = {
         "pytest>=4.3.0",  # 4.3.0 dropped last use of `convert`
         "pytest-cov",
         "pytest-mock",
+        "dill",
     ],
 }
 EXTRAS_REQUIRE["dev"] = (

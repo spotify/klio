@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import sys
 
 import apache_beam as beam
 import pytest
@@ -22,6 +23,9 @@ from apache_beam.testing import test_pipeline
 from klio_core.proto import klio_pb2
 
 from klio.transforms import helpers
+
+
+IS_PY36 = sys.version_info < (3, 7)
 
 
 class BaseTest:
@@ -404,7 +408,8 @@ def test_update_klio_log(mocker, monkeypatch, caplog, mock_config):
         assert False, "Expected debug audit log not found"
 
 
-def test_trigger_upstream_job(mock_config, mocker):
+@pytest.mark.skipif(IS_PY36, reason="This test fails to pickle on 3.6")
+def test_trigger_upstream_job(mock_config, mocker, capsys):
     mock_gcs_client = mocker.patch("klio.transforms._helpers.gcsio.GcsIO")
     mock_gcs_client.return_value.exists.return_value = False
     mock_pubsub_client = mocker.patch("google.cloud.pubsub.PublisherClient")

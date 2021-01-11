@@ -36,7 +36,7 @@ Accepted KEPs
 
 *Implementation in progress*
 
-* :doc:`kep-002`
+(None, yet.)
 
 Open KEPs
 ---------
@@ -48,7 +48,7 @@ Open KEPs
 Finished KEPs
 -------------
 
-(None, yet.)
+* :doc:`kep-002`
 
 Deferred KEPs
 -------------

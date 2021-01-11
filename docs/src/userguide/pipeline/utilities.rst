@@ -1,7 +1,7 @@
 Utilities
 =========
 
-Klio offers decorators that help Klio-ify transforms of a pipeline.
+Klio offers decorators and other utilities that help Klio-ify transforms of a pipeline.
 
 
 .. _serialization-klio-message:
@@ -350,3 +350,53 @@ effect.
     @profile
     def my_nonklio_map_func(item):
         print(f"Received {item}!")
+
+
+.. _klio-concurrency-mgmt:
+
+Concurrency Management
+----------------------
+
+Currently, Apache Beam does not have a mechanism to limit the number of threads that a pipeline uses to execute its transforms.
+Klio provides a way for users to limit the number of threads used for a specific transform or section of code, with defaults set to the number of CPUs of the worker machine.
+See :doc:`../../../keps/kep-002` for more background information.
+
+There are two mechanisms to manage threads in a Klio pipeline:
+
+1. the :func:`@handle_klio <klio.transforms.decorators.handle_klio>` decorator;
+2. and a context manager.
+
+Both of these approaches can be seen in the following examples:
+
+.. code-block:: python
+
+    # Limit threads via the @handle_klio decorator
+    from klio.transforms import decorators
+    @decorators.handle_klio(max_thread_count=2)
+    def my_heavy_weight_transform(ctx, item):
+        ...
+
+    # If `max_thread_count` isn't provided, default of # of CPUs will be used
+    @decorators.handle_klio
+    def my_heavy_weight_ransform(ctx, item):
+        ...
+
+    # Limit threads with a context manager
+    from klio.utils import ThreadLimiter
+    thread_limiter = ThreadLimiter(max_thread_count=2)
+    with thread_limiter:
+        ...
+
+
+Refer to the :class:`klio.utils.ThreadLimiter` definition for supported arguments.
+
+Each transform that uses the ``@handle_klio`` decorator or the thread limiter context manager will have their own "pseudo-pool" of threads they're allowed to use managed by a :class:`BoundedSemaphore <threading.BoundedSemaphore>`.
+When using the decorator, the number of threads given to a transform equates to the number of elements that the transform can process at any given time.
+Therefore, if all threads in an allotted pool are in use, then the transform will be blocked from processing a new element until an in-process element is complete or errors out.
+
+While limiting the threads for one transform does not `directly` limit the threads of another transform, if a transform is limited to fewer threads precedes a transform with a higher number of threads – or no limitation – then the latter transform may be indirectly affected and not able to use all of its available threads.
+
+.. note::
+
+    Klio's thread management does not affect jobs using the direct runner `unless` the `option <https://beam.apache.org/documentation/runners/direct/#parallel-execution>`_ ``direct_running_mode='multi_threading'`` is used in the job's ``pipeline_options``.
+    By default, pipelines run using the direct runner are single-threaded.

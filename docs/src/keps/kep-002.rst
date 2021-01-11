@@ -57,7 +57,7 @@ Therefore, if all threads in an allotted pool are in use, then the transform wil
 
 While limiting the threads for one transform does not `directly` limit the threads of another transform, if a transform is limited to fewer threads precedes a transform with a higher number of threads – or no limitation – then the latter transform may be indirectly affected and not able to use all of its available threads.
 
-The proposed thread management does not affect jobs using the direct runner `unless` the `option <https://beam.apache.org/documentation/runners/direct/#execution-mode>`_ ``direct_running_mode='multi_threading'`` is used in the job's ``pipeline_options``.
+The proposed thread management does not affect jobs using the direct runner `unless` the `option <https://beam.apache.org/documentation/runners/direct/#parallel-execution>`_ ``direct_running_mode='multi_threading'`` is used in the job's ``pipeline_options``.
 By default, pipelines run using the direct runner are single-threaded.
 
 

@@ -8,6 +8,7 @@ Added
 *****
 
 * Add thread limiting context manager utility (See `KEP 2: Thread Management <https://docs.klio.io/en/latest/keps/kep-002.html>`_).
+* Add default thread management to ``@handle_klio`` decorator (See `KEP 2: Thread Management <https://docs.klio.io/en/latest/keps/kep-002.html>`_).
 
 
 0.2.3 (2021-01-04)

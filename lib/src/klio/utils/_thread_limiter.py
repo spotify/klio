@@ -110,14 +110,14 @@ class ThreadLimiter(object):
         if max_thread_count is ThreadLimit.NONE:
             self._dummy = True
             self._semaphore = _DummySemaphore()
-            self.logger.info(f"{self} Using unlimited semaphore")
+            self.logger.debug(f"{self} Using unlimited semaphore")
 
         else:
             self._dummy = False
             if callable(max_thread_count):
                 max_thread_count = max_thread_count()
             self._semaphore = threading.BoundedSemaphore(max_thread_count)
-            self.logger.info(
+            self.logger.debug(
                 f"{self} Initial semaphore value: {self._semaphore._value}"
             )
 

@@ -18,6 +18,7 @@ import pytest
 from klio_core.proto import klio_pb2
 
 from klio.transforms import decorators
+from klio.utils import _thread_limiter
 
 
 @pytest.fixture
@@ -126,6 +127,100 @@ def test_retry_raises_runtime_invalid_delay(
 
         @decorators._handle_klio
         @decorators._retry(tries=1, delay=invalid_delay)
+        def func(*args, **kwargs):
+            pass
+
+        func(kmsg.SerializeToString())
+
+
+@pytest.mark.parametrize(
+    "max_thread_count,patch_str",
+    (
+        (None, "threading.BoundedSemaphore"),
+        (_thread_limiter.ThreadLimit.DEFAULT, "threading.BoundedSemaphore"),
+        (_thread_limiter.ThreadLimit.NONE, "_DummySemaphore"),
+    ),
+)
+def test_thread_limiting(
+    max_thread_count, patch_str, kmsg, mock_config, mocker, monkeypatch
+):
+    mock_function = mocker.Mock()
+    mock_semaphore = mocker.Mock()
+    monkeypatch.setattr(
+        f"klio.utils._thread_limiter.{patch_str}", mock_semaphore
+    )
+
+    kwargs = {}
+    if max_thread_count is not None:
+        kwargs["max_thread_count"] = max_thread_count
+
+    @decorators._handle_klio(**kwargs)
+    def func(*args, **kwargs):
+        mock_function(*args, **kwargs)
+        return
+
+    func(kmsg.SerializeToString())
+
+    assert 1 == mock_function.call_count
+    mock_semaphore.return_value.acquire.assert_called_once_with()
+    mock_semaphore.return_value.release.assert_called_once_with()
+
+
+def test_thread_limiting_custom_limiter(
+    kmsg, mock_config, mocker, monkeypatch
+):
+    mock_function = mocker.Mock()
+    mock_semaphore = mocker.Mock()
+
+    limiter = _thread_limiter.ThreadLimiter(max_thread_count=1)
+    monkeypatch.setattr(limiter, "_semaphore", mock_semaphore)
+
+    @decorators._handle_klio(thread_limiter=limiter)
+    def func(*args, **kwargs):
+        mock_function(*args, **kwargs)
+        return
+
+    func(kmsg.SerializeToString())
+
+    assert 1 == mock_function.call_count
+    mock_semaphore.acquire.assert_called_once_with()
+    mock_semaphore.release.assert_called_once_with()
+
+
+def test_thread_limiting_raises_mutex_args(kmsg, mocker, mock_config):
+    limiter = _thread_limiter.ThreadLimiter(max_thread_count=1)
+
+    with pytest.raises(RuntimeError):
+
+        @decorators._handle_klio(max_thread_count=1, thread_limiter=limiter)
+        def func(*args, **kwargs):
+            pass
+
+        func(kmsg.SerializeToString())
+
+
+def test_thread_limiting_raises_invalid_limiter(kmsg, mocker, mock_config):
+    limiter = "not an instance of ThreadLimiter"
+
+    with pytest.raises(RuntimeError):
+
+        @decorators._handle_klio(thread_limiter=limiter)
+        def func(*args, **kwargs):
+            pass
+
+        func(kmsg.SerializeToString())
+
+
+@pytest.mark.parametrize(
+    "invalid_max_thread_count", (-2, {"a": "dict"}, ["a", "list"])
+)
+def test_thread_limiting_raises_invalid_max(
+    invalid_max_thread_count, kmsg, mocker, mock_config
+):
+
+    with pytest.raises(RuntimeError):
+
+        @decorators._handle_klio(max_thread_count=invalid_max_thread_count)
         def func(*args, **kwargs):
             pass
 

@@ -41,6 +41,14 @@ def klio_msg():
 @pytest.fixture
 def expected_log_messages(klio_msg):
     return [
+        (
+            "KlioThreadLimiter(name=LogKlioMessage.process) Blocked – "
+            "waiting on semaphore for an available thread (available threads:"
+        ),
+        (
+            "KlioThreadLimiter(name=LogKlioMessage.process) Released "
+            "semaphore (available threads:"
+        ),
         "Received element {}".format(klio_msg.data.element),
         "Received payload {}".format(klio_msg.data.payload),
     ]
@@ -52,6 +60,8 @@ def test_process(klio_msg, expected_log_messages, caplog):
 
     assert klio_msg.SerializeToString() == list(output)[0]
 
+    assert len(caplog.records) == len(expected_log_messages)
+
     for index, record in enumerate(caplog.records):
         assert "INFO" == record.levelname
-        assert expected_log_messages[index] == record.message
+        assert expected_log_messages[index] in record.message

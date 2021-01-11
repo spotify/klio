@@ -18,10 +18,28 @@
 
 TOX_ENV_BIN_DIR=${TOX_ENV_DIR}/bin
 
-${TOX_ENV_BIN_DIR}/klio image build -j ${KLIO_TEST_DIR} --image-tag ${KLIO_TEST_DIR}
-${TOX_ENV_BIN_DIR}/klio job test -j ${KLIO_TEST_DIR} --image-tag ${KLIO_TEST_DIR} -- tests
-${TOX_ENV_BIN_DIR}/klio job run -j ${KLIO_TEST_DIR} --image-tag ${KLIO_TEST_DIR} --direct-runner 2>&1 | tee ${KLIO_TEST_DIR}/job_output.log
+# Exit immediately if a step returns a non-zero code; to call:
+# `raise_on_fail <RET_CODE>`
+# Use `$?` to get the return code of the last command executed
+function raise_on_fail() {
+  RET_CODE="$1"
+  if [ $RET_CODE -ne 0 ]; then
+      echo FAIL
+      exit 1
+  fi
+}
 
-if [ -f "${KLIO_TEST_DIR}/integration_test.py" ];
-  then python ${KLIO_TEST_DIR}/integration_test.py ;
+${TOX_ENV_BIN_DIR}/klio image build -j ${KLIO_TEST_DIR} --image-tag ${KLIO_TEST_DIR}
+raise_on_fail $?
+
+${TOX_ENV_BIN_DIR}/klio job test -j ${KLIO_TEST_DIR} --image-tag ${KLIO_TEST_DIR} -- tests
+raise_on_fail $?
+
+${TOX_ENV_BIN_DIR}/klio job run -j ${KLIO_TEST_DIR} --image-tag ${KLIO_TEST_DIR} --direct-runner 2>&1 | tee ${KLIO_TEST_DIR}/job_output.log
+raise_on_fail $?
+
+if [ -f "${KLIO_TEST_DIR}/integration_test.py" ]; then
+  python ${KLIO_TEST_DIR}/integration_test.py ;
+  raise_on_fail $?
 fi
+

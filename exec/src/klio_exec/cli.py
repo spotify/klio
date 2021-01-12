@@ -57,9 +57,11 @@ def _get_config(config_path):
         raise SystemExit(1)
 
 
-# TODO : remove this when the call in spotify-klio is removed
-def _compare_runtime_to_buildtime_config(runtime_config_path):
-    return True
+def _compare_runtime_to_buildtime_config(klio_config):
+    buildtime_config_path = "/usr/src/config/.effective-klio-job.yaml"
+    buildtime_config = config.KlioConfig(_get_config(buildtime_config_path))
+
+    return buildtime_config.as_dict() == klio_config.as_dict()
 
 
 @main.command("run")
@@ -71,6 +73,18 @@ def _compare_runtime_to_buildtime_config(runtime_config_path):
 def run_pipeline(
     image_tag, direct_runner, update, klio_config, config_meta, blocking
 ):
+
+    # Prompt user to continue if runtime config file is not the same as
+    # the buildtime config file. Do this after _get_config since that
+    # will prompt the user if their config file doesn't even exist first.
+    if _compare_runtime_to_buildtime_config(klio_config) is False:
+        msg = (
+            "The Klio config file '{}' at runtime differs from the config "
+            "file used when building this Docker image. If this is unexpected "
+            "behavior, please double check your runtime config, or rebuild "
+            "your Docker image with the correct config file."
+        )
+        logging.warning(msg.format(config_meta.config_path))
 
     # RunConfig ensures config is pickled and sent to worker.  Note this
     # depends on save_main_session being True

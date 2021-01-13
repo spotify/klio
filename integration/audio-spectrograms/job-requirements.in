@@ -1,6 +1,4 @@
-apache-beam[gcp]==2.24.0
+apache-beam[gcp]==2.27.0
 librosa
 pytest
-google-cloud-storage < 1.30.0
-google-cloud-kms < 2.0.0
 # Note: klio packages are installed via docker

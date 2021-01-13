@@ -1,4 +1,4 @@
-FROM dataflow.gcr.io/v1beta3/python36-fnapi:2.24.0
+FROM dataflow.gcr.io/v1beta3/python36-fnapi:2.27.0
 
 WORKDIR /usr/src/app
 RUN mkdir -p /usr/src/config
@@ -15,7 +15,7 @@ RUN pip install ./lib
 RUN pip install ./exec
 
 COPY job-requirements.txt job-requirements.txt
-RUN pip install -r job-requirements.txt --use-feature=2020-resolver
+RUN pip install -r job-requirements.txt
 
 COPY __init__.py \
      run.py \
@@ -26,4 +26,4 @@ COPY __init__.py \
 
 ARG KLIO_CONFIG=klio-job.yaml
 COPY $KLIO_CONFIG /usr/src/config/.effective-klio-job.yaml
-RUN pip install . --use-feature=2020-resolver
+RUN pip install .

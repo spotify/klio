@@ -39,7 +39,7 @@ pipeline_options:
   runner: DirectRunner
   setup_file: setup.py
   streaming: false
+  temp_location: gs://klio-integration
   update: false
   worker_harness_container_image: integration-klio-read-bq-write-bq
-  temp_location: gs://klio-integration
 version: 2

@@ -7,6 +7,8 @@ CLI Changelog
 Fixed
 *****
 * Fixed a runtime bug in ``klio job config`` commands
+* Fixed language with ``klio job create`` command to make it more general to job type
+* Fixed bug where ``klio job create`` in batch mode tried to create topics and subscriptions
 
 1.0.4 (2021-01-04)
 ------------------

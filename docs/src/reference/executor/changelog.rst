@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.2.2 (2021-01-14)
+------------------
+
+Fixed
+*****
+
+* Reintroduced comparing build to runtime config
+
 0.2.1 (2020-12-03)
 ------------------
 

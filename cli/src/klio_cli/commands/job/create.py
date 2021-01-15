@@ -344,7 +344,7 @@ class CreateJob(object):
         else:
             if user_input:
                 create_resources = click.prompt(
-                    "Create topics, buckets, and dashboards? [Y/n]",
+                    "Create relevant resources in GCP? [Y/n]",
                     type=click.Choice(["y", "Y", "n", "N"]),
                     default="n"
                     if DEFAULTS["create_resources"] is False
@@ -516,7 +516,7 @@ class CreateJob(object):
         }
 
         if job_type == "batch":
-            job_context = self._get_batch_user_input(kwargs)
+            job_context = self._get_batch_user_input_job_context(kwargs)
         else:
             job_context = self._get_streaming_user_input(kwargs)
 
@@ -582,7 +582,7 @@ class CreateJob(object):
                 "Batch event output file", default=default_batch_event_output
             )
 
-        default_batch_data_output = "{}-output"
+        default_batch_data_output = "{}-output".format(kwargs.get("job_name"))
         batch_data_output = kwargs.get("batch_data_output")
         if not batch_data_output:
             batch_data_output = click.prompt(
@@ -741,7 +741,9 @@ class CreateJob(object):
 
     def _create_external_resources(self, context):
         if context["create_resources"]:
-            gcp_setup.create_topics_and_buckets(context)
+            if context["job_type"] == "streaming":
+                gcp_setup.create_topics(context)
+            gcp_setup.create_buckets(context)
             gcp_setup.create_stackdriver_dashboard(context)
 
     def create(self, unknown_args, known_kwargs, output_dir):

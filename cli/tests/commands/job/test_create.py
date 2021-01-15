@@ -988,8 +988,9 @@ def test_create(
     mock_create_dockerfile = mocker.patch.object(job, "_create_dockerfile")
     mock_create_readme = mocker.patch.object(job, "_create_readme")
 
-    mock_create_topics = mocker.patch.object(
-        create.gcp_setup, "create_topics_and_buckets"
+    mock_create_topics = mocker.patch.object(create.gcp_setup, "create_topics")
+    mock_create_buckets = mocker.patch.object(
+        create.gcp_setup, "create_buckets"
     )
     mock_create_stackdriver = mocker.patch.object(
         create.gcp_setup, "create_stackdriver_dashboard"
@@ -1030,10 +1031,13 @@ def test_create(
         )
 
     if create_resources:
-        mock_create_topics.assert_called_once_with(context)
+        if job_type == "streaming":
+            mock_create_topics.assert_called_once_with(context)
+        mock_create_buckets.assert_called_once_with(context)
         mock_create_stackdriver.assert_called_once_with(context)
     else:
         mock_create_topics.assert_not_called()
+        mock_create_buckets.assert_not_called()
         mock_create_stackdriver.assert_not_called()
 
     mock_create_reqs_files.assert_called_once_with(

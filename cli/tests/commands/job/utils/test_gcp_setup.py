@@ -229,7 +229,7 @@ def test_create_bucket_if_missing_raises(mock_storage, mocker, caplog):
     assert 2 == len(caplog.records)
 
 
-def test_create_topics_and_buckets(
+def test_create_topics(
     context,
     mock_publisher,
     mock_subscriber,
@@ -238,34 +238,33 @@ def test_create_topics_and_buckets(
     mock_create_storage,
     caplog,
 ):
-    gcp_setup.create_topics_and_buckets(context)
+    gcp_setup.create_topics(context)
 
     assert 1 == mock_publisher.call_count
     assert 1 == mock_subscriber.call_count
     assert 2 == mock_create_topic.call_count
-    assert 1 == mock_storage.call_count
-    assert 1 == mock_create_storage.call_count
     assert 3 == len(caplog.records)
 
 
-def test_create_topics_and_buckets_unsupported(
-    context,
-    mock_publisher,
-    mock_subscriber,
-    mock_storage,
-    mock_create_topic,
-    mock_create_storage,
-    caplog,
+def test_create_buckets(
+    context, mock_storage, mock_create_storage, caplog,
+):
+    gcp_setup.create_buckets(context)
+
+    assert 1 == mock_storage.call_count
+    assert 1 == mock_create_storage.call_count
+    assert 1 == len(caplog.records)
+
+
+def test_create_buckets_unsupported(
+    context, mock_storage, caplog,
 ):
     loc = "bq://not-a-gcs-location"
     context["job_options"]["outputs"][0]["data_location"] = loc
-    gcp_setup.create_topics_and_buckets(context)
+    gcp_setup.create_buckets(context)
 
-    assert 1 == mock_publisher.call_count
-    assert 1 == mock_subscriber.call_count
-    assert 2 == mock_create_topic.call_count
     assert 1 == mock_storage.call_count
-    assert 6 == len(caplog.records)
+    assert 4 == len(caplog.records)
 
 
 def test_create_stackdriver_dashboard(context, mocker, caplog):

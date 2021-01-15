@@ -113,7 +113,7 @@ def _create_bucket_if_missing(bucket_name, storage_client, project):
         raise SystemExit(1)
 
 
-def create_topics_and_buckets(context):
+def create_topics(context):
     inputs = context["job_options"]["inputs"]
     outputs = context["job_options"]["outputs"]
     project = context["pipeline_options"]["project"]
@@ -135,11 +135,21 @@ def create_topics_and_buckets(context):
     logging.info(
         "Creating output topics & locations for job {}".format(job_name)
     )
-    storage_client = storage.Client(project=project)
 
     for output in outputs:
         output_topic = output["topic"]
         _create_topic_if_missing(output_topic, publisher_client, project)
+
+
+def create_buckets(context):
+    outputs = context["job_options"]["outputs"]
+    project = context["pipeline_options"]["project"]
+    job_name = context["job_name"]
+
+    logging.info("Creating output locations for job {}".format(job_name))
+    storage_client = storage.Client(project=project)
+
+    for output in outputs:
         location = output["data_location"]
         if not location.startswith("gs://"):
             msg = "Unsupported location type, skipping: {}".format(location)

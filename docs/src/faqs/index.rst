@@ -27,6 +27,8 @@ FAQs
     custom_proto_def
     dags_in_klio
     migrate_from_fnapi
+    migrate_from_setup
+    setup_packaging
 
 
 General
@@ -76,3 +78,5 @@ Technical
     publish_kmsgs_from_non_klio_job
     custom_proto_def
     migrate_from_fnapi
+    migrate_from_setup
+    setup_packaging

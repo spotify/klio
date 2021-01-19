@@ -1,3 +1,5 @@
+.. _migrate-from-fnapi:
+
 How Do I Migrate from FnAPI to ``setup.py``?
 ============================================
 

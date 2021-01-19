@@ -171,6 +171,14 @@ Files can be read & written locally (supported in Direct Runner only), or from/t
 
 Read more about configuring for :ref:`reading events from files <event-input-config-files>` and :ref:`writing events to files <event-output-config-files>`.
 
+Avro
+^^^^
+
+Only supported in batch mode.
+Both local and GCS avro files are supported.
+
+More information and examples on how to read and write to avro files
+in :ref:`event-config-avro-read` the event config section.
 
 Data I/O
 --------

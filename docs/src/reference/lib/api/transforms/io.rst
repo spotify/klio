@@ -15,4 +15,5 @@ I/O
 .. autoclass:: KlioWriteToBigQuery()
     :inherited-members: apache_beam.io.WriteToBigQuery.__init__
     :members: __init__
+.. autoclass:: KlioWriteToAvro()
 .. autoexception::  KlioMissingConfiguration

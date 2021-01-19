@@ -62,6 +62,7 @@ class BatchEventMapper(object):
     output = {
         "file": transforms.KlioWriteToText,
         "bq": transforms.KlioWriteToBigQuery,
+        "avro": transforms.KlioWriteToAvro,
     }
 
 

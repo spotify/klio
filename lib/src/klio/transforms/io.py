@@ -428,7 +428,7 @@ class KlioWriteToAvro(beam.io.WriteToAvro):
     """Write avro to a local directory or GCS bucket.
 
     ``KlioMessage.data.element`` data is parsed out
-    and dumped into arvo format.
+    and dumped into avro format.
 
     Args:
       file_path_prefix (str): The file path to write to

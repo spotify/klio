@@ -62,6 +62,7 @@
     KlioReadFromAvro
     KlioWriteToText
     KlioWriteToBigQuery
+    KlioWriteToAvro
     KlioMissingConfiguration
 
 

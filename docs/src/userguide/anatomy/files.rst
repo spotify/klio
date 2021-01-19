@@ -33,7 +33,7 @@ Python Files
 ``__init__.py`` helps the Python executable find the path where the other Python files are.
 
 ``setup.py`` file defines how the job should be packaged so the configured runner can appropriately install it.
-This is also where job-specific :violetemph:`system-level dependencies` should be declared.
+This is also where job-specific :violetemph:`system-level dependencies` should be declared. See :ref:`setup-py` for more information.
 
 Dependency Declaration
 ----------------------
@@ -53,25 +53,7 @@ Read more about a job's configuration :doc:`here <../config/index>`.
 Other Files
 -----------
 
-``MANIFEST.in`` declares files needed for job installation (i.e. ``job-requirements.txt``) but not needed at runtime.
-
-.. collapsible:: Why is this needed?
-
-    The ``MANIFEST.in`` file must include any file required to *install* your job as a Python
-    package (but not needed to run your job; those files are declared under ``data_files``
-    in ``setup.py`` as referred above).
-
-    When Klio launches the job for Dataflow, Dataflow will locally create a `source distribution`_
-    of your job by running ``python setup.py sdist``. When running this, Python will tar together
-    the files declared in ``setup.py`` as well as any non-Python files defined in `MANIFEST.in`_
-    into a file called ``workflow.tar.gz`` (as named by Dataflow to then be uploaded).
-
-    Then, on the worker, Dataflow will run ``pip install workflow.tar.gz``. ``pip`` will actually
-    build a `wheel`_, installing packages defined in ``job-requirements.txt`` (and running any
-    other custom commands defined in ``setup.py``). After the installation of the package via
-    ``pip install workflow.tar.gz``, ``job-requirements.txt`` will effectively be gone and
-    inaccessible to the job's code. Building a wheel ignores ``MANIFEST.in``, but includes all the
-    files declared in ``setup.py``, the ones actually needed for running the Klio job.
+``MANIFEST.in`` declares files needed for job installation (i.e. ``job-requirements.txt``) but not needed at runtime. See :ref:`manifest-in` for more information.
 
 ``README.md`` is initially populated with setup instructions on how to get a job running, but should be used however needed.
 

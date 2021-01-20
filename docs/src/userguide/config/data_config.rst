@@ -92,7 +92,7 @@ Example configuration for a custom data input that is not supported by Klio:
     | *Required*
 
 
-.. option:: job_config.events.inputs[].skip_klio_existence_check BOOL
+.. option:: job_config.data.inputs[].skip_klio_existence_check BOOL
 
     Inherited from :ref:`global data input config <skip-input-ext-check>`. This will be set to
     ``True`` automatically.
@@ -103,7 +103,7 @@ Example configuration for a custom data input that is not supported by Klio:
     Inherited from :ref:`global data input config <ping-mode>`.
 
 
-.. option:: job_config.events.inputs[].<custom-key> ANY
+.. option:: job_config.data.inputs[].<custom-key> ANY
 
     Any arbitrary key-value pairs for custom data input configuration specific to a job.
 
@@ -189,7 +189,7 @@ Example configuration for a custom data output that is not supported by Klio:
     | *Required*
 
 
-.. option:: job_config.events.outputs[].skip_klio_existence_check BOOL
+.. option:: job_config.data.outputs[].skip_klio_existence_check BOOL
 
     Inherited from :ref:`global data output config <skip-output-ext-check>`. This will be set to
     ``True`` automatically.
@@ -200,7 +200,7 @@ Example configuration for a custom data output that is not supported by Klio:
     Inherited from :ref:`global data output config <force-mode>`.
 
 
-.. option:: job_config.events.outputs[].<custom-key> ANY
+.. option:: job_config.data.outputs[].<custom-key> ANY
 
     Any arbitrary key-value pairs for custom data output configuration specific to a job.
 

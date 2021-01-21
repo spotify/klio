@@ -29,6 +29,7 @@ FAQs
     migrate_from_fnapi
     migrate_from_setup
     setup_packaging
+    streaming_to_batch_conversion
 
 
 General
@@ -80,3 +81,4 @@ Technical
     migrate_from_fnapi
     migrate_from_setup
     setup_packaging
+    streaming_to_batch_conversion

@@ -583,3 +583,49 @@ def test_config_pickling(config_dict, final_config_dict):
     actual = unpickled.as_dict()
 
     assert final_config_dict == actual
+
+
+@pytest.mark.parametrize(
+    "worker_disk_type, is_valid",
+    (
+        ("local-ssd", True),
+        ("something", False),
+        (
+            "compute.googleapis.com/projects/test_project/"
+            "regions/europe-west1/diskTypes/local-ssd",
+            True,
+        ),
+        (
+            "compute.googleapis.com/projects/wrong_project/"
+            "regions/europe-west1/diskTypes/local-ssd",
+            False,
+        ),
+        (
+            "compute.googleapis.com/projects/test_project/"
+            "regions/wrong-region/diskTypes/local-ssd",
+            False,
+        ),
+        (
+            "compute.googleapis.com/projects/test_project/"
+            "regions/wrong-region/diskTypes/invalid",
+            False,
+        ),
+    ),
+)
+def test_worker_disk_image_formatting(worker_disk_type, is_valid):
+    # config formats worker_disk_type on creation.  We need to ensure it can
+    # read the unformatted and formatted versions
+    pipeline_config_dict = {
+        "project": "test_project",
+        "worker_disk_type": worker_disk_type,
+    }
+
+    if is_valid:
+        config.KlioPipelineConfig(
+            pipeline_config_dict, job_name="test_job", version=2
+        )
+    else:
+        with pytest.raises(ValueError):
+            config.KlioPipelineConfig(
+                pipeline_config_dict, job_name="test_job", version=2
+            )

@@ -376,13 +376,7 @@ class KlioPipelineConfig(object):
     disk_size_gb = utils.field(type=int, default=32)
     worker_machine_type = utils.field(type=str, default="n1-standard-2")
     worker_harness_container_image = utils.field(type=str, default=None)
-    worker_disk_type = utils.field(
-        type=str,
-        default=None,
-        validator=attr.validators.optional(
-            attr.validators.in_(["local-ssd", "pd-ssd", "pd-standard"])
-        ),
-    )
+    worker_disk_type = utils.field(type=str, default=None,)
     use_public_ips = utils.field(type=bool, default=None)
     min_cpu_platform = utils.field(type=str, default=None)
     dataflow_worker_jar = utils.field(type=str, default=None)
@@ -400,12 +394,27 @@ class KlioPipelineConfig(object):
         self.max_num_workers = max(2, self.num_workers)
         self.USER_ATTRIBS = []
 
-        if self.worker_disk_type is not None:
-            self.worker_disk_type = WORKER_DISK_TYPE_URL.format(
+        valid_disk_types = ["local-ssd", "pd-ssd", "pd-standard"]
+
+        def format_disk_type(simple_type):
+            return WORKER_DISK_TYPE_URL.format(
                 project=self.project,
                 region=self.region,
-                disk_type=self.worker_disk_type,
+                disk_type=simple_type,
             )
+
+        # worker_disk_type may or may not already be formatted as a URL
+        if self.worker_disk_type is not None:
+            if self.worker_disk_type in valid_disk_types:
+                self.worker_disk_type = format_disk_type(self.worker_disk_type)
+            elif self.worker_disk_type != format_disk_type(
+                self.worker_disk_type.split("/")[-1]
+            ):
+                raise ValueError(
+                    "Invalid pipeline_options.worker_disk_type: '{}'".format(
+                        self.worker_disk_type
+                    )
+                )
 
         declared_config = self._as_dict()
         for key, value in config_dict.items():

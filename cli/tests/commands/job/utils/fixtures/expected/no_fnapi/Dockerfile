@@ -19,3 +19,5 @@ COPY __init__.py \
      /usr/src/app/
 
 RUN pip install .  --use-feature=2020-resolver
+ARG KLIO_CONFIG=klio-job.yaml
+COPY $KLIO_CONFIG /usr/src/config/.effective-klio-job.yaml

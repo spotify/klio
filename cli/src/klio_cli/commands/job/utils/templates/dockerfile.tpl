@@ -45,9 +45,8 @@ COPY __init__.py \
      {%- endif %}
      /usr/src/app/
 
-{% if klio.use_fnapi -%}
-ARG KLIO_CONFIG=klio-job.yaml
-COPY $KLIO_CONFIG /usr/src/config/.effective-klio-job.yaml
-{% else -%}
+{% if not klio.use_fnapi -%}
 RUN pip install .  --use-feature=2020-resolver
 {% endif -%}
+ARG KLIO_CONFIG=klio-job.yaml
+COPY $KLIO_CONFIG /usr/src/config/.effective-klio-job.yaml

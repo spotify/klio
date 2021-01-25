@@ -1,5 +1,5 @@
 ## -*- docker-image-name: "{{ klio.pipeline_options.worker_harness_container_image }}" -*-
-FROM apache/beam_python{{ klio.python_version }}_sdk:2.24.0
+FROM apache/beam_python{{ klio.python_version }}_sdk:2.26.0
 
 WORKDIR /usr/src/app
 {%- if klio.use_fnapi %}
@@ -28,7 +28,7 @@ RUN pip install --upgrade pip setuptools
 ###############################################################
 
 COPY job-requirements.txt job-requirements.txt
-RUN pip install -r job-requirements.txt --use-feature=2020-resolver
+RUN pip install -r job-requirements.txt
 {%- else -%}
 RUN pip install --upgrade pip setuptools
 {%- endif %}
@@ -45,9 +45,8 @@ COPY __init__.py \
      {%- endif %}
      /usr/src/app/
 
-{% if klio.use_fnapi -%}
+{% if not klio.use_fnapi -%}
+RUN pip install .
+{% endif -%}
 ARG KLIO_CONFIG=klio-job.yaml
 COPY $KLIO_CONFIG /usr/src/config/.effective-klio-job.yaml
-{% else -%}
-RUN pip install .  --use-feature=2020-resolver
-{% endif -%}

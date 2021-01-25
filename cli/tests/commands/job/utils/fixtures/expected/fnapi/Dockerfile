@@ -1,5 +1,5 @@
 ## -*- docker-image-name: "gcr.io/foo/bar" -*-
-FROM apache/beam_python3.6_sdk:2.24.0
+FROM apache/beam_python3.6_sdk:2.26.0
 
 WORKDIR /usr/src/app
 RUN mkdir -p /usr/src/config
@@ -25,7 +25,7 @@ RUN pip install --upgrade pip setuptools
 ###############################################################
 
 COPY job-requirements.txt job-requirements.txt
-RUN pip install -r job-requirements.txt --use-feature=2020-resolver
+RUN pip install -r job-requirements.txt
 
 COPY __init__.py \
      run.py \

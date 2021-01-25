@@ -1,1 +1,1 @@
-job-requirements.txt
+include job-requirements.txt

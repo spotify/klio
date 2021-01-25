@@ -9,6 +9,13 @@ Fixed
 * Fixed a runtime bug in ``klio job config`` commands
 * Fixed language with ``klio job create`` command to make it more general to job type
 * Fixed bug where ``klio job create`` in batch mode tried to create topics and subscriptions
+* Fixed template for new jobs to correctly include the ``klio-job.yaml`` file
+* Fixed syntax for ``MANIFEST.in`` template
+
+Changed
+*******
+
+* Updated Beam SDK version to latest known working version
 
 1.0.4 (2021-01-04)
 ------------------

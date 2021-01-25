@@ -1,5 +1,5 @@
 # <--- Do not delete
-apache-beam[gcp]==2.24.0  # must match the Dockerfile base image
+apache-beam[gcp]==2.26.0  # must match the Dockerfile base image
 klio-exec
 # --->
 # Put any third-party Python dependencies you need for your job here

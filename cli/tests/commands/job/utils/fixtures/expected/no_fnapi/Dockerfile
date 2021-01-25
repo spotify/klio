@@ -1,5 +1,5 @@
 ## -*- docker-image-name: "gcr.io/foo/bar" -*-
-FROM apache/beam_python3.6_sdk:2.24.0
+FROM apache/beam_python3.6_sdk:2.26.0
 
 WORKDIR /usr/src/app
 
@@ -18,6 +18,6 @@ COPY __init__.py \
      # Include any other non-Python files your job needs
      /usr/src/app/
 
-RUN pip install .  --use-feature=2020-resolver
+RUN pip install .
 ARG KLIO_CONFIG=klio-job.yaml
 COPY $KLIO_CONFIG /usr/src/config/.effective-klio-job.yaml

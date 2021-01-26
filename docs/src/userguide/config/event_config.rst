@@ -92,7 +92,7 @@ Example configuration for `Google Pub/Sub`_:
     Inherited from :ref:`global event input config <skip-klio-read>`.
 
 
-.. _event-config-bigquery:
+.. _event-input-config-bigquery:
 
 Google BigQuery
 ^^^^^^^^^^^^^^^
@@ -464,6 +464,139 @@ Example configuration for `Google Pub/Sub`_:
     Inherited from :ref:`global event output config <skip-klio-write>`.
 
 
+.. _event-output-config-bigquery:
+
+Google BigQuery
+^^^^^^^^^^^^^^^
+
+*Mode: Batch*
+
+Publishing KlioMessages to `Google BigQuery`_ is supported for all runners.
+
+The ``payload`` is used from :ref:`KlioMessage.data <data>` to create a row in the designated BigQuery table.
+The value of the ``payload`` must be JSON-serializable since Klio loads the ``payload`` data as JSON before writing to BigQuery.
+
+Example configuration for `Google BigQuery`_:
+
+.. code-block:: yaml
+
+    name: my-cool-job
+    job_config:
+      events:
+        outputs:
+          - type: bq
+            project: my-project
+            dataset: my-dataset
+            table: my-table
+            schema: |
+                {
+                    "fields": [
+                        {
+                            "name": "file_name",
+                            "type": "STRING",
+                            "mode": "REQUIRED"
+                        },
+                        {
+                            "name": "file_size_bytes",
+                            "type": "INTEGER",
+                            "mode": "NULLABLE"
+                        }
+                    ]
+                }
+
+.. option:: job_config.events.outputs[].type
+
+    Value: ``bq``
+
+    | **Runner**: Dataflow, Direct
+    | *Required*
+
+
+.. option:: job_config.events.outputs[].project STR
+
+    The ID of the project containing this table or ``None`` if the table reference is specified entirely by the |table|_ argument.
+
+    | **Runner**: Dataflow, Direct
+    | *Optional*
+
+.. _bigquery_output_dataset_config:
+.. option:: job_config.events.outputs[].dataset STR
+
+    The ID of the dataset containing this table or ``None`` if the table reference is specified entirely by the |table|_ argument.
+
+    | **Runner**: Dataflow, Direct
+    | *Optional*
+
+
+.. _bigquery_output_table_config:
+.. option:: job_config.events.outputs[].table STR
+
+    The ID of the table.
+    The ID must contain only letters ``a-z``, ``A-Z``, numbers ``0-9``, or underscores ``_``.
+    If |dataset|_ argument is ``None`` then the ``table`` argument must contain the entire table reference specified as: ``'DATASET.TABLE'`` or ``'PROJECT:DATASET.TABLE'``.
+
+    | **Runner**: Dataflow, Direct
+    | *Required*
+
+.. option:: job_config.events.outputs[].schema DICT
+
+    The schema to be used if the BigQuery table to write has to be created.
+    This should be specified as the string representing a dictionary in the form of:
+
+    .. code-block::
+
+        {
+            "fields": [
+                {
+                    "name": "<field name>",  # required
+                    "type": "<TYPE>",  # required
+                    "mode": "<MODE>",  # required
+                    "description": "<DESCRIPTION>"  # optional
+                }, ...
+            ]
+        }
+
+    Refer to the `BigQuery schema documentation <https://cloud.google.com/bigquery/docs/schemas#creating_a_json_schema_file>`_ for more information on defining a schema.
+
+    | **Runner**: Dataflow, Direct
+    | *Optional*
+
+
+.. option:: job_config.events.outputs[].create_disposition STR
+
+    A string describing what happens if the table does not exist. Possible values are:
+
+    * ``"CREATE_IF_NEEDED"``: create if does not exist.
+    * ``"CREATE_NEVER"``: fail the write if does not exist.
+
+    Refer to BigQuery `create disposition documentation <https://beam.apache.org/documentation/io/built-in/google-bigquery/#create-disposition>`_ for more information.
+
+
+    Defaults to ``"CREATE_IF_NEEDED"``.
+
+    | **Runner**: Dataflow, Direct
+    | *Optional*
+
+.. option:: job_config.events.outputs[].write_disposition STR
+
+    A string describing what happens if the table has already some data. Possible values are:
+
+    * ``"WRITE_TRUNCATE"``: delete existing rows.
+    * ``"WRITE_APPEND"``: add to existing rows.
+    * ``"WRITE_EMPTY"``: fail the write if table not empty.
+
+    Refer to BigQuery `write disposition documentation <https://beam.apache.org/documentation/io/built-in/google-bigquery/#write-disposition>`_ for more information.
+
+    Defaults to ``"WRITE_APPEND"``.
+
+    .. caution::
+
+        For streaming pipelines, ``"WRITE_TRUNCATE"`` can not be used; a ``ValueError`` will be raised.
+
+    | **Runner**: Dataflow, Direct
+    | *Optional*
+
+
 
 .. _event-output-config-files:
 
@@ -678,3 +811,7 @@ Example configuration for a custom event input that is not supported by Klio:
 .. _append_trailing_newlines: #append-trailing-newlines-config
 .. |location| replace:: ``location``
 .. _location: #file-output-location-config
+.. |table| replace:: ``table``
+.. _table: #bigquery-output-table-config
+.. |dataset| replace:: ``dataset``
+.. _dataset: #bigquery-output-dataset-config

@@ -153,7 +153,9 @@ Google BigQuery
 
 Only supported in batch mode.
 
-Klio supports BigQuery columns as event inputs. More information about configuring BigQuery table inputs can be found in the :ref:`event-config-bigquery` event config section.
+Klio supports reading from and writing to `Google BigQuery <https://cloud.google.com/bigquery/docs>`_ tables as event inputs/outputs.
+
+Read more about configuring for :ref:`reading events from BigQuery <event-input-config-bigquery>` and :ref:`writing events to BigQuery <event-output-config-bigquery>`.
 
 
 Text Files

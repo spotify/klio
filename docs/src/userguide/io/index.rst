@@ -132,7 +132,7 @@ Event I/O
 ---------
 
 Google Pub/Sub
-^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
 
 Currently Pubsub is the only supported event I/O in streaming jobs.
 
@@ -153,7 +153,23 @@ Google BigQuery
 
 Only supported in batch mode.
 
-Klio supports BigQuery columns as event inputs. More information about configuring BigQuery table inputs can be found in the :ref:`event-config-bigquery` event config section.
+Klio supports reading from and writing to `Google BigQuery <https://cloud.google.com/bigquery/docs>`_ tables as event inputs/outputs.
+
+Read more about configuring for :ref:`reading events from BigQuery <event-input-config-bigquery>` and :ref:`writing events to BigQuery <event-output-config-bigquery>`.
+
+
+Text Files
+^^^^^^^^^^
+
+Only supported in batch mode.
+
+Klio supports reading events from and writing events to text files.
+When reading, each line represents its own ``KlioMessage``, and the data on the line is converted to :ref:`KlioMessage.data.element <data>`.
+When writing, each :ref:`KlioMessage.data.element <data>` of a ``KlioMessage`` is written to its own line.
+
+Files can be read & written locally (supported in Direct Runner only), or from/to Google Cloud Storage (supported for both Direct Runner and Dataflow Runner).
+
+Read more about configuring for :ref:`reading events from files <event-input-config-files>` and :ref:`writing events to files <event-output-config-files>`.
 
 
 Data I/O

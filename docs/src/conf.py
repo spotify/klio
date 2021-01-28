@@ -144,6 +144,9 @@ nitpick_ignore = [
     ("py:class", "klio_core.proto.klio_pb2.KlioMessage"),
     ("py:exc", "klio_core.proto.klio_pb2._message.DecodeError"),
     # -->
+    # <-- missing docstrings in Beam of objects these docs refer to
+    ("py:class", "apache_beam.coders.coders.ToBytesCoder"),
+    # -->
 ]
 
 # sphinx-build -b linkcheck will error out if links in docstrings are broken,

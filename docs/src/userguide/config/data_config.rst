@@ -23,7 +23,7 @@ Example configuration for `Google Cloud Storage`_:
             inputs:
               - type: gcs
                 location: gs://my-bucket/my-jobs-folder
-                file_suffix: ogg
+                file_suffix: .ogg
 
 .. _data-inputs-type:
 .. option:: job_config.data.inputs[].type STR

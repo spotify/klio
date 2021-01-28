@@ -144,6 +144,121 @@ access to configuration is needed for a transform's logic, then use the provided
             ...
 
 
+Templating and Overriding a Job's Configuration
+-----------------------------------------------
+
+Klio supports templating ``klio-job.yaml`` as well as overriding the configuration's values via the CLI.
+
+Templating Keys and Values
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To template any key or value in ``klio-job.yaml``, declare it with ``${...}``, for example:
+
+.. code-block:: yaml
+
+  # klio-job.yaml snippet
+  job_name: my-job
+  job_config:
+    a_key: ${my_template_value}
+    ${a_template_key}: some_static_value
+
+
+Then, use the ``--template`` flag (supported on most ``klio job`` subcommands – see :doc:`CLI documentation </reference/cli/api/cli/job>` for which commands supports the flag) to provide the content for the templated variables:
+
+.. code-block:: sh
+
+  # command accepts multiple `--template` flags
+  $ klio job run \
+    --template my_template_value=foo \
+    --template a_template_key=some_variable_key
+
+
+Within your Klio job, you'll have access to these configuration values just like normal:
+
+.. code-block:: python
+
+    # in transforms.py
+
+    import apache_beam as beam
+    from klio.transforms import decorators
+
+    class MyTransform(beam.DoFn):
+        @decorators.handle_klio
+        def process(self, item):
+            my_templated_value = self._klio.config.job_config.a_key
+            # my_templated_value == 'foo'
+            ...
+
+
+Overriding Values
+^^^^^^^^^^^^^^^^^
+
+Similar to templating, Klio supports overriding the values of keys during runtime.
+While templating can be used for both keys and values in ``klio-job.yaml``, overriding is limited to just values.
+
+For example, a snippet of a Klio job's configuration might look like:
+
+.. code-block:: yaml
+
+  # klio-job.yaml snippet
+  job_name: my-job
+  job_config:
+    a_key: a_default_value
+    b_key: another_default_value
+    c_key: some_other_default_value
+
+
+Then, use the ``--override`` flag (supported on most ``klio job`` subcommands – see :doc:`CLI documentation </reference/cli/api/cli/job>` for which commands supports the flag) to override the desired keys:
+
+.. code-block:: sh
+
+  # command accepts multiple `--override` flags
+  $ klio job run \
+    --override job_config.a_key=a_new_value \
+    --override job_config.b_key=b_new_value
+
+.. attention::
+
+  Be sure to provide the full path to the desired key to change.
+  In this example, ``a_key`` is nested under ``job_config``, so the full path is ``job_config.a_key``.
+
+Within your Klio job, you'll have access to these configuration values just like normal:
+
+.. code-block:: python
+
+    # in transforms.py
+
+    import apache_beam as beam
+    from klio.transforms import decorators
+
+    class MyTransform(beam.DoFn):
+        @decorators.handle_klio
+        def process(self, item):
+            a_value = self._klio.config.job_config.a_key
+            # a_value == 'a_new_value'
+            c_value = self._klio.config.job_config.c_key
+            # c_value == 'some_other_default_value'
+            ...
+
+.. attention::
+
+  In order to override a value for a data/event input or output, you must specify a name in its configuration, and then use the name in the path of the override:
+
+  .. code-block:: yaml
+
+    job_config:
+      events:
+        inputs:
+          - type: pubsub
+            name: my_input
+            topic: my/pubsub/topic
+            subscription: my/pubsub/subscription
+
+  .. code-block:: sh
+
+    $ klio job run \
+      --override job_config.events.inputs.my_input.topic=/my/other/pubsub/topic
+
 Examples
 --------
 

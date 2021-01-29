@@ -116,6 +116,7 @@ Beam Pipeline Options
         The commands ``klio job create`` and ``klio job verify --create-resources`` will create
         this bucket for you.
 
+.. _kliopipelineconfig-streaming:
 
 .. option:: pipeline_options.streaming BOOL
 

@@ -1,15 +1,20 @@
-Hello Klio Example
-==================
+.. _hello-klio-streaming:
 
-This guide will show you how to set up your development environment to implement Klio, create an example Klio streaming job and run it on DirectRunner.
+Hello Klio Streaming Example
+============================
+
+This guide will show you how to set up your development environment to implement Klio,
+create an example Klio streaming job and run it on DirectRunner. If you are interested in building
+a streaming Klio job then checkout the :ref:`Klio Batch Quickstart Guide<hello-klio-batch>`.
+
 
 .. attention::
 
     Be sure to follow the :doc:`installation instructions <installation>` before continuing on.
 
 
-Create a New Klio Job
----------------------
+Create a New Klio Streaming Job
+-------------------------------
 
 :violetemph:`First`, initialize the ``klio_quickstart`` project directory for ``git``:
 
@@ -28,13 +33,14 @@ Create a New Klio Job
 
     $ klio job create --job-name klio-quick-start --create-resources --use-defaults
 
+
 After responding to the prompts, Klio will:
 
-1. Create two Pub/Sub topics, one for input and one for output, in the provided GCP project: ``projects/$GCP_PROJECT/topics/klio-quick-start-input``  and ``projects/$GCP_PROJECT/topics/klio-quick-start-output``.
-2. Create one Pub/Sub subscription to the input Pub/Sub topic in the provided GCP project: ``projects/$GCP_PROJECT/subscription/klio-quick-start-input-klio-quickstart-input``.
-3. Create a GCS bucket in the provided GCP project you provided in the prompt for output data: ``gs://$GCP_PROJECT-output``.
-4. Create a `Google Stackdriver`_ dashboard in the provided GCP project for you to monitor runtime job metrics.
-5. Create required files within the current working directory.
+1. Create a GCS bucket in the provided GCP project you provided in the prompt for output data: ``gs://$GCP_PROJECT-output``.
+2. Create a `Google Stackdriver`_ dashboard in the provided GCP project for you to monitor runtime job metrics.
+3. Create required files within the current working directory.
+4. Create two Pub/Sub topics, one for input and one for output, in the provided GCP project: ``projects/$GCP_PROJECT/topics/klio-quick-start-input`` and ``projects/$GCP_PROJECT/topics/klio-quick-start-output``.
+5. Create one Pub/Sub subscription to the input Pub/Sub topic in the provided GCP project: ``projects/$GCP_PROJECT/subscription/klio-quick-start-input-klio-quickstart-input``.
 
 :violetemph:`Then`, commit the created job files into ``git``:
 

@@ -350,6 +350,26 @@ class KlioReadAvroEventConfig(KlioEventInput, KlioReadAvroConfig):
     pass
 
 
+@attr.attrs(frozen=True)
+class KlioWriteAvroConfig(KlioAvroConfig):
+    # Either file_path_prefix or location must be set
+    # Right now `schema` is also allowed to pass inbut anything other than
+    # the default schema cannot make proper use of `write_record`
+    file_path_prefix = attr.attrib(type=str, default=None)
+    location = attr.attrib(type=str, default=None)
+    codec = attr.attrib(type=str, default="deflate")
+    file_name_suffix = attr.attrib(type=str, default="")
+    num_shards = attr.attrib(type=int, default=0)
+    shard_name_template = attr.attrib(type=str, default=None)
+    mime_type = attr.attrib(type=str, default="application/x-avro")
+
+
+@supports(KlioIODirection.OUTPUT, KlioIOType.EVENT)
+@attr.attrs(frozen=True)
+class KlioWriteAvroEventConfig(KlioEventOutput, KlioWriteAvroConfig):
+    pass
+
+
 # TODO: integrate into @dsimon's converter logic once his PR#154 is merged
 def _convert_bigquery_input_coder(coder_str):
     # direct runner seems to call this multiple times, prob with pickling;

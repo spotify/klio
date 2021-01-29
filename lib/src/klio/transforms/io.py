@@ -360,6 +360,19 @@ class KlioReadFromAvro(beam.io.ReadFromAvro):
     Data from avro is dumped into JSON and assigned to ``KlioMessage.data.
     element``.
 
+    ``KlioReadFromAvro`` is the default read for event input config type avro.
+    However, ``KlioReadFromAvro`` can also be called explicity in a pipeline.
+
+    Example pipeline reading in elements from an avro file:
+
+    .. code-block:: python
+
+        def run(pipeline, config):
+            initial_data_path = os.path.join(DIRECTORY_TO_AVRO, "twitter.avro")
+            pipeline | io_transforms.KlioReadFromAvro(
+                    file_pattern=initial_data_path
+            ) | beam.ParDo(transforms.HelloKlio())
+
     Args:
       file_pattern (str): the file glob to read.
       location (str): local or GCS path of file(s) to read.
@@ -428,7 +441,22 @@ class KlioWriteToAvro(beam.io.WriteToAvro):
     """Write avro to a local directory or GCS bucket.
 
     ``KlioMessage.data.element`` data is parsed out
-    and dumped into arvo format.
+    and dumped into avro format.
+
+    ``KlioWriteToAvro`` is the default write for event output config type avro.
+    However, ``KlioWriteToAvro`` can also be called explicity in a pipeline.
+
+    Example pipeline for writing elements to an avro file:
+
+    .. code-block:: python
+
+        def run(input_pcol, config):
+            output_gcs_location = "gs://test-gcs-location"
+            return (
+                input_pcol
+                | beam.ParDo(HelloKlio())
+                | transforms.io.KlioWriteToAvro(location=output_gcs_location)
+            )
 
     Args:
       file_path_prefix (str): The file path to write to

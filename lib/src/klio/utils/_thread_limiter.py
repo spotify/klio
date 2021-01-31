@@ -127,7 +127,7 @@ class ThreadLimiter(object):
         if not self._dummy:
             threads_available = self._semaphore._value
             suffix_msg = f" (available threads: {threads_available})"
-        self.logger.info(f"{self} {message}{suffix_msg}")
+        self.logger.debug(f"{self} {message}{suffix_msg}")
 
     def acquire(self):
         """Acquire a semaphore (a thread).

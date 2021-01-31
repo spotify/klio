@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.2.5 (UNRELEASED)
+------------------
+
+Changed
+*******
+
+* Changed thread limiter logging to debug.
+
+
 0.2.4 (2021-01-14)
 ------------------
 

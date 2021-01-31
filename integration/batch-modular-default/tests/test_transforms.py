@@ -25,7 +25,7 @@ import transforms
 @pytest.fixture
 def caplog(caplog):
     """Set global test logging levels."""
-    caplog.set_level(logging.DEBUG)
+    caplog.set_level(logging.INFO)
     return caplog
 
 
@@ -41,27 +41,25 @@ def klio_msg():
 @pytest.fixture
 def expected_log_messages(klio_msg):
     return [
-        (
-            "KlioThreadLimiter(name=LogKlioMessage.process) Blocked – "
-            "waiting on semaphore for an available thread (available threads:"
-        ),
-        (
-            "KlioThreadLimiter(name=LogKlioMessage.process) Released "
-            "semaphore (available threads:"
-        ),
-        "Received element {}".format(klio_msg.data.element),
-        "Received payload {}".format(klio_msg.data.payload),
+        {
+            "level": "INFO",
+            "message": "Received element {}".format(klio_msg.data.element),
+        },
+        {
+            "level": "INFO",
+            "message": "Received payload {}".format(klio_msg.data.payload),
+        },
     ]
 
 
 def test_process(klio_msg, expected_log_messages, caplog):
     helloklio_fn = transforms.LogKlioMessage()
     output = helloklio_fn.process(klio_msg.SerializeToString())
-
     assert klio_msg.SerializeToString() == list(output)[0]
 
     assert len(caplog.records) == len(expected_log_messages)
 
     for index, record in enumerate(caplog.records):
-        assert "INFO" == record.levelname
-        assert expected_log_messages[index] in record.message
+        expected_log_message = expected_log_messages[index]
+        assert expected_log_message["level"] == record.levelname
+        assert expected_log_message["message"] in record.message

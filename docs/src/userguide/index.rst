@@ -5,6 +5,7 @@ Hello, Klio!
     :maxdepth: 2
     :hidden:
 
+    intro
     Anatomy <anatomy/index>
     pipeline/index
     io/index

@@ -105,6 +105,7 @@ extensions = [
     "sphinxcontrib.images",  # thumbnail images
     "sphinxcontrib.spelling",  # spell check
     "sphinx_click",  # auto-docs for Click commands
+    "sphinx_reredirects",  # page redirects
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -220,3 +221,13 @@ intersphinx_mapping = {
 
 # -- sphinxcontrib.spelling config
 spelling_word_list_filename="spelling_wordlist.txt"
+
+
+# -- sphinx-reredirects config
+# see docs: https://pypi.org/project/sphinx-reredirects/
+# old page dir/name -> new page html (relative to old page dir);
+redirects = {
+    # A dummy userguide intro page (that redirects to userguide/index)
+    # so that it shows up in the sidebar
+    "userguide/intro": "index.html",
+}

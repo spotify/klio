@@ -1,0 +1,13 @@
+:orphan:
+
+.. note: When going to a nonexistent page locally, this won't render because the internal
+   local sphinx server doesn't handle 404 -> 404.html mappings.
+   Going to localhost:8888/404.html will look broken since it's looking for assets at the full
+   URL (/en/latest/_static/... versus /_static/...). This should work when deployed.
+
+404 - Page Not Found
+====================
+
+We could not find this page!
+
+If you believe this is a mistake, please file an `issue <https://github.com/spotify/klio/issues>`_.

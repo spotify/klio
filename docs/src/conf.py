@@ -106,6 +106,7 @@ extensions = [
     "sphinxcontrib.spelling",  # spell check
     "sphinx_click",  # auto-docs for Click commands
     "sphinx_reredirects",  # page redirects
+    "notfound.extension",  # add support for 404 page
 ]
 
 # Add any paths that contain templates here, relative to this directory.

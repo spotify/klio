@@ -6,6 +6,7 @@ Hello, Klio!
     :hidden:
 
     intro
+    quickstart/index
     Anatomy <anatomy/index>
     pipeline/index
     io/index

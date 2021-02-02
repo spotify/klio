@@ -231,4 +231,6 @@ redirects = {
     # A dummy userguide intro page (that redirects to userguide/index)
     # so that it shows up in the sidebar
     "userguide/intro": "index.html",
+    # Move quickstart into userguide
+    "quickstart/*": "/userguide/${source}.html",
 }

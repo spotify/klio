@@ -5,9 +5,9 @@ State can be passed from one transform to the next within a pipeline using the `
 (``bytes``) attribute. What one transform yields/returns will turn into the ``data.payload`` value
 for the next transform, with three exceptions:
 
-    1. the yielded/returned value is equal to the ``data`` argument given to the transform;
-    2. the yielded/returned value is ``None``; or
-    3. the transform raises an exception, therefore dropping the message.
+1. the yielded/returned value is equal to the ``data`` argument given to the transform;
+2. the yielded/returned value is ``None``; or
+3. the transform raises an exception, therefore dropping the message.
 
 
 An illustrative example:

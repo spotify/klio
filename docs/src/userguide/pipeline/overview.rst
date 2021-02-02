@@ -81,10 +81,10 @@ Below is an example of a transform that inherits from Beam's DoFn.
 Klio enhances Beam by offering decorators that can be imported from ``klio.transforms``
 then used then decorating methods on transforms to make use of functionalities such as the examples below.
 
- * :ref:`De/serialization of Klio Messages <serialization-klio-message>`
- * :ref:`Inject klio context on methods and functions <accessing-klio-context>`
- * :ref:`Handle timeouts <timeout>`
- * :ref:`Retry on failure <retries>`
+* :ref:`De/serialization of Klio Messages <serialization-klio-message>`
+* :ref:`Inject klio context on methods and functions <accessing-klio-context>`
+* :ref:`Handle timeouts <timeout>`
+* :ref:`Retry on failure <retries>`
 
 
 
@@ -131,10 +131,10 @@ Custom transforms can be imported and used in the ``run.py`` to put together the
 
 Klio also offers composite :ref:`built-in transforms <builtin-transforms>` that can be used directly in the ``run.py`` function.
 
- * :ref:`Data existence checks <data-existence-checks>`
- * :ref:`Inject klio context on methods and functions <accessing-klio-context>`
- * :ref:`Handle timeouts <timeout>`
- * :ref:`Retry on failure <retries>`
+* :ref:`Data existence checks <data-existence-checks>`
+* :ref:`Inject klio context on methods and functions <accessing-klio-context>`
+* :ref:`Handle timeouts <timeout>`
+* :ref:`Retry on failure <retries>`
 
 
 

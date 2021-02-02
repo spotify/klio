@@ -1,9 +1,26 @@
 Graph
 =====
 
-In **streaming** mode, Klio makes use of `Google Pub/Sub`_ and `GCS buckets`_ to create a directed acyclic graph (DAG) to string job dependencies together, allowing various modes of execution.
+.. attention::
+    Management of a graph of Klio jobs is not supported in **batch** mode,
+    as Klio cannot trigger parent jobs to generate missing data in batch mode.
+    However, you can still use Klio's (default or custom) data existence checks
+    to drop messages where input data doesn't exist,
+    as well as data output existence checks to skip already processed items.
 
-Klio support two modes of execution: :ref:`top-down <top-down>` and :ref:`bottom-up <bottom-up>`.
+
+    We recommend making use of an external orchestration framework (such as `Luigi`_)
+    to manage dependencies between Klio batch jobs.
+
+    From this point on, any reference to a Klio job on this page
+    will mean a Klio **streaming** job.
+
+
+In **streaming** mode, Klio makes use of `Google Pub/Sub`_ and `GCS buckets`_
+to create a directed acyclic graph (DAG) to string job dependencies together,
+allowing various modes of execution.
+
+Klio supports two styles of execution for **streaming** jobs: :ref:`top-down <top-down>` and :ref:`bottom-up <bottom-up>`.
 
 .. _top-down:
 
@@ -64,3 +81,4 @@ the graph.
 
 .. _Google Pub/Sub: https://cloud.google.com/pubsub/docs
 .. _GCS buckets: https://cloud.google.com/storage/docs
+.. _Luigi: https://github.com/spotify/luigi

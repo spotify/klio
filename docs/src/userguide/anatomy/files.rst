@@ -26,9 +26,9 @@ There are a handful of files that are required for a Klio job, which the ``klio 
 Python Files
 ------------
 
-``run.py`` and ``transforms.py`` jointly define the logic of your streaming job (the pink box of "your code" in the :doc:`job overview diagram <job>`).
+``run.py`` and ``transforms.py`` jointly define the logic of your job (the pink box of "your code" in the :doc:`job overview diagram <job>`).
 
-``test_transforms.py`` gives you a place to test the logic of your streaming job.
+``test_transforms.py`` gives you a place to test the logic of your job.
 
 ``__init__.py`` helps the Python executable find the path where the other Python files are.
 

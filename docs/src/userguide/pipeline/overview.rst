@@ -1,13 +1,10 @@
 Overview
 ========
 
-Pipeline Structures
--------------------
-
 .. _pipeline-overview-klio-message:
 
 Klio Message
-^^^^^^^^^^^^
+------------
 
 A :ref:`Klio Message <klio-message>` is protobuf data that is passed between transforms
 and represents a unit of work to be done by the transform. It carries an ``element`` value
@@ -20,7 +17,7 @@ despite output already existing.
 .. _pipeline-overview-run-function:
 
 Run function
-^^^^^^^^^^^^
+------------
 
 The run function is the main entrypoint to run a job's transform(s). It contains the overall process of the pipeline,
 laying out the transforms that the klio messages will pass through during the pipeline.
@@ -52,7 +49,7 @@ Klio also provides :ref:`built-in transforms <builtin-transforms>` to aid with e
 .. _pipeline-overview-transforms:
 
 Transforms
-^^^^^^^^^^
+----------
 
 `Transforms`_ hold the logic involved in processing data.They receive a Klio Message,
 perform some logic,and yield the Klio message to the next transform of the pipeline.

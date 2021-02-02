@@ -233,4 +233,6 @@ redirects = {
     "userguide/intro": "index.html",
     # Move quickstart into userguide
     "quickstart/*": "/userguide/${source}.html",
+    # Move io under pipelines
+    "userguide/io/index": "/userguide/pipeline/io.html",
 }

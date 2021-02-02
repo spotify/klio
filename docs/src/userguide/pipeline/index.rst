@@ -1,5 +1,5 @@
-Pipelines
-=========
+The Klio Pipeline
+=================
 
 
 .. the toctree is shown twice; the 2nd time is so it renders where we want the list of contents
@@ -17,6 +17,7 @@ Pipelines
    message
    state
    metrics
+   io
    multiple_inputs
 
 A `Beam Pipeline`_ encapsulates the various steps of the Klio job from reading input data,

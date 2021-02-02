@@ -7,9 +7,8 @@ Hello, Klio!
 
     intro
     quickstart/index
-    Anatomy <anatomy/index>
+    anatomy/index
     pipeline/index
-    io/index
     config/index
     examples/index
 

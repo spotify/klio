@@ -1,5 +1,5 @@
-Klio Job Overview
-=================
+Overview
+========
 
 .. _overview-streaming-job:
 

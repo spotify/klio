@@ -371,20 +371,20 @@ Example configuration for reading elements from a specific avro file:
     | **Runner**: Dataflow, Direct
     | *Required*
 
- .. option:: job_config.events.inputs[].file_pattern STR
+.. option:: job_config.events.inputs[].file_pattern STR
 
-     Pattern of file name(s) to read.
-     This field is optional if ``job_config.events.inputs[].location`` is provided.
+    Pattern of file name(s) to read.
+    This field is optional if ``job_config.events.inputs[].location`` is provided.
 
-     | **Runner**: Dataflow, Direct
-     | *Optional*
+    | **Runner**: Dataflow, Direct
+    | *Optional*
 
-     .. note::
+    .. note::
 
-         If both ``job_config.events.inputs[].location`` and
-         ``job_config.events.inputs[].file_pattern`` are provided,
-         the two fields will be joined to to find files matching ``file_pattern``
-         located in the provided ``location`` path.
+        If both ``job_config.events.inputs[].location`` and
+        ``job_config.events.inputs[].file_pattern`` are provided,
+        the two fields will be joined to to find files matching ``file_pattern``
+        located in the provided ``location`` path.
 
 
 .. option:: job_config.events.inputs[].min_bundle_size INT

@@ -1,13 +1,10 @@
 Overview
 ========
 
-Pipeline Structures
--------------------
-
 .. _pipeline-overview-klio-message:
 
 Klio Message
-^^^^^^^^^^^^
+------------
 
 A :ref:`Klio Message <klio-message>` is protobuf data that is passed between transforms
 and represents a unit of work to be done by the transform. It carries an ``element`` value
@@ -20,7 +17,7 @@ despite output already existing.
 .. _pipeline-overview-run-function:
 
 Run function
-^^^^^^^^^^^^
+------------
 
 The run function is the main entrypoint to run a job's transform(s). It contains the overall process of the pipeline,
 laying out the transforms that the klio messages will pass through during the pipeline.
@@ -52,7 +49,7 @@ Klio also provides :ref:`built-in transforms <builtin-transforms>` to aid with e
 .. _pipeline-overview-transforms:
 
 Transforms
-^^^^^^^^^^
+----------
 
 `Transforms`_ hold the logic involved in processing data.They receive a Klio Message,
 perform some logic,and yield the Klio message to the next transform of the pipeline.
@@ -81,10 +78,10 @@ Below is an example of a transform that inherits from Beam's DoFn.
 Klio enhances Beam by offering decorators that can be imported from ``klio.transforms``
 then used then decorating methods on transforms to make use of functionalities such as the examples below.
 
- * :ref:`De/serialization of Klio Messages <serialization-klio-message>`
- * :ref:`Inject klio context on methods and functions <accessing-klio-context>`
- * :ref:`Handle timeouts <timeout>`
- * :ref:`Retry on failure <retries>`
+* :ref:`De/serialization of Klio Messages <serialization-klio-message>`
+* :ref:`Inject klio context on methods and functions <accessing-klio-context>`
+* :ref:`Handle timeouts <timeout>`
+* :ref:`Retry on failure <retries>`
 
 
 
@@ -131,10 +128,10 @@ Custom transforms can be imported and used in the ``run.py`` to put together the
 
 Klio also offers composite :ref:`built-in transforms <builtin-transforms>` that can be used directly in the ``run.py`` function.
 
- * :ref:`Data existence checks <data-existence-checks>`
- * :ref:`Inject klio context on methods and functions <accessing-klio-context>`
- * :ref:`Handle timeouts <timeout>`
- * :ref:`Retry on failure <retries>`
+* :ref:`Data existence checks <data-existence-checks>`
+* :ref:`Inject klio context on methods and functions <accessing-klio-context>`
+* :ref:`Handle timeouts <timeout>`
+* :ref:`Retry on failure <retries>`
 
 
 

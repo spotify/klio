@@ -13,17 +13,17 @@ Google Cloud Storage
 
 Example configuration for `Google Cloud Storage`_:
 
-    .. code-block:: yaml
+.. code-block:: yaml
 
-        name: my-cool-job
-        pipeline_options:
-          streaming: True
-        job_config:
-          data:
-            inputs:
-              - type: gcs
-                location: gs://my-bucket/my-jobs-folder
-                file_suffix: .ogg
+    name: my-cool-job
+    pipeline_options:
+      streaming: True
+    job_config:
+      data:
+        inputs:
+          - type: gcs
+            location: gs://my-bucket/my-jobs-folder
+            file_suffix: .ogg
 
 .. _data-inputs-type:
 .. option:: job_config.data.inputs[].type STR
@@ -75,14 +75,14 @@ Custom
 
 Example configuration for a custom data input that is not supported by Klio:
 
-    .. code-block:: yaml
+.. code-block:: yaml
 
-        name: my-cool-job
-        job_config:
-          data:
-            inputs:
-              - type: custom
-                some_key: some_value
+    name: my-cool-job
+    job_config:
+      data:
+        inputs:
+          - type: custom
+            some_key: some_value
 
 .. option:: job_config.data.inputs[].type
 
@@ -116,17 +116,17 @@ Google Cloud Storage
 
 Example configuration for `Google Cloud Storage`_:
 
-    .. code-block:: yaml
+.. code-block:: yaml
 
-        name: my-cool-job
-        pipeline_options:
-          streaming: True
-        job_config:
-          data:
-            outputs:
-              - type: gcs
-                location: gs://my-bucket/my-jobs-folder
-                file_suffix: .wav
+    name: my-cool-job
+    pipeline_options:
+      streaming: True
+    job_config:
+      data:
+        outputs:
+          - type: gcs
+            location: gs://my-bucket/my-jobs-folder
+            file_suffix: .wav
 
 .. option:: job_config.data.outputs[].type STR
 
@@ -172,14 +172,14 @@ Custom
 
 Example configuration for a custom data output that is not supported by Klio:
 
-    .. code-block:: yaml
+.. code-block:: yaml
 
-        name: my-cool-job
-        job_config:
-          data:
-            outputs:
-              - type: custom
-                some_key: some_value
+    name: my-cool-job
+    job_config:
+      data:
+        outputs:
+          - type: custom
+            some_key: some_value
 
 .. option:: job_config.data.outputs[].type
 

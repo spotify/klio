@@ -1,5 +1,5 @@
-Graph
-=====
+Chaining Klio Jobs Together
+===========================
 
 .. attention::
     Management of a graph of Klio jobs is not supported in **batch** mode,

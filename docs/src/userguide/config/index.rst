@@ -267,9 +267,9 @@ Streaming
 
 *Case:*
 
-  * **Runner**: DirectRunner
-  * **Events**: Consume ``KlioMessage`` events from a Google Pub/Sub subscription; write ``KlioMessage`` events to a Google Pub/Sub topic.
-  * **Data**: Read input binary data from a GCS bucket; write output binary data to a GCS bucket.
+* **Runner**: DirectRunner
+* **Events**: Consume ``KlioMessage`` events from a Google Pub/Sub subscription; write ``KlioMessage`` events to a Google Pub/Sub topic.
+* **Data**: Read input binary data from a GCS bucket; write output binary data to a GCS bucket.
 
 
 .. literalinclude:: examples/streaming.yaml
@@ -278,9 +278,9 @@ Streaming
 
 *Case:*
 
-  * **Runner**: DataflowRunner
-  * **Events**: Consume ``KlioMessage`` events from a Google Pub/Sub subscription; write ``KlioMessage`` events to a Google Pub/Sub topic.
-  * **Data**: Read input binary data from a GCS bucket; write output binary data to a GCS bucket.
+* **Runner**: DataflowRunner
+* **Events**: Consume ``KlioMessage`` events from a Google Pub/Sub subscription; write ``KlioMessage`` events to a Google Pub/Sub topic.
+* **Data**: Read input binary data from a GCS bucket; write output binary data to a GCS bucket.
 
 
 .. literalinclude:: examples/streaming-dataflow.yaml
@@ -292,9 +292,9 @@ Batch
 
 *Case:*
 
-  * **Runner**: DirectRunner
-  * **Events**: Generate ``KlioMessage`` events from a local file; write ``KlioMessage`` events to a local file.
-  * **Data**: Read input binary data from a GCS bucket; write output binary data to a GCS bucket.
+* **Runner**: DirectRunner
+* **Events**: Generate ``KlioMessage`` events from a local file; write ``KlioMessage`` events to a local file.
+* **Data**: Read input binary data from a GCS bucket; write output binary data to a GCS bucket.
 
 
 .. literalinclude:: examples/batch.yaml
@@ -302,10 +302,10 @@ Batch
 
 *Case:*
 
-  * **Runner**: DataflowRunner
-  * **Events**: Generate ``KlioMessage`` events from a local file; write ``KlioMessage`` events to a local file.
-  * **Data**: Read input binary data from a GCS bucket; write output binary data to a GCS bucket.
-  * Use `Python packaging for dependency management`_ instead of using/packaging with Docker to run on the workers
+* **Runner**: DataflowRunner
+* **Events**: Generate ``KlioMessage`` events from a local file; write ``KlioMessage`` events to a local file.
+* **Data**: Read input binary data from a GCS bucket; write output binary data to a GCS bucket.
+* Use `Python packaging for dependency management`_ instead of using/packaging with Docker to run on the workers
 
 .. literalinclude:: examples/batch-dataflow.yaml
   :language: yaml

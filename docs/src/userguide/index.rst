@@ -5,9 +5,10 @@ Hello, Klio!
     :maxdepth: 2
     :hidden:
 
-    Anatomy <anatomy/index>
+    intro
+    quickstart/index
+    anatomy/index
     pipeline/index
-    io/index
     config/index
     examples/index
 

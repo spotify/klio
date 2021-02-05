@@ -44,8 +44,13 @@ jobs:
           python -m pip install -e ../audio/
       - name: "Build docs"
         run: "sphinx-build -n -T -W -b html -d build/doctrees src src/html"
-      - name: "Check broken links"
-        run: "sphinx-build -n -T -W -b linkcheck -d build/docstrees src src/linkcheck"
+      # Temporary workaround for https://gitlab.com/documatt/sphinx-reredirects/-/merge_requests/1
+      - name: "Check broken links [temporary workaround]"
+        run: "make linkcheck"
+      # Uncomment two lines below if/when the above linked PR gets addressed
+      # - name: "Check broken links"
+      #   run: "sphinx-build -n -T -W -b linkcheck -d build/docstrees src src/linkcheck"
+
       # Un-comment if we want to add this to our build process; commenting it out
       # for now because it might be too obtrusive
       # - name: "Spell check docs"

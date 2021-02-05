@@ -36,7 +36,9 @@ stricthtml: clean
 	@echo "Build finished in strict mode. The HTML pages are in $(BUILDDIR)/html"
 
 linkcheck:
-	$(SPHINXBUILD) -b linkcheck $(ALLSPHINXOPTS) $(BUILDDIR)/linkcheck
+# 	Temporary workaround for https://gitlab.com/documatt/sphinx-reredirects/-/merge_requests/1
+# 	$(SPHINXBUILD) -q -b linkcheck $(ALLSPHINXOPTS) $(BUILDDIR)/linkcheck
+	@bash linkcheck_fix.sh
 	@echo
 	@echo "Link check complete; look for any errors in the above output " \
 	      "or in $(BUILDDIR)/linkcheck/output.txt."

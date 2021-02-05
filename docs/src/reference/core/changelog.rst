@@ -11,6 +11,12 @@ Fixed
 * Fixed config bug that skipped preprocessing (overrides, templates) of dict parsed from YAML
 * ``KlioWriteToAvro`` has been enabled as an output event type (previously missing).
 
+Changed
+*******
+
+* moved ``IndentListDumper`` to ``klio_core`` config utils.
+
+
 0.2.1 (2020-12-03)
 ------------------
 

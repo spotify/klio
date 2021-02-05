@@ -21,29 +21,7 @@ import yaml
 
 from klio_core import config as kconfig
 from klio_core import utils as core_utils
-
-
-class IndentListDumper(yaml.Dumper):
-    """Force indentation for lists for better visual understanding.
-
-    Instead of this:
-
-        foo:
-          bar:
-          - one
-          - two
-          - three
-
-    Format list indentations like this:
-        foo:
-          bar:
-            - one
-            - two
-            - three
-    """
-
-    def increase_indent(self, flow=False, indentless=False):
-        return super(IndentListDumper, self).increase_indent(flow, False)
+from klio_core.config import _utils as config_utils
 
 
 class EffectiveJobConfig(object):
@@ -124,7 +102,7 @@ class EffectiveJobConfig(object):
         yaml.dump(
             effective_config,
             stream=sys.stdout,
-            Dumper=IndentListDumper,
+            Dumper=config_utils.IndentListDumper,
             sort_keys=False,
         )
 
@@ -142,7 +120,7 @@ class EffectiveJobConfig(object):
             yaml.dump(
                 effective_config,
                 stream=f,
-                Dumper=IndentListDumper,
+                Dumper=config_utils.IndentListDumper,
                 default_flow_style=False,
                 sort_keys=False,
             )
@@ -156,7 +134,7 @@ class EffectiveJobConfig(object):
             yaml.dump(
                 self.config_data,
                 stream=f,
-                Dumper=IndentListDumper,
+                Dumper=config_utils.IndentListDumper,
                 default_flow_style=False,
                 sort_keys=False,
             )

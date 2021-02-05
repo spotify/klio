@@ -18,9 +18,7 @@ import os
 import tempfile
 
 import docker
-import yaml
 
-from klio_cli.commands.job import configuration
 from klio_cli.utils import docker_utils
 
 
@@ -181,13 +179,7 @@ class BaseDockerizedPipeline(object):
             self.materialized_config_file = tempfile.NamedTemporaryFile(
                 prefix="/tmp/", mode="w", delete=False
             )
-            yaml.dump(
-                self.klio_config.as_dict(),
-                stream=self.materialized_config_file,
-                Dumper=configuration.IndentListDumper,
-                default_flow_style=False,
-                sort_keys=False,
-            )
+            self.klio_config.write_to_file(self.materialized_config_file)
 
     def run(self, *args, **kwargs):
         # bail early

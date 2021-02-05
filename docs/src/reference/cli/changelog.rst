@@ -1,6 +1,15 @@
 CLI Changelog
 =============
 
+1.0.6 (UNRELEASED)
+------------------
+
+Changed
+*******
+
+* moved ``IndentListDumper`` to ``klio_core`` config utils.
+
+
 1.0.5 (2021-01-26)
 ------------------
 

@@ -18,7 +18,6 @@ The Klio Pipeline
    state
    metrics
    io
-   multiple_inputs
 
 A `Beam Pipeline`_ encapsulates the various steps of the Klio job from reading input data,
 transforming the data, and writing output data. Klio pipelines offer a Pythonic interface to
@@ -59,7 +58,6 @@ Further Documentation
    message
    state
    metrics
-   multiple_inputs
 
 
 .. _Beam Pipeline: https://beam.apache.org/documentation/programming-guide/#creating-a-pipeline

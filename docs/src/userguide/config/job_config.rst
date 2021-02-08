@@ -63,7 +63,7 @@ Example:
 A list of input configuration that will be will used to determine when and how to do work.
 
 If more than one input is configured, please familiarized yourself with
-:doc:`how multiple configured inputs <../pipeline/multiple_inputs>` are handled in Klio.
+:ref:`how multiple configured inputs <multiple-event-inputs>` are handled in Klio.
 
 
 .. option:: job_config.events.inputs[].type STR

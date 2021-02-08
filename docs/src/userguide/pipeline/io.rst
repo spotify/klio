@@ -88,8 +88,67 @@ object, and it will be the responsibility of your own code to setup the input.
    * any automatic data input existence checks (described above)
    * any automatic data output existence checks (described below)
 
+
+.. _multiple-event-inputs:
+
+Multiple Event Inputs
+^^^^^^^^^^^^^^^^^^^^^
+
+Currently, Klio supports working with multiple event inputs.
+This may be multiple Pub/Sub subscriptions, or BigQuery tables, or any other of Klio's :ref:`supported event inputs <supported-event-io>`.
+A job may not have multiple inputs that support different modes.
+For instance, Pub/Sub is only supported in streaming mode.
+Therefore, a streaming job may not mix reading from a Pub/Sub subscription with any inputs supported in batch mode.
+
+Step 1: Defining Multiple Inputs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To define multiple event inputs, just add another list item under ``job_config.events.inputs`` in the ``klio-job.yaml`` file:
+
+.. code-block:: yaml
+
+  job_config:
+    events:
+      inputs:
+        - type: file
+          location: ./batch_track_ids_1.txt
+        - type: file
+          location: ./batch_track_ids_2.txt
+    # <-- snip -->
+
+Klio will automatically read from the configured inputs concurrently.
+
+Step 2: Using Multiple Inputs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the job's ``run.py`` file, the ``run`` function will be called with *multiple* :class:`PCollections <apache_beam.pvalue.PCollection>` instead of a single ``PCollection`` as the first argument.
+The first argument, ``pcolls``, is a :func:`namedtuple <collections.namedtuple>` which length is equal to the number of configured inputs.
+To access the input ``PCollection`` for a particular configured input, names are generated using the configured inputs ``type`` plus its index (using zero-indexing).
+For example:
+
+.. code-block:: py
+  :emphasize-lines: 2,3
+
+  def run(pcolls, config):
+      first = pcolls.file0 | "process first" >> beam.Map(first_func)
+      second = pcolls.file1 | "process second" >> beam.Map(second_func)
+      combined = (first, second) | beam.Flatten()
+      return combined | "process combined" >> beam.Map(combined_func)
+
+
+If needed, the configuration is attached to the :class:`KlioContext <klio.transforms.core.KlioContext>` object:
+
+.. code-block:: py
+
+  @decorators.handle_klio
+  def my_map_function(ctx, item):
+      file0_config = ctx.config.job_config.events.inputs[0]
+      file1_config = ctx.config.job_config.events.inputs[1]
+      ...
+
+
 Outputs
---------
+-------
 
 Likewise event and data outputs correspond to the output produced by a job.
 For example:
@@ -127,6 +186,7 @@ have multiple event outputs or want to customize the behavior of writing output
 events.  In these situations, you can disable Klio's built-in writing of output
 events by setting ``skip_klio_write`` to ``true`` in the event output's config:
 
+.. _supported-event-io:
 
 Event I/O
 ---------

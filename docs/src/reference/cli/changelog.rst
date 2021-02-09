@@ -13,7 +13,7 @@ Changed
 *******
 
 * Moved ``IndentListDumper`` to ``klio_core`` config utils.
-* Runtime config file for ``klioexec`` now mounted to ``klio-job-run-effective.yaml``
+* Runtime config file for ``klioexec`` now written to ``klio-job-run-effective.yaml`` in the job's directory.
 
 
 1.0.5 (2021-01-26)

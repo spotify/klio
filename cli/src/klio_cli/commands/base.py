@@ -15,9 +15,10 @@
 
 import logging
 import os
-import tempfile
 
 import docker
+
+from klio_core.config import core as config_core
 
 from klio_cli.utils import docker_utils
 
@@ -29,8 +30,6 @@ class BaseDockerizedPipeline(object):
     CONTAINER_GCP_CRED_PATH = os.path.join("/usr", GCP_CRED_FILE)
     CONTAINER_JOB_DIR = "/usr/src/app"
     DOCKER_LOGGER_NAME = "klio.base_docker_pipeline"
-    # path where the temp config-file is mounted into klio-exec's container
-    MATERIALIZED_CONFIG_PATH = "/usr/src/config/materialized_config.yaml"
 
     def __init__(self, job_dir, klio_config, docker_runtime_config):
         self.job_dir = job_dir
@@ -42,7 +41,6 @@ class BaseDockerizedPipeline(object):
         # if this is set to true, running the command will generate a temp file
         # and mount it to the container
         self.requires_config_file = True
-        self.materialized_config_file = None
 
     @property
     def _full_image_name(self):
@@ -100,12 +98,6 @@ class BaseDockerizedPipeline(object):
             },
         }
 
-        if self.materialized_config_file is not None:
-            volumes[self.materialized_config_file.name] = {
-                "bind": BaseDockerizedPipeline.MATERIALIZED_CONFIG_PATH,
-                "mode": "rw",
-            }
-
         return volumes
 
     def _get_command(self, *args, **kwargs):
@@ -116,7 +108,10 @@ class BaseDockerizedPipeline(object):
             command.extend(
                 [
                     "--config-file",
-                    BaseDockerizedPipeline.MATERIALIZED_CONFIG_PATH,
+                    os.path.join(
+                        self.CONTAINER_JOB_DIR,
+                        config_core.RUN_EFFECTIVE_CONFIG_FILE,
+                    ),
                 ]
             )
         return command
@@ -176,10 +171,10 @@ class BaseDockerizedPipeline(object):
 
     def _write_effective_config(self):
         if self.requires_config_file:
-            self.materialized_config_file = tempfile.NamedTemporaryFile(
-                prefix="/tmp/", mode="w", delete=False
+            path = os.path.join(
+                self.job_dir, config_core.RUN_EFFECTIVE_CONFIG_FILE
             )
-            self.klio_config.write_to_file(self.materialized_config_file)
+            self.klio_config.write_to_file(path)
 
     def run(self, *args, **kwargs):
         # bail early

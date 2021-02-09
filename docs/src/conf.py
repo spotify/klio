@@ -162,6 +162,11 @@ linkcheck_ignore = [
     r"https://github.com/spotify/klio/tree/master/docs/src/keps",
     r"https://docs.klio.io/en/latest/keps/",
 ]
+# temp ignore newly added sections to RELEASING.rst
+linkcheck_anchors_ignore = [
+    "changelog-format",
+    "update-changelog",
+]
 
 # -- Options for HTML output -------------------------------------------------
 

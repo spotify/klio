@@ -254,6 +254,25 @@ To view them locally
 Then navigate to ``http://localhost:8888`` in your browser.
 
 
+Changelog
+---------
+
+If your change is noteworthy, there needs to be a changelog entry so our users can learn about it!
+
+* For each pull request, add a line in ``docs/src/reference/<package>/changelog.rst`` under the appropriate section (``Added``, ``Fixed``, ``Removed``, ``Changed``, or ``Dependencies Updated``) for the latest unreleased version (e.g. ``1.2.3 (UNRELEASED)``).
+
+  * If there is no ``(UNRELEASED)`` version, start a new version section with a second-level header of ``1.2.3 (UNRELEASED)`` where ``1.2.3`` is the next anticipated release.
+  * Include links to any relevant issues, KEPs, or PRs (particularly in the case of reverts).
+
+* Wrap symbols like modules, functions, or classes into double backticks so they are rendered in a ``monospace font``.
+* If you mention functions or other callables, add parentheses at the end of their names: ``klio.func()`` or ``klio.Class.method()``. This makes the changelog a lot more readable.
+* Prefer simple past tense or constructions with "now". For example:
+
+  * Added ``klio.fun_functions.func()``.
+  * ``klio.func()`` now doesn't crash the Large Hadron Collider anymore when passed the *foobar* argument.
+
+Refer to the `changelog format <https://github.com/spotify/klio/blob/master/RELEASING.rst#changelog-format>`_ in ``RELEASING.rst`` for a complete example, and `Update Changelog <https://github.com/spotify/klio/blob/master/RELEASING.rst#update-changelog>`_ when preparing the changelog for a new release.
+
 Microsite
 ---------
 

@@ -12,6 +12,7 @@ on:
       - 'docs/**'
       - 'devtools/**'
       - 'examples/**'
+      - '**.rst'
   pull_request:
     branches:
       - master
@@ -20,6 +21,7 @@ on:
       - 'docs/**'
       - 'devtools/**'
       - 'examples/**'
+      - '**.rst'
 
 jobs:
   core_cli_checks:

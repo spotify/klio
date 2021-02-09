@@ -9,12 +9,14 @@ on:
       - develop
     paths:
       - 'docs/**'
+      - '**.rst'
   pull_request:
     branches:
       - master
       - develop
     paths:
       - 'docs/**'
+      - '**.rst'
 
 defaults:
   run:

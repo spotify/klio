@@ -142,7 +142,6 @@ nitpick_ignore = [
     # -->
     # <-- nitpick docstrings that reference other Klio objects that are
     # not yet documented
-    ("py:class", "klio_core.config.KlioConfig"),
     ("py:class", "klio_core.proto.klio_pb2.KlioMessage"),
     ("py:exc", "klio_core.proto.klio_pb2._message.DecodeError"),
     # -->
@@ -158,9 +157,11 @@ linkcheck_ignore = [
     r"https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs#configuration.load",
     # ignore local links
     r"\./.+\.html",
-    # temp ignore reference to keps
-    r"https://github.com/spotify/klio/tree/master/docs/src/keps",
-    r"https://docs.klio.io/en/latest/keps/",
+]
+# temp ignore newly added sections to RELEASING.rst
+linkcheck_anchors_ignore = [
+    "changelog-format",
+    "update-changelog",
 ]
 
 # -- Options for HTML output -------------------------------------------------

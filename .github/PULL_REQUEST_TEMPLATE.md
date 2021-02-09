@@ -18,6 +18,7 @@ Some valid responses are:
 - [ ] Format the pull request title like `[cli] Fixes bugs in 'klio job fake-cmd'`.
 - [ ] Changes are covered by unit tests (no major decrease in code coverage %) and/or integration tests.
 - [ ] Document any relevant additions/changes in the appropriate spot in `docs/src`.
+- [ ] For any change that affects users, update the package's changelog in ``docs/src/reference/<package>/changelog.rst``.
 
 
 <!---

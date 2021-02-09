@@ -130,10 +130,81 @@ Releasing
 Prepare Release
 ~~~~~~~~~~~~~~~
 
-* don't forget changelog updates
-
 Before building and uploading, we need to make the required release commit(s) for a pull request.
 
+Update Changelog
+^^^^^^^^^^^^^^^^
+
+**FYI:** Each package has its changelog in ``docs/src/reference/<package>/changelog.rst``. The details of the latest release is seen on the package's PyPI project page (`for example <https://pypi.org/project/klio/>`_, see "Release Information" at the bottom).
+This is generated automatically in the package's ``setup.py::get_long_description`` function.
+
+Steps to Update
+***************
+
+1. Navigate to the package's changelog in ``docs/src/reference/<package>/changelog.rst``.
+2. There should be a header for the current version plus ``(UNRELEASED)``, e.g. ``1.2.3 (UNRELEASED)``. Update ``(UNRELEASED)`` to the package's release date, e.g. ``1.2.3 (2021-01-01)``.
+3. Make sure the changelog entries for the version are up to date. Ideally, it's all populated as contributors have added an item to the changelog along with their pull requests. If not, refer to the commits between this release and the last release for the package and populate the changelog accordingly. See `below <#changelog-format>`_ for how the changelog should be formatted. See the `Changelog section in CONTRIBUTING.rst <https://github.com/spotify/klio/blob/master/CONTRIBUTING.rst#changelog>`_ when writing an entry for a pull request when not releasing.
+4. Commit changes with the message "Prepare release <package> v1.2.3".
+
+Changelog Format
+****************
+
+1. Each changelog entry should describe the change with the users as the audience. For example, "Dropped support for Python 3.5", or "Added support for configuration templating." If the change doesn't affect the user, then it should probably not have an entry.
+
+2. Each changelog entry should fall under one of the following sections:
+
+* Added
+* Fixed
+* Removed
+* Changed
+* Dependencies Updated
+
+3. The ``changelog.rst`` file should follow the following template (note that not all sections need to have content):
+
+.. code-block:: rst
+
+    Changelog
+    =========
+
+    1.2.4 (UNRELEASED)
+    ------------------
+
+    Changed
+    *******
+
+    * ``antigravity`` submodule is now located under ``flying_pigs`` module with a redirect from the original ``frozen_hell.antigravity`` location.
+
+    Dependencies Updated
+    ********************
+
+    * Minimum version of ``teleportation`` dependency now at ``9.0.0`` due to API changes.
+
+    1.2.3 (2021-01-01)
+    ------------------
+
+    Added
+    *****
+
+    * Added support for an invisibility cloak (See `KEP 999 <https://docs.klio.io/en/latest/keps/kep-999.html>`_).
+
+    Fixed
+    *****
+
+    * Turning on flying mode now correctly detects elevation (See `PR 99999 <https://github.com/spotify/klio/pull/99999>`_).
+
+
+    1.2.2 (2020-12-01)
+    ------------------
+
+    Removed
+    *******
+
+    * Deprecated support for Python 2.9
+    * Removed unused ``nightvision`` dependency.
+
+
+Update Version
+^^^^^^^^^^^^^^
 
 **Attention:** This step should be done with the **virtualenv of the package** activated (**not** the virtualenv needed for releasing).
 This virtualenv should have the ``dev`` extras package installed, i.e. ``pip install -e ".[dev]"`` which includes the ``bumpversion`` library.

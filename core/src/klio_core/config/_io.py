@@ -15,6 +15,7 @@
 
 import enum
 import importlib
+import json
 import logging
 
 
@@ -450,12 +451,20 @@ class KlioBigQueryEventInput(KlioEventInput, KlioBigQueryConfig):
         return copy
 
 
+def _convert_bigquery_output_schema(schema):
+    if isinstance(schema, dict):
+        return schema
+    return json.loads(schema)
+
+
 @attr.attrs(frozen=True)
 @supports(KlioIODirection.OUTPUT, KlioIOType.EVENT)
 class KlioBigQueryEventOutput(KlioEventOutput, KlioBigQueryConfig):
     # schema field is optional; assumes form of
     # {"fields": [{"name": ...,"type": ..., "mode": ...}, ... ]
-    schema = attr.attrib(type=dict, default=None)
+    schema = attr.attrib(
+        type=dict, converter=_convert_bigquery_output_schema, default=None
+    )
     create_disposition = attr.attrib(type=str, default="CREATE_IF_NEEDED")
     write_disposition = attr.attrib(type=str, default="WRITE_EMPTY")
 

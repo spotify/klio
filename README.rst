@@ -65,7 +65,7 @@ Read more about Klio `here <https://docs.klio.io/en/latest/userguide/index.html>
 Get Started
 -----------
 
-Check out our `Quick Start <https://docs.klio.io/en/latest/quickstart/index.html>`_ guide on how to start using Klio.
+Check out our `Quick Start <https://docs.klio.io/en/latest/userguide/quickstart/index.html>`_ guide on how to start using Klio.
 
 
 Resources

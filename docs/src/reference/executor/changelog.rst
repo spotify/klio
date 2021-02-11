@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.2.3 (UNRELEASED)
+------------------
+
+Fixed
+*****
+
+* ``klioexec`` now writes runtime config to include in ``setup.py`` distribution.
+
+
 0.2.2 (2021-01-14)
 ------------------
 

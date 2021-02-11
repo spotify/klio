@@ -55,6 +55,11 @@ def expected_log_messages(klio_msg):
                 "semaphore (available threads:"
             ),
         },
+        {
+            "level": "DEBUG",
+            "message": "Loading config file from "
+            "/usr/local/klio-job-run-effective.yaml.",
+        },
         {"level": "INFO", "message": "Hello, Klio!"},
         {
             "level": "INFO",

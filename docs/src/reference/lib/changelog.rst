@@ -8,6 +8,7 @@ Changed
 *******
 
 * Changed thread limiter logging to debug.
+* Workers will look for ``klio-job-run-effective.yaml`` before dropping back to ``.effective-klio-job.yaml``.
 
 
 0.2.4 (2021-01-14)

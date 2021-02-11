@@ -25,7 +25,7 @@ import transforms
 @pytest.fixture
 def caplog(caplog):
     """Set global test logging levels."""
-    caplog.set_level(logging.INFO)
+    caplog.set_level(logging.DEBUG)
     return caplog
 
 
@@ -41,6 +41,25 @@ def klio_msg():
 @pytest.fixture
 def expected_log_messages(klio_msg):
     return [
+        {
+            "level": "DEBUG",
+            "message": (
+                "KlioThreadLimiter(name=LogKlioMessage.process) Blocked – "
+                "waiting on semaphore for an available thread (available threads:"
+            ),
+        },
+        {
+            "level": "DEBUG",
+            "message": (
+                "KlioThreadLimiter(name=LogKlioMessage.process) Released "
+                "semaphore (available threads:"
+            ),
+        },
+        {
+            "level": "DEBUG",
+            "message": "Loading config file from "
+            "/usr/local/klio-job-run-effective.yaml.",
+        },
         {
             "level": "INFO",
             "message": "Received element {}".format(klio_msg.data.element),

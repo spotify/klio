@@ -155,6 +155,7 @@ nitpick_ignore = [
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-linkcheck_ignore
 linkcheck_ignore = [
     r"https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs#configuration.load",
+    r"https://matplotlib.org/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure",
     # ignore local links
     r"\./.+\.html",
 ]

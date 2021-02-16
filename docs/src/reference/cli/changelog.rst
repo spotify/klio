@@ -1,6 +1,21 @@
 CLI Changelog
 =============
 
+1.0.6 (UNRELEASED)
+------------------
+
+Fixed
+*****
+
+* The ``--config-file`` flag can now be used in ``setup.py`` projects.
+
+Changed
+*******
+
+* Moved ``IndentListDumper`` to ``klio_core`` config utils.
+* Runtime config file for ``klioexec`` now written to ``klio-job-run-effective.yaml`` in the job's directory.
+
+
 1.0.5 (2021-01-26)
 ------------------
 

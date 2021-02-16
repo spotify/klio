@@ -18,6 +18,7 @@ COPY __init__.py \
      # Include any other non-Python files your job needs
      /usr/src/app/
 
-RUN pip install .
 ARG KLIO_CONFIG=klio-job.yaml
-COPY $KLIO_CONFIG /usr/src/config/.effective-klio-job.yaml
+COPY $KLIO_CONFIG klio-job-run-effective.yaml
+
+RUN pip install .

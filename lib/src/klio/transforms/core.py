@@ -22,6 +22,7 @@ import threading
 import yaml
 
 from klio_core import config
+from klio_core.config import core as config_core
 from klio_core.proto import klio_pb2
 
 from klio.metrics import client as metrics_client
@@ -35,19 +36,29 @@ class RunConfig(object):
 
     @classmethod
     def _load_config_from_file(cls):
-        # [Klio v2] this may get expensive, to always be reading config
-        # from a file. Can this be replaced by something in memory
-        # that's also globally accessible?
-        klio_job_file = "/usr/src/config/.effective-klio-job.yaml"
-        # for backwards compatibility, and user is using setup.py and we
-        # have to find it somewhere...
-        if not os.path.exists(klio_job_file):
-            # use iterator so we don't waste time searching everywhere upfront
-            files = glob.iglob("/usr/**/klio-job.yaml", recursive=True)
+        klio_job_file = None
+
+        run_config_path = os.path.join(
+            "/usr/local", config_core.RUN_EFFECTIVE_CONFIG_FILE
+        )
+        if os.path.exists(run_config_path):
+            klio_job_file = run_config_path
+        else:
+            run_config_path = os.path.join(
+                "/usr/**", config_core.RUN_EFFECTIVE_CONFIG_FILE
+            )
+            files = glob.iglob(run_config_path, recursive=True)
             for f in files:
                 klio_job_file = f
                 # only grab the first one
                 break
+
+        if not klio_job_file:
+            klio_job_file = "/usr/src/config/.effective-klio-job.yaml"
+
+        logger = logging.getLogger("klio")
+        logger.debug(f"Loading config file from {klio_job_file}.")
+
         with open(klio_job_file, "r") as f:
             all_config_data = yaml.safe_load(f)
         return config.KlioConfig(all_config_data)

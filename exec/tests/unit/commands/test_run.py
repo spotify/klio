@@ -225,6 +225,10 @@ def test_verify_packaging(
     mock_path_exists = mocker.patch.object(os.path, "exists")
     mock_path_exists.return_value = True
 
+    mock_write_run_effective_config = mocker.patch.object(
+        run.KlioPipeline, "_write_run_effective_config"
+    )
+
     kpipe = run.KlioPipeline("test-job", mock_config, mocker.Mock())
 
     if not streaming and not any([requirements_file, setup_file, exp]):
@@ -232,6 +236,11 @@ def test_verify_packaging(
             kpipe._verify_packaging()
     else:
         kpipe._verify_packaging()
+
+    if setup_file and not exp:
+        mock_write_run_effective_config.assert_called_once()
+    else:
+        mock_write_run_effective_config.assert_not_called()
 
 
 def test_verify_packaging_with_both_packagaing_systems_raises(mocker):

@@ -99,16 +99,27 @@ def test_klio_metrics(
             assert exp_logger_enabled is not actual_relay.disabled
 
 
-@pytest.mark.parametrize("exists", (True, False))
-def test_load_config_from_file(exists, config_dict, mocker, monkeypatch):
-    monkeypatch.setattr(os.path, "exists", lambda x: exists)
+@pytest.mark.parametrize("usr_local_exists", (True, False))
+@pytest.mark.parametrize("usr_glob_exists", (True, False))
+def test_load_config_from_file(
+    usr_local_exists, usr_glob_exists, config_dict, mocker, monkeypatch,
+):
+    monkeypatch.setattr(os.path, "exists", lambda x: usr_local_exists)
+    effective_klio_yaml_file = "/usr/src/app/klio-job-run-effective.yaml"
+    expected_open_file = "/usr/src/config/.effective-klio-job.yaml"
 
-    klio_yaml_file = "/usr/src/config/.effective-klio-job.yaml"
-    if not exists:
-        klio_yaml_file = "/usr/lib/python/site-packages/klio/klio-job.yaml"
-        mock_iglob = mocker.Mock()
-        mock_iglob.return_value = iter([klio_yaml_file])
-        monkeypatch.setattr(core_transforms.glob, "iglob", mock_iglob)
+    if usr_local_exists:
+        expected_open_file = "/usr/local/klio-job-run-effective.yaml"
+    elif usr_glob_exists:
+        expected_open_file = effective_klio_yaml_file
+
+    mock_iglob = mocker.Mock()
+    if usr_glob_exists:
+        mock_iglob.return_value = [effective_klio_yaml_file]
+    else:
+        mock_iglob.return_value = []
+
+    monkeypatch.setattr(core_transforms.glob, "iglob", mock_iglob)
 
     open_name = "klio.transforms.core.open"
     config_str = yaml.dump(config_dict)
@@ -117,12 +128,14 @@ def test_load_config_from_file(exists, config_dict, mocker, monkeypatch):
 
     klio_config = core_transforms.RunConfig._load_config_from_file()
 
-    m.assert_called_once_with(klio_yaml_file, "r")
+    m.assert_called_once_with(expected_open_file, "r")
     assert isinstance(klio_config, config.KlioConfig)
-    if not exists:
+    if not usr_local_exists:
         mock_iglob.assert_called_once_with(
-            "/usr/**/klio-job.yaml", recursive=True
+            "/usr/**/klio-job-run-effective.yaml", recursive=True
         )
+    else:
+        mock_iglob.assert_not_called()
 
 
 def test_load_config_from_file_raises(config_dict, mocker, monkeypatch):

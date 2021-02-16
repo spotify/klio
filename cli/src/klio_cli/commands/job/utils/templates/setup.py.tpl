@@ -126,7 +126,7 @@ setuptools.setup(
         #    str(dir where to install files, relative to Python modules),
         #    list(str(non-Python filenames))
         # )
-        (".", ["klio-job.yaml"]),
+        (".", ["klio-job-run-effective.yaml"]),
     ],
     include_package_data=True,  # required
     # NOTE: Explicitly include Python modules names (all relevant Python files

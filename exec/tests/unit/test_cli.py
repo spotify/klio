@@ -175,42 +175,6 @@ def test_get_config_raises(tmpdir, caplog):
     assert 1 == len(caplog.records)
 
 
-@pytest.mark.parametrize(
-    "addl_runtime_data,buildtime_exists,exp_retval",
-    (
-        (False, True, True),
-        (True, True, False),
-        (False, False, True),
-        (True, False, False),  # not possible but CYA
-    ),
-)
-def test_compare_runtime_to_buildtime_config(
-    mocker, monkeypatch, addl_runtime_data, buildtime_exists, exp_retval
-):
-    monkeypatch.setattr(os.path, "exists", lambda x: buildtime_exists)
-
-    buildtime_data = {"job_name": "foo", "job_config": {}}
-    runtime_data = buildtime_data.copy()
-    if addl_runtime_data:
-        runtime_data["job_config"] = runtime_data["job_config"].copy()
-        runtime_data["job_config"]["foo"] = "bar"
-
-    # multiple `open` mocks: https://stackoverflow.com/a/26830397/1579977
-    open_name = "klio_exec.cli.open"
-    buildtime_data_str = yaml.dump(buildtime_data).encode("utf-8")
-
-    runtime_conf = kconfig.KlioConfig(runtime_data)
-
-    mock_open_buildtime = mocker.mock_open(read_data=buildtime_data_str)
-    mock_open = mocker.patch(open_name, mock_open_buildtime)
-
-    side_effect = (mock_open_buildtime.return_value,)
-    mock_open.side_effect = side_effect
-
-    act_retval = cli._compare_runtime_to_buildtime_config(runtime_conf)
-    assert exp_retval == act_retval
-
-
 @pytest.mark.parametrize("blocking", (True, False, None))
 @pytest.mark.parametrize(
     "image_tag,direct_runner,update",
@@ -231,7 +195,6 @@ def test_run_pipeline(
     cli_runner,
     mock_klio_config,
     patch_run_basic_pipeline,
-    mock_compare_runtime_to_buildtime_config,
 ):
     mock_compare_runtime_to_buildtime_config.return_value = True
     runtime_conf = cli.RuntimeConfig(
@@ -264,34 +227,21 @@ def test_run_pipeline(
     mock_klio_config.assert_calls()
 
     patch_run_basic_pipeline.assert_called_once_with()
-    mock_compare_runtime_to_buildtime_config.assert_called_once_with(
-        mock_klio_config.klio_config
-    )
 
 
 @pytest.mark.parametrize(
-    "config_file_override,compare_conf_retval",
-    (
-        (None, True),
-        (None, False),
-        ("klio-job2.yaml", True),
-        ("klio-job2.yaml", False),
-    ),
+    "config_file_override", (None, "klio-job2.yaml"),
 )
 def test_run_pipeline_conf_override(
     config_file_override,
-    compare_conf_retval,
     cli_runner,
     config,
     mock_klio_config,
     patch_run_basic_pipeline,
-    mock_compare_runtime_to_buildtime_config,
     caplog,
     tmpdir,
     monkeypatch,
 ):
-    mock_compare_runtime_to_buildtime_config.return_value = compare_conf_retval
-
     cli_inputs = []
 
     temp_dir = tmpdir.mkdir("testing123")
@@ -317,15 +267,7 @@ def test_run_pipeline_conf_override(
 
     patch_run_basic_pipeline.assert_called_once_with()
 
-    mock_compare_runtime_to_buildtime_config.assert_called_once_with(
-        mock_klio_config.klio_config
-    )
-
-    if compare_conf_retval is False:
-        assert 1 == len(caplog.records)
-        assert "WARNING" == caplog.records[0].levelname
-    else:
-        assert 0 == len(caplog.records)
+    assert 0 == len(caplog.records)
 
 
 @pytest.mark.parametrize("config_file_override", (None, "klio-job2.yaml"))

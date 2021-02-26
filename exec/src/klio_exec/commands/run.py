@@ -272,7 +272,10 @@ class KlioPipeline(object):
 
     def _write_run_effective_config(self):
         # this method assumes setup.py is being used!
-        path = config_core.RUN_EFFECTIVE_CONFIG_PATH
+        if self.runtime_conf.direct_runner:
+            path = config_core.WORKER_RUN_EFFECTIVE_CONFIG_PATH
+        else:
+            path = config_core.RUN_EFFECTIVE_CONFIG_PATH
         logging.debug(
             "Writing runtime configuration to {}"
             " in the job's running docker container.".format(path)

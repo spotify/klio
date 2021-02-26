@@ -38,11 +38,8 @@ class RunConfig(object):
     def _load_config_from_file(cls):
         klio_job_file = None
 
-        run_config_path = os.path.join(
-            "/usr/local", config_core.RUN_EFFECTIVE_CONFIG_FILE
-        )
-        if os.path.exists(run_config_path):
-            klio_job_file = run_config_path
+        if os.path.exists(config_core.WORKER_RUN_EFFECTIVE_CONFIG_PATH):
+            klio_job_file = config_core.WORKER_RUN_EFFECTIVE_CONFIG_PATH
         else:
             run_config_path = os.path.join(
                 "/usr/**", config_core.RUN_EFFECTIVE_CONFIG_FILE

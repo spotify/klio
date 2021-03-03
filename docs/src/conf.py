@@ -156,6 +156,7 @@ nitpick_ignore = [
 linkcheck_ignore = [
     r"https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs#configuration.load",
     r"https://matplotlib.org/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure",
+    r"https://cloud.google.com/logging/docs/logs-based-metrics/#distribution_metrics",
     # ignore local links
     r"\./.+\.html",
 ]

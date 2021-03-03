@@ -203,6 +203,26 @@ def test_get_image_tag(image, tag, expected_image):
     assert expected_image == actual_image
 
 
+@pytest.mark.parametrize("direct_runner", (True, False))
+def test_write_run_effective_config(mocker, direct_runner):
+    if direct_runner:
+        expected_path = "/usr/local/klio-job-run-effective.yaml"
+    else:
+        expected_path = "/usr/src/app/klio-job-run-effective.yaml"
+
+    mock_config = mocker.Mock()
+    mock_runtime_conf = mocker.Mock()
+    mock_runtime_conf.direct_runner = direct_runner
+    m_open = mocker.mock_open()
+    mock_open = mocker.patch("klio_exec.commands.run.open", m_open)
+
+    kpipe = run.KlioPipeline("test-job", mock_config, mock_runtime_conf)
+    kpipe._write_run_effective_config()
+
+    mock_open.assert_called_once_with(expected_path, "w")
+    mock_config.write_to_file.assert_called_once_with(mock_open.return_value)
+
+
 @pytest.mark.parametrize("streaming", (True, False))
 @pytest.mark.parametrize(
     "exp,setup_file, requirements_file",

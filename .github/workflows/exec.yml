@@ -7,6 +7,7 @@ on:
     branches:
       - master
       - develop
+      - release
     paths:
       - 'core/**'  # since exec depends on core, we should run tests when core changes
       - 'lib/**'  # since exec depends on lib, we should run tests when lib changes
@@ -15,6 +16,7 @@ on:
     branches:
       - master
       - develop
+      - release
     paths:
       - 'core/**'  # since exec depends on core, we should run tests when core changes
       - 'lib/**'  # since exec depends on lib, we should run tests when lib changes

@@ -138,6 +138,8 @@ class KlioContext(object):
                 use_stackdriver = False
 
         if use_stackdriver is not False:
+            # FYI there's a deprecation warning when the SD Client is init'ed
+            # StackdriverLogMetricsClient is init'ed
             sd_client = stackdriver.StackdriverLogMetricsClient(self.config)
             clients.append(sd_client)
 

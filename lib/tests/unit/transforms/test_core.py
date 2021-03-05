@@ -65,6 +65,12 @@ from klio.transforms import core as core_transforms
         ),
     ),
 )
+@pytest.mark.filterwarnings(
+    (
+        "ignore:StackdriverLogMetricsClient has been deprecated since `klio` "
+        "version 0.2.6"
+    )
+)
 def test_klio_metrics(
     runner,
     metrics_config,

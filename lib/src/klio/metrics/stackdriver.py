@@ -33,6 +33,9 @@ To explicitly turn off log-based metrics, in ``klio-job.yaml``:
       metrics:
         stackdriver_logger: false
 
+.. deprecated:: 21.3.0
+    Use :mod:`native <klio.metrics.native>` metrics instead. See
+    :ref:`docs <stackdriver-log-metrics-deprecation-notice>` for more info.
 """
 import logging
 
@@ -40,8 +43,14 @@ from googleapiclient import discovery
 from googleapiclient import errors as gapi_errors
 
 from klio.metrics import logger
+from klio.transforms import _utils
 
 
+BASE_WARN_MSG = " has been deprecated since `klio` version 21.3.0"
+
+
+# FYI: marking the __init__ method as deprecated instead of the class since
+#      (for now) the decorator doesn't work on classes.
 class StackdriverLogMetricsClient(logger.MetricsLoggerClient):
     """Stackdriver client for transform metrics.
 
@@ -50,10 +59,16 @@ class StackdriverLogMetricsClient(logger.MetricsLoggerClient):
 
     Args:
         klio_config (klio_core.config.KlioConfig):  the job's configuration.
+
+    .. deprecated:: 21.3.0
+       Use :class:`NativeMetricsClient
+       <klio.metrics.native.NativeMetricsClient>` instead. See
+       :ref:`docs <stackdriver-log-metrics-deprecation-notice>` for more info.
     """
 
     RELAY_CLIENT_NAME = "stackdriver_logger"
 
+    @_utils.deprecated(message="StackdriverLogMetricsClient" + BASE_WARN_MSG)
     def __init__(self, klio_config):
         super(StackdriverLogMetricsClient, self).__init__(klio_config)
         self.job_name = klio_config.job_name
@@ -155,6 +170,8 @@ class StackdriverLogMetricsClient(logger.MetricsLoggerClient):
         return StackdriverLogMetricsTimer(*args, **kwargs)
 
 
+# FYI: marking the __init__ method as deprecated instead of the class since
+#      (for now) the decorator doesn't work on classes.
 class StackdriverLogMetricsCounter(logger.LoggerCounter):
     """Stackdriver log-based counter metric.
 
@@ -170,6 +187,11 @@ class StackdriverLogMetricsCounter(logger.LoggerCounter):
         transform (str): Name of transform associated with counter, if any.
         tags (dict): Tags to associate with counter. Note:
             ``{"metric_type": "counter"}`` will always be an included tag.
+
+    .. deprecated:: 21.3.0
+        Use :class:`NativeCounter <klio.metrics.native.NativeCounter>` instead.
+        See :ref:`docs <stackdriver-log-metrics-deprecation-notice>` for more
+        info.
     """
 
     # NOTE: The in-memory value (as kept track in the metric Dispatchers) may
@@ -184,6 +206,7 @@ class StackdriverLogMetricsCounter(logger.LoggerCounter):
     )
     KLIO_TRANSFORM_LABEL_KEY = "klio_transform"
 
+    @_utils.deprecated(message="StackdriverLogMetricsCounter" + BASE_WARN_MSG)
     def __init__(self, name, job_name, project, transform=None, tags=None):
         # Since stackdriver literally counts loglines, initializing a
         # counter value is not supported; defaulting to 0
@@ -278,13 +301,35 @@ class StackdriverLogMetricsCounter(logger.LoggerCounter):
     # including method for documentation purposes
 
 
+# FYI: marking the __init__ method as deprecated instead of the class since
+#      (for now) the decorator doesn't work on classes.
 class StackdriverLogMetricsGauge(logger.LoggerGauge):
     """Pass-thru object for naming only. Stackdriver log-based metrics
     does not support gauges.
+
+    .. deprecated:: 21.3.0
+        Use :class:`NativeGauge <klio.metrics.native.NativeGauge>` instead.
+        See :ref:`docs <stackdriver-log-metrics-deprecation-notice>` for more
+        info.
     """
 
+    @_utils.deprecated(message="StackdriverLogMetricsGauge" + BASE_WARN_MSG)
+    def __init__(self, *args, **kwargs):
+        super(StackdriverLogMetricsGauge, self).__init__(*args, **kwargs)
 
+
+# FYI: marking the __init__ method as deprecated instead of the class since
+#      (for now) the decorator doesn't work on classes.
 class StackdriverLogMetricsTimer(logger.LoggerTimer):
     """Pass-thru object for naming only. Stackdriver log-based metrics
     does not support timers.
+
+    .. deprecated:: 21.3.0
+        Use :class:`NativeTimer <klio.metrics.native.NativeTimer>` instead.
+        See :ref:`docs <stackdriver-log-metrics-deprecation-notice>` for more
+        info.
     """
+
+    @_utils.deprecated(message="StackdriverLogMetricsTimer" + BASE_WARN_MSG)
+    def __init__(self, *args, **kwargs):
+        super(StackdriverLogMetricsTimer, self).__init__(*args, **kwargs)

@@ -87,6 +87,12 @@ def test_retry_custom_catch(kmsg, mocker, mock_config):
     assert 1 == mock_function.call_count
 
 
+@pytest.mark.filterwarnings(
+    (
+        "ignore:'retry' is experimental and is subject to incompatible "
+        "changes, or removal in a future release of Klio."
+    )
+)
 def test_retry_raises_runtime_parents(kmsg, mocker, mock_config):
     # Need to call @retry with parens
     with pytest.raises(RuntimeError):

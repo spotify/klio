@@ -8,7 +8,7 @@ on:
     branches:
       - master
       - develop
-      - release
+      - release-*
     paths-ignore:
       - 'docs/**'
       - 'devtools/**'
@@ -18,7 +18,7 @@ on:
     branches:
       - master
       - develop
-      - release
+      - release-*
     paths-ignore:
       - 'docs/**'
       - 'devtools/**'

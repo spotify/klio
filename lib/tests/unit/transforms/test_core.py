@@ -21,55 +21,47 @@ import yaml
 from klio_core import config
 
 from klio.metrics import logger as logger_metrics
+from klio.metrics import native as native_metrics
 from klio.metrics import stackdriver as sd_metrics
+from klio.transforms import _utils as utils
 from klio.transforms import core as core_transforms
 
 
 @pytest.mark.parametrize(
-    "runner,metrics_config,exp_clients,exp_logger_enabled",
+    "runner,metrics_config,exp_clients,exp_warn",
     (
         # default metrics client config for respective runner
-        ("dataflow", {}, (sd_metrics.StackdriverLogMetricsClient,), None),
-        ("direct", {}, (logger_metrics.MetricsLoggerClient,), True),
+        ("dataflow", {}, [sd_metrics.StackdriverLogMetricsClient], True),
+        ("direct", {}, [logger_metrics.MetricsLoggerClient], False),
         # explicitly turn on metrics for respective runner
         (
             "dataflow",
             {"stackdriver_logger": True},
-            (sd_metrics.StackdriverLogMetricsClient,),
-            None,
+            [sd_metrics.StackdriverLogMetricsClient],
+            True,
         ),
         (
             "direct",
             {"logger": True},
-            (logger_metrics.MetricsLoggerClient,),
-            True,
+            [logger_metrics.MetricsLoggerClient],
+            False,
         ),
         # turn off default client for respective runner
-        (
-            "dataflow",
-            {"stackdriver_logger": False},
-            (logger_metrics.MetricsLoggerClient,),
-            False,
-        ),
-        (
-            "direct",
-            {"logger": False},
-            (logger_metrics.MetricsLoggerClient,),
-            False,
-        ),
+        ("dataflow", {"stackdriver_logger": False}, [], False),
+        ("direct", {"logger": False}, [], False),
         # ignore SD config when on direct
         (
             "direct",
             {"stackdriver_logger": True},
-            (logger_metrics.MetricsLoggerClient,),
-            True,
+            [logger_metrics.MetricsLoggerClient],
+            False,
         ),
         # ignore logger config when on dataflow
         (
             "dataflow",
             {"logger": False},
-            (sd_metrics.StackdriverLogMetricsClient,),
-            None,
+            [sd_metrics.StackdriverLogMetricsClient],
+            True,
         ),
     ),
 )
@@ -77,11 +69,14 @@ def test_klio_metrics(
     runner,
     metrics_config,
     exp_clients,
-    exp_logger_enabled,
+    exp_warn,
     klio_config,
     mocker,
     monkeypatch,
 ):
+    # all should have the native metrics client
+    exp_clients.append(native_metrics.NativeMetricsClient)
+
     klio_ns = core_transforms.KlioContext()
     # sanity check / clear out thread local
     klio_ns._thread_local.klio_metrics = None
@@ -91,12 +86,17 @@ def test_klio_metrics(
     mock_config = mocker.PropertyMock(return_value=klio_config)
     monkeypatch.setattr(core_transforms.KlioContext, "config", mock_config)
 
-    registry = klio_ns.metrics
+    if exp_warn:
+        with pytest.warns(utils.KlioDeprecationWarning):
+            registry = klio_ns.metrics
+    else:
+        registry = klio_ns.metrics
 
+    assert len(exp_clients) == len(registry._relays)
     for actual_relay in registry._relays:
-        assert isinstance(actual_relay, exp_clients)
+        assert any([isinstance(actual_relay, ec) for ec in exp_clients])
         if isinstance(actual_relay, logger_metrics.MetricsLoggerClient):
-            assert exp_logger_enabled is not actual_relay.disabled
+            assert actual_relay.disabled is False
 
 
 @pytest.mark.parametrize("exists", (True, False))

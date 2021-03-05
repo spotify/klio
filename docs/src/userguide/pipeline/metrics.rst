@@ -12,8 +12,10 @@ Custom User Metrics
 -------------------
 
 Within a Klio transform, you are able to create metric objects during pipeline execution.
-Right now, Klio provides a metrics logger (via the standard library's ``logging`` module),
-and `Stackdriver log-based metrics <https://cloud.google.com/logging/docs/logs-based-metrics/>`_.
+Klio defaults to using `Apache Beam's metrics <https://beam.apache.org/documentation/programming-guide/#metrics>`_ 
+(referred to as "native" metrics within Klio), and additionally provides a metrics logger 
+(via the standard library's :mod:`logging` module), and `Stackdriver log-based metrics 
+<https://cloud.google.com/logging/docs/logs-based-metrics/>`_.
 The Stackdriver log-based metrics client is an overlay of the metrics logger
 where it creates a `user-defined metric <https://console.cloud.google.com/logs/metrics>`_
 within Stackdriver per Python metric object created.
@@ -151,6 +153,9 @@ Setting no metrics configuration is the same as:
 
   job_config:
     metrics:
+      native:
+        # default timer unit in seconds
+        timer_unit: s
       logger:  # default on for Direct Runner
         # level that metrics are emitted
         level: debug
@@ -170,6 +175,11 @@ The default configuration above is the same as setting metrics clients to `True`
     metrics:
       logger: true
       stackdriver_logger: true
+
+
+.. note::
+
+    The native client can not be turned off.
 
 
 To turn off/on a metrics client, set its value to `false`/`true`:
@@ -197,8 +207,22 @@ To turn off/on a metrics client, set its value to `false`/`true`:
 Available Configuration
 ***********************
 
-For both ``logger`` and ``stackdriver_logger``, the following configuration is available:
+For all three clients, ``native``, ``logger`` and ``stackdriver_logger``, the following configuration is available:
 
+
+.. program:: metrics-config
+
+.. option:: timer_unit
+
+  Globally set the default unit of time for timers.
+
+  Options: ``ns``, ``nanoseconds``, ``us``, ``microseconds``, ``ms``, ``milliseconds``,
+  ``s``, ``seconds``.
+
+  Default: ``ns``
+
+
+For both ``logger`` and ``stackdriver_logger``, the following additional configuration is available:
 
 .. program:: metrics-config
 
@@ -209,15 +233,6 @@ For both ``logger`` and ``stackdriver_logger``, the following configuration is a
   Options: ``debug``, ``info``, ``warning``, ``error``, ``critical``.
 
   Default: ``debug``
-
-.. option:: timer_unit
-
-  Globally set the default unit of time for timers.
-
-  Options: ``ns``, ``nanoseconds``, ``us``, ``microseconds``, ``ms``, ``milliseconds``,
-  ``s``, ``seconds``.
-
-  Default: ``ns``
 
 
 Metric Types
@@ -282,6 +297,13 @@ Gauges
     can **only** support counter-type metrics.
     You may still create gauge-type & timer-type metrics,
     but those will only show up in logs, not on Stackdriver.
+
+
+.. warning::
+
+    With the native Beam metrics, when running on Dataflow, only Counter and Distribution type metrics are emitted to Dataflow's monitoring. 
+    See `documentation <https://cloud.google.com/dataflow/docs/guides/using-cloud-monitoring>`_ for more information.
+
 
 A simple integer that is set.
 It reflects a measurement at that point in time

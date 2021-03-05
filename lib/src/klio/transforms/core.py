@@ -26,6 +26,7 @@ from klio_core.proto import klio_pb2
 
 from klio.metrics import client as metrics_client
 from klio.metrics import logger as metrics_logger
+from klio.metrics import native as native_metrics
 from klio.metrics import stackdriver
 
 
@@ -100,7 +101,8 @@ class KlioContext(object):
         return klio_job_str
 
     def _get_metrics_registry(self):
-        clients = []
+        native_metrics_client = native_metrics.NativeMetricsClient(self.config)
+        clients = [native_metrics_client]
         use_logger, use_stackdriver = None, None
         metrics_config = self.config.job_config.metrics
 
@@ -114,34 +116,33 @@ class KlioContext(object):
         #       `--direct-runner`.
         #       i.e.: runner = os.getenv("BEAM_RUNNER", "").lower()
         runner = self.config.pipeline_options.runner
+
         if "dataflow" in runner.lower():
-            # Must explicitly compare to `False` since `None` could be
-            # the user accepting default config.
-            # If explicitly false, then just disable logger underneath SD
-            if use_stackdriver is not False:
-                sd_client = stackdriver.StackdriverLogMetricsClient(
-                    self.config
-                )
-                clients.append(sd_client)
-            else:
-                # if use_stackdriver is explicitly false, then make sure
-                # logger client is disabled since the stackdriver client
-                # inherits the logger client
+            if use_logger is None:
                 use_logger = False
 
-        if not len(clients):  # setup default client
-            disabled = False
-            # User might disable the logger, but we still need a relay
-            # client if all other relay clients are disabled. This allows
-            # folks to silence metrics but not need to remove code that
-            # interacts with `_klio.metrics`.
-            # Must explicitly compare to `False` since `None` could be
-            # the user accepting default config
-            if use_logger is False:
-                disabled = True
-            logger_client = metrics_logger.MetricsLoggerClient(
-                self.config, disabled=disabled
-            )
+            if use_stackdriver is None:
+                use_stackdriver = True
+            # if use_stackdriver is explicitly False, then make sure
+            # logger client is disabled since the stackdriver client
+            # inherits the logger client
+            elif use_stackdriver is False:
+                use_logger = False
+
+        else:
+            if use_logger is None:
+                use_logger = True
+            if use_stackdriver is not False:
+                # Explicitly turn it off when not running on Dataflow as SD
+                # metrics reporting doesn't work when running locally
+                use_stackdriver = False
+
+        if use_stackdriver is not False:
+            sd_client = stackdriver.StackdriverLogMetricsClient(self.config)
+            clients.append(sd_client)
+
+        if use_logger is not False:
+            logger_client = metrics_logger.MetricsLoggerClient(self.config)
             clients.append(logger_client)
 
         return metrics_client.MetricsRegistry(

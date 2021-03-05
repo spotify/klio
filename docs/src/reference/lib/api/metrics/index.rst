@@ -6,6 +6,7 @@
    :hidden:
 
    Client <client>
+   Native <native>
    Logger <logger>
    Stackdriver <stackdriver>
    Dispatcher <dispatcher>
@@ -29,6 +30,22 @@
     MetricsRegistry.marshal
     MetricsRegistry.unmarshal
 
+
+:doc:`native`
+^^^^^^^^^^^^^
+
+.. currentmodule:: klio.metrics.native
+
+.. autosummary::
+    :nosignatures:
+
+    NativeMetricsClient
+    NativeMetricsClient.counter
+    NativeMetricsClient.gauge
+    NativeMetricsClient.timer
+    NativeCounter
+    NativeGauge
+    NativeTimer
 
 :doc:`logger`
 ^^^^^^^^^^^^^

@@ -461,7 +461,7 @@ Right now, Klio only relies on
 <https://cloud.google.com/logging/docs/logs-based-metrics/#counter-metric>`_.
 In the future, Klio may support gauges and/or timers through
 `distribution-type metrics
-<https://cloud.google.com/logging/docs/logs-based-metrics/#distribution_metrics>`_.
+<https://cloud.google.com/logging/docs/logs-based-metrics/#distribution-metric>`_.
 Users are free to experiment with creating distribution metrics by hand based off the logs.
 
 **Metrics between transforms:**

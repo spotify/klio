@@ -121,14 +121,15 @@ def stop_job(config_file):
 
 
 @main.command("test", context_settings=dict(ignore_unknown_options=True))
+@options.config_file
 @click.argument("pytest_args", nargs=-1, type=click.UNPROCESSED)
-def test_job(pytest_args):
+def test_job(config_file, pytest_args):
     """Thin wrapper around pytest. Any arguments after -- are passed through.
     """
     import os
     import pytest
 
-    config_path = "klio-job.yaml"
+    config_path = config_file or "klio-job.yaml"
     config_data = _get_config(config_path)
     conf_obj = config.KlioConfig(config_data)
 

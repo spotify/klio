@@ -21,12 +21,23 @@ class TestPipeline(base.BaseDockerizedPipeline):
 
     def __init__(self, job_dir, klio_config, docker_runtime_config):
         super().__init__(job_dir, klio_config, docker_runtime_config)
-        self.requires_config_file = False
+        self.requires_config_file = True
 
     def _get_environment(self):
         envs = super()._get_environment()
         envs["KLIO_TEST_MODE"] = "true"
         return envs
 
-    def _get_command(self, pytest_args):
-        return ["test"] + pytest_args
+    def _get_command(self, *args, **kwargs):
+        return ["test"]
+
+    def _add_pytest_args(self, cmd, pytest_args):
+        if pytest_args:
+            cmd.extend(pytest_args)
+
+    def _get_docker_runflags(self, *args, **kwargs):
+        base_runflags = super()._get_docker_runflags(*args, **kwargs)
+        # add pytest args *after* the base command flags are added
+        pytest_args = kwargs.get("pytest_args", [])
+        self._add_pytest_args(base_runflags["command"], pytest_args)
+        return base_runflags

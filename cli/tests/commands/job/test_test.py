@@ -42,8 +42,32 @@ def test_get_environment(test_pipeline):
 
 
 def test_get_command(test_pipeline):
-    assert ["test", "py", "args"] == test_pipeline._get_command(["py", "args"])
+    assert ["test"] == test_pipeline._get_command()
+
+
+def test_add_pytest_args(test_pipeline):
+    docker_runflags = {"command": ["cmd"]}
+    test_pipeline._add_pytest_args(docker_runflags["command"], ["py", "args"])
+    assert ["cmd", "py", "args"] == docker_runflags["command"]
+
+
+def test_get_docker_runflags(mocker, monkeypatch, test_pipeline):
+    mock_base_docker_runflags = mocker.Mock()
+    mock_base_docker_runflags.return_value = {
+        "command": ["test", "--config-file", "x"]
+    }
+    monkeypatch.setattr(
+        test_job.base.BaseDockerizedPipeline,
+        "_get_docker_runflags",
+        mock_base_docker_runflags,
+    )
+    actual_runflags = test_pipeline._get_docker_runflags(
+        pytest_args=["py", "args"]
+    )
+
+    expected = ["test", "--config-file", "x", "py", "args"]
+    assert expected == actual_runflags["command"]
 
 
 def test_requires_config_setting(test_pipeline):
-    assert not test_pipeline.requires_config_file
+    assert test_pipeline.requires_config_file

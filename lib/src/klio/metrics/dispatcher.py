@@ -128,7 +128,7 @@ class CounterDispatcher(BaseMetricDispatcher):
             value (int): value with which to increment the counter;
                 default is 1.
         """
-        self.value += value
+        self.value = value
 
         for relay, counter in self.relay_to_metric:
             counter.update(self.value)

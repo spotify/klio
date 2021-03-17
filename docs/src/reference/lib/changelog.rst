@@ -1,6 +1,20 @@
 Changelog
 =========
 
+21.3.0rc1 (UNRELEASED)
+----------------------
+
+Added
+*****
+
+* Add support for using Beam's metrics API directly.
+
+Changed
+*******
+
+* The Beam metrics client will always be used, no matter the configured runner.
+* Marked Klio's support for Stackdriver log-based metrics for deprecation and eventual removal.
+
 0.2.4 (2021-01-14)
 ------------------
 

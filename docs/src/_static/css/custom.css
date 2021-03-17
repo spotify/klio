@@ -74,6 +74,20 @@ div.admonition-collapsible > p.admonition-title.open:before {
   content: "\f107";
 }
 
+/* fixup deprecation directive to look similar to admonitions */
+.deprecated {
+  border-left: 0.2rem solid #dc3545 !important;
+  border-right: None !important;
+  border-top: None !important;
+  border-bottom: None !important;
+
+}
+.versionmodified {
+  border: None !important;
+  font-style: None;
+  font-weight: 700;
+}
+
 /*
   blockquote styling - because apparently pandas theme doesn't include it?
   making it similar to how admonitions look.

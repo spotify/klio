@@ -20,6 +20,13 @@ from googleapiclient import errors as gapi_errors
 from klio.metrics import stackdriver as sd_metrics
 
 
+BASE_WARN_MSG = " has been deprecated since `klio` version 21.3.0"
+CLIENT_WARN_MSG = "StackdriverLogMetricsClient" + BASE_WARN_MSG
+CTR_WARN_MSG = "StackdriverLogMetricsCounter" + BASE_WARN_MSG
+GAUGE_WARN_MSG = "StackdriverLogMetricsGauge" + BASE_WARN_MSG
+TIMER_WARN_MSG = "StackdriverLogMetricsTimer" + BASE_WARN_MSG
+
+
 @pytest.fixture
 def mock_stackdriver_client(mocker, monkeypatch):
     mock_client = mocker.Mock()
@@ -51,6 +58,7 @@ def counter():
     return sd_metrics.StackdriverLogMetricsCounter(**kwargs)
 
 
+@pytest.mark.filterwarnings(f"ignore:{CLIENT_WARN_MSG}")
 def test_stackdriver_client(client, mock_discovery_build):
     # sanity check
     assert not getattr(client._thread_local, "stackdriver_client", None)
@@ -62,6 +70,8 @@ def test_stackdriver_client(client, mock_discovery_build):
 
 
 @pytest.mark.parametrize("value", (None, 5))
+@pytest.mark.filterwarnings(f"ignore:{CLIENT_WARN_MSG}")
+@pytest.mark.filterwarnings(f"ignore:{CTR_WARN_MSG}")
 def test_client_counter(client, value, mocker, monkeypatch, caplog):
     mock_init_metric = mocker.Mock()
     monkeypatch.setattr(
@@ -84,6 +94,8 @@ def test_client_counter(client, value, mocker, monkeypatch, caplog):
         assert "WARNING" == caplog.records[0].levelname
 
 
+@pytest.mark.filterwarnings(f"ignore:{CLIENT_WARN_MSG}")
+@pytest.mark.filterwarnings(f"ignore:{GAUGE_WARN_MSG}")
 def test_client_gauge(client, caplog):
     gauge = client.gauge(name="my-gauge")
 
@@ -92,6 +104,8 @@ def test_client_gauge(client, caplog):
     assert "WARNING" == caplog.records[0].levelname
 
 
+@pytest.mark.filterwarnings(f"ignore:{CLIENT_WARN_MSG}")
+@pytest.mark.filterwarnings(f"ignore:{TIMER_WARN_MSG}")
 def test_client_timer(client, caplog):
     gauge = client.timer(name="my-timer")
 
@@ -100,6 +114,7 @@ def test_client_timer(client, caplog):
     assert "WARNING" == caplog.records[0].levelname
 
 
+@pytest.mark.filterwarnings(f"ignore:{CTR_WARN_MSG}")
 def test_counter_get_filter(counter):
     exp_filter = (
         'resource.type="dataflow_step" '
@@ -113,6 +128,7 @@ def test_counter_get_filter(counter):
 
 
 @pytest.mark.parametrize("raises", (False, True))
+@pytest.mark.filterwarnings(f"ignore:{CTR_WARN_MSG}")
 def test_counter_init_metric(raises, counter, mock_stackdriver_client, caplog):
     _mock_projects = mock_stackdriver_client.projects.return_value
     mock_req = _mock_projects.metrics.return_value.create
@@ -132,6 +148,7 @@ def test_counter_init_metric(raises, counter, mock_stackdriver_client, caplog):
 @pytest.mark.parametrize(
     "status,exp_log_level", ((409, "DEBUG"), (403, "ERROR"))
 )
+@pytest.mark.filterwarnings(f"ignore:{CTR_WARN_MSG}")
 def test_counter_init_metric_api_error(
     status, exp_log_level, counter, mock_stackdriver_client, mocker, caplog
 ):

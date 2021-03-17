@@ -141,6 +141,27 @@ def mock_compare_runtime_to_buildtime_config(mocker, monkeypatch):
     return mock
 
 
+def _create_tmp_config_file(
+    temp_dir_str: str, config_file: str, config
+) -> str:
+    """
+    Creates a temporary config file
+
+    Args:
+        temp_dir_str: Temporary directory where to create file
+        config_file: config file name
+        config: config to write
+
+    Returns:
+        Temp config file path
+    """
+    # create a tmp file else click will complain it doesn't exist
+    tmp_config_file = os.path.join(temp_dir_str, config_file)
+    with open(tmp_config_file, "w") as f:
+        yaml.dump(config, f)
+    return tmp_config_file
+
+
 def test_get_config(tmpdir, config):
     tmp_config = tmpdir.mkdir("klio-exec-testing").join("klio-job.yaml")
     tmp_config.write(yaml.dump(config))
@@ -298,15 +319,12 @@ def test_run_pipeline_conf_override(
     temp_dir_str = str(temp_dir)
     monkeypatch.setattr(os, "getcwd", lambda: temp_dir_str)
 
-    exp_conf_file = "klio-job.yaml"
     if config_file_override:
-        exp_conf_file = os.path.join(temp_dir_str, config_file_override)
-        cli_inputs.extend(["--config-file", exp_conf_file])
-
         # create a tmp file else click will complain it doesn't exist
-        with open(exp_conf_file, "w") as f:
-            yaml.dump(config, f)
-
+        exp_conf_file = _create_tmp_config_file(
+            temp_dir_str, config_file_override, config
+        )
+        cli_inputs.extend(["--config-file", exp_conf_file])
         mock_klio_config.setup(_config(), "klio-job.yaml", exp_conf_file)
     else:
         mock_klio_config.setup(_config(), "klio-job.yaml")
@@ -354,10 +372,10 @@ def test_stop_job(
     exp_file = os.path.join(temp_dir_str, "klio-job.yaml")
     if config_file_override:
         # create a tmp file else click will complain it doesn't exist
-        exp_file = os.path.join(temp_dir_str, config_file_override)
+        exp_file = _create_tmp_config_file(
+            temp_dir_str, config_file_override, config
+        )
         cli_inputs.extend(["--config-file", exp_file])
-        with open(exp_file, "w") as f:
-            yaml.dump(config, f)
 
     result = cli_runner.invoke(cli.stop_job, cli_inputs)
     assert 0 == result.exit_code
@@ -393,6 +411,53 @@ def test_test_job(
     assert "true" == os.environ["KLIO_TEST_MODE"]
 
     mock_test.assert_called_once_with(pytest_args)
+
+
+@pytest.mark.parametrize(
+    "config_file_override,pytest_args",
+    [(None, []), ("klio-job2.yaml", ["test_file.py::test_foo"])],
+)
+def test_test_job_conf_override(
+    config_file_override,
+    pytest_args,
+    mocker,
+    monkeypatch,
+    config,
+    cli_runner,
+    patch_klio_config,
+    tmpdir,
+):
+    mock_get_config = mocker.Mock()
+    monkeypatch.setattr(cli, "_get_config", mock_get_config)
+    mock_get_config.return_value = config
+
+    mock_test = mocker.Mock()
+    monkeypatch.setattr(pytest, "main", mock_test)
+    mock_test.return_value = 0
+
+    cli_inputs = []
+
+    temp_dir = tmpdir.mkdir("testing")
+    temp_dir_str = str(temp_dir)
+    monkeypatch.setattr(os, "getcwd", lambda: temp_dir_str)
+
+    config_file = "klio-job.yaml"
+    if config_file_override:
+        # create a tmp file else click will complain it doesn't exist
+        config_file = _create_tmp_config_file(
+            temp_dir_str, config_file_override, config
+        )
+        cli_inputs.extend(["--config-file", config_file])
+
+    cli_inputs.extend(pytest_args)
+
+    result = cli_runner.invoke(cli.test_job, cli_inputs)
+
+    core_testing.assert_execution_success(result)
+    assert "true" == os.environ["KLIO_TEST_MODE"]
+
+    mock_test.assert_called_once_with(pytest_args)
+    mock_get_config.assert_called_once_with(config_file)
 
 
 @pytest.mark.parametrize(

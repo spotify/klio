@@ -72,13 +72,6 @@ def mock_docker_client(mocker):
 
 
 @pytest.fixture
-def mock_materialized_config_file(mocker):
-    mock = mocker.Mock()
-    mock.name = "test-config"
-    return mock
-
-
-@pytest.fixture
 def base_pipeline(
     klio_config,
     docker_runtime_config,
@@ -115,10 +108,6 @@ def expected_volumes():
             "mode": "rw",
         },
         "/test/dir/jobs/test_run_job": {"bind": "/usr/src/app", "mode": "rw"},
-        "test-config": {
-            "bind": base.BaseDockerizedPipeline.MATERIALIZED_CONFIG_PATH,
-            "mode": "rw",
-        },
     }
 
 
@@ -148,17 +137,8 @@ def test_get_environment(base_pipeline, expected_envs):
 
 
 def test_get_volumes(
-    base_pipeline,
-    expected_volumes,
-    mocker,
-    monkeypatch,
-    mock_materialized_config_file,
+    base_pipeline, expected_volumes, mocker, monkeypatch,
 ):
-    monkeypatch.setattr(
-        base_pipeline,
-        "materialized_config_file",
-        mock_materialized_config_file,
-    )
     assert expected_volumes == base_pipeline._get_volumes()
 
 
@@ -175,7 +155,6 @@ def test_get_docker_runflags(
     mocker,
     monkeypatch,
     requires_config,
-    mock_materialized_config_file,
 ):
     mock_get_command = mocker.Mock(return_value=["command"])
     monkeypatch.setattr(base_pipeline, "_get_command", mock_get_command)
@@ -185,19 +164,9 @@ def test_get_docker_runflags(
     expected_command = ["command"]
 
     if requires_config:
-        monkeypatch.setattr(
-            base_pipeline,
-            "materialized_config_file",
-            mock_materialized_config_file,
-        )
         expected_command.extend(
-            [
-                "--config-file",
-                base.BaseDockerizedPipeline.MATERIALIZED_CONFIG_PATH,
-            ]
+            ["--config-file", "/usr/src/app/klio-job-run-effective.yaml"]
         )
-    else:
-        expected_volumes.pop("test-config")
 
     exp_runflags = {
         "image": "test-image:foo-123",
@@ -331,11 +300,16 @@ def test_run(base_pipeline, mocker, monkeypatch):
     monkeypatch.setattr(
         base_pipeline, "_run_docker_container", mock_run_docker_container
     )
+    mock_write_effective_config = mocker.Mock()
+    monkeypatch.setattr(
+        base_pipeline, "_write_effective_config", mock_write_effective_config
+    )
 
     base_pipeline.run()
 
     mock_check_gcp_credentials_exist.assert_called_once_with()
     mock_check_docker_setup.assert_called_once_with()
+    mock_write_effective_config.assert_called_once_with()
     mock_setup_docker_image.assert_called_once_with()
     mock_get_docker_runflags.assert_called_once_with()
     mock_run_docker_container.assert_called_once_with(

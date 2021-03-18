@@ -14,14 +14,29 @@
 #
 
 import logging
+import os
 
 import attr
+import yaml
 
 from klio_core.config import _io as io
 from klio_core.config import _preprocessing as preprocessing
 from klio_core.config import _utils as utils
 
 logger = logging.getLogger("klio")
+
+
+# path used by both klio-cli and klioexec to write and read the config when
+# running a job
+RUN_EFFECTIVE_CONFIG_FILE = "klio-job-run-effective.yaml"
+RUN_EFFECTIVE_CONFIG_PATH = os.path.join(
+    "/usr/src/app", RUN_EFFECTIVE_CONFIG_FILE
+)
+
+# location where workers expect to load the config file from when using setup.py
+WORKER_RUN_EFFECTIVE_CONFIG_PATH = os.path.join(
+    "/usr/local", RUN_EFFECTIVE_CONFIG_FILE
+)
 
 WORKER_DISK_TYPE_URL = (
     "compute.googleapis.com/projects/{project}/regions/{region}/"
@@ -108,6 +123,31 @@ class KlioConfig(BaseKlioConfig):
         object.
         """
         return super().as_dict()
+
+    def write_to_file(self, path_or_stream):
+        """write the config object as a yaml file
+
+        Args:
+            path_or_stream: either a string of a file path or a writable stream
+        """
+
+        def _write(stream):
+            yaml.dump(
+                self.as_dict(),
+                stream=stream,
+                Dumper=utils.IndentListDumper,
+                default_flow_style=False,
+                sort_keys=False,
+            )
+
+        if isinstance(path_or_stream, str):
+            dirname = os.path.dirname(path_or_stream)
+            if not os.path.exists(dirname):
+                os.makedirs(dirname)
+            with open(path_or_stream, "w") as stream:
+                _write(stream)
+        else:
+            _write(path_or_stream)
 
 
 @attr.attrs

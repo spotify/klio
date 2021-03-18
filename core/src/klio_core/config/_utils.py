@@ -16,6 +16,7 @@
 import logging
 
 import attr
+import yaml
 
 from klio_core.config import _converters as converters
 
@@ -174,3 +175,26 @@ class config_object(object):
         attrib_cls.__init__ = init_from_dict
         attrib_cls.from_values = original_init
         return attrib_cls
+
+
+class IndentListDumper(yaml.Dumper):
+    """Force indentation for lists for better visual understanding.
+
+    Instead of this:
+
+        foo:
+          bar:
+          - one
+          - two
+          - three
+
+    Format list indentations like this:
+        foo:
+          bar:
+            - one
+            - two
+            - three
+    """
+
+    def increase_indent(self, flow=False, indentless=False):
+        return super(IndentListDumper, self).increase_indent(flow, False)

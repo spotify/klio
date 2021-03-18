@@ -7,6 +7,7 @@ on:
     branches:
       - master
       - develop
+      - release-*
     paths:
       - 'core/**'  # since CLI depends on core, we should run tests when core changes
       - 'cli/**'
@@ -14,6 +15,7 @@ on:
     branches:
       - master
       - develop
+      - release-*
     paths:
       - 'core/**'  # since CLI depends on core, we should run tests when core changes
       - 'cli/**'
@@ -81,6 +83,9 @@ jobs:
       - uses: "actions/setup-python@v1"
         with:
           python-version: "3.7"
+      - name: "Install dependency: klio_core"
+        run: "python -m pip install -e ."
+        working-directory: core
       - name: "Install in dev mode"
         run: "python -m pip install -e .[dev]"
       - name: "Import package"

@@ -20,7 +20,6 @@ Creating a new Klio job that does not use the FnAPI from the start via:
 Limitations and Warnings
 ------------------------
 
-* Currently, Klio in non-FnAPI mode does not yet support jobs with multiple configuration files. Support is planned.
 * ``pipeline_options.requirements_file`` configuration for `pipeline dependencies`_ **will not work** for Klio jobs. While klio will honor that configuration value for Dataflow to pick up, declaring requirements in ``setup.py`` is needed because a Klio job inherently has multiple Python files.
 * While Klio will still upload the worker image to `Google Container Registry`_ when running/deploying a job, Dataflow will *not* use the image. It is good practice to upload the worker image to ensure repeatable builds, but in the future, an option will be added to skip the upload.
 
@@ -65,7 +64,7 @@ explicitly including non-Python files needed for a job (i.e. a model, a JSON sch
             description="My example job using setup.py",  # optional
             install_requires=["tensorflow"],  # optional
             data_files=[  # required
-                (".", ["klio-job.yaml", "my-model.h5"]),
+                (".", ["klio-job-run-effective.yaml", "my-model.h5"]),
             ],
             include_package_data=True,  # required
             py_modules=["run", "transforms"],  # required

@@ -1,0 +1,17 @@
+INFO:root:Found worker image: integration-test-klio-read-file-write-file:custom-io-klio-job.yaml
+INFO:root:Received item: 012345678
+INFO:root:Reeived config: KlioCustomDataConfig(io_type=<KlioIOType.DATA: 2>, io_direction=<KlioIODirection.INPUT: 1>)
+INFO:root:Received item: 012345678
+INFO:root:Reeived config: KlioCustomDataConfig(io_type=<KlioIOType.DATA: 2>, io_direction=<KlioIODirection.OUTPUT: 2>)
+INFO:root:Received item: 876543210
+INFO:root:Reeived config: KlioCustomDataConfig(io_type=<KlioIOType.DATA: 2>, io_direction=<KlioIODirection.INPUT: 1>)
+INFO:root:Received item: 876543210
+INFO:root:Reeived config: KlioCustomDataConfig(io_type=<KlioIOType.DATA: 2>, io_direction=<KlioIODirection.OUTPUT: 2>)
+INFO:root:Received item: 567801234
+INFO:root:Reeived config: KlioCustomDataConfig(io_type=<KlioIOType.DATA: 2>, io_direction=<KlioIODirection.INPUT: 1>)
+INFO:root:Received item: 567801234
+INFO:root:Reeived config: KlioCustomDataConfig(io_type=<KlioIOType.DATA: 2>, io_direction=<KlioIODirection.OUTPUT: 2>)
+INFO:root:Received item: 432108765
+INFO:root:Reeived config: KlioCustomDataConfig(io_type=<KlioIOType.DATA: 2>, io_direction=<KlioIODirection.INPUT: 1>)
+INFO:root:Received item: 432108765
+INFO:root:Reeived config: KlioCustomDataConfig(io_type=<KlioIOType.DATA: 2>, io_direction=<KlioIODirection.OUTPUT: 2>)

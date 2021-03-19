@@ -157,6 +157,7 @@ INSTALL_REQUIRES = [
     "klio-core>=21.2.0",
     "protobuf",
     "psutil",
+    "psycopg2-binary",
     "pyyaml",
     "six",
 ]

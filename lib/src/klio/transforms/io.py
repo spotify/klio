@@ -17,6 +17,7 @@ import json
 import os
 
 import apache_beam as beam
+import psycopg2
 from apache_beam.io import avroio as beam_avroio
 from apache_beam.io.gcp import bigquery as beam_bq
 from fastavro import parse_schema
@@ -528,3 +529,67 @@ class KlioWriteToAvro(beam.io.WriteToAvro):
             file_path_prefix = location
 
         return file_path_prefix
+
+
+class _KlioCloudSqlProxyDoFn(beam.DoFn):
+    def __init__(self, host, database, user, password, table):
+        self.host = host
+        self.database = database
+        self.user = user
+        # TODO figure out nicer way of passing in secrets
+        self.password = password
+        self.table = table
+
+    def setup(self):
+        self._startup_cloudsql_proxy()
+        self._init_connection()
+
+    def _startup_cloudsql_proxy(self):
+        # TODO: abstract this away
+        os.system("wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy")
+        os.system("chmod +x cloud_sql_proxy")
+        os.system(f"./cloud_sql_proxy -instances={self.sql_args['cloud_sql_connection_name']}=tcp:3306 &")
+
+    def _init_connection(self):
+        # TODO make this work for MySQL and SQL Server
+        # TODO figure out how to be selective in importing SQL connector libs
+        self._conn = psycopg2.connect(
+            host=self.host,
+            database=self.database,
+            user=self.user,
+            password=self.password
+        )
+
+    def _unwrap_klio_message(self, element):
+        message = klio_pb2.KlioMessage()
+        message.ParseFromString(element)
+        return message
+
+    def _build_insert_statement(self, table, row):
+        columns = row.keys()
+        value_placeholders = ", ".join(["%s"] * len(columns))
+        insert_sql = f"INSERT INTO {table} ({row.keys()}) VALUES ({value_placeholders})"
+        return insert_sql
+
+    # TODO how to configure retries?
+    def process(self, element):
+        row = self._unwrap_klio_message(element)
+        stmt = self._build_insert_statement(self.table, row)
+
+        # TODO wrap in try/except
+        with self.conn:
+            with self.conn.cursor() as curs:
+                curs.execute(stmt, row.values())
+
+        yield element
+
+class KlioWriteToCloudSql(beam.PTransform):
+    def __init__(self, host, database, user, password, table):
+        self.host = host
+        self.database = database
+        self.user = user
+        self.password = password
+        self.table = table
+
+    def expand(self, pcoll):
+        return (pcoll | beam.ParDo(_KlioCloudSqlProxyDoFn(self.host, self.database, self.user, self.password, self.table)))

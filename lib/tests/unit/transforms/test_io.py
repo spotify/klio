@@ -204,3 +204,24 @@ def test_bigquery_mapper_map_row_element(klio_message_columns, row, expected):
     actual = mapper._map_row_element(row)
 
     assert actual == expected
+
+def test_klio_cloudsql_proxy_dofn(mocker, monkeypatch, row):
+    config = {
+        "host": "localhost",
+        "database": "test_database",
+        "user": "user_bob",
+        "password": "secret",
+        "table": "event_table",
+    }
+
+    mock_start_cloudsql_proxy_method = mocker.Mock()
+    monkeypatch.setattr(os, "system", mock_start_cloudsql_proxy_method)
+
+    mock_psycopg_connect = mocker.Mock()
+    monkeypatch.setattr(io_transforms.psycopg2.connect, mock_psycopg_connect)
+
+    ksql_dofn = io_transforms._KlioCloudsqlProxyDoFn(**config)
+
+    stmt = ksql_dofn._build_insert_statement("my-table", {"date", "2012-03-19"})
+
+    assert "INSERT INTO my-table (date) VALUES (%s)" == stmt

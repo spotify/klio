@@ -1,0 +1,28 @@
+job_name: cloudsql-write
+version: 2
+pipeline_options:
+  streaming: False
+  project: fluffy-zelda-glitch-toki-kobe
+  worker_harness_container_image: gcr.io/fluffy-zelda-glitch-toki-kobe/cloudsql-write-worker
+  runner: DirectRunner
+  setup_file: setup.py  # relative to job dir
+job_config:
+  allow_non_klio_messages: False
+  events:
+    inputs:
+      - type: file
+        location: cloudsql-write_input_elements.txt
+    outputs:
+      - type: file
+        location: cloudsql-write_output_elements
+  data:
+    inputs:
+      - type: file
+        location: cloudsql-write-input
+        # Remove/set to false when job is ready to process input existence checks
+        skip_klio_existence_check: True
+    outputs:
+      - type: cloudsql
+        engine: mysql
+        table: events
+        schema:

@@ -39,6 +39,7 @@ jobs:
           - "batch-modular-default"
           - "audio-spectrograms"
           - "read-bq-write-bq"
+          - "cloud-sql-write"
       # do not cancel other jobs in matrix if one fails
       fail-fast: false
     steps:

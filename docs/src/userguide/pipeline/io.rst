@@ -208,6 +208,8 @@ to process.
 More information about configuring pub/sub can be found in the
 :ref:`event-config-pubsub` event config section.
 
+.. _big-query:
+
 Google BigQuery
 ^^^^^^^^^^^^^^^
 
@@ -217,6 +219,7 @@ Klio supports reading from and writing to `Google BigQuery <https://cloud.google
 
 Read more about configuring for :ref:`reading events from BigQuery <event-input-config-bigquery>` and :ref:`writing events to BigQuery <event-output-config-bigquery>`.
 
+.. _text-files:
 
 Text Files
 ^^^^^^^^^^
@@ -230,6 +233,8 @@ When writing, each :ref:`KlioMessage.data.element <data>` of a ``KlioMessage`` i
 Files can be read & written locally (supported in Direct Runner only), or from/to Google Cloud Storage (supported for both Direct Runner and Dataflow Runner).
 
 Read more about configuring for :ref:`reading events from files <event-input-config-files>` and :ref:`writing events to files <event-output-config-files>`.
+
+.. _avro:
 
 Avro
 ^^^^

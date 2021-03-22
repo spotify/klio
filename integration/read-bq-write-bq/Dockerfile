@@ -1,4 +1,4 @@
-FROM dataflow.gcr.io/v1beta3/python36-fnapi:2.27.0
+FROM dataflow.gcr.io/v1beta3/python36-fnapi:2.28.0
 
 WORKDIR /usr/src/app
 RUN mkdir -p /usr/src/config
@@ -13,6 +13,7 @@ COPY exec exec
 RUN pip install ./core
 RUN pip install ./lib
 RUN pip install ./exec
+
 
 COPY job-requirements.txt job-requirements.txt
 RUN pip install -r job-requirements.txt

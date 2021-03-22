@@ -111,6 +111,7 @@ class ProfilePipeline(base.BaseDockerizedPipeline):
 
     def run(self, what, subcommand_flags):
         self._check_docker_setup()
+        self._write_effective_config()
         self._setup_docker_image()
 
         kwargs = {"subcommand": what, "subcommand_flags": subcommand_flags}

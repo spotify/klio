@@ -1,8 +1,12 @@
 CLI Changelog
 =============
 
+.. _cli-21.2.0:
+
 21.2.0 (2021-03-16)
 -------------------
+
+.. start-21.2.0
 
 Fixed
 *****
@@ -15,6 +19,7 @@ Changed
 * Moved ``IndentListDumper`` to ``klio_core`` config utils.
 * Runtime config file for ``klioexec`` now written to ``klio-job-run-effective.yaml`` in the job's directory.
 
+.. end-21.2.0
 
 1.0.5 (2021-01-26)
 ------------------

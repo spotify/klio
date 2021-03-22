@@ -1,14 +1,19 @@
 Changelog
 =========
 
+.. _core-21.2.0:
+
 21.2.0 (2021-03-16)
 -------------------
+
+.. start-21.2.0
 
 Changed
 *******
 
 * Moved ``IndentListDumper`` to ``klio_core`` config utils.
 
+.. end-21.2.0
 
 0.2.2 (2021-02-11)
 ------------------

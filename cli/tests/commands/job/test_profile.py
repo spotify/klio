@@ -339,6 +339,10 @@ def test_run(klio_pipeline, mocker, monkeypatch):
     monkeypatch.setattr(
         klio_pipeline, "_run_docker_container", mock_run_docker_container
     )
+    mock_write_effective_config = mocker.Mock()
+    monkeypatch.setattr(
+        klio_pipeline, "_write_effective_config", mock_write_effective_config
+    )
 
     klio_pipeline.run(what="what", subcommand_flags={"some": "flags"})
 
@@ -350,6 +354,7 @@ def test_run(klio_pipeline, mocker, monkeypatch):
     mock_run_docker_container.assert_called_once_with(
         mock_get_docker_runflags.return_value
     )
+    mock_write_effective_config.assert_called_once_with()
 
 
 @pytest.mark.parametrize("input_file", (None, "foo.pstats"))

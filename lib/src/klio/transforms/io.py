@@ -23,6 +23,8 @@ from fastavro import parse_schema
 
 from klio_core.proto import klio_pb2
 
+from klio.transforms import core
+
 
 class BaseKlioIOException(Exception):
     """Base IO exception."""
@@ -87,6 +89,61 @@ class _KlioTransformMixin(metaclass=_KlioWrapIOMetaclass):
     _REQUIRES_IO_READ_WRAP = False
 
 
+class _KlioIOCounter(beam.DoFn):
+    """Internal helper transform to count elements to/from I/O transforms.
+
+    This should be used right after a read transform, or right before a
+    write transform. Since it is a DoFn transform, it needs to be invoked
+    via ``beam.ParDo`` when used. Examples:
+
+    .. code-block:: python
+
+        class MyReadCompositeTransform(beam.PTransform):
+            def __init__(self, *args, **kwargs):
+                self.reader = MyReadTransform(*args, **kwargs)
+                self.counter = _KlioIOCounter("read", "MyReadTransform")
+
+            def expand(self, pbegin):
+                return (
+                    pbegin
+                    | "Read Input" >> self.reader
+                    | "Read Counter" >> beam.ParDo(self.counter)
+                )
+
+        class MyWriteCompositeTransform(beam.PTransform):
+            def __init__(self, *args, **kwargs):
+                self.writer = MyWriteTransform(*args, **kwargs)
+                self.counter = _KlioIOCounter("write", "MyWriteTransform")
+
+            def expand(self, pbegin):
+                return (
+                    pbegin
+                    | "Write Counter" >> beam.ParDo(self.counter)
+                    | "Write Output" >> self.writer
+                )
+
+    Args:
+        direction (str): direction of the counter. Choices: ``read``,
+            ``write``.
+        bind_transform (str): Name of transform to bind the counter to.
+    """
+
+    def __init__(self, direction, bind_transform):
+        assert direction in ("read", "write")
+        self.direction = direction
+        self.bind_transform = bind_transform
+
+    def setup(self):
+        ctx = core.KlioContext()
+        self.io_counter = ctx.metrics.counter(
+            f"kmsg-{self.direction}", transform=self.bind_transform
+        )
+
+    def process(self, item):
+        self.io_counter.inc()
+        yield item
+
+
 class _KlioReadFromTextSource(beam.io.textio._TextSource):
     """Parses a text file as newline-delimited elements.
        Supports newline delimiters '\n' and '\r\n
@@ -109,12 +166,26 @@ class _KlioReadFromTextSource(beam.io.textio._TextSource):
             yield message.SerializeToString()
 
 
-class KlioReadFromText(beam.io.ReadFromText, _KlioTransformMixin):
+class _KlioReadFromText(beam.io.ReadFromText, _KlioTransformMixin):
+
+    _source_class = _KlioReadFromTextSource
+
+
+class KlioReadFromText(beam.PTransform):
     """Read from a local or GCS file with each new line as a
     ``KlioMessage.data.element``.
     """
 
-    _source_class = _KlioReadFromTextSource
+    def __init__(self, *args, **kwargs):
+        self._reader = _KlioReadFromText(*args, **kwargs)
+        self.__counter = _KlioIOCounter("read", "KlioReadFromText")
+
+    def expand(self, pbegin):
+        return (
+            pbegin
+            | "KlioReadFromText" >> self._reader
+            | "Read Counter" >> beam.ParDo(self.__counter)
+        )
 
 
 class _KlioReadFromBigQueryMapper(object):
@@ -267,14 +338,20 @@ storage-avro#avro_conversions
      """
 
     def __init__(self, *args, klio_message_columns=None, **kwargs):
-        self.__reader = beam_bq.ReadFromBigQuery(*args, **kwargs)
+        self._reader = beam_bq.ReadFromBigQuery(*args, **kwargs)
         self.__mapper = _KlioReadFromBigQueryMapper(klio_message_columns)
+        self.__counter = _KlioIOCounter("read", "KlioReadFromBigQuery")
 
     def expand(self, pcoll):
-        return pcoll | self.__reader | self.__mapper.as_beam_map()
+        return (
+            pcoll
+            | "ReadFromBigQuery" >> self._reader
+            | "Create KlioMessage" >> self.__mapper.as_beam_map()
+            | "Read Counter" >> beam.ParDo(self.__counter)
+        )
 
 
-class KlioWriteToBigQuery(beam.io.WriteToBigQuery, _KlioTransformMixin):
+class KlioWriteToBigQuery(beam.PTransform, _KlioTransformMixin):
     """Writes to BigQuery table with each row as ``KlioMessage.data.element``.
     """
 
@@ -285,6 +362,10 @@ class KlioWriteToBigQuery(beam.io.WriteToBigQuery, _KlioTransformMixin):
 
     _REQUIRES_IO_READ_WRAP = False
 
+    def __init__(self, *args, **kwargs):
+        self._writer = beam.io.WriteToBigQuery(*args, **kwargs)
+        self.__counter = _KlioIOCounter("write", "KlioWriteToBigQuery")
+
     def __unwrap(self, encoded_element):
         message = klio_pb2.KlioMessage()
         message.ParseFromString(encoded_element)
@@ -293,7 +374,12 @@ class KlioWriteToBigQuery(beam.io.WriteToBigQuery, _KlioTransformMixin):
         return data
 
     def expand(self, pcoll):
-        return super().expand(pcoll | beam.Map(self.__unwrap))
+        return (
+            pcoll
+            | "Write Counter" >> beam.ParDo(self.__counter)
+            | "Serialize Klio Message" >> beam.Map(self.__unwrap)
+            | "WriteToBigQuery" >> self._writer
+        )
 
 
 class _KlioTextSink(beam.io.textio._TextSink):
@@ -315,13 +401,26 @@ class _KlioTextSink(beam.io.textio._TextSink):
         super(_KlioTextSink, self).write_encoded_record(file_handle, record)
 
 
-class KlioWriteToText(beam.io.textio.WriteToText):
+class _KlioWriteToText(beam.io.textio.WriteToText):
+    def __init__(self, *args, **kwargs):
+        self._sink = _KlioTextSink(*args, **kwargs)
+
+
+class KlioWriteToText(beam.PTransform):
     """Write to a local or GCS file with each new line as
     ``KlioMessage.data.element``.
     """
 
     def __init__(self, *args, **kwargs):
-        self._sink = _KlioTextSink(*args, **kwargs)
+        self.__writer = _KlioWriteToText(*args, **kwargs)
+        self.__counter = _KlioIOCounter("write", "KlioWriteToText")
+
+    def expand(self, pcoll):
+        return (
+            pcoll
+            | "Write Counter" >> beam.ParDo(self.__counter)
+            | "KlioWriteToText" >> self.__writer
+        )
 
 
 # note: fast avro is default for py3 on beam
@@ -354,33 +453,7 @@ class _KlioFastAvroSource(beam_avroio._FastAvroSource):
 # True. If we don't do this, then just the parent documentation will be shown,
 # excluding our new parameter and including an unavailable parameter
 # (`location` and `use_fastavro` respectively)
-class KlioReadFromAvro(beam.io.ReadFromAvro):
-    """Read avro from a local directory or GCS bucket.
-
-    Data from avro is dumped into JSON and assigned to ``KlioMessage.data.
-    element``.
-
-    ``KlioReadFromAvro`` is the default read for event input config type avro.
-    However, ``KlioReadFromAvro`` can also be called explicity in a pipeline.
-
-    Example pipeline reading in elements from an avro file:
-
-    .. code-block:: python
-
-        def run(pipeline, config):
-            initial_data_path = os.path.join(DIRECTORY_TO_AVRO, "twitter.avro")
-            pipeline | io_transforms.KlioReadFromAvro(
-                    file_pattern=initial_data_path
-            ) | beam.ParDo(transforms.HelloKlio())
-
-    Args:
-      file_pattern (str): the file glob to read.
-      location (str): local or GCS path of file(s) to read.
-      min_bundle_size (int): the minimum size in bytes, to be considered when
-        splitting the input into bundles.
-      validate (bool): flag to verify that the files exist during the pipeline
-        creation time.
-    """
+class _KlioReadFromAvro(beam.io.ReadFromAvro):
 
     _REQUIRES_IO_READ_WRAP = True
 
@@ -393,7 +466,7 @@ class KlioReadFromAvro(beam.io.ReadFromAvro):
     ):
         file_pattern = self._get_file_pattern(file_pattern, location)
 
-        super(KlioReadFromAvro, self).__init__(
+        super(_KlioReadFromAvro, self).__init__(
             file_pattern=file_pattern,
             min_bundle_size=min_bundle_size,
             validate=validate,
@@ -421,6 +494,46 @@ class KlioReadFromAvro(beam.io.ReadFromAvro):
         return file_pattern
 
 
+class KlioReadFromAvro(beam.PTransform):
+    """Read avro from a local directory or GCS bucket.
+
+    Data from avro is dumped into JSON and assigned to ``KlioMessage.data.
+    element``.
+
+    ``KlioReadFromAvro`` is the default read for event input config type avro.
+    However, ``KlioReadFromAvro`` can also be called explicity in a pipeline.
+
+    Example pipeline reading in elements from an avro file:
+
+    .. code-block:: python
+
+        def run(pipeline, config):
+            initial_data_path = os.path.join(DIRECTORY_TO_AVRO, "twitter.avro")
+            pipeline | io_transforms.KlioReadFromAvro(
+                    file_pattern=initial_data_path
+            ) | beam.ParDo(transforms.HelloKlio())
+
+    Args:
+      file_pattern (str): the file glob to read.
+      location (str): local or GCS path of file(s) to read.
+      min_bundle_size (int): the minimum size in bytes, to be considered when
+        splitting the input into bundles.
+      validate (bool): flag to verify that the files exist during the pipeline
+        creation time.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self._reader = _KlioReadFromAvro(*args, **kwargs)
+        self.__counter = _KlioIOCounter("read", "KlioReadFromAvro")
+
+    def expand(self, pbegin):
+        return (
+            pbegin
+            | "KlioReadFromAvro" >> self._reader
+            | "Read Counter" >> beam.ParDo(self.__counter)
+        )
+
+
 # note: fast avro is default for py3 on beam
 class _KlioFastAvroSink(beam_avroio._FastAvroSink):
     def write_record(self, writer, encoded_element):
@@ -437,40 +550,7 @@ class _KlioFastAvroSink(beam_avroio._FastAvroSink):
 # If this occurs, consider writing this as a custom PTransform
 # that bundles a ``beam.Map`` with the standard ``WriteToAvro``
 # Refer to ``KlioReadFromBigQuery`` as an example.
-class KlioWriteToAvro(beam.io.WriteToAvro):
-    """Write avro to a local directory or GCS bucket.
-
-    ``KlioMessage.data.element`` data is parsed out
-    and dumped into avro format.
-
-    ``KlioWriteToAvro`` is the default write for event output config type avro.
-    However, ``KlioWriteToAvro`` can also be called explicity in a pipeline.
-
-    Example pipeline for writing elements to an avro file:
-
-    .. code-block:: python
-
-        def run(input_pcol, config):
-            output_gcs_location = "gs://test-gcs-location"
-            return (
-                input_pcol
-                | beam.ParDo(HelloKlio())
-                | transforms.io.KlioWriteToAvro(location=output_gcs_location)
-            )
-
-    Args:
-      file_path_prefix (str): The file path to write to
-      location (str): local or GCS path to write to
-      schema (str): The schema to use, as returned by avro.schema.parse
-      codec (str): The codec to use for block-level compression.
-            defaults to 'deflate'
-      file_name_suffix (str): Suffix for the files written.
-      num_shards (int): The number of files (shards) used for output.
-      shard_name_template (str): template string for shard number and count
-      mime_type (str): The MIME type to use for the produced files.
-        Defaults to "application/x-avro"
-    """
-
+class _KlioWriteToAvro(beam.io.WriteToAvro):
     KLIO_SCHEMA_OBJ = {
         "namespace": "klio.avro",
         "type": "record",
@@ -492,7 +572,7 @@ class KlioWriteToAvro(beam.io.WriteToAvro):
 
         file_path = self._get_file_path(file_path_prefix, location)
 
-        super(KlioWriteToAvro, self).__init__(
+        super(_KlioWriteToAvro, self).__init__(
             file_path_prefix=file_path,
             schema=schema,
             codec=codec,
@@ -528,3 +608,49 @@ class KlioWriteToAvro(beam.io.WriteToAvro):
             file_path_prefix = location
 
         return file_path_prefix
+
+
+class KlioWriteToAvro(beam.PTransform):
+    """Write avro to a local directory or GCS bucket.
+
+    ``KlioMessage.data.element`` data is parsed out
+    and dumped into avro format.
+
+    ``KlioWriteToAvro`` is the default write for event output config type avro.
+    However, ``KlioWriteToAvro`` can also be called explicity in a pipeline.
+
+    Example pipeline for writing elements to an avro file:
+
+    .. code-block:: python
+
+        def run(input_pcol, config):
+            output_gcs_location = "gs://test-gcs-location"
+            return (
+                input_pcol
+                | beam.ParDo(HelloKlio())
+                | transforms.io.KlioWriteToAvro(location=output_gcs_location)
+            )
+
+    Args:
+      file_path_prefix (str): The file path to write to
+      location (str): local or GCS path to write to
+      schema (str): The schema to use, as returned by avro.schema.parse
+      codec (str): The codec to use for block-level compression.
+            defaults to 'deflate'
+      file_name_suffix (str): Suffix for the files written.
+      num_shards (int): The number of files (shards) used for output.
+      shard_name_template (str): template string for shard number and count
+      mime_type (str): The MIME type to use for the produced files.
+        Defaults to "application/x-avro"
+    """
+
+    def __init__(self, *args, **kwargs):
+        self._writer = _KlioWriteToAvro(*args, **kwargs)
+        self.__counter = _KlioIOCounter("write", "KlioWriteToAvro")
+
+    def expand(self, pcoll):
+        return (
+            pcoll
+            | "Write Counter" >> beam.ParDo(self.__counter)
+            | "KlioWriteToAvro" >> self._writer
+        )

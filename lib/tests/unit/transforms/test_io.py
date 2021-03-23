@@ -17,15 +17,28 @@ import glob
 import json
 import os
 import tempfile
+from unittest import mock
 
 import apache_beam as beam
 import pytest
 
 from apache_beam.testing import test_pipeline
+from apache_beam.testing import util as btest_util
 
 from klio_core.proto import klio_pb2
 
-from klio.transforms import io as io_transforms
+from klio.transforms import core
+from tests.unit import conftest
+
+# NOTE: All of the Klio IO transforms use _KlioIOCounter, which instantiates
+# a KlioContext object. When the config attribute is accessed (when setting up
+# a metrics counter object), it will try to read a
+# `/usr/src/config/.effective-klio-job.yaml` file. Since all IO transforms
+# use the _KlioIOCounter, we just patch on the module level instead of
+# within each and every test function.
+patcher = mock.patch.object(core.RunConfig, "get", conftest._klio_config)
+patcher.start()
+from klio.transforms import io as io_transforms  # NOQA E402
 
 
 HERE = os.path.abspath(os.path.join(os.path.abspath(__file__), os.path.pardir))
@@ -42,6 +55,10 @@ def assert_expected_klio_msg_from_file(element):
 def test_read_from_file():
     file_path = os.path.join(FIXTURE_PATH, "elements_text_file.txt")
 
+    exp_element_count = 0
+    with open(file_path, "r") as f:
+        exp_element_count = len(f.readlines())
+
     transform = io_transforms.KlioReadFromText(file_path)
     with test_pipeline.TestPipeline() as p:
         (
@@ -50,7 +67,13 @@ def test_read_from_file():
             | beam.Map(assert_expected_klio_msg_from_file)
         )
 
-    assert transform._REQUIRES_IO_READ_WRAP is False
+    assert transform._reader._REQUIRES_IO_READ_WRAP is False
+
+    actual_counters = p.result.metrics().query()["counters"]
+    assert 1 == len(actual_counters)
+    assert exp_element_count == actual_counters[0].committed
+    assert "KlioReadFromText" == actual_counters[0].key.metric.namespace
+    assert "kmsg-read" == actual_counters[0].key.metric.name
 
 
 def test_write_to_file():
@@ -66,14 +89,29 @@ def test_write_to_file():
         # WriteToText will shard files so we iterate through each
         # file in the directory
         write_results = []
-
+        exp_element_count = 0
         for file_name in glob.glob(tmp_path + "*"):
             if os.path.isfile(os.path.join(tmp_path, file_name)):
                 with open(file_name, "rb") as f:
-                    write_results.extend(f.readlines())
+                    lines = f.readlines()
+                    exp_element_count = len(lines)
+                    write_results.extend(lines)
         with open(file_path_read, "rb") as fr:
             read_results = fr.readlines()
         assert write_results == read_results
+
+    actual_counters = p.result.metrics().query()["counters"]
+    assert 2 == len(actual_counters)
+
+    read_counter = actual_counters[0]
+    write_counter = actual_counters[1]
+    assert exp_element_count == read_counter.committed
+    assert "KlioReadFromText" == read_counter.key.metric.namespace
+    assert "kmsg-read" == read_counter.key.metric.name
+
+    assert exp_element_count == write_counter.committed
+    assert "KlioWriteToText" == write_counter.key.metric.namespace
+    assert "kmsg-write" == write_counter.key.metric.name
 
 
 def _expected_avro_kmsgs():
@@ -109,14 +147,17 @@ def assert_expected_klio_msg_from_avro(element):
 def test_read_from_avro():
     file_pattern = os.path.join(FIXTURE_PATH, "twitter.avro")
 
+    transform = io_transforms.KlioReadFromAvro(file_pattern=file_pattern)
     with test_pipeline.TestPipeline() as p:
-        (
-            p
-            | io_transforms.KlioReadFromAvro(file_pattern=file_pattern)
-            | beam.Map(assert_expected_klio_msg_from_avro)
-        )
+        p | transform | beam.Map(assert_expected_klio_msg_from_avro)
 
-    assert io_transforms.KlioReadFromAvro._REQUIRES_IO_READ_WRAP is True
+    assert transform._reader._REQUIRES_IO_READ_WRAP is True
+
+    actual_counters = p.result.metrics().query()["counters"]
+    assert 1 == len(actual_counters)
+    assert 2 == actual_counters[0].committed
+    assert "KlioReadFromAvro" == actual_counters[0].key.metric.namespace
+    assert "kmsg-read" == actual_counters[0].key.metric.name
 
 
 def assert_expected_klio_msg_from_avro_write(element):
@@ -131,6 +172,9 @@ def assert_expected_klio_msg_from_avro_write(element):
 def test_write_to_avro():
 
     file_path_read = os.path.join(FIXTURE_PATH, "elements_text_file.txt")
+    exp_element_count = 0
+    with open(file_path_read, "r") as f:
+        exp_element_count = len(f.readlines())
 
     with tempfile.TemporaryDirectory() as tmp_path:
         with test_pipeline.TestPipeline() as p:
@@ -150,6 +194,20 @@ def test_write_to_avro():
             p2 | io_transforms.KlioReadFromAvro(
                 file_pattern=(tmp_path + "*")
             ) | beam.Map(assert_expected_klio_msg_from_avro_write)
+
+    actual_counters = p.result.metrics().query()["counters"]
+    assert 2 == len(actual_counters)
+
+    read_counter = actual_counters[0]
+    write_counter = actual_counters[1]
+
+    assert exp_element_count == read_counter.committed
+    assert "KlioReadFromText" == read_counter.key.metric.namespace
+    assert "kmsg-read" == read_counter.key.metric.name
+
+    assert exp_element_count == write_counter.committed
+    assert "KlioWriteToAvro" == write_counter.key.metric.namespace
+    assert "kmsg-write" == write_counter.key.metric.name
 
 
 def test_avro_io_immutability():
@@ -204,3 +262,60 @@ def test_bigquery_mapper_map_row_element(klio_message_columns, row, expected):
     actual = mapper._map_row_element(row)
 
     assert actual == expected
+
+
+def _generate_kmsg(element):
+    message = klio_pb2.KlioMessage()
+    message.version = klio_pb2.Version.V2
+    message.metadata.intended_recipients.anyone.SetInParent()
+    message.data.element = bytes(json.dumps(element), "utf-8")
+    return message.SerializeToString()
+
+
+def test_read_from_bigquery(monkeypatch):
+    read_from_bq = io_transforms.KlioReadFromBigQuery()
+    monkeypatch.setattr(read_from_bq, "_reader", beam.Map(lambda x: x))
+
+    table_data = [{"entity_id": 1}, {"entity_id": 2}, {"entity_id": 3}]
+    expected_pcoll = [_generate_kmsg(k) for k in table_data]
+    with test_pipeline.TestPipeline() as p:
+        act_pcoll = p | beam.Create(table_data) | read_from_bq
+        btest_util.assert_that(act_pcoll, btest_util.equal_to(expected_pcoll))
+
+    actual_counters = p.result.metrics().query()["counters"]
+    assert 1 == len(actual_counters)
+    assert len(table_data) == actual_counters[0].committed
+    assert "KlioReadFromBigQuery" == actual_counters[0].key.metric.namespace
+    assert "kmsg-read" == actual_counters[0].key.metric.name
+
+
+def _generate_kmsg_with_payload(element):
+    message = klio_pb2.KlioMessage()
+    message.version = klio_pb2.Version.V2
+    message.metadata.intended_recipients.anyone.SetInParent()
+    message.data.element = bytes(str(element["entity_id"]), "utf-8")
+    message.data.payload = bytes(json.dumps(element), "utf-8")
+    return message.SerializeToString()
+
+
+def test_write_to_bigquery(monkeypatch):
+    write_to_bq = io_transforms.KlioWriteToBigQuery(
+        project="test-project", dataset="test-dataset", table="test-table"
+    )
+    monkeypatch.setattr(write_to_bq, "_writer", beam.Map(lambda x: x))
+
+    table_data = [{"entity_id": 1}, {"entity_id": 2}, {"entity_id": 3}]
+    with test_pipeline.TestPipeline() as p:
+        act_pcoll = (
+            p
+            | beam.Create(table_data)
+            | beam.Map(_generate_kmsg_with_payload)
+            | write_to_bq
+        )
+        btest_util.assert_that(act_pcoll, btest_util.equal_to(table_data))
+
+    actual_counters = p.result.metrics().query()["counters"]
+    assert 1 == len(actual_counters)
+    assert len(table_data) == actual_counters[0].committed
+    assert "KlioWriteToBigQuery" == actual_counters[0].key.metric.namespace
+    assert "kmsg-write" == actual_counters[0].key.metric.name

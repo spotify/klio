@@ -27,8 +27,7 @@ def caplog(caplog):
     return caplog
 
 
-@pytest.fixture
-def job_config_dict():
+def _job_config_dict():
     return {
         "metrics": {"logger": {}},
         "allow_non_klio_messages": False,
@@ -56,7 +55,11 @@ def job_config_dict():
 
 
 @pytest.fixture
-def pipeline_config_dict():
+def job_config_dict():
+    return _job_config_dict()
+
+
+def _pipeline_config_dict():
     return {
         "project": "test-project",
         "staging_location": "gs://some/stage",
@@ -76,13 +79,26 @@ def pipeline_config_dict():
 
 
 @pytest.fixture
-def config_dict(job_config_dict, pipeline_config_dict):
+def pipeline_config_dict():
+    return _pipeline_config_dict()
+
+
+def _config_dict():
     return {
-        "job_config": job_config_dict,
-        "pipeline_options": pipeline_config_dict,
+        "job_config": _job_config_dict(),
+        "pipeline_options": _pipeline_config_dict(),
         "job_name": "test-job",
         "version": 1,
     }
+
+
+@pytest.fixture
+def config_dict():
+    return _config_dict()
+
+
+def _klio_config():
+    return config.KlioConfig(_config_dict())
 
 
 @pytest.fixture

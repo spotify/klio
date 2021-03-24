@@ -1,6 +1,15 @@
 CLI Changelog
 =============
 
+21.3.0rc1 (2021-03-24)
+----------------------
+
+Fixed
+*****
+
+* ``klio job test`` now respects the ``--config-file`` option.
+* Fix effective config file handling for ``klio job profile``.
+
 21.2.0 (2021-03-16)
 -------------------
 

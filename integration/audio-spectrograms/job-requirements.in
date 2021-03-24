@@ -1,4 +1,4 @@
-apache-beam[gcp]==2.27.0
+apache-beam[gcp]==2.28.0
 librosa
 pytest
 # Note: klio packages are installed via docker

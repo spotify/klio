@@ -1,6 +1,11 @@
 Changelog
 =========
 
+21.3.0rc1 (2021-03-24)
+----------------------
+
+* Bumping version for March 2021 release; no changes in this package.
+
 21.2.0 (2021-03-16)
 -------------------
 

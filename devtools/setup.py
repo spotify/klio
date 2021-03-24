@@ -154,8 +154,8 @@ INSTALL_REQUIRES = [
     "click",
     "docker",
     "dockerpty",
-    "klio-cli>=1.0.0",
-    "klio-core>=0.2.0",
+    "klio-cli>=21.3.0rc1",
+    "klio-core>=21.3.0rc1",
 ]
 EXTRAS_REQUIRE = {
     "tests": [

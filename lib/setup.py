@@ -154,7 +154,7 @@ INSTALL_REQUIRES = [
     # 2.22 added DirectRunner support for `DoFn.setup`
     "apache-beam[gcp]>2.21.0",
     "google-api-python-client",
-    "klio-core>=21.2.0",
+    "klio-core>=21.3.0rc1",
     "protobuf",
     "psutil",
     "pyyaml",

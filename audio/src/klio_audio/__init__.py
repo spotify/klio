@@ -14,7 +14,7 @@
 #
 
 __author__ = "The klio developers"
-__version__ = "0.1.0"
+__version__ = "21.3.0rc1"
 __email__ = "opensource+klio@spotify.com"
 __description__ = "Library for audio-related Klio transforms and helpers"
 __uri__ = "https://github.com/spotify/klio"

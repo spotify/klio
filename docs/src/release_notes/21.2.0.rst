@@ -1,0 +1,76 @@
+21.2.0
+======
+
+New Versioning Scheme & Synchronization
+---------------------------------------
+The maintainers of Klio have decided to **synchronize** the versions of the packages that make up the Klio ecosystems. 
+From now on, every package in each release will have matching versions. 
+
+As well, we are switching to **calendar versioning** [#f0]_ and will target making monthly releases. 
+The new scheme for all Klio packages will be ``YY.MM.MICRO`` with an optional modifier suffix (e.g. ``rc1``, ``beta1``, etc).  
+
+Since we're moving off a semantic versioning scheme, going forward there **should not** be any general expectation of backwards compatibility between scheduled releases, although we will be clear about what changes are made in release notes and changelogs.  
+When needed, we'll publish off-schedule releases by bumping the ``MICRO`` part.  
+While we'll aim to keep those backwards compatible, it is not a guarantee.
+
+Batch Mode, New Event IOs, Templating Configs
+---------------------------------------------
+
+As of version ``21.2.0``, Klio now has full support for running jobs in batch mode 🎉. 
+And with that, a lot of goodies that can be used in streaming & batch.
+
+New features include:
+
+* Run a job in batch mode
+  
+  * Read how to easily convert (or otherwise simply toggle between) a current streaming job to batch :doc:`here </faqs/streaming_to_batch_conversion>`
+
+* Event IO support for:
+
+  * reading/writing KlioMessages to:
+
+    * files (both locally and on GCS) (:ref:`docs <text-files>`)
+    * BigQuery (:ref:`docs <big-query>`)
+    * Avro (both locally and on GCS) (:ref:`docs <avro>`)
+
+  * `Note`: reading from non-Pub/Sub event input is only supported for Batch
+
+* Read multiple event inputs of KlioMessages (:ref:`docs <multiple-event-inputs>`)
+* Support for templating configuration keys & values, and overriding configuration values at runtime (:ref:`docs <template-and-override-config>`)
+
+
+Changes
+-------
+
+:ref:`klio-cli <cli-21.2.0>`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. include:: /reference/cli/changelog.rst
+    :start-after: start-21.2.0
+    :end-before: end-21.2.0
+
+:ref:`klio <lib-21.2.0>`
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. include:: /reference/lib/changelog.rst
+    :start-after: start-21.2.0
+    :end-before: end-21.2.0
+
+
+:ref:`klio-core <core-21.2.0>`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. include:: /reference/core/changelog.rst
+    :start-after: start-21.2.0
+    :end-before: end-21.2.0
+
+:ref:`klio-exec <exec-21.2.0>`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. include:: /reference/executor/changelog.rst
+    :start-after: start-21.2.0
+    :end-before: end-21.2.0
+
+.. rubric:: Footnotes
+
+.. [#f0] https://calver.org

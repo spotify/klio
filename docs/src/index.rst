@@ -106,6 +106,7 @@ Releases
 
    User Guide <userguide/index>
    Reference <reference/index>
+   Release Notes <release_notes/index>
    FAQs <faqs/index>
    Contributing <contributors>
    KEPs <keps/index>

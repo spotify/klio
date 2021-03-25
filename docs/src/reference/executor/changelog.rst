@@ -1,14 +1,20 @@
 Changelog
 =========
 
+.. _exec-21.2.0:
+
 21.2.0 (2021-03-16)
 -------------------
+
+.. start-21.2.0
 
 Fixed
 *****
 
 * ``klioexec`` now writes runtime config to include in ``setup.py`` distribution.
 
+
+.. end-21.2.0
 
 0.2.2 (2021-01-14)
 ------------------

@@ -15,9 +15,12 @@ Changed
 * The Beam metrics client will always be used, no matter the configured runner.
 * Marked Klio's support for Stackdriver log-based metrics for deprecation and eventual removal.
 
+.. _lib-21.2.0:
 
 21.2.0 (2021-03-16)
 -------------------
+
+.. start-21.2.0
 
 Changed
 *******
@@ -25,6 +28,7 @@ Changed
 * Changed thread limiter logging to debug.
 * Workers will look for ``klio-job-run-effective.yaml`` before dropping back to ``.effective-klio-job.yaml``.
 
+.. end-21.2.0
 
 0.2.4 (2021-01-14)
 ------------------

@@ -15,6 +15,7 @@
 
 import apache_beam as beam
 
+import klio.transforms as ktransforms
 import transforms
 
 
@@ -34,6 +35,13 @@ def run(input_pcol, config):
         apache_beam.pvalue.PCollection: PCollection that will be passed to
         the output transform for the configured event output (if any).
     """
-    output_pcol = input_pcol | beam.ParDo(transforms.HelloKlio())
-    # <-- multiple Klio-based ParDo transforms are supported here -->
+    cloudsql_config = {
+        "host": "localhost",
+        "database": "postgres",
+        "user": "postgres",
+        "password": "mJkm9NBBBl3Nb0G8",
+        "table": "test",
+        "cloudsql_connection": "sigint:europe-west1:fallon-postgres"
+    }
+    output_pcol = input_pcol | ktransforms.KlioWriteToCloudSql(**cloudsql_config)
     return output_pcol

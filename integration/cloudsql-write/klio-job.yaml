@@ -2,27 +2,40 @@ job_name: cloudsql-write
 version: 2
 pipeline_options:
   streaming: False
-  project: fluffy-zelda-glitch-toki-kobe
+  # TODO change this to the IT project
+  project: sigint
   worker_harness_container_image: gcr.io/fluffy-zelda-glitch-toki-kobe/cloudsql-write-worker
-  runner: DirectRunner
+  runner: DataflowRunner
   setup_file: setup.py  # relative to job dir
+  # delete these after
+  staging_location: gs://sigint-fallon-eu/cloudsql-write/staging
+  temp_location: gs://sigint-fallon-eu/cloudsql-write/temp
+  region: europe-west1
+  # TODO you can have multiple extra_package options on the command line, but here it gets overwritten
+  # TODO maybe try the extra_packages (note the s) option
+  #extra_package: klio-core-21.2.0.tar.gz
+  #extra_package: klio-exec-21.2.0.tar.gz
+  extra_packages:
+    - klio-21.2.0.tar.gz
+    - klio-exec-21.2.0.tar.gz
+    - klio-core-21.2.0.tar.gz
 job_config:
   allow_non_klio_messages: False
   events:
     inputs:
       - type: file
-        location: cloudsql-write_input_elements.txt
+        location: gs://sigint-fallon-eu/cloudsql-write_input_elements.txt
     outputs:
       - type: file
-        location: cloudsql-write_output_elements
+        location: gs://sigint-fallon-eu/cloudsql-write_output_elements
   data:
     inputs:
       - type: file
         location: cloudsql-write-input
         # Remove/set to false when job is ready to process input existence checks
         skip_klio_existence_check: True
-    outputs:
-      - type: cloudsql
-        engine: mysql
-        table: events
-        schema:
+#    outputs:
+#      - type: cloudsql
+#        engine: mysql
+#        table: events
+#        schema:

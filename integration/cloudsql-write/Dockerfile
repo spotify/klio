@@ -8,6 +8,13 @@ ENV GOOGLE_CLOUD_PROJECT=fluffy-zelda-glitch-toki-kobe \
 
 RUN pip install --upgrade pip setuptools
 
+COPY core core
+COPY lib lib
+COPY exec exec
+RUN pip install ./core
+RUN pip install ./lib
+RUN pip install ./exec
+
 COPY __init__.py \
      run.py \
      transforms.py \
@@ -15,10 +22,16 @@ COPY __init__.py \
      setup.py \
      MANIFEST.in \
      klio-job.yaml \
+     cloud_sql_proxy.linux.amd64 \
+#     klio-core-21.2.0.tar.gz \
+#     klio-21.2.0.tar.gz \
+#     klio-exec-21.2.0.tar.gz \
      # Include any other non-Python files your job needs
      /usr/src/app/
 
 ARG KLIO_CONFIG=klio-job.yaml
 COPY $KLIO_CONFIG klio-job-run-effective.yaml
+# TODO understand why the following line was needed
+COPY $KLIO_CONFIG /usr/src/config/.effective-klio-job.yaml
 
 RUN pip install .

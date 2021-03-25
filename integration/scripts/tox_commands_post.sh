@@ -20,8 +20,8 @@ if [ -f "${KLIO_TEST_DIR}/it/after.py" ];
   then python ${KLIO_TEST_DIR}/it/after.py;
 fi
 
-rm -rf ${KLIO_TEST_DIR}/core
-rm -rf ${KLIO_TEST_DIR}/lib
-rm -rf ${KLIO_TEST_DIR}/exec
-rm -rf ${KLIO_TEST_DIR}/audio
-rm -rf ${KLIO_TEST_DIR}/job_output.log
+#rm -rf ${KLIO_TEST_DIR}/core
+#rm -rf ${KLIO_TEST_DIR}/lib
+#rm -rf ${KLIO_TEST_DIR}/exec
+#rm -rf ${KLIO_TEST_DIR}/audio
+#rm -rf ${KLIO_TEST_DIR}/job_output.log

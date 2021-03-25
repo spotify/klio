@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+import logging # TODO get rid of this
 import json
 import os
+import psutil
+import subprocess
 
 import apache_beam as beam
 import psycopg2
@@ -532,27 +534,67 @@ class KlioWriteToAvro(beam.io.WriteToAvro):
 
 
 class _KlioCloudSqlProxyDoFn(beam.DoFn):
-    def __init__(self, host, database, user, password, table):
+    def __init__(self, host, database, user, password, table, connection_name=None):
         self.host = host
         self.database = database
         self.user = user
         # TODO figure out nicer way of passing in secrets
         self.password = password
         self.table = table
+        self.cloudsql_connection_name = connection_name
 
     def setup(self):
-        self._startup_cloudsql_proxy()
+        if self.cloudsql_connection_name:
+            self._startup_cloudsql_proxy()
         self._init_connection()
 
     def _startup_cloudsql_proxy(self):
         # TODO: abstract this away
-        os.system("wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy")
-        os.system("chmod +x cloud_sql_proxy")
-        os.system(f"./cloud_sql_proxy -instances={self.sql_args['cloud_sql_connection_name']}=tcp:3306 &")
+        # wget hangs
+        # wget_cmd = "wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy".split(' ')
+        # print(wget_cmd)
+        # r = subprocess.run(wget_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        #
+        # print(f"Moving on...")
+        # try:
+        #     chmod_cmd = "chmod +x cloud_sql_proxy".split(' ')
+        #     print(chmod_cmd)
+        #     r = subprocess.run(chmod_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # finally:
+        #     print(f"{chmod_cmd} results {r.stdout} {r.stderr}")
+
+        if not self.find_process("cloud_sql_proxy.linux.amd64"):
+            # TODO document required perms https://cloud.google.com/sql/docs/mysql/sql-proxy#permissions
+            logger = logging.getLogger("klio")
+            logger.info("Launching CloudSQL Proxy ... ")
+            launcher = f"/usr/local/cloud_sql_proxy.linux.amd64 -instances={self.cloudsql_connection_name}=tcp:5432".split(' ')
+            proc = subprocess.Popen(launcher, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+            logger = logging.getLogger("klio")
+            try:
+                out, err = proc.communicate(timeout=20)
+            except Exception as e:
+                logger.info(e)
+                logger.info(f"[CLOUDSQLPROXY] {out} {err}")
+
+
+    def find_process(self, name):
+        # from https://psutil.readthedocs.io/en/latest/#find-process-by-name
+        "Return a list of processes matching 'name'."
+        ls = []
+        logger = logging.getLogger("klio")
+        for p in psutil.process_iter(["name", "exe", "cmdline"]):
+            if name == p.info['name'] or \
+                    p.info['exe'] and os.path.basename(p.info['exe']) == name or \
+                    p.info['cmdline'] and p.info['cmdline'][0] == name:
+                logger.info(f"Found {p}")
+                ls.append(p)
+        return 0 != len(ls)
 
     def _init_connection(self):
         # TODO make this work for MySQL and SQL Server
         # TODO figure out how to be selective in importing SQL connector libs
+
         self._conn = psycopg2.connect(
             host=self.host,
             database=self.database,
@@ -563,12 +605,17 @@ class _KlioCloudSqlProxyDoFn(beam.DoFn):
     def _unwrap_klio_message(self, element):
         message = klio_pb2.KlioMessage()
         message.ParseFromString(element)
-        return message
+        logger = logging.getLogger("klio")
+        logger.info(message.data.element)
+        row = json.loads(message.data.element)
+        return row
 
     def _build_insert_statement(self, table, row):
         columns = row.keys()
         value_placeholders = ", ".join(["%s"] * len(columns))
-        insert_sql = f"INSERT INTO {table} ({row.keys()}) VALUES ({value_placeholders})"
+        keys = ', '.join(list(row.keys()))
+        insert_sql = f"INSERT INTO {table} ({keys}) VALUES ({value_placeholders})"
+
         return insert_sql
 
     # TODO how to configure retries?
@@ -577,19 +624,21 @@ class _KlioCloudSqlProxyDoFn(beam.DoFn):
         stmt = self._build_insert_statement(self.table, row)
 
         # TODO wrap in try/except
-        with self.conn:
-            with self.conn.cursor() as curs:
-                curs.execute(stmt, row.values())
-
+        with self._conn:
+            with self._conn.cursor() as curs:
+                curs.execute(stmt, list(row.values()))
+        logger = logging.getLogger("klio")
+        logger.info(f"Reached end of process method, yielding {element}")
         yield element
 
 class KlioWriteToCloudSql(beam.PTransform):
-    def __init__(self, host, database, user, password, table):
+    def __init__(self, host, database, user, password, table, cloudsql_connection):
         self.host = host
         self.database = database
         self.user = user
         self.password = password
         self.table = table
+        self.cloudsql_connection = cloudsql_connection
 
     def expand(self, pcoll):
-        return (pcoll | beam.ParDo(_KlioCloudSqlProxyDoFn(self.host, self.database, self.user, self.password, self.table)))
+        return (pcoll | beam.ParDo(_KlioCloudSqlProxyDoFn(self.host, self.database, self.user, self.password, self.table, self.cloudsql_connection)))

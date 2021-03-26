@@ -456,12 +456,14 @@ def _timeout(seconds=None, exception=None, exception_message=None):
         )
 
     def inner(func_or_meth):
-        timeout_wrapper = ktimeout.KlioTimeoutWrapper(
-            function=func_or_meth,
-            seconds=seconds,
-            timeout_exception=exception,
-            exception_message=exception_message,
-        )
+        with _klio_context() as kctx:
+            timeout_wrapper = ktimeout.KlioTimeoutWrapper(
+                function=func_or_meth,
+                seconds=seconds,
+                timeout_exception=exception,
+                exception_message=exception_message,
+                klio_context=kctx,
+            )
 
         # Unfortunately these two wrappers can't be abstracted into
         # one wrapper - the `self` arg apparently can not be abstracted
@@ -528,14 +530,16 @@ def _retry(
         )
 
     def inner(func_or_meth):
-        retry_wrapper = kretry.KlioRetryWrapper(
-            function=func_or_meth,
-            tries=tries,
-            delay=delay,
-            exception=exception,
-            raise_exception=raise_exception,
-            exception_message=exception_message,
-        )
+        with _klio_context() as kctx:
+            retry_wrapper = kretry.KlioRetryWrapper(
+                function=func_or_meth,
+                tries=tries,
+                delay=delay,
+                exception=exception,
+                raise_exception=raise_exception,
+                exception_message=exception_message,
+                klio_context=kctx,
+            )
 
         # Unfortunately these two wrappers can't be abstracted into
         # one wrapper - the `self` arg apparently can not be abstracted

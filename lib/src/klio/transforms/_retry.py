@@ -41,6 +41,7 @@ class KlioRetryWrapper(object):
         self,
         function,
         tries,
+        klio_context,
         delay=None,
         exception=None,
         raise_exception=None,
@@ -54,6 +55,12 @@ class KlioRetryWrapper(object):
         self._retry_exception = raise_exception or KlioRetriesExhausted
         self._exception_message = exception_message
         self._logger = logging.getLogger("klio")
+        self._retry_ctr = klio_context.metrics.counter(
+            "kmsg-retry-attempt", transform=self._func_name
+        )
+        self._retry_error_ctr = klio_context.metrics.counter(
+            "kmsg-drop-retry-error", transform=self._func_name
+        )
 
     def __call__(self, *args, **kwargs):
         tries = self._tries
@@ -68,9 +75,11 @@ class KlioRetryWrapper(object):
             except self._exception as e:
                 tries -= 1
                 if not tries:
+                    self._retry_error_ctr.inc()
                     self._raise_exception(e)
                     break
 
+                self._retry_ctr.inc()
                 msg = self._format_log_message(tries, e)
                 self._logger.warning(msg)
 

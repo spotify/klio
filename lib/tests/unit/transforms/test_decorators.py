@@ -12,13 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import time
 
+from unittest import mock
+
+import apache_beam as beam
 import pytest
+
+from apache_beam.testing import test_pipeline
 
 from klio_core.proto import klio_pb2
 
+from klio.transforms import core
 from klio.transforms import decorators
 from klio.utils import _thread_limiter
+from tests.unit import conftest
+
+# NOTE: When the config attribute is accessed (when setting up
+# a metrics counter object), it will try to read a
+# `/usr/src/config/.effective-klio-job.yaml` file. Since all IO transforms
+# use the _KlioIOCounter, we just patch on the module level instead of
+# within each and every test function.
+patcher = mock.patch.object(core.RunConfig, "get", conftest._klio_config)
+patcher.start()
 
 
 @pytest.fixture
@@ -231,3 +247,56 @@ def test_thread_limiting_raises_invalid_max(
             pass
 
         func(kmsg.SerializeToString())
+
+
+class RetryDoFn(beam.DoFn):
+    @decorators._handle_klio
+    @decorators._retry(tries=3)
+    def process(self, item):
+        raise Exception("fuu")
+
+
+def test_retry_metrics(mock_config, kmsg):
+    pcoll = [kmsg.SerializeToString()]
+
+    with test_pipeline.TestPipeline() as p:
+        p | beam.Create(pcoll) | beam.ParDo(RetryDoFn())
+
+    actual_counters = p.result.metrics().query()["counters"]
+    assert 2 == len(actual_counters)
+
+    retry_ctr = actual_counters[0]
+    drop_ctr = actual_counters[1]
+
+    assert 2 == retry_ctr.committed
+    assert "RetryDoFn.process" == retry_ctr.key.metric.namespace
+    assert "kmsg-retry-attempt" == retry_ctr.key.metric.name
+
+    assert 1 == drop_ctr.committed
+    assert "RetryDoFn.process" == drop_ctr.key.metric.namespace
+    assert "kmsg-drop-retry-error" == drop_ctr.key.metric.name
+
+
+class TimeoutDoFn(beam.DoFn):
+    @decorators._handle_klio
+    @decorators._timeout(seconds=0.1)
+    def process(self, item):
+        time.sleep(2)
+        yield item
+
+
+@pytest.mark.skip(
+    "FIXME: this errors from pickling issues, which is not seen when "
+    "running an actual job."
+)
+def test_timeout_metrics(mock_config, kmsg):
+    pcoll = [kmsg.SerializeToString()]
+
+    with test_pipeline.TestPipeline() as p:
+        p | beam.Create(pcoll) | beam.ParDo(TimeoutDoFn())
+
+    actual_counters = p.result.metrics().query()["counters"]
+    assert 1 == len(actual_counters)
+    assert 1 == actual_counters[0].committed
+    assert "TimeoutDoFn.process" == actual_counters[0].key.metric.namespace
+    assert "kmsg-drop-timed-out" == actual_counters[0].key.metric.name

@@ -112,6 +112,12 @@ def mock_config(mocker, monkeypatch):
     mconfig.job_name = "a-job"
     mconfig.pipeline_options.streaming = True
     mconfig.pipeline_options.project = "not-a-real-project"
+    mconfig.pipeline_options.runner = "DirectRunner"
+
+    mock_data_output = mocker.Mock(name="MockDataGcsOutput")
+    mock_data_output.location = "gs://this-should-not-exist"
+    mock_data_output.file_suffix = ""
+    mconfig.job_config.data.outputs = [mock_data_output]
 
     mock_data_input = mocker.Mock(name="MockDataGcsInput")
     mock_data_input.type = "gcs"

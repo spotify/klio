@@ -171,6 +171,15 @@ class _KlioInputDataMixin(object):
 
     DIRECTION_PFX = KlioIODirection.INPUT
 
+    def setup(self, *args, **kwargs):
+        super(_KlioInputDataMixin, self).setup(*args, **kwargs)
+        self.found_ctr = self._klio.metrics.counter(
+            "kmsg-data-found-input", transform=self._transform_name
+        )
+        self.not_found_ctr = self._klio.metrics.counter(
+            "kmsg-data-not-found-input", transform=self._transform_name
+        )
+
     @property
     def _data_config(self):
         # TODO: figure out how to support multiple inputs
@@ -198,6 +207,11 @@ class _KlioInputDataMixin(object):
             )
         return self._klio.config.job_config.data.inputs[0]
 
+    @property
+    def _transform_name(self):
+        # grab the child class name that inherits this class, if any
+        return self.__class__.__name__
+
 
 class _KlioOutputDataMixin(object):
     """Mixin to add output-specific logic for a data existence check.
@@ -206,6 +220,15 @@ class _KlioOutputDataMixin(object):
     """
 
     DIRECTION_PFX = KlioIODirection.OUTPUT
+
+    def setup(self, *args, **kwargs):
+        super(_KlioOutputDataMixin, self).setup(*args, **kwargs)
+        self.found_ctr = self._klio.metrics.counter(
+            "kmsg-data-found-output", transform=self._transform_name
+        )
+        self.not_found_ctr = self._klio.metrics.counter(
+            "kmsg-data-not-found-output", transform=self._transform_name
+        )
 
     @property
     def _data_config(self):
@@ -235,6 +258,11 @@ class _KlioOutputDataMixin(object):
             )
         return self._klio.config.job_config.data.outputs[0]
 
+    @property
+    def _transform_name(self):
+        # grab the child class name that inherits this class, if any
+        return self.__class__.__name__
+
 
 class _KlioGcsDataExistsMixin(object):
     """Mixin for GCS-specific data existence check logic.
@@ -243,7 +271,8 @@ class _KlioGcsDataExistsMixin(object):
     _KlioInputDataMixin or _KlioOutputDataMixin
     """
 
-    def setup(self):
+    def setup(self, *args, **kwargs):
+        super(_KlioGcsDataExistsMixin, self).setup(*args, **kwargs)
         self.client = gcsio.GcsIO()
 
     def exists(self, path):
@@ -260,9 +289,12 @@ class _KlioGcsCheckExistsBase(
         item_path = self._get_absolute_path(item)
         item_exists = self.exists(item_path)
 
-        state = DataExistState.FOUND
         if not item_exists:
+            self.not_found_ctr.inc()
             state = DataExistState.NOT_FOUND
+        else:
+            self.found_ctr.inc()
+            state = DataExistState.FOUND
 
         self._klio.logger.info(
             "%s %s at %s"

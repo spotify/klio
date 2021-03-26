@@ -233,6 +233,8 @@ class TestExecutionMode(BaseTest):
                 self.assert_not_processed
             )
 
+        assert 0 == len(p.result.metrics().query()["counters"])
+
     def input_v0_kmsg_limited(self):
         msg = self.prep_kmsg()
         msg.metadata.intended_recipients.limited.recipients.extend(
@@ -273,6 +275,8 @@ class TestExecutionMode(BaseTest):
                 self.assert_not_processed
             )
 
+        assert 0 == len(p.result.metrics().query()["counters"])
+
     def input_v0_kmsg_drop(self):
         msg = self.prep_kmsg()
         msg.metadata.intended_recipients.limited.recipients.extend(
@@ -312,6 +316,13 @@ class TestExecutionMode(BaseTest):
             _ = msg_version.v1 | "Assert no v1 msgs" >> beam.Map(
                 self.assert_not_processed
             )
+        actual_counters = p.result.metrics().query()["counters"]
+
+        assert 1 == len(actual_counters)
+        drop_counter = actual_counters[0]
+        assert len(pcoll) == drop_counter.committed
+        assert "KlioCheckRecipients" == drop_counter.key.metric.namespace
+        assert "kmsg-drop-not-recipient" == drop_counter.key.metric.name
 
     def in_v0_kmsg_trigger_children_of(self):
         msg = self.prep_kmsg()
@@ -366,6 +377,8 @@ class TestExecutionMode(BaseTest):
             _ = msg_version.v1 | "Assert no v1 msgs" >> beam.Map(
                 self.assert_not_processed
             )
+
+        assert 0 == len(p.result.metrics().query()["counters"])
 
 
 def assert_audit(actual):
@@ -449,3 +462,112 @@ def test_trigger_upstream_job(mock_config, mocker, capsys):
         mock_pubsub_client.return_value.topic_path.return_value,
         exp_kmsg.SerializeToString(),
     )
+
+    actual_counters = p.result.metrics().query()["counters"]
+    assert 2 == len(actual_counters)
+
+    data_not_found_ctr = actual_counters[0]
+    trigger_upstream_ctr = actual_counters[1]
+    assert 1 == data_not_found_ctr.committed
+    assert "KlioGcsCheckInputExists" == data_not_found_ctr.key.metric.namespace
+    assert "kmsg-data-not-found-input" == data_not_found_ctr.key.metric.name
+    assert 1 == trigger_upstream_ctr.committed
+    assert "KlioTriggerUpstream" == trigger_upstream_ctr.key.metric.namespace
+    assert "kmsg-trigger-upstream" == trigger_upstream_ctr.key.metric.name
+
+
+def test_klio_drop(mock_config, caplog):
+    kmsg = klio_pb2.KlioMessage()
+
+    with test_pipeline.TestPipeline() as p:
+        p | beam.Create([kmsg.SerializeToString()]) | helpers.KlioDrop()
+
+    # beam produces 50+ log messages so let's just iterate and find what
+    # we're looking for *shrug*
+    for rec in caplog.records:
+        if "Dropping KlioMessage" in rec.message:
+            assert True
+            break
+    else:
+        assert False, "Expected log message not found"
+
+    actual_counters = p.result.metrics().query()["counters"]
+    assert 1 == len(actual_counters)
+    assert 1 == actual_counters[0].committed
+    assert "KlioDrop" == actual_counters[0].key.metric.namespace
+    assert "kmsg-drop" == actual_counters[0].key.metric.name
+
+
+def test_klio_debug(mock_config):
+    kmsg = klio_pb2.KlioMessage()
+
+    with test_pipeline.TestPipeline() as p:
+        p | beam.Create(
+            [kmsg.SerializeToString()]
+        ) | helpers.KlioDebugMessage()
+
+    actual_counters = p.result.metrics().query()["counters"]
+    assert 1 == len(actual_counters)
+    assert 1 == actual_counters[0].committed
+    assert "KlioDebugMessage" == actual_counters[0].key.metric.namespace
+    assert "kmsg-debug" == actual_counters[0].key.metric.name
+
+
+@pytest.mark.parametrize("global_ping", (True, False))
+def test_klio_filter_ping(global_ping, mock_config):
+    mock_config.job_config.data.inputs[0].ping = global_ping
+
+    kmsg1 = klio_pb2.KlioMessage()
+    kmsg1.metadata.ping = True
+    kmsg2 = klio_pb2.KlioMessage()
+    kmsg2.metadata.ping = False
+    pcoll = [kmsg1.SerializeToString(), kmsg2.SerializeToString()]
+
+    with test_pipeline.TestPipeline() as p:
+        p | beam.Create(pcoll) | helpers.KlioFilterPing()
+
+    actual_counters = p.result.metrics().query()["counters"]
+    pass_thru_ctr = actual_counters[0]
+    assert "KlioFilterPing" == pass_thru_ctr.key.metric.namespace
+    assert "kmsg-skip-ping" == pass_thru_ctr.key.metric.name
+
+    if global_ping:
+        assert 1 == len(actual_counters)
+        assert 2 == pass_thru_ctr.committed
+    else:
+        assert 2 == len(actual_counters)
+        process_ctr = actual_counters[1]
+        assert 1 == pass_thru_ctr.committed
+        assert 1 == process_ctr.committed
+        assert "KlioFilterPing" == process_ctr.key.metric.namespace
+        assert "kmsg-process-ping" == process_ctr.key.metric.name
+
+
+@pytest.mark.parametrize("global_force", (True, False))
+def test_klio_filter_force(global_force, mock_config):
+    mock_config.job_config.data.outputs[0].force = global_force
+
+    kmsg1 = klio_pb2.KlioMessage()
+    kmsg1.metadata.force = True
+    kmsg2 = klio_pb2.KlioMessage()
+    kmsg2.metadata.force = False
+    pcoll = [kmsg1.SerializeToString(), kmsg2.SerializeToString()]
+
+    with test_pipeline.TestPipeline() as p:
+        p | beam.Create(pcoll) | helpers.KlioFilterForce()
+
+    actual_counters = p.result.metrics().query()["counters"]
+    force_ctr = actual_counters[0]
+    assert "KlioFilterForce" == force_ctr.key.metric.namespace
+    assert "kmsg-process-force" == force_ctr.key.metric.name
+
+    if global_force:
+        assert 1 == len(actual_counters)
+        assert 2 == force_ctr.committed
+    else:
+        assert 2 == len(actual_counters)
+        skip_ctr = actual_counters[1]
+        assert 1 == force_ctr.committed
+        assert 1 == skip_ctr.committed
+        assert "KlioFilterForce" == skip_ctr.key.metric.namespace
+        assert "kmsg-skip-force" == skip_ctr.key.metric.name

@@ -37,6 +37,7 @@
 .. autosummary::
     :nosignatures:
 
+    KlioMessageCounter
     KlioGcsCheckInputExists
     KlioGcsCheckOutputExists
     KlioFilterPing

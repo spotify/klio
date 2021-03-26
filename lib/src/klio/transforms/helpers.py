@@ -32,6 +32,61 @@ _StubDataConfig = collections.namedtuple("_StubDataConfig", ["ping", "force"])
 """Stub data config when helpers are used without job_config.data configured."""
 
 
+class KlioMessageCounter(beam.DoFn):
+    """Helper transform to count elements.
+
+    This transform will yield elements given to it, counting each one it sees.
+
+    Since it is a DoFn transform, it needs to be invoked via ``beam.ParDo``
+    when used. Some usage examples:
+
+    .. code-block:: python
+
+        # Example composite transform
+        class MyCompositeTransform(beam.PTransform):
+            def __init__(self, *args, **kwargs):
+                self.transform = MyTransform(*args, **kwargs)
+                self.ctr = KlioMessageCounter(suffix="processed", "MyTransform")
+
+            def expand(self, pcoll):
+                return (
+                    pcoll
+                    | "Process items" >> self.transform
+                    | "Count items processed" >> beam.ParDo(self.ctr)
+                )
+
+        # Example pipeline segment
+        def run(input_pcol, config):
+            input_data = input_pcol | helpers.KlioGcsCheckInputExists()
+            data_not_found = input_data.not_found | helpers.KlioMessageCounter(
+                suffix="data-not-found",
+                bind_transform="KlioGcsCheckInputExists"
+            )
+            ...
+
+    Args:
+        suffix (str): suffix of the counter name. The full counter name will
+            be ``kmsg-{suffix}``.
+        bind_transform (str): Name of transform to bind the counter to. This
+            is used for Dataflow monitoring UI purposes, and can be set to a
+            prior or following transform in a pipeline, or to itself.
+    """
+
+    def __init__(self, suffix, bind_transform):
+        self.suffix = suffix
+        self.bind_transform = bind_transform
+
+    @decorators._set_klio_context
+    def setup(self):
+        self.counter = self._klio.metrics.counter(
+            f"kmsg-{self.suffix}", transform=self.bind_transform
+        )
+
+    def process(self, item):
+        self.counter.inc()
+        yield item
+
+
 class KlioGcsCheckInputExists(
     _helpers._KlioInputDataMixin, _helpers._KlioGcsCheckExistsBase
 ):
@@ -54,6 +109,15 @@ class KlioFilterPing(
     """Klio transform to tag outputs if in ping mode or not."""
 
     stub_config = _StubDataConfig(ping=False, force=False)
+
+    def setup(self, *args, **kwargs):
+        super(KlioFilterPing, self).setup(*args, **kwargs)
+        self.process_ctr = self._klio.metrics.counter(
+            "kmsg-process-ping", transform=self._transform_name
+        )
+        self.pass_thru_ctr = self._klio.metrics.counter(
+            "kmsg-skip-ping", transform=self._transform_name
+        )
 
     @property
     def _data_config(self):
@@ -78,10 +142,12 @@ class KlioFilterPing(
 
         if self.ping(kmsg):
             self._klio.logger.info("Pass through '%s': Ping mode ON." % item)
+            self.pass_thru_ctr.inc()
             tagged_state = _helpers.TaggedStates.PASS_THRU
 
         else:
             self._klio.logger.debug("Process '%s': Ping mode OFF." % item)
+            self.process_ctr.inc()
             tagged_state = _helpers.TaggedStates.PROCESS
 
         yield pvalue.TaggedOutput(tagged_state.value, kmsg.SerializeToString())
@@ -93,6 +159,15 @@ class KlioFilterForce(
     """Klio transform to tag outputs if in force mode or not."""
 
     stub_config = _StubDataConfig(ping=False, force=False)
+
+    def setup(self, *args, **kwargs):
+        super(KlioFilterForce, self).setup(*args, **kwargs)
+        self.process_ctr = self._klio.metrics.counter(
+            "kmsg-process-force", transform=self._transform_name
+        )
+        self.pass_thru_ctr = self._klio.metrics.counter(
+            "kmsg-skip-force", transform=self._transform_name
+        )
 
     @property
     def _data_config(self):
@@ -121,6 +196,7 @@ class KlioFilterForce(
                 "Pass through '%s': Force mode OFF with output found at '%s'."
                 % (item, item_path)
             )
+            self.pass_thru_ctr.inc()
             tagged_state = _helpers.TaggedStates.PASS_THRU
 
         else:
@@ -128,6 +204,7 @@ class KlioFilterForce(
                 "Process '%s': Force mode ON with output found at '%s'."
                 % (item, item_path)
             )
+            self.process_ctr.inc()
             tagged_state = _helpers.TaggedStates.PROCESS
 
         yield pvalue.TaggedOutput(tagged_state.value, kmsg.SerializeToString())
@@ -173,6 +250,10 @@ class KlioWriteToEventOutput(beam.PTransform):
         kwargs = self._event_config.as_dict()
         return (
             pcoll
+            | "Write Counter"
+            >> KlioMessageCounter(
+                suffix="output", bind_transform=KlioWriteToEventOutput
+            )
             | "Writing to '%s'" % self._event_config.name
             >> transform_kls(**kwargs)
         )
@@ -184,12 +265,21 @@ class KlioDrop(beam.DoFn, metaclass=_helpers._KlioBaseDoFnMetaclass):
 
     WITH_OUTPUTS = False
 
+    @decorators._set_klio_context
+    def setup(self):
+        # grab the child class name that inherits this class
+        transform_name = self.__class__.__name__
+        self.drop_ctr = self._klio.metrics.counter(
+            "kmsg-drop", transform=transform_name
+        )
+
     @decorators._handle_klio(max_thread_count=kutils.ThreadLimit.NONE)
     def process(self, kmsg):
         self._klio.logger.info(
             "Dropping KlioMessage - can not process '%s' any further."
             % kmsg.element
         )
+        self.drop_ctr.inc()
         return
 
 
@@ -267,6 +357,14 @@ class KlioCheckRecipients(
 
     WITH_OUTPUTS = True
 
+    def setup(self, *args, **kwargs):
+        super(KlioCheckRecipients, self).setup(*args, **kwargs)
+        # this grabs the child class name that inherits this class, if any
+        transform_name = self.__class__.__name__
+        self.drop_ctr = self._klio.metrics.counter(
+            "kmsg-drop-not-recipient", transform=transform_name
+        )
+
     @decorators._set_klio_context
     def _should_process(self, klio_message):
         intended_recipients = klio_message.metadata.intended_recipients
@@ -325,6 +423,7 @@ class KlioCheckRecipients(
                 _helpers.TaggedStates.PROCESS.value, raw_message
             )
         else:
+            self.drop_ctr.inc()
             yield pvalue.TaggedOutput(
                 _helpers.TaggedStates.DROP.value, raw_message
             )
@@ -408,7 +507,16 @@ class KlioDebugMessage(beam.PTransform):
         return raw_message
 
     def expand(self, pipeline):
-        return pipeline | beam.Map(self.print_debug)
+        return (
+            pipeline
+            | "Debug Message Counter"
+            >> beam.ParDo(
+                KlioMessageCounter(
+                    suffix="debug", bind_transform="KlioDebugMessage"
+                )
+            )
+            | beam.Map(self.print_debug)
+        )
 
 
 class KlioSetTrace(beam.PTransform):
@@ -646,6 +754,14 @@ class KlioTriggerUpstream(beam.PTransform):
         if self.log_level is not None:
             _ = updated_kmsg | lbl2 >> beam.Map(self.log)
 
-        return updated_kmsg | lbl3 >> beam.io.WriteToPubSub(
-            topic=self.upstream_topic
+        return (
+            updated_kmsg
+            | "Write Counter"
+            >> beam.ParDo(
+                KlioMessageCounter(
+                    suffix="trigger-upstream",
+                    bind_transform="KlioTriggerUpstream",
+                )
+            )
+            | lbl3 >> beam.io.WriteToPubSub(topic=self.upstream_topic)
         )

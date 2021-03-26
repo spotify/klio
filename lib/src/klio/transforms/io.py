@@ -89,6 +89,7 @@ class _KlioTransformMixin(metaclass=_KlioWrapIOMetaclass):
     _REQUIRES_IO_READ_WRAP = False
 
 
+# TODO: merge with helpers.KlioMessageCounter since it's the same logic
 class _KlioIOCounter(beam.DoFn):
     """Internal helper transform to count elements to/from I/O transforms.
 

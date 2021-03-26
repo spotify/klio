@@ -4,6 +4,7 @@ Helpers
 
 .. currentmodule:: klio.transforms.helpers
 
+.. autoclass:: KlioMessageCounter()
 .. autoclass:: KlioGcsCheckInputExists()
 .. autoclass:: KlioGcsCheckOutputExists()
 .. autoclass:: KlioFilterPing()

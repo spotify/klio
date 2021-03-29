@@ -33,6 +33,7 @@ loggers_to_mute = (
     "apache_beam.internal.gcp.auth",
     "oauth2client.transport",
     "oauth2client.client",
+    "klio.metrics",
     # The concurrency logs may be different for every machine, so let's
     # just turn them off
     "klio.concurrency",

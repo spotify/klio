@@ -655,3 +655,79 @@ class KlioWriteToAvro(beam.PTransform):
             | "Write Counter" >> beam.ParDo(self.__counter)
             | "KlioWriteToAvro" >> self._writer
         )
+
+
+class KlioReadFromPubSub(beam.PTransform):
+    """Read from a Google Pub/Sub topic or subscription.
+
+    Args:
+        topic (str): Cloud Pub/Sub topic in the form
+            ``projects/<project>/topics/<topic>``. If provided,
+            ``subscription`` must be ``None``.
+        subscription (str): Existing Cloud Pub/Sub subscription to use in the
+            form ``projects/<project>/subscriptions/<subscription>``. If not
+            specified, a temporary subscription will be created from the
+            specified topic. If provided, ``topic`` must be ``None``.
+        id_label (str): The attribute on incoming Pub/Sub messages to use as a
+            unique record identifier. When specified, the value of this
+            attribute (which can be any string that uniquely identifies the
+            record) will be used for deduplication of messages. If not
+            provided, we cannot guarantee that no duplicate data will be
+            delivered on the Pub/Sub stream. In this case, deduplication of
+            the stream will be strictly best effort.
+        with_attributes (bool): With ``True``, output elements will be
+            :class:`PubsubMessage <apache_beam.io.gcp.pubsub.PubsubMessage>`
+            objects. With ``False``, output elements will be of type ``bytes``
+            (message data only). Defaults to ``False``.
+        timestamp_attribute (str): Message value to use as element timestamp.
+            If ``None``, uses message publishing time as the timestamp.
+            Timestamp values should be in one of two formats: (1) A numerical
+            value representing the number of milliseconds since the Unix epoch.
+            (2) A string in RFC 3339 format, UTC timezone. Example:
+            ``2015-10-29T23:41:41.123Z``. The sub-second component of the
+            timestamp is optional, and digits beyond the first three (i.e.,
+            time units smaller than milliseconds) may be ignored.
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        self._reader = beam.io.ReadFromPubSub(*args, **kwargs)
+        self.__counter = _KlioIOCounter("read", "KlioReadFromPubSub")
+
+    def expand(self, pbegin):
+        return (
+            pbegin
+            | "Read from PubSub" >> self._reader
+            | "Read Counter" >> beam.ParDo(self.__counter)
+        )
+
+
+class KlioWriteToPubSub(beam.PTransform):
+    """Write to a Google Pub/Sub topic.
+
+    Args:
+        topic (str): Cloud Pub/Sub topic in the form
+            ``/topics/<project>/<topic>``.
+        with_attributes (bool): With ``True``, input elements will be
+            :class:`PubsubMessage <apache_beam.io.gcp.pubsub.PubsubMessage>`
+            objects. With ``False``, input elements will be of type ``bytes``
+            (message data only). Defaults to ``False``.
+        id_label (str): If set, will set an attribute for each Cloud Pub/Sub
+            message with the given name and a unique value. This attribute
+            can then be used in a ReadFromPubSub PTransform to deduplicate
+            messages.
+        timestamp_attribute (str): If set, will set an attribute for each
+            Cloud Pub/Sub message with the given name and the message's
+            publish time as the value.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self._writer = beam.io.WriteToPubSub(*args, **kwargs)
+        self.__counter = _KlioIOCounter("write", "KlioWriteToPubSub")
+
+    def expand(self, pcoll):
+        return (
+            pcoll
+            | "Write Counter" >> beam.ParDo(self.__counter)
+            | "Write To PubSub" >> self._writer
+        )

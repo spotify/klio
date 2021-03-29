@@ -61,9 +61,11 @@
     KlioReadFromText
     KlioReadFromBigQuery
     KlioReadFromAvro
+    KlioReadFromPubSub
     KlioWriteToText
     KlioWriteToBigQuery
     KlioWriteToAvro
+    KlioWriteToPubSub
     KlioMissingConfiguration
 
 

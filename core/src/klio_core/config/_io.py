@@ -116,7 +116,7 @@ class KlioIOConfig(object):
         # since dicts preserve order by default in py3, let's force
         # type to be first - particularly helpful/useful for dumping
         # config via `klio job config show`
-        copy = {"type": self.name}
+        copy = {"type": self.type_name}
         copy.update(config_dict)
         return copy
 
@@ -199,7 +199,7 @@ class KlioDataIOConfig(KlioIOConfig):
 
 @attr.attrs(frozen=True)
 class KlioPubSubConfig(object):
-    name = "pubsub"
+    type_name = "pubsub"
     topic = attr.attrib(type=str)
 
     @staticmethod
@@ -254,7 +254,7 @@ class KlioPubSubEventOutput(KlioEventOutput, KlioPubSubConfig):
 
 
 class KlioFileConfig(object):
-    name = "file"
+    type_name = "file"
 
 
 @attr.attrs(frozen=True)
@@ -331,7 +331,7 @@ class KlioFileOutputDataConfig(KlioDataIOConfig, KlioFileConfig):
 
 
 class KlioAvroConfig(object):
-    name = "avro"
+    type_name = "avro"
 
 
 @attr.attrs(frozen=True)
@@ -387,7 +387,7 @@ def _convert_bigquery_input_coder(coder_str):
 
 @attr.attrs(frozen=True)
 class KlioBigQueryConfig(object):
-    name = "bq"
+    type_name = "bq"
     project = attr.attrib(type=str, default=None)
     dataset = attr.attrib(type=str, default=None)
     table = attr.attrib(type=str, default=None)
@@ -493,7 +493,7 @@ class KlioBigQueryEventOutput(KlioEventOutput, KlioBigQueryConfig):
 
 @attr.attrs(frozen=True)
 class KlioGCSConfig(KlioIOConfig):
-    name = "gcs"
+    type_name = "gcs"
     location = attr.attrib(type=str)
 
     @staticmethod

@@ -500,7 +500,7 @@ class KlioPipeline(object):
         if label_prefix:
             label = "[{}] {}".format(label_prefix, label)
 
-        transform_cls_in = self._io_mapper.input[input_config.name]
+        transform_cls_in = self._io_mapper.input[input_config.type_name]
         in_pcol = pipeline | label >> transform_cls_in(
             **input_config.to_io_kwargs()
         )
@@ -534,7 +534,9 @@ class KlioPipeline(object):
         if self._has_event_outputs:
             output_config = self.config.job_config.events.outputs[0]
             if not output_config.skip_klio_write:
-                transform_cls_out = self._io_mapper.output[output_config.name]
+                transform_cls_out = self._io_mapper.output[
+                    output_config.type_name
+                ]
                 to_output = out_pcol
                 if to_pass_thru:
                     to_output_tuple = (out_pcol, to_pass_thru)

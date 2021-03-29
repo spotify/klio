@@ -172,7 +172,7 @@ EXTRAS_REQUIRE = {
         "pytest-mock",
     ],
     "debug": [
-        "line_profiler",  # wall time profiling
+        "line_profiler<3.2",  # wall time profiling
         "matplotlib",  # needed for plotting mem/CPU usage
         "numpy",  # needed for plotting
         "memory_profiler",

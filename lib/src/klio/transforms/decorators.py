@@ -388,12 +388,15 @@ def _handle_klio(*args, max_thread_count=None, thread_limiter=None, **kwargs):
         thd_limiter = __get_thread_limiter(
             max_thread_count, thread_limiter, func_name
         )
+        # grab klio context outside of the method/func wrappers so the
+        # context manager isn't called for every time an item is processed
+        with _klio_context() as ctx:
+            kctx = ctx
 
         @functools.wraps(func_or_meth)
         def method_wrapper(self, *args, **kwargs):
             with thd_limiter:
-                with _klio_context() as ctx:
-                    setattr(self, "_klio", ctx)
+                setattr(self, "_klio", kctx)
 
                 # SO. HACKY. We check to see if this method is named "expand"
                 # to designate  if the class is a Composite-type transform
@@ -420,10 +423,9 @@ def _handle_klio(*args, max_thread_count=None, thread_limiter=None, **kwargs):
         @functools.wraps(func_or_meth)
         def func_wrapper(incoming_item, *args, **kwargs):
             with thd_limiter:
-                with _klio_context() as ctx:
-                    return __serialize_klio_message(
-                        ctx, func_or_meth, incoming_item, *args, **kwargs
-                    )
+                return __serialize_klio_message(
+                    kctx, func_or_meth, incoming_item, *args, **kwargs
+                )
 
         if __is_method(func_or_meth):
             return method_wrapper

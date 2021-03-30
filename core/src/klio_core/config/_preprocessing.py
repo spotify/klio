@@ -82,10 +82,6 @@ class KlioConfigPreprocessor(object):
         for conf in io_subsection_list:
             if "name" in conf:
                 name = conf["name"]
-                # TODO: right now "name" isn't supported in IOConfig (conflicts
-                # with existing "name" attribute), once that's fixed we
-                # shouldn't drop name here
-                conf.pop("name")
             else:
                 type_name = conf.get("type", "unknown")
                 type_id = type_counters[type_name]

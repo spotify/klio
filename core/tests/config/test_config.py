@@ -36,7 +36,11 @@ def job_config_dict():
                 },
             },
             "outputs": {
-                "pubsub0": {"type": "pubsub", "topic": "test-job-out"}
+                "pubsub0": {
+                    "type": "pubsub",
+                    "topic": "test-job-out",
+                    "name": "test-event-output0",
+                }
             },
         },
         "data": {
@@ -44,6 +48,7 @@ def job_config_dict():
                 "gcs0": {
                     "type": "GCS",
                     "location": "gs://sigint-output/test-parent-job-out",
+                    "name": "test-data-input0",
                 }
             },
             "outputs": {
@@ -63,49 +68,55 @@ def job_config_dict():
 @pytest.fixture
 def final_job_config_dict():
     return {
-        "metrics": {"logger": {}},
+        "allow_non_klio_messages": False,
+        "metrics": {
+            "logger": {}
+        },
+        "blocking": False,
         "events": {
             "inputs": [
                 {
                     "type": "pubsub",
-                    "topic": "test-parent-job-out",
-                    "subscription": "test-parent-job-out-sub",
+                    "name": None,
                     "skip_klio_read": False,
-                },
+                    "topic": "test-parent-job-out",
+                    "subscription": "test-parent-job-out-sub"
+                }
             ],
             "outputs": [
                 {
                     "type": "pubsub",
-                    "topic": "test-job-out",
+                    "name": "test-event-output0",
                     "skip_klio_write": False,
+                    "topic": "test-job-out"
                 }
-            ],
+            ]
         },
         "data": {
             "inputs": [
                 {
                     "type": "gcs",
-                    "location": "gs://sigint-output/test-parent-job-out",
+                    "name": "test-data-input0",
                     "skip_klio_existence_check": False,
+                    "location": "gs://sigint-output/test-parent-job-out",
                     "file_suffix": "",
-                    "ping": False,
+                    "ping": False
                 }
             ],
-            "outputs": [
+            "outputs":[
                 {
                     "type": "gcs",
+                    "name": None,
+                    "skip_klio_existence_check": False,
+                    "location": "gs://sigint-output/test-job-out",
                     "file_suffix": "",
                     "force": False,
-                    "location": "gs://sigint-output/test-job-out",
-                    "skip_klio_existence_check": False,
                 }
-            ],
+            ]
         },
         "more": "config",
         "that": {"the": "user"},
-        "might": ["include"],
-        "blocking": False,
-        "allow_non_klio_messages": False,
+        "might": ["include"]
     }
 
 

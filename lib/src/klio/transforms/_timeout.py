@@ -63,13 +63,21 @@ class KlioTimeoutWrapper(object):
     DEFAULT_EXC_MSG = "Function '{}' timed out after {} seconds."
 
     def __init__(
-        self, function, seconds, timeout_exception=None, exception_message=None
+        self,
+        function,
+        seconds,
+        klio_context,
+        timeout_exception=None,
+        exception_message=None,
     ):
         self._function = function
         self._func_name = getattr(function, "__qualname__", function.__name__)
         self._seconds = seconds
         self._timeout_exception = timeout_exception or KlioTimeoutError
         self._exception_message = exception_message
+        self._timeout_ctr = klio_context.metrics.counter(
+            "klio-drop-timed-out", transform=self._func_name
+        )
 
     def __call__(self, *args, **kwargs):
         self._queue = multiprocessing.Queue(maxsize=1)
@@ -123,6 +131,7 @@ class KlioTimeoutWrapper(object):
     def ready(self):
         """Manage the status of "value" property."""
         if self._timeout < time.monotonic():
+            self._timeout_ctr.inc()
             self.cancel()
         return self._queue.full() and not self._queue.empty()
 

@@ -27,8 +27,7 @@ def caplog(caplog):
     return caplog
 
 
-@pytest.fixture
-def job_config_dict():
+def _job_config_dict():
     return {
         "metrics": {"logger": {}},
         "allow_non_klio_messages": False,
@@ -56,7 +55,11 @@ def job_config_dict():
 
 
 @pytest.fixture
-def pipeline_config_dict():
+def job_config_dict():
+    return _job_config_dict()
+
+
+def _pipeline_config_dict():
     return {
         "project": "test-project",
         "staging_location": "gs://some/stage",
@@ -76,13 +79,26 @@ def pipeline_config_dict():
 
 
 @pytest.fixture
-def config_dict(job_config_dict, pipeline_config_dict):
+def pipeline_config_dict():
+    return _pipeline_config_dict()
+
+
+def _config_dict():
     return {
-        "job_config": job_config_dict,
-        "pipeline_options": pipeline_config_dict,
+        "job_config": _job_config_dict(),
+        "pipeline_options": _pipeline_config_dict(),
         "job_name": "test-job",
         "version": 1,
     }
+
+
+@pytest.fixture
+def config_dict():
+    return _config_dict()
+
+
+def _klio_config():
+    return config.KlioConfig(_config_dict())
 
 
 @pytest.fixture
@@ -96,6 +112,12 @@ def mock_config(mocker, monkeypatch):
     mconfig.job_name = "a-job"
     mconfig.pipeline_options.streaming = True
     mconfig.pipeline_options.project = "not-a-real-project"
+    mconfig.pipeline_options.runner = "DirectRunner"
+
+    mock_data_output = mocker.Mock(name="MockDataGcsOutput")
+    mock_data_output.location = "gs://this-should-not-exist"
+    mock_data_output.file_suffix = ""
+    mconfig.job_config.data.outputs = [mock_data_output]
 
     mock_data_input = mocker.Mock(name="MockDataGcsInput")
     mock_data_input.type = "gcs"

@@ -164,6 +164,7 @@ linkcheck_ignore = [
 linkcheck_anchors_ignore = [
     "changelog-format",
     "update-changelog",
+    "matplotlib.figure.Figure",
 ]
 
 # -- Options for HTML output -------------------------------------------------

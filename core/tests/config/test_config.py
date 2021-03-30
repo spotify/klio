@@ -69,9 +69,7 @@ def job_config_dict():
 def final_job_config_dict():
     return {
         "allow_non_klio_messages": False,
-        "metrics": {
-            "logger": {}
-        },
+        "metrics": {"logger": {}},
         "blocking": False,
         "events": {
             "inputs": [
@@ -80,7 +78,7 @@ def final_job_config_dict():
                     "name": None,
                     "skip_klio_read": False,
                     "topic": "test-parent-job-out",
-                    "subscription": "test-parent-job-out-sub"
+                    "subscription": "test-parent-job-out-sub",
                 }
             ],
             "outputs": [
@@ -88,9 +86,9 @@ def final_job_config_dict():
                     "type": "pubsub",
                     "name": "test-event-output0",
                     "skip_klio_write": False,
-                    "topic": "test-job-out"
+                    "topic": "test-job-out",
                 }
-            ]
+            ],
         },
         "data": {
             "inputs": [
@@ -100,10 +98,10 @@ def final_job_config_dict():
                     "skip_klio_existence_check": False,
                     "location": "gs://sigint-output/test-parent-job-out",
                     "file_suffix": "",
-                    "ping": False
+                    "ping": False,
                 }
             ],
-            "outputs":[
+            "outputs": [
                 {
                     "type": "gcs",
                     "name": None,
@@ -112,11 +110,11 @@ def final_job_config_dict():
                     "file_suffix": "",
                     "force": False,
                 }
-            ]
+            ],
         },
         "more": "config",
         "that": {"the": "user"},
-        "might": ["include"]
+        "might": ["include"],
     }
 
 

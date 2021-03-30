@@ -226,53 +226,61 @@ def test_apply_templates(
 @pytest.mark.parametrize(
     "config,expected",
     (
-            # No overrides given - no changes in returned dict
-            (
-                    {
-                        "job_config": {
-                            "events": {
-                                "inputs": [
-                                    {"type": "bq", "key": "value"},
-                                    {"type": "bq", "key": "value2"},
-                                    {"type": "gcs", "gcskey": "gcsvalue"},
-                                ],
-                                "outputs": [
-                                    {"type": "bq", "key": "value", "name": "mybq"},
-                                    {"type": "bq", "key": "value2"},
-                                ],
-                            },
-                            "data": {
-                                "inputs": [],
-                                "outputs": [
-                                    {"type": "bq", "key": "value", "name": "mybq"},
-                                    {"type": "bq", "key": "value2"},
-                                ],
-                            },
-                        }
+        # No overrides given - no changes in returned dict
+        (
+            {
+                "job_config": {
+                    "events": {
+                        "inputs": [
+                            {"type": "bq", "key": "value"},
+                            {"type": "bq", "key": "value2"},
+                            {"type": "gcs", "gcskey": "gcsvalue"},
+                        ],
+                        "outputs": [
+                            {"type": "bq", "key": "value", "name": "mybq"},
+                            {"type": "bq", "key": "value2"},
+                        ],
                     },
-                    {
-                        "job_config": {
-                            "events": {
-                                "inputs": {
-                                    "bq0": {"type": "bq", "key": "value"},
-                                    "bq1": {"type": "bq", "key": "value2"},
-                                    "gcs0": {"type": "gcs", "gcskey": "gcsvalue"},
-                                },
-                                "outputs": {
-                                    "mybq": {"type": "bq", "key": "value", "name": "mybq"},
-                                    "bq0": {"type": "bq", "key": "value2"},
-                                },
+                    "data": {
+                        "inputs": [],
+                        "outputs": [
+                            {"type": "bq", "key": "value", "name": "mybq"},
+                            {"type": "bq", "key": "value2"},
+                        ],
+                    },
+                }
+            },
+            {
+                "job_config": {
+                    "events": {
+                        "inputs": {
+                            0: {"type": "bq", "key": "value"},
+                            1: {"type": "bq", "key": "value2"},
+                            2: {"type": "gcs", "gcskey": "gcsvalue"},
+                        },
+                        "outputs": {
+                            "mybq": {
+                                "type": "bq",
+                                "key": "value",
+                                "name": "mybq",
                             },
-                            "data": {
-                                "inputs": {},
-                                "outputs": {
-                                    "mybq": {"type": "bq", "key": "value", "name": "mybq"},
-                                    "bq0": {"type": "bq", "key": "value2"},
-                                },
+                            1: {"type": "bq", "key": "value2"},
+                        },
+                    },
+                    "data": {
+                        "inputs": {},
+                        "outputs": {
+                            "mybq": {
+                                "type": "bq",
+                                "key": "value",
+                                "name": "mybq",
                             },
-                        }
-                    }
-            ),
+                            1: {"type": "bq", "key": "value2"},
+                        },
+                    },
+                }
+            },
+        ),
     ),
 )
 def test_transform_io(kcp, config, expected):

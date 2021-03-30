@@ -73,6 +73,7 @@ def supports(*type_directions):
 class KlioIOConfig(object):
     io_type = attr.attrib(type=KlioIOType)
     io_direction = attr.attrib(type=KlioIODirection)
+    name = attr.attrib(type=str)
 
     # these must be filled in by subclasses so Klio knows what supports what
     SUPPORTED_TYPES = []
@@ -116,7 +117,7 @@ class KlioIOConfig(object):
         # since dicts preserve order by default in py3, let's force
         # type to be first - particularly helpful/useful for dumping
         # config via `klio job config show`
-        copy = {"type": self.name}
+        copy = {"type": self.type_name}
         copy.update(config_dict)
         return copy
 
@@ -141,15 +142,19 @@ class KlioEventInput(KlioIOConfig):
         # to be defined without a default after those that have defaults,
         # we're inserting the default value here if the user doesn't have
         # it already in their config
+        copy = config_dict.copy()
         if "skip_klio_read" not in config_dict:
-            copy = config_dict.copy()
             copy["skip_klio_read"] = False
+        if "name" not in config_dict:
+            copy["name"] = None
+        if "skip_klio_read" not in config_dict or "name" not in config_dict:
             return super().from_dict(copy, *args, **kwargs)
         return super().from_dict(config_dict, *args, **kwargs)
 
     def to_io_kwargs(self):
         kwargs = super().to_io_kwargs()
         kwargs.pop("skip_klio_read", None)
+        kwargs.pop("name", None)
         return kwargs
 
 
@@ -163,15 +168,19 @@ class KlioEventOutput(KlioIOConfig):
         # to be defined without a default after those that have defaults,
         # we're inserting the default value here if the user doesn't have
         # it already in their config
+        copy = config_dict.copy()
         if "skip_klio_write" not in config_dict:
-            copy = config_dict.copy()
             copy["skip_klio_write"] = False
+        if "name" not in config_dict:
+            copy["name"] = None
+        if "skip_klio_write" not in config_dict or "name" not in config_dict:
             return super().from_dict(copy, *args, **kwargs)
         return super().from_dict(config_dict, *args, **kwargs)
 
     def to_io_kwargs(self):
         kwargs = super().to_io_kwargs()
         kwargs.pop("skip_klio_write", None)
+        kwargs.pop("name", None)
         return kwargs
 
 
@@ -185,9 +194,15 @@ class KlioDataIOConfig(KlioIOConfig):
         # to be defined without a default after those that have defaults,
         # we're inserting the default value here if the user doesn't have
         # it already in their config
+        copy = config_dict.copy()
         if "skip_klio_existence_check" not in config_dict:
-            copy = config_dict.copy()
             copy["skip_klio_existence_check"] = False
+        if "name" not in config_dict:
+            copy["name"] = None
+        if (
+            "skip_klio_existence_check" not in config_dict
+            or "name" not in config_dict
+        ):
             return super().from_dict(copy, *args, **kwargs)
         return super().from_dict(config_dict, *args, **kwargs)
 
@@ -199,7 +214,7 @@ class KlioDataIOConfig(KlioIOConfig):
 
 @attr.attrs(frozen=True)
 class KlioPubSubConfig(object):
-    name = "pubsub"
+    type_name = "pubsub"
     topic = attr.attrib(type=str)
 
     @staticmethod
@@ -254,7 +269,7 @@ class KlioPubSubEventOutput(KlioEventOutput, KlioPubSubConfig):
 
 
 class KlioFileConfig(object):
-    name = "file"
+    type_name = "file"
 
 
 @attr.attrs(frozen=True)
@@ -331,7 +346,7 @@ class KlioFileOutputDataConfig(KlioDataIOConfig, KlioFileConfig):
 
 
 class KlioAvroConfig(object):
-    name = "avro"
+    type_name = "avro"
 
 
 @attr.attrs(frozen=True)
@@ -387,7 +402,7 @@ def _convert_bigquery_input_coder(coder_str):
 
 @attr.attrs(frozen=True)
 class KlioBigQueryConfig(object):
-    name = "bq"
+    type_name = "bq"
     project = attr.attrib(type=str, default=None)
     dataset = attr.attrib(type=str, default=None)
     table = attr.attrib(type=str, default=None)
@@ -493,7 +508,7 @@ class KlioBigQueryEventOutput(KlioEventOutput, KlioBigQueryConfig):
 
 @attr.attrs(frozen=True)
 class KlioGCSConfig(KlioIOConfig):
-    name = "gcs"
+    type_name = "gcs"
     location = attr.attrib(type=str)
 
     @staticmethod

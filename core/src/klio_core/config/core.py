@@ -268,7 +268,7 @@ class KlioJobConfig(object):
     def _create_config_objects(self, configs, io_type, io_direction):
         options = dict(
             [
-                (x.name, x)
+                (x.type_name, x)
                 for x in self._get_all_config_subclasses()
                 if x.supports_type(io_type)
                 and x.supports_direction(io_direction)

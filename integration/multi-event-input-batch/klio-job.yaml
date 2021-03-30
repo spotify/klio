@@ -14,8 +14,10 @@ job_config:
   events:
     inputs:
       - type: file
+        name: "first_input"
         location: ./batch_track_ids_1.txt
       - type: file
+        name: "second_input"
         location: ./batch_track_ids_2.txt
     outputs:
       - type: file

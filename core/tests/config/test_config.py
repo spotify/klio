@@ -36,7 +36,11 @@ def job_config_dict():
                 },
             },
             "outputs": {
-                "pubsub0": {"type": "pubsub", "topic": "test-job-out"}
+                "pubsub0": {
+                    "type": "pubsub",
+                    "topic": "test-job-out",
+                    "name": "test-event-output0",
+                }
             },
         },
         "data": {
@@ -44,6 +48,7 @@ def job_config_dict():
                 "gcs0": {
                     "type": "GCS",
                     "location": "gs://sigint-output/test-parent-job-out",
+                    "name": "test-data-input0",
                 }
             },
             "outputs": {
@@ -63,21 +68,25 @@ def job_config_dict():
 @pytest.fixture
 def final_job_config_dict():
     return {
+        "allow_non_klio_messages": False,
         "metrics": {"logger": {}},
+        "blocking": False,
         "events": {
             "inputs": [
                 {
                     "type": "pubsub",
+                    "name": None,
+                    "skip_klio_read": False,
                     "topic": "test-parent-job-out",
                     "subscription": "test-parent-job-out-sub",
-                    "skip_klio_read": False,
-                },
+                }
             ],
             "outputs": [
                 {
                     "type": "pubsub",
-                    "topic": "test-job-out",
+                    "name": "test-event-output0",
                     "skip_klio_write": False,
+                    "topic": "test-job-out",
                 }
             ],
         },
@@ -85,8 +94,9 @@ def final_job_config_dict():
             "inputs": [
                 {
                     "type": "gcs",
-                    "location": "gs://sigint-output/test-parent-job-out",
+                    "name": "test-data-input0",
                     "skip_klio_existence_check": False,
+                    "location": "gs://sigint-output/test-parent-job-out",
                     "file_suffix": "",
                     "ping": False,
                 }
@@ -94,18 +104,17 @@ def final_job_config_dict():
             "outputs": [
                 {
                     "type": "gcs",
+                    "name": None,
+                    "skip_klio_existence_check": False,
+                    "location": "gs://sigint-output/test-job-out",
                     "file_suffix": "",
                     "force": False,
-                    "location": "gs://sigint-output/test-job-out",
-                    "skip_klio_existence_check": False,
                 }
             ],
         },
         "more": "config",
         "that": {"the": "user"},
         "might": ["include"],
-        "blocking": False,
-        "allow_non_klio_messages": False,
     }
 
 
@@ -427,7 +436,7 @@ def test_klio_read_file_config():
         config_dict, io.KlioIOType.DATA, io.KlioIODirection.INPUT
     )
 
-    assert "file" == klio_read_file_config.name
+    assert "file" == klio_read_file_config.type_name
     assert config_dict["location"] == klio_read_file_config.file_pattern
 
 
@@ -440,7 +449,7 @@ def test_klio_write_file_config():
         config_dict, io.KlioIOType.DATA, io.KlioIODirection.OUTPUT
     )
 
-    assert "file" == klio_write_file_config.name
+    assert "file" == klio_write_file_config.type_name
     assert config_dict["location"] == klio_write_file_config.file_path_prefix
 
 
@@ -461,7 +470,7 @@ def test_klio_write_bigquery_config():
         config_dict, io.KlioIOType.EVENT, io.KlioIODirection.OUTPUT
     )
 
-    assert "bq" == klio_write_bq_cfg.name
+    assert "bq" == klio_write_bq_cfg.type_name
     assert config_dict["schema"] == klio_write_bq_cfg.schema
     assert (
         config_dict["create_disposition"]

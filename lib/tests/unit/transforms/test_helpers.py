@@ -435,7 +435,7 @@ def test_update_klio_log(mocker, monkeypatch, caplog, mock_config):
 
 
 @pytest.mark.skipif(IS_PY36, reason="This test fails to pickle on 3.6")
-def test_trigger_upstream_job(mock_config, mocker, capsys):
+def test_trigger_upstream_job(mock_config, mocker, caplog):
     mock_gcs_client = mocker.patch("klio.transforms._helpers.gcsio.GcsIO")
     mock_gcs_client.return_value.exists.return_value = False
     mock_pubsub_client = mocker.patch("google.cloud.pubsub.PublisherClient")
@@ -487,6 +487,14 @@ def test_trigger_upstream_job(mock_config, mocker, capsys):
     assert 1 == trigger_upstream_ctr.committed
     assert "KlioTriggerUpstream" == trigger_upstream_ctr.key.metric.namespace
     assert "kmsg-trigger-upstream" == trigger_upstream_ctr.key.metric.name
+
+    expected_log_msg = "Triggering upstream upstream-job for does_not_exist"
+    for record in caplog.records:
+        if expected_log_msg in record.message:
+            assert True
+            break
+    else:
+        assert False, "Expected log message not found"
 
 
 def test_klio_drop(mock_config, caplog):

@@ -513,10 +513,22 @@ def test_klio_drop(mock_config, caplog):
         assert False, "Expected log message not found"
 
     actual_counters = p.result.metrics().query()["counters"]
-    assert 1 == len(actual_counters)
-    assert 1 == actual_counters[0].committed
-    assert "KlioDrop" == actual_counters[0].key.metric.namespace
-    assert "kmsg-drop" == actual_counters[0].key.metric.name
+    assert 3 == len(actual_counters)
+    received_ctr = actual_counters[0]
+    drop_ctr = actual_counters[1]
+    success_ctr = actual_counters[2]
+
+    assert 1 == received_ctr.committed
+    assert "KlioDrop.process" == received_ctr.key.metric.namespace
+    assert "kmsg-received" == received_ctr.key.metric.name
+
+    assert 1 == drop_ctr.committed
+    assert "KlioDrop" == drop_ctr.key.metric.namespace
+    assert "kmsg-drop" == drop_ctr.key.metric.name
+
+    assert 1 == success_ctr.committed
+    assert "KlioDrop.process" == success_ctr.key.metric.namespace
+    assert "kmsg-success" == success_ctr.key.metric.name
 
 
 def test_klio_debug(mock_config):

@@ -42,6 +42,9 @@ _ERROR_MSG_KMSG_TO_BYTES = (
     "Error: {}"
 )
 _CACHED_INSTANCES = collections.defaultdict(set)
+MetricsObjects = collections.namedtuple(
+    "MetricsObjects", ["received", "success", "error", "timer"]
+)
 
 
 # TODO: This may be nice to make generic and move into the public helpers
@@ -163,7 +166,7 @@ def __get_thread_limiter(max_thread_count, thread_limiter, func_name=None):
 # A separate function from __serialize_klio_message_generator so we can
 # specifically `yield from` it (and exhaust transforms that have multiple
 # yields)
-def __from_klio_message_generator(self, kmsg, payload, orig_item):
+def __from_klio_message_generator(metrics, self, kmsg, payload, orig_item):
     try:
         yield serializer.from_klio_message(kmsg, payload)
 
@@ -171,6 +174,7 @@ def __from_klio_message_generator(self, kmsg, payload, orig_item):
         self._klio.logger.error(
             _ERROR_MSG_KMSG_TO_BYTES.format(kmsg, err), exc_info=True
         )
+        metrics.error.inc()
         # Since the yielded value in the `try` clause may not tagged, that
         # one will be used by default by whatever executed this function,
         # and anything that has a tagged output value (like this dropped one)
@@ -184,87 +188,98 @@ def __from_klio_message_generator(self, kmsg, payload, orig_item):
         # executes the next `yield`
         return
 
+    else:
+        metrics.success.inc()
+
 
 # meant for DoFn.process generator methods; very similar to the
 # '__serialize_klio_message' function, but needs to be its own function
 # since it's a generator (can't mix the two - if a function has a `yield`
 # statement, it automatically becomes a generator)
 def __serialize_klio_message_generator(
-    self, meth, incoming_item, *args, **kwargs
+    metrics, self, meth, incoming_item, *args, **kwargs
 ):
-    try:
-        kmsg = serializer.to_klio_message(
-            incoming_item, self._klio.config, self._klio.logger
-        )
-    except Exception as err:
-        self._klio.logger.error(
-            _ERROR_MSG_KMSG_FROM_BYTES.format(incoming_item, err),
-            exc_info=True,
-        )
-        # Since the yielded value in the `try` clause is not tagged, that
-        # one will be used by default by whatever executed this function,
-        # and anything that has a tagged output value (like this dropped one)
-        # will just be ignored, which is fine for dropped values.
-        # But if the caller function wanted to, they could access this via
-        # pcoll.drop.
-        yield pvalue.TaggedOutput("drop", incoming_item)
-        # explicitly return so that Beam doesn't call `next` and
-        # executes the next `yield`
-        return
-
-    try:
-        payload = meth(self, kmsg.data, *args, **kwargs)
-
-    except Exception as err:
-        func_path = self.__class__.__name__ + "." + meth.__name__
-        log_msg, exc_info = __get_user_error_message(err, func_path, kmsg)
-        self._klio.logger.error(log_msg, exc_info=exc_info)
-        # Since the yielded value in the `try` clause is not tagged, that
-        # one will be used by default by whatever executed this function,
-        # and anything that has a tagged output value (like this dropped one)
-        # will just be ignored, which is fine for dropped values.
-        # But if the caller function wanted to, they could access this via
-        # pcoll.drop.
-        # We won't try to serialize kmsg to bytes since something already
-        # went wrong.
-        yield pvalue.TaggedOutput("drop", incoming_item)
-        # explicitly return so that Beam doesn't call `next` and
-        # executes the next `yield`
-        return
-
-    else:
-        if isinstance(payload, types.GeneratorType):
-            try:
-                for pl in payload:
-                    yield from __from_klio_message_generator(
-                        self, kmsg, pl, incoming_item
-                    )
-            # This exception block will the execute
-            # if the pl item is an Exception
-            except Exception as err:
-                func_path = self.__class__.__name__ + "." + meth.__name__
-                log_msg, exc_info = __get_user_error_message(
-                    err, func_path, kmsg
-                )
-                self._klio.logger.error(log_msg, exc_info=exc_info)
-                # This will catch an exception present in the generator
-                # containing items yielded by a function/method
-                # decorated by @handle_klio.
-                # Following items in the generator will be ignored
-                # since an exception has already been detected.
-                # We won't try to serialize kmsg to bytes since
-                # something already went wrong.
-                yield pvalue.TaggedOutput("drop", incoming_item)
-                # explicitly return so that Beam doesn't call `next` and
-                # executes the next `yield`
-                return
-        else:
-            yield from __from_klio_message_generator(
-                self, kmsg, payload, incoming_item
+    metrics.received.inc()
+    with metrics.timer:
+        try:
+            kmsg = serializer.to_klio_message(
+                incoming_item, self._klio.config, self._klio.logger
             )
+        except Exception as err:
+            self._klio.logger.error(
+                _ERROR_MSG_KMSG_FROM_BYTES.format(incoming_item, err),
+                exc_info=True,
+            )
+            metrics.error.inc()
+            # Since the yielded value in the `try` clause is not tagged, that
+            # one will be used by default by whatever executed this function,
+            # and anything that has a tagged output value (like this dropped
+            # one) will just be ignored, which is fine for dropped values.
+            # But if the caller function wanted to, they could access this via
+            # pcoll.drop.
+            yield pvalue.TaggedOutput("drop", incoming_item)
+            # explicitly return so that Beam doesn't call `next` and
+            # executes the next `yield`
+            return
+
+        try:
+            payload = meth(self, kmsg.data, *args, **kwargs)
+
+        except Exception as err:
+            func_path = self.__class__.__name__ + "." + meth.__name__
+            log_msg, exc_info = __get_user_error_message(err, func_path, kmsg)
+            self._klio.logger.error(log_msg, exc_info=exc_info)
+            metrics.error.inc()
+            # Since the yielded value in the `try` clause is not tagged, that
+            # one will be used by default by whatever executed this function,
+            # and anything that has a tagged output value (like this dropped
+            # one) will just be ignored, which is fine for dropped values.
+            # But if the caller function wanted to, they could access this via
+            # pcoll.drop.
+            # We won't try to serialize kmsg to bytes since something already
+            # went wrong.
+            yield pvalue.TaggedOutput("drop", incoming_item)
+            # explicitly return so that Beam doesn't call `next` and
+            # executes the next `yield`
+            return
+
+        else:
+            if isinstance(payload, types.GeneratorType):
+                try:
+                    for pl in payload:
+                        yield from __from_klio_message_generator(
+                            metrics, self, kmsg, pl, incoming_item
+                        )
+                # This exception block will the execute
+                # if the pl item is an Exception
+                except Exception as err:
+                    func_path = self.__class__.__name__ + "." + meth.__name__
+                    log_msg, exc_info = __get_user_error_message(
+                        err, func_path, kmsg
+                    )
+                    self._klio.logger.error(log_msg, exc_info=exc_info)
+                    metrics.error.inc()
+                    # This will catch an exception present in the generator
+                    # containing items yielded by a function/method
+                    # decorated by @handle_klio.
+                    # Following items in the generator will be ignored
+                    # since an exception has already been detected.
+                    # We won't try to serialize kmsg to bytes since
+                    # something already went wrong.
+                    yield pvalue.TaggedOutput("drop", incoming_item)
+                    # explicitly return so that Beam doesn't call `next` and
+                    # executes the next `yield`
+                    return
+            else:
+                yield from __from_klio_message_generator(
+                    metrics, self, kmsg, payload, incoming_item
+                )
 
 
-def __serialize_klio_message(ctx, func, incoming_item, *args, **kwargs):
+def __serialize_klio_message(
+    metrics, ctx, func, incoming_item, *args, **kwargs
+):
+    metrics.received.inc()
     # manipulate `ctx` to handle both methods and functions depending on
     # what we're wrapping. Functions just have `ctx` object, but methods
     # have `self._klio` as its context, and we also need access to `self`
@@ -272,68 +287,103 @@ def __serialize_klio_message(ctx, func, incoming_item, *args, **kwargs):
     _self = ctx
     if not isinstance(ctx, core.KlioContext):
         ctx = _self._klio
-    try:
-        kmsg = serializer.to_klio_message(
-            incoming_item, ctx.config, ctx.logger
-        )
-    except Exception as err:
-        ctx.logger.error(
-            _ERROR_MSG_KMSG_FROM_BYTES.format(incoming_item, err),
-            exc_info=True,
-        )
-        # Since the returned value in the `try` clause is not tagged, that
-        # one will be used by default by whatever executed this function,
-        # and anything that has a tagged output value (like this dropped one)
-        # will just be ignored, which is fine for dropped values.
-        # But if the caller function wanted to, they could access this via
-        # pcoll.drop.
-        return pvalue.TaggedOutput("drop", incoming_item)
 
-    try:
-        ret = func(_self, kmsg.data, *args, **kwargs)
-        if isinstance(ret, types.GeneratorType):
-            raise TypeError(
-                "can't pickle generator object: '{}'".format(func.__name__)
+    with metrics.timer:
+        try:
+            kmsg = serializer.to_klio_message(
+                incoming_item, ctx.config, ctx.logger
             )
-    except TypeError:
-        # If we get here, we threw a type error because we found a generator
-        # and those can't be pickled. But there's no need to do any special
-        # error handling - this will contain enough info for the user so
-        # we just re-raise
-        raise
+        except Exception as err:
+            ctx.logger.error(
+                _ERROR_MSG_KMSG_FROM_BYTES.format(incoming_item, err),
+                exc_info=True,
+            )
+            metrics.error.inc()
+            # Since the returned value in the `try` clause is not tagged, that
+            # one will be used by default by whatever executed this function,
+            # and anything that has a tagged output value (like this dropped
+            # one) will just be ignored, which is fine for dropped values.
+            # But if the caller function wanted to, they could access this via
+            # pcoll.drop.
+            return pvalue.TaggedOutput("drop", incoming_item)
 
-    except Exception as err:
-        log_msg, exc_info = __get_user_error_message(err, func.__name__, kmsg)
-        ctx.logger.error(log_msg, exc_info=exc_info)
-        # Since the returned value in the `try` clause is not tagged, that
-        # one will be used by default by whatever executed this function,
-        # and anything that has a tagged output value (like this dropped one)
-        # will just be ignored, which is fine for dropped values.
-        # But if the caller function wanted to, they could access this via
-        # pcoll.drop.
-        # We won't try to serialize kmsg to bytes since something already
-        # went wrong.
-        return pvalue.TaggedOutput("drop", incoming_item)
+        try:
+            ret = func(_self, kmsg.data, *args, **kwargs)
+            if isinstance(ret, types.GeneratorType):
+                raise TypeError(
+                    "can't pickle generator object: '{}'".format(func.__name__)
+                )
+        except TypeError:
+            metrics.error.inc()
+            # If we get here, we threw a type error because we found a generator
+            # and those can't be pickled. But there's no need to do any special
+            # error handling - this will contain enough info for the user so
+            # we just re-raise
+            raise
 
-    try:
-        return serializer.from_klio_message(kmsg, ret)
+        except Exception as err:
+            log_msg, exc_info = __get_user_error_message(
+                err, func.__name__, kmsg
+            )
+            ctx.logger.error(log_msg, exc_info=exc_info)
+            metrics.error.inc()
+            # Since the returned value in the `try` clause is not tagged, that
+            # one will be used by default by whatever executed this function,
+            # and anything that has a tagged output value (like this dropped
+            # one) will just be ignored, which is fine for dropped values.
+            # But if the caller function wanted to, they could access this via
+            # pcoll.drop.
+            # We won't try to serialize kmsg to bytes since something already
+            # went wrong.
+            return pvalue.TaggedOutput("drop", incoming_item)
 
-    except Exception as err:
-        ctx.logger.error(
-            _ERROR_MSG_KMSG_TO_BYTES.format(kmsg, err), exc_info=True
-        )
-        # Since the returned value in the `try` clause is not tagged, that
-        # one will be used by default by whatever executed this function,
-        # and anything that has a tagged output value (like this dropped one)
-        # will just be ignored, which is fine for dropped values.
-        # But if the caller function wanted to, they could access this via
-        # pcoll.drop.
-        # We won't try to serialize kmsg to bytes since something already
-        # went wrong.
-        return pvalue.TaggedOutput("drop", incoming_item)
+        try:
+            to_ret = serializer.from_klio_message(kmsg, ret)
+            metrics.success.inc()
+            return to_ret
+
+        except Exception as err:
+            ctx.logger.error(
+                _ERROR_MSG_KMSG_TO_BYTES.format(kmsg, err), exc_info=True
+            )
+            metrics.error.inc()
+            # Since the returned value in the `try` clause is not tagged, that
+            # one will be used by default by whatever executed this function,
+            # and anything that has a tagged output value (like this dropped
+            # one) will just be ignored, which is fine for dropped values.
+            # But if the caller function wanted to, they could access this via
+            # pcoll.drop.
+            # We won't try to serialize kmsg to bytes since something already
+            # went wrong.
+            return pvalue.TaggedOutput("drop", incoming_item)
+
+
+def __get_transform_metrics(func_name, kctx=None):
+    if kctx is None:
+        with _klio_context() as ctx:
+            kctx = ctx
+
+    default_unit = "s"  # seconds
+    metrics_conf = kctx.config.job_config.metrics
+    timer_unit = metrics_conf.get("timer_unit")
+    logger_unit = metrics_conf.get("logger", {}).get("timer_unit")
+    # TODO: delete line once stackdriver log-based metrics is fully removed
+    sd_unit = metrics_conf.get("stackdriver_logger", {}).get("timer_unit")
+
+    timer_unit = timer_unit or sd_unit or logger_unit or default_unit
+    received_ctr = kctx.metrics.counter("kmsg-received", transform=func_name)
+    success_ctr = kctx.metrics.counter("kmsg-success", transform=func_name)
+    drop_err_ctr = kctx.metrics.counter("kmsg-drop-error", transform=func_name)
+    msg_timer = kctx.metrics.timer(
+        "kmsg-timer", transform=func_name, timer_unit=timer_unit
+    )
+    return MetricsObjects(received_ctr, success_ctr, drop_err_ctr, msg_timer)
 
 
 def _serialize_klio_message(func_or_meth):
+    func_name = getattr(func_or_meth, "__qualname__", func_or_meth.__name__)
+    metrics_objs = __get_transform_metrics(func_name)
+
     @functools.wraps(func_or_meth)
     def method_wrapper(self, incoming_item, *args, **kwargs):
         wrapper = __serialize_klio_message
@@ -341,6 +391,7 @@ def _serialize_klio_message(func_or_meth):
             "ctx": self,
             "func": func_or_meth,
             "incoming_item": incoming_item,
+            "metrics": metrics_objs,
         }
         if __is_dofn_process_method(self, func_wrapper):
             wrapper = __serialize_klio_message_generator
@@ -348,6 +399,7 @@ def _serialize_klio_message(func_or_meth):
                 "self": self,
                 "meth": func_or_meth,
                 "incoming_item": incoming_item,
+                "metrics": metrics_objs,
             }
         return wrapper(*args, **wrapper_kwargs, **kwargs)
 
@@ -357,6 +409,7 @@ def _serialize_klio_message(func_or_meth):
             "ctx": klio_ns,
             "func": func_or_meth,
             "incoming_item": incoming_item,
+            "metrics": metrics_objs,
         }
         return __serialize_klio_message(*args, **wrapper_kwargs, **kwargs)
 
@@ -405,6 +458,8 @@ def _handle_klio(*args, max_thread_count=None, thread_limiter=None, **kwargs):
         with _klio_context() as ctx:
             kctx = ctx
 
+        metrics_objs = __get_transform_metrics(func_name, kctx)
+
         @functools.wraps(func_or_meth)
         def method_wrapper(self, *args, **kwargs):
             with thd_limiter:
@@ -428,6 +483,7 @@ def _handle_klio(*args, max_thread_count=None, thread_limiter=None, **kwargs):
                     "ctx": self,
                     "func": func_or_meth,
                     "incoming_item": incoming_item,
+                    "metrics": metrics_objs,
                 }
                 # Only the process method of a DoFn is a generator - otherwise
                 # beam can't pickle a generator
@@ -437,7 +493,9 @@ def _handle_klio(*args, max_thread_count=None, thread_limiter=None, **kwargs):
                         "self": self,
                         "meth": func_or_meth,
                         "incoming_item": incoming_item,
+                        "metrics": metrics_objs,
                     }
+
                 return wrapper(*args, **wrapper_kwargs, **kwargs)
 
         @functools.wraps(func_or_meth)
@@ -447,6 +505,7 @@ def _handle_klio(*args, max_thread_count=None, thread_limiter=None, **kwargs):
                     "ctx": kctx,
                     "func": func_or_meth,
                     "incoming_item": incoming_item,
+                    "metrics": metrics_objs,
                 }
                 return __serialize_klio_message(
                     *args, **wrapper_kwargs, **kwargs

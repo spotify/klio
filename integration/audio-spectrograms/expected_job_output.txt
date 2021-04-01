@@ -1,6 +1,5 @@
 INFO:root:Found worker image: integration-klio-audio:audio-spectrograms
 INFO:matplotlib.font_manager:generated new fontManager
-DEBUG:klio:Loading config file from /usr/local/klio-job-run-effective.yaml.
 DEBUG:klio:KlioMessage full audit log - Entity ID:  - Path: fluffy-zelda-glitch-toki-kobe::klio-audio (current job)
 DEBUG:klio:Process 'battleclip_daq': Ping mode OFF.
 DEBUG:klio:Downloading battleclip_daq.ogg from gs://klio-integration/beatbox

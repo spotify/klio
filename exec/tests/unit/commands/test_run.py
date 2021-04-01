@@ -126,6 +126,13 @@ def _config():
     return mock_config
 
 
+# The import in the few lines below triggers metrics to be setup (via
+# helper decorators that are pulled in), which for some reason, triggers
+# the setting up of stackdriver logger (which triggers an API auth call)
+# on GH workflows. So we try to patch that out.
+patcher = mock.patch("googleapiclient.discovery.build")
+patcher.start()
+
 from klio_exec.commands import run  # noqa E402
 
 

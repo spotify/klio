@@ -485,7 +485,7 @@ class KlioPipeline(object):
         to_process = MultiInputPCollTuple(**input_name_to_input_pcolls)
         to_pass_thru = (
             multi_to_pass_thru
-            | "Merge multi-input pass-thrus" >> beam.Flatten()
+            | "Merge multi-input pass-thrus" >> beam.Flatten(pipeline=pipeline)
         )
         return to_process, to_pass_thru
 

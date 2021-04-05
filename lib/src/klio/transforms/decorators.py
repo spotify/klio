@@ -17,6 +17,7 @@ import collections
 import contextlib
 import functools
 import inspect
+import os
 import threading
 import types
 
@@ -75,6 +76,17 @@ def __get_or_create_instance(function):
 
 @__get_or_create_instance
 def _klio_context():
+    if os.getenv("KLIO_DOCS_MODE", "").lower() in ("true", "1"):
+        # We return a mock object instead of the real thing when building
+        # Klio's docs. This is because autodocs (which grabs docstrings
+        # automatically) will import actual objects to document. When
+        # decorators in particular are imported, they're evaluated. Some
+        # decorators need access to the Klio context which would otherwise
+        # fail because building docs does not give access to the
+        # `/usr/src/config/.klio-job-run-effective.yaml` file.
+        from unittest import mock
+
+        return mock.Mock()
     return core.KlioContext()
 
 

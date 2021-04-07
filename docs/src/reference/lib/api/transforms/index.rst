@@ -48,6 +48,8 @@
     KlioUpdateAuditLog
     KlioDebugMessage
     KlioSetTrace
+    KlioTriggerUpstream
+
 
 
 :doc:`io`

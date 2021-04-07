@@ -6,7 +6,218 @@ Metrics
 Default Metrics Provided
 ------------------------
 
-Coming soon!
+Klio collects :ref:`some metrics <default-metrics-collected>` by default. 
+When running on Dataflow, these metrics will be :ref:`automatically available <dataflow-metrics-ui>` in the job's UI as custom counters, as well as custom metrics in Stackdriver monitoring.
+
+.. _default-metrics-collected:
+
+Metrics Collected
+*****************
+
+.. _io-transform-metrics:
+
+IO Transforms
+~~~~~~~~~~~~~
+
+The following metrics are collected by default from Klio's :doc:`IO transforms </reference/lib/api/transforms/io>`:
+
+.. list-table::
+    :widths: 20 10 40 30
+    :header-rows: 1
+
+    * - Name
+      - Type
+      - Description
+      - Collecting Transform(s) 
+    * - ``kmsg-read`` [#f0]_
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - ``KlioMessage`` read in as event input.
+      - | :class:`KlioReadFromPubSub <klio.transforms.io.KlioReadFromPubSub>`
+        | :class:`KlioReadFromBigQuery <klio.transforms.io.KlioReadFromBigQuery>`
+        | :class:`KlioReadFromAvro <klio.transforms.io.KlioReadFromAvro>`
+        | :class:`KlioReadFromText <klio.transforms.io.KlioReadFromText>`
+
+    * - ``kmsg-write`` [#f0]_
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - ``KlioMessage`` written out as event output.
+      - | :class:`KlioWriteToPubSub <klio.transforms.io.KlioWriteToPubSub>`
+        | :class:`KlioWriteToBigQuery <klio.transforms.io.KlioWriteToBigQuery>`
+        | :class:`KlioWriteToAvro <klio.transforms.io.KlioWriteToAvro>`
+        | :class:`KlioWriteToText <klio.transforms.io.KlioWriteToText>`
+
+
+.. [#f0] Collecting transform is automatically used in pipeline unless configured otherwise. See :ref:`builtin-transforms` for more information on what is built-in within a Klio pipeline.
+
+
+Helper Transforms
+~~~~~~~~~~~~~~~~~
+        
+The following metrics are collected by default from Klio's :doc:`helper transforms </reference/lib/api/transforms/helpers>`:
+
+.. list-table::
+    :widths: 20 10 40 30
+    :header-rows: 1
+
+    * - Name
+      - Type
+      - Description
+      - Collecting Decorator(s) 
+    * - ``kmsg-data-found-input`` [#f1]_
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - ``KlioMessage`` with input data found.
+      - :class:`KlioGcsCheckInputExists <klio.transforms.helpers.KlioGcsCheckInputExists>`
+    * - ``kmsg-data-not-found-input`` [#f1]_
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - ``KlioMessage`` with input data **not** found.
+      - :class:`KlioGcsCheckInputExists <klio.transforms.helpers.KlioGcsCheckInputExists>`
+    * - ``kmsg-data-found-output`` [#f1]_
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - ``KlioMessage`` with output data found.
+      - :class:`KlioGcsCheckOutputExists <klio.transforms.helpers.KlioGcsCheckOutputExists>`
+    * - ``kmsg-data-not-found-output`` [#f1]_
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - ``KlioMessage`` with output data **not** found.
+      - :class:`KlioGcsCheckOutputExists <klio.transforms.helpers.KlioGcsCheckOutputExists>`
+    * - ``kmsg-process-ping`` [#f1]_
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - ``KlioMessage`` **not** in ping mode and will be processed.
+      - :class:`KlioFilterPing <klio.transforms.helpers.KlioFilterPing>`
+    * - ``kmsg-skip-ping`` [#f1]_
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - ``KlioMessage`` in ping mode, and will skip processing to be passed through directly to the configured event output, if any. 
+      - :class:`KlioFilterPing <klio.transforms.helpers.KlioFilterPing>`
+    * - ``kmsg-process-force`` [#f1]_
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - ``KlioMessage`` in force mode, and will be processed even though its referenced output data exists.
+      - :class:`KlioFilterForce <klio.transforms.helpers.KlioFilterForce>`
+    * - ``kmsg-skip-force`` [#f1]_
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - ``KlioMessage`` **not** in force mode, and will skip processing because its referenced output data already exists. 
+      - :class:`KlioFilterForce <klio.transforms.helpers.KlioFilterForce>`
+    * - ``kmsg-output``
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - ``KlioMessage`` written to event output specifically through the ``KlioWriteToEventOutput`` transform (excludes the final event output automatically handled by Klio with :ref:`kmsg-write <io-transform-metrics>`).
+      - :class:`KlioWriteToEventOutput <klio.transforms.helpers.KlioWriteToEventOutput>`
+    * - ``kmsg-drop``
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - ``KlioMessage`` processed by the ``KlioDrop`` transform and will be dropped.
+      - :class:`KlioDrop <klio.transforms.helpers.KlioDrop>`
+    * - ``kmsg-drop-not-recipient``
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - ``KlioMessage`` dropped because the message is not intended for the current job to handle.
+      - :class:`KlioCheckRecipients <klio.transforms.helpers.KlioCheckRecipients>`  
+    * - ``kmsg-debug``
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - ``KlioMessage`` processed by the ``KlioDebugMessage`` transform.
+      - :class:`KlioDebugMessage <klio.transforms.helpers.KlioDebugMessage>`  
+    * - ``kmsg-trigger-upstream``
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - ``KlioMessage`` emitted to upstream's event input via ``KlioTriggerUpstream``.
+      - :class:`KlioTriggerUpstream <klio.transforms.helpers.KlioTriggerUpstream>`  
+
+
+
+.. [#f1] Collecting transform is automatically used in pipeline unless configured otherwise. See :ref:`builtin-transforms` for more information on what is built-in within a Klio pipeline.
+
+.. _default-decorator-metrics:
+
+Decorators
+~~~~~~~~~~
+
+Klio also collects transform-level metrics through many of the built-in :doc:`decorators </reference/lib/api/transforms/decorators>`.
+
+.. note:: 
+
+    These metrics are on the transform-level, not pipeline level. 
+    Therefore, each metric name plus the associated transform will count as one unique metric.
+
+    For example, if there are two transforms that use the ``@handle_klio`` decorator, then **two** sets of metrics (i.e. ``kmsg-received``, ``kmsg-success``, ``kmsg-drop-error``, ``kmsg-timer``) will be collected, **one per transform**.
+
+The following metrics are collected by default:
+      
+.. list-table::
+    :widths: 20 10 40 30
+    :header-rows: 1
+
+    * - Name
+      - Type
+      - Description
+      - Collecting Transform(s) 
+    * - ``kmsg-received``
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - ``KlioMessage`` received by a transform (before processing begins).
+      - | :func:`@handle_klio <klio.transforms.decorators.handle_klio>`
+        | :func:`@serialize_klio_message <klio.transforms.decorators.serialize_klio_message>`
+    * - ``kmsg-success``
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - ``KlioMessage`` successfully processed by a transform.
+      - | :func:`@handle_klio <klio.transforms.decorators.handle_klio>`
+        | :func:`@serialize_klio_message <klio.transforms.decorators.serialize_klio_message>`
+    * - ``kmsg-drop-error``
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - ``KlioMessage`` dropped because of error during processing. This includes messages dropped from retries exhausted (``kmsg-drop-retry-error``) and messages timing out (``kmsg-drop-timed-out``). This does **not** include messages dropped via ``KlioDrop`` transform (``kmsg-drop``).
+      - | :func:`@handle_klio <klio.transforms.decorators.handle_klio>`
+        | :func:`@serialize_klio_message <klio.transforms.decorators.serialize_klio_message>`
+    * - ``kmsg-timer``
+      - :class:`timer <klio.metrics.dispatcher.TimerDispatcher>`
+      - Time it takes to process ``KlioMessage``. This includes messages that are processed successfully as well as messages that have been dropped because of error.
+
+        This timer defaults to measuring in units as configured in ``klio-job.yaml`` under |job_config.metrics|_ in the following order of precedence:
+            
+        1. ``.timer_unit``
+        2. ``.stackdriver_logger.timer_unit``
+        3. ``.logger.timer_unit``
+        4. If nothing is set, then ``seconds`` will be used.
+
+      - | :func:`@handle_klio <klio.transforms.decorators.handle_klio>`
+        | :func:`@serialize_klio_message <klio.transforms.decorators.serialize_klio_message>`
+    * - ``kmsg-retry-attempt``
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - Number of retries for a given ``KlioMessage``.
+      - :func:`@retry <klio.transforms.decorators.retry>`
+    * - ``kmsg-drop-retry-error``
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - ``KlioMessage`` dropped from exhausting the number of configured retries. This number is included in ``kmsg-drop-error``.
+      - :func:`@retry <klio.transforms.decorators.retry>`
+    * - ``kmsg-drop-timed-out``
+      - :class:`counter <klio.metrics.dispatcher.CounterDispatcher>`
+      - Processing timed out for a ``KlioMessage``.  This number is included in ``kmsg-drop-error``.
+      - :func:`@timeout <klio.transforms.decorators.timeout>`
+
+.. _dataflow-metrics-ui:
+
+Viewing Emitted Metrics
+***********************
+
+When using Dataflow, metrics will be automatically emitted to `Dataflow & Stackdriver monitoring <https://cloud.google.com/dataflow/docs/guides/using-cloud-monitoring#custom_metrics>`_.
+
+
+For example, in Dataflow's job UI, within the right-side column listing "Job Info", a "Custom Counters" section should be visible (and will include any :ref:`custom user metrics <custom-user-metrics>`):
+
+.. figure:: images/dataflow_counters.png
+    :alt: Metrics viewed under "Custom Counters" in Dataflow Job UI
+    :align: center
+    :scale: 30%
+
+    *Metrics viewed under "Custom Counters" in Dataflow Job UI*
+
+
+All metrics, both these default metrics as well as :ref:`custom user metrics <custom-user-metrics>`, are also available in `Stackdriver Monitoring <https://cloud.google.com/dataflow/docs/guides/using-cloud-monitoring#explore_metrics>`_.
+
+For example, when creating a graph for a `dashboard <https://cloud.google.com/monitoring/charts>`_, select the resource type "Dataflow Job", and then the desired metric to graph under "Metric". 
+Add a filter for a particular transform to avoid viewing a metric of the same name for all the transforms (particularly useful for metrics collected via :ref:`decorators <default-decorator-metrics>`).
+
+.. figure:: images/dashboard_create.png
+    :alt: Klio metrics available in Stackdriver Monitoring Dashboards
+    :align: center
+    :scale: 30%
+
+    *Klio metrics available in Stackdriver Monitoring Dashboards*
+
+Any :ref:`custom user metrics <custom-user-metrics>` defined in a job's transforms should also be available to select under "Metric", too.
+
+
+.. _custom-user-metrics:
 
 Custom User Metrics
 -------------------
@@ -473,3 +684,6 @@ maintaining metrics between transforms of a pipeline can not be supported
 **Stackdriver metrics for historical logs:**
 In Stackdriver, metrics based off of logs will be tracked *after* the metric is created.
 Stackdriver **will ignore** any previous log lines before the metric is made.
+
+.. |job_config.metrics| replace:: ``job_config.metrics``
+.. _job_config.metrics: #job-config-metrics

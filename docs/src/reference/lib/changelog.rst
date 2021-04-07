@@ -1,6 +1,22 @@
 Changelog
 =========
 
+21.4.0rc1 (UNRELEASED)
+----------------------
+
+Added
+*****
+
+* Add default metrics to be collected in Klio's IO transforms.
+* Add default metrics to be collected in Klio's helper transforms.
+* Add default metrics to be collected in Klio's decorators.
+* Add ``KlioReadFromPubSub`` and ``KlioWriteToPubSub`` IO transforms.
+
+Fixed
+*****
+
+* ``KlioTriggerUpstream`` no longer raises a pickling error when trying to log.
+
 21.3.0rc1 (UNRELEASED)
 ----------------------
 

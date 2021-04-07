@@ -57,8 +57,10 @@ def expected_log_messages(klio_msg):
         },
         {
             "level": "DEBUG",
-            "message": "Loading config file from "
-            "/usr/local/klio-job-run-effective.yaml.",
+            "message": (
+                "[kmsg-received] value: 1 transform: 'LogKlioMessage.process' "
+                "tags: {'metric_type': 'counter'}"
+            )
         },
         {
             "level": "INFO",
@@ -67,6 +69,17 @@ def expected_log_messages(klio_msg):
         {
             "level": "INFO",
             "message": "Received payload {}".format(klio_msg.data.payload),
+        },
+        {
+            "level": "DEBUG",
+            "message": (
+                "[kmsg-success] value: 1 transform: 'LogKlioMessage.process' "
+                "tags: {'metric_type': 'counter'}"
+            )
+        },
+        {
+            "level": "DEBUG",
+            "message": "[kmsg-timer] value:",
         },
     ]
 

@@ -1,6 +1,24 @@
 Changelog
 =========
 
+21.4.0rc1 (UNRELEASED)
+----------------------
+
+Changed
+*******
+
+* Use newly-added ``KlioReadFromPubSub`` and ``KlioWriteToPubSub`` transforms instead of native Beam's transforms.
+
+Fixed
+*****
+
+* Limit version of ``line_profiler`` as the latest introduced breaking API changes.
+
+21.3.0 (UNRELEASED)
+-------------------
+
+*  Delete me: placeholder for when ``21.3.0`` is merged in.
+
 .. _exec-21.2.0:
 
 21.2.0 (2021-03-16)

@@ -29,7 +29,7 @@ def caplog(caplog):
 
 def _job_config_dict():
     return {
-        "metrics": {"logger": {}},
+        "metrics": {"logger": {}, "timer_unit": "ns"},
         "allow_non_klio_messages": False,
         "number_of_retries": 3,
         "inputs": [

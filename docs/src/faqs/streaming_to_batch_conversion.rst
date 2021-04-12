@@ -51,10 +51,10 @@ An example of of the changes for reading and writing to a GCS file are seen belo
     job_config:
       event:
         inputs:
-          - type: gcs
+          - type: file
             location: gs://my-event-input/my-input-elements.txt
         outputs:
-          - type: gcs
+          - type: file
             location: gs://my-event-output/
 
 

@@ -1,6 +1,14 @@
 CLI Changelog
 =============
 
+21.7.0 (UNRELEASED)
+-------------------
+
+Fixed
+*****
+
+* Fixed bug with ``klio message publish`` not working on ``google-cloud-pubsub > 2.3.0``
+
 .. _cli-21.2.0:
 
 21.2.0 (2021-03-16)

@@ -366,6 +366,7 @@ class KlioPipelineConfig(object):
     job_name = utils.field(repr=True, type=str)
     version = utils.field(type=int)
 
+    # TODO: Do we still want this to be the default
     runner = utils.field(type=str, default="DataflowRunner")
     streaming = utils.field(type=bool, default=True)
 
@@ -420,6 +421,9 @@ class KlioPipelineConfig(object):
     use_public_ips = utils.field(type=bool, default=None)
     min_cpu_platform = utils.field(type=str, default=None)
     dataflow_worker_jar = utils.field(type=str, default=None)
+
+    # Direct on GKE options
+    gke_namespace = utils.field(type=str, default=None)
 
     # profiling options
     profile_location = utils.field(type=str, default=None)

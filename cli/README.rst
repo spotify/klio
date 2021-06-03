@@ -15,5 +15,5 @@ The ``klio-cli``
 The CLI is the main entrypoint for users in interacting with a Klio job.
 This CLI is used for creating, deploying, testing, and profiling of Klio jobs, among other helpful commands.
 
-Check out the `installation guide <https://docs.klio.io/en/latest/quickstart/installation.html>`_ for how to setup installation.
+Check out the `installation guide <https://docs.klio.io/en/latest/userguide/quickstart/installation.html>`_ for how to setup installation.
 There is also the `user guide <https://docs.klio.io/en/latest/userguide/index.html>`_ and the `API documentation <https://docs.klio.io/en/latest/reference/cli/index.html>`_ for more information.

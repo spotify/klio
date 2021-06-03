@@ -54,6 +54,7 @@ logging.getLogger().setLevel(logging.INFO)
 DockerRuntimeConfig = collections.namedtuple(
     "DockerRuntimeConfig", ["image_tag", "force_build", "config_file_override"]
 )
+# TODO: We can get rid of direct_runner since we have runner
 RunJobConfig = collections.namedtuple(
     "RunJobConfig", ["direct_runner", "update", "git_sha"]
 )
@@ -146,15 +147,21 @@ def run_job(klio_config, config_meta, **kwargs):
         config_file_override=config_meta.config_file,
     )
 
-    run_job_config = RunJobConfig(
-        direct_runner=direct_runner,
-        update=kwargs.pop("update"),
-        git_sha=git_sha,
-    )
-    klio_pipeline = job_commands.run.RunPipeline(
-        config_meta.job_dir, klio_config, runtime_config, run_job_config
-    )
-    rc = klio_pipeline.run()
+    if not direct_runner and klio_config.pipeline_options.runner == "DirectGKERunner":
+        run_gke = job_commands.run_gke.RunPipelineGKE(
+            config_meta.job_dir, klio_config, runtime_config
+        )
+        rc = run_gke.run()
+    else:
+        run_job_config = RunJobConfig(
+            direct_runner=direct_runner,
+            update=kwargs.pop("update"),
+            git_sha=git_sha,
+        )
+        klio_pipeline = job_commands.run.RunPipeline(
+            config_meta.job_dir, klio_config, runtime_config, run_job_config
+        )
+        rc = klio_pipeline.run()
     sys.exit(rc)
 
 

@@ -71,3 +71,9 @@ def is_direct_runner(klio_config, direct_runner):
         validate_dataflow_runner_config(klio_config)
 
     return direct_runner
+
+
+def get_runner(klio_config, runner):
+    if not runner:
+        runner = klio_config.pipeline_options.runner
+    return runner

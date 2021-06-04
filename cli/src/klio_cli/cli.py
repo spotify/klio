@@ -147,17 +147,18 @@ def run_job(klio_config, config_meta, **kwargs):
         config_file_override=config_meta.config_file,
     )
 
+    run_job_config = RunJobConfig(
+        direct_runner=direct_runner,
+        update=kwargs.pop("update"),
+        git_sha=git_sha,
+    )
+
     if not direct_runner and klio_config.pipeline_options.runner == "DirectGKERunner":
         run_gke = job_commands.run_gke.RunPipelineGKE(
-            config_meta.job_dir, klio_config, runtime_config
+            config_meta.job_dir, klio_config, runtime_config, run_job_config
         )
         rc = run_gke.run()
     else:
-        run_job_config = RunJobConfig(
-            direct_runner=direct_runner,
-            update=kwargs.pop("update"),
-            git_sha=git_sha,
-        )
         klio_pipeline = job_commands.run.RunPipeline(
             config_meta.job_dir, klio_config, runtime_config, run_job_config
         )

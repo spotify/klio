@@ -104,14 +104,14 @@ def get_long_description(package_dir):
         pass
 
     desc = (
-        read("README.rst")
-        + "\n"
-        + main_readme
-        + "\n"
-        + "Release Information\n"
-        + "===================\n\n"
-        + recent_changelog
-        + f"\n\n`Full Changelog <{cl_url}>`_.\n\n"
+            read("README.rst")
+            + "\n"
+            + main_readme
+            + "\n"
+            + "Release Information\n"
+            + "===================\n\n"
+            + recent_changelog
+            + f"\n\n`Full Changelog <{cl_url}>`_.\n\n"
     )
     return desc
 
@@ -152,6 +152,7 @@ PROJECT_URLS = {
 META_FILE = read(META_PATH)
 INSTALL_REQUIRES = [
     "klio-core>=21.2.0",
+    "kubernetes",  # TODO: Move this to extra requires
     "click",
     "dateparser",
     "docker",
@@ -171,6 +172,7 @@ EXTRAS_REQUIRE = {
     "docs": ["sphinx", "interrogate"],
     "tests": [
         "coverage",
+        "kubernetes",
         "mock",  # for py2 - remove when dropping support
         "pytest>=4.3.0",  # 4.3.0 dropped last use of `convert`
         "pytest-cov",
@@ -178,9 +180,9 @@ EXTRAS_REQUIRE = {
     ],
 }
 EXTRAS_REQUIRE["dev"] = (
-    EXTRAS_REQUIRE["docs"]
-    + EXTRAS_REQUIRE["tests"]
-    + ["klio-devtools", "bumpversion", "wheel"]
+        EXTRAS_REQUIRE["docs"]
+        + EXTRAS_REQUIRE["tests"]
+        + ["klio-devtools", "bumpversion", "wheel"]
 )
 # support 3.6, 3.7, & 3.8, matching Beam's support
 PYTHON_REQUIRES = ">=3.6, <3.9"

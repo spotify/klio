@@ -26,6 +26,7 @@ from klio import __version__ as klio_lib_version
 from klio import transforms
 from klio.transforms import helpers
 from klio_core import __version__ as klio_core_version
+from klio_core import variables as var
 from klio_core.config import core as config_core
 
 from klio_exec import __version__ as klio_exec_version
@@ -142,6 +143,14 @@ class KlioPipeline(object):
 
         if self.runtime_conf.direct_runner:
             standard_opts.runner = "direct"
+
+        elif (
+            self.config.pipeline_options.runner
+            == var.KlioRunner.DIRECT_GKE_RUNNER
+        ):
+            standard_opts.runner = (
+                "klio_exec.runners.gke_direct.GkeDirectRunner"
+            )
 
     @staticmethod
     def _get_image_tag(image, tag):

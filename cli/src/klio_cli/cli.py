@@ -24,6 +24,7 @@ import click
 
 from klio_core import options as core_options
 from klio_core import utils as core_utils
+from klio_core import variables as var
 
 from klio_cli import __version__ as version
 from klio_cli import options
@@ -153,24 +154,28 @@ def run_job(klio_config, config_meta, **kwargs):
         git_sha=git_sha,
     )
 
-    if not direct_runner and klio_config.pipeline_options.runner == "DirectGKERunner":
-        run_gke = job_commands.run_gke.RunPipelineGKE(
+    if (
+        not direct_runner
+        and klio_config.pipeline_options.runner
+        == var.KlioRunner.DIRECT_GKE_RUNNER
+    ):
+        gke_commands = cli_utils.import_gke_commands()
+
+        klio_pipeline = gke_commands.RunPipelineGKE(
             config_meta.job_dir, klio_config, runtime_config, run_job_config
         )
-        rc = run_gke.run()
     else:
         klio_pipeline = job_commands.run.RunPipeline(
             config_meta.job_dir, klio_config, runtime_config, run_job_config
         )
-        rc = klio_pipeline.run()
+    rc = klio_pipeline.run()
     sys.exit(rc)
 
 
 @job.command(
     "stop",
     help=(
-        "Cancel a currently running job.\n\n**NOTE:** Draining is not "
-        "supported."
+        "Cancel a currently running job.\n\n**NOTE:** Draining is not supported"
     ),
 )
 @core_options.job_dir
@@ -211,7 +216,14 @@ def stop_job(klio_config, config_meta, job_name, region, gcp_project):
 
     # TODO: make this a click option once draining is supported @lynn
     strategy = "cancel"
-    job_commands.stop.StopJob().stop(job_name, gcp_project, region, strategy)
+    if klio_config.pipeline_options.runner == var.KlioRunner.DIRECT_GKE_RUNNER:
+        gke_commands = cli_utils.import_gke_commands()
+
+        gke_commands.StopPipelineGKE(config_meta.job_dir).stop()
+    else:
+        job_commands.stop.StopJob().stop(
+            job_name, gcp_project, region, strategy
+        )
 
 
 @job.command(
@@ -258,10 +270,21 @@ def deploy_job(klio_config, config_meta, **kwargs):
             job_name, gcp_project, region, strategy
         )
 
-    klio_pipeline = job_commands.run.RunPipeline(
-        config_meta.job_dir, klio_config, runtime_config, run_job_config
-    )
-    rc = klio_pipeline.run()
+    if (
+        not direct_runner
+        and klio_config.pipeline_options.runner
+        == var.KlioRunner.DIRECT_GKE_RUNNER
+    ):
+        gke_commands = cli_utils.import_gke_commands()
+
+        run_command = gke_commands.RunPipelineGKE(
+            config_meta.job_dir, klio_config, runtime_config, run_job_config
+        )
+    else:
+        run_command = job_commands.run.RunPipeline(
+            config_meta.job_dir, klio_config, runtime_config, run_job_config
+        )
+    rc = run_command.run()
     sys.exit(rc)
 
 
@@ -307,7 +330,12 @@ def create_job(addl_job_opts, output, **known_kwargs):
 )
 @core_utils.with_klio_config
 def delete_job(klio_config, config_meta):
-    job_commands.delete.DeleteJob(klio_config).delete()
+    if klio_config.pipeline_options.runner == var.KlioRunner.DIRECT_GKE_RUNNER:
+        gke_commands = cli_utils.import_gke_commands()
+
+        gke_commands.DeletePipelineGKE(config_meta.job_dir).delete()
+    else:
+        job_commands.delete.DeleteJob(klio_config).delete()
 
 
 @job.command(
@@ -323,8 +351,7 @@ def delete_job(klio_config, config_meta):
 def test_job(
     klio_config, config_meta, force_build, image_tag, pytest_args, **kwargs
 ):
-    """Thin wrapper around pytest. Any arguments after -- are passed through.
-    """
+    """Thin wrapper around pytest. Any arguments after -- are passed through."""
     pytest_args = list(pytest_args)
 
     if pytest_args:

@@ -14,6 +14,8 @@
 #
 """Shared variables for use within the Klio ecosystem."""
 
+import enum
+
 
 # From https://cloud.google.com/dataflow/docs/concepts/regional-endpoints
 # Last pulled: 2020-10-01
@@ -35,3 +37,10 @@ DATAFLOW_REGIONS = (
     "us-west1",
 )
 """Default tuple of regions/locations for which to query."""
+
+
+class KlioRunner(enum.Enum):
+    DIRECT_GKE_RUNNER = "DirectGKERunner"
+
+    def __eq__(self, other):
+        return self.value.lower() == other.lower()

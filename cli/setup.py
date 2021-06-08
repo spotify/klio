@@ -171,11 +171,13 @@ EXTRAS_REQUIRE = {
     "docs": ["sphinx", "interrogate"],
     "tests": [
         "coverage",
+        "kubernetes",
         "mock",  # for py2 - remove when dropping support
         "pytest>=4.3.0",  # 4.3.0 dropped last use of `convert`
         "pytest-cov",
         "pytest-mock",
     ],
+    "kubernetes": ["kubernetes"],
 }
 EXTRAS_REQUIRE["dev"] = (
     EXTRAS_REQUIRE["docs"]

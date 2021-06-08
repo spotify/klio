@@ -403,7 +403,6 @@ def test_run_job(
     (
         (True, None, None),
         (False, None, None),
-        (True, None, None),
         (True, None, "foobar"),
         (True, "klio-job2.yaml", None),
         (True, "klio-job2.yaml", "foobar"),
@@ -420,7 +419,9 @@ def test_run_job_gke(
     mock_get_git_sha,
     mock_klio_config,
 ):
-    mock_run_gke = mocker.patch.object(cli.job_commands.run_gke.RunPipelineGKE, "run")
+    mock_run_gke = mocker.patch.object(
+        cli.job_commands.run_gke.RunPipelineGKE, "run"
+    )
     mock_run_gke.return_value = 0
     mock_run = mocker.patch.object(cli.job_commands.run.RunPipeline, "run")
     mock_run.return_value = 0
@@ -433,7 +434,7 @@ def test_run_job_gke(
             "region": "boonies",
             "staging_location": "gs://somewhere/over/the/rainbow",
             "temp_location": "gs://somewhere/over/the/rainbow",
-            "runner" : "DirectGKERunner",
+            "runner": "DirectGKERunner",
         },
         "job_config": {
             "inputs": [
@@ -452,9 +453,7 @@ def test_run_job_gke(
         },
     }
 
-    mock_klio_config.setup(
-        config_data, config_file, config_override
-    )
+    mock_klio_config.setup(config_data, config_file, config_override)
 
     cli_inputs = ["job", "run"]
     if image_tag:

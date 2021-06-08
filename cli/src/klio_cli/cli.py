@@ -153,7 +153,10 @@ def run_job(klio_config, config_meta, **kwargs):
         git_sha=git_sha,
     )
 
-    if not direct_runner and klio_config.pipeline_options.runner == "DirectGKERunner":
+    if (
+        not direct_runner
+        and klio_config.pipeline_options.runner == "DirectGKERunner"
+    ):
         run_gke = job_commands.run_gke.RunPipelineGKE(
             config_meta.job_dir, klio_config, runtime_config, run_job_config
         )

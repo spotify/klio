@@ -16,6 +16,7 @@
 import errno
 import logging
 import os
+import re
 
 import glom
 import yaml
@@ -30,9 +31,8 @@ class RunPipelineGKE(base.BaseDockerizedPipeline):
     def __init__(
         self, job_dir, klio_config, docker_runtime_config, run_job_config
     ):
-        super().__init__(
-            job_dir, klio_config, docker_runtime_config, run_job_config
-        )
+        super().__init__(job_dir, klio_config, docker_runtime_config)
+        self.run_job_config = run_job_config
         self._deployment_config = None
         self._kubernetes_client = None
 
@@ -79,7 +79,7 @@ class RunPipelineGKE(base.BaseDockerizedPipeline):
         :return bool
             Whether a deployment for the given name-namespace combo exists
         """
-        dep = self._get_deployment_config()
+        dep = self.deployment_config
         namespace = dep["metadata"]["namespace"]
         deployment_name = dep["metadata"]["name"]
         resp = self.kubernetes_client.list_namespaced_deployment(
@@ -98,8 +98,9 @@ class RunPipelineGKE(base.BaseDockerizedPipeline):
             # TODO: If more than one image deployed,
             #  we need to search for correct container
             image_base = glom.glom(dep, image_path)
-            # TODO: Should we validate image has no tag before adding tag
-            full_image = image_base + f":{image_tag}"
+            # Strip off existing image tag if any
+            image_base = re.split(":", image_base)[0]
+            full_image = f"{image_base}:{image_tag}"
             glom.assign(self._deployment_config, image_path, full_image)
 
     def _apply_deployment(self):
@@ -111,6 +112,7 @@ class RunPipelineGKE(base.BaseDockerizedPipeline):
         """
         dep = self.deployment_config
         namespace = dep["metadata"]["namespace"]
+        deployment_name = dep["metadata"]["name"]
         if not self._deployment_exists():
             resp = self.kubernetes_client.create_namespaced_deployment(
                 body=dep, namespace=namespace
@@ -121,7 +123,10 @@ class RunPipelineGKE(base.BaseDockerizedPipeline):
             if self.run_job_config.update:
                 self._update_deployment()
             else:
-                raise
+                logging.warning(
+                    f"Cannot apply deployment for {deployment_name}."
+                    f"If deployment already exists, set `update` to True."
+                )
 
     def _setup_docker_image(self):
         super()._setup_docker_image()
@@ -132,15 +137,6 @@ class RunPipelineGKE(base.BaseDockerizedPipeline):
             self.docker_runtime_config.image_tag,
             self._docker_client,
         )
-
-    def _get_deployment_status(self):
-        dep = self.deployment_config
-        deployment_name = glom.glom(dep, "metadata.name")
-        namespace = glom.glom(dep, "metadata.namespace")
-        resp = self.kubernetes_client.read_namespaced_deployment(
-            deployment_name, namespace=namespace
-        )
-        return resp.status
 
     def _update_deployment(self, replica_count=None, image_tag=None):
         """
@@ -160,7 +156,8 @@ class RunPipelineGKE(base.BaseDockerizedPipeline):
         if image_tag:
             image_path = "spec.template.spec.containers.0.image"
             image_base = glom.glom(dep, image_path)
-            # TODO: Add regex to remove a tag if a tag is present
+            # Strip off existing image tag if present
+            image_base = re.split(":", image_base)[0]
             full_image = image_base + f":{image_tag}"
             glom.assign(self._deployment_config, image_path, full_image)
         resp = self.kubernetes_client.patch_namespaced_deployment(

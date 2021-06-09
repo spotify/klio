@@ -250,17 +250,18 @@ def test_update_deployment(
     namespace = deployment_config["metadata"]["namespace"]
     mock_k8s_client = mocker.Mock()
     mock_k8s_client.patch_namespaced_deployment.return_value = deployment_resp
+
+    stop_pipeline_gke = run_job_gke.StopPipelineGKE("/some/job/dir")
+
     monkeypatch.setattr(
-        run_pipeline_gke, "_kubernetes_client", mock_k8s_client
+        stop_pipeline_gke, "_kubernetes_client", mock_k8s_client
     )
     monkeypatch.setattr(
-        run_pipeline_gke, "_deployment_config", deployment_config
+        stop_pipeline_gke, "_deployment_config", deployment_config
     )
-    run_pipeline_gke._update_deployment()
+    stop_pipeline_gke._update_deployment()
     mock_k8s_client.patch_namespaced_deployment.assert_called_once_with(
-        name=deployment_name,
-        namespace=namespace,
-        body=deployment_config,
+        name=deployment_name, namespace=namespace, body=deployment_config,
     )
 
 
@@ -364,11 +365,7 @@ def test_apply_deployment(
 
 
 def test_delete(
-    monkeypatch,
-    mocker,
-    deployment_response_list,
-    run_pipeline_gke,
-    deployment_config,
+    monkeypatch, mocker, deployment_response_list, deployment_config,
 ):
     namespace = deployment_config["metadata"]["namespace"]
     deployment_name = deployment_config["metadata"]["name"]
@@ -377,13 +374,16 @@ def test_delete(
     mock_k8s_client.list_namespaced_deployment.return_value = (
         deployment_response_list
     )
+
+    delete_pipeline_gke = run_job_gke.DeletePipelineGKE("/some/job/dir")
+
     monkeypatch.setattr(
-        run_pipeline_gke, "_kubernetes_client", mock_k8s_client
+        delete_pipeline_gke, "_kubernetes_client", mock_k8s_client
     )
     monkeypatch.setattr(
-        run_pipeline_gke, "_deployment_config", deployment_config
+        delete_pipeline_gke, "_deployment_config", deployment_config
     )
-    run_pipeline_gke.delete()
+    delete_pipeline_gke.delete()
     mock_k8s_client.delete_namespaced_deployment.assert_called_once_with(
         name=deployment_name,
         namespace=namespace,
@@ -393,20 +393,21 @@ def test_delete(
     )
 
 
-def test_stop(
-    deployment_resp, deployment_config, run_pipeline_gke, monkeypatch, mocker
-):
+def test_stop(deployment_resp, deployment_config, monkeypatch, mocker):
     deployment_name = deployment_config["metadata"]["name"]
     namespace = deployment_config["metadata"]["namespace"]
     mock_k8s_client = mocker.Mock()
     mock_k8s_client.patch_namespaced_deployment.return_value = deployment_resp
+
+    stop_pipeline_gke = run_job_gke.StopPipelineGKE("/some/job/dir")
+
     monkeypatch.setattr(
-        run_pipeline_gke, "_kubernetes_client", mock_k8s_client
+        stop_pipeline_gke, "_kubernetes_client", mock_k8s_client
     )
     monkeypatch.setattr(
-        run_pipeline_gke, "_deployment_config", deployment_config
+        stop_pipeline_gke, "_deployment_config", deployment_config
     )
-    run_pipeline_gke.stop()
+    stop_pipeline_gke.stop()
     mock_k8s_client.patch_namespaced_deployment.assert_called_once_with(
         name=deployment_name,
         namespace=namespace,

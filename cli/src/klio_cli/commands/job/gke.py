@@ -26,13 +26,11 @@ from klio_cli.commands import base
 from klio_cli.utils import docker_utils
 
 
-class RunPipelineGKE(base.BaseDockerizedPipeline):
+class GKECommandMixin(object):
+    # NOTE : This command requires a job_dir attribute
 
-    def __init__(
-        self, job_dir, klio_config, docker_runtime_config, run_job_config
-    ):
-        super().__init__(job_dir, klio_config, docker_runtime_config)
-        self.run_job_config = run_job_config
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._deployment_config = None
         self._kubernetes_client = None
 
@@ -49,7 +47,6 @@ class RunPipelineGKE(base.BaseDockerizedPipeline):
                 path_to_deployment_config,
             )
 
-    # TODO: Is this the proper way to use property?
     @property
     def kubernetes_client(self):
         if not self._kubernetes_client:
@@ -89,6 +86,14 @@ class RunPipelineGKE(base.BaseDockerizedPipeline):
             if i.metadata.name == deployment_name:
                 return True
         return False
+
+
+class RunPipelineGKE(GKECommandMixin, base.BaseDockerizedPipeline):
+    def __init__(
+        self, job_dir, klio_config, docker_runtime_config, run_job_config
+    ):
+        super().__init__(job_dir, klio_config, docker_runtime_config)
+        self.run_job_config = run_job_config
 
     def _apply_image_to_deployment_config(self):
         image_tag = self.docker_runtime_config.image_tag
@@ -138,6 +143,24 @@ class RunPipelineGKE(base.BaseDockerizedPipeline):
             self._docker_client,
         )
 
+    def run(self, *args, **kwargs):
+        # NOTE: Notice this job doesn't actually run docker locally, but we
+        # still have to build and push the image before we can run kubectl
+
+        # docker image setup
+        self._check_gcp_credentials_exist()
+        self._check_docker_setup()
+        self._setup_docker_image()
+
+        self._apply_image_to_deployment_config()
+        self._apply_deployment(**kwargs)
+
+
+class StopPipelineGKE(GKECommandMixin):
+    def __init__(self, job_dir):
+        super().__init__()
+        self.job_dir = job_dir
+
     def _update_deployment(self, replica_count=None, image_tag=None):
         """
         This will update a deployment with a provided replica count or image tag
@@ -161,11 +184,22 @@ class RunPipelineGKE(base.BaseDockerizedPipeline):
             full_image = image_base + f":{image_tag}"
             glom.assign(self._deployment_config, image_path, full_image)
         resp = self.kubernetes_client.patch_namespaced_deployment(
-            name=deployment_name,
-            namespace=namespace,
-            body=dep,
+            name=deployment_name, namespace=namespace, body=dep,
         )
         logging.info(f"Scaled deployment {resp.metadata.name}")
+
+    def stop(self):
+        """
+        Delete a namespaced deployment
+        Expects existence of a kubernetes/deployment.yaml
+        """
+        self._update_deployment(replica_count=0)
+
+
+class DeletePipelineGKE(GKECommandMixin):
+    def __init__(self, job_dir):
+        super().__init__()
+        self.job_dir = job_dir
 
     def _delete_deployment(self):
         dep = self.deployment_config
@@ -185,29 +219,9 @@ class RunPipelineGKE(base.BaseDockerizedPipeline):
                 f"Deployment {namespace}:{deployment_name}" f"does not exist."
             )
 
-    def run(self, *args, **kwargs):
-        # NOTE: Notice this job doesn't actually run docker locally, but we
-        # still have to build and push the image before we can run kubectl
-
-        # docker image setup
-        self._check_gcp_credentials_exist()
-        self._check_docker_setup()
-        self._setup_docker_image()
-
-        self._apply_image_to_deployment_config()
-        self._apply_deployment(**kwargs)
-
-    # TODO: Should we move this into a stop_gke module?
     def delete(self):
         """
         Delete a namespaced deployment
         Expects existence of a kubernetes/deployment.yaml
         """
         self._delete_deployment()
-
-    def stop(self):
-        """
-        Delete a namespaced deployment
-        Expects existence of a kubernetes/deployment.yaml
-        """
-        self._update_deployment(replica_count=0)

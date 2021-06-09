@@ -310,6 +310,35 @@ def test_delete_job(
     mock_delete.return_value.delete.assert_called_once_with()
 
 
+def test_delete_job_gke(
+    mocker, monkeypatch, runner, patch_os_getcwd, mock_klio_config,
+):
+
+    config = {
+        "job_name": "test-job",
+        "version": 1,
+        "pipeline_options": {
+            "project": "test-project",
+            "runner": "DirectGKERunner",
+        },
+        "job_config": {},
+    }
+    mock_klio_config.setup(config, None, None)
+
+    mock_delete_gke = mocker.patch.object(
+        cli.job_commands.run_gke, "DeletePipelineGKE"
+    )
+
+    cli_inputs = ["job", "delete"]
+    result = runner.invoke(cli.main, cli_inputs)
+    core_testing.assert_execution_success(result)
+    assert "" == result.output
+
+    mock_klio_config.assert_calls()
+    mock_delete_gke.assert_called_once_with(mock_klio_config.meta.job_dir)
+    mock_delete_gke.return_value.delete.assert_called_once_with()
+
+
 @pytest.mark.parametrize(
     "is_gcp,direct_runner,config_override,image_tag",
     (
@@ -559,6 +588,35 @@ def test_stop_job(
     mock_stop.assert_called_once_with(
         "test-job", "test-project", "us-central1", "cancel"
     )
+
+
+def test_stop_job_gke(
+    runner, mocker, mock_klio_config,
+):
+    config_data = {
+        "job_name": "test-job",
+        "version": 1,
+        "pipeline_options": {
+            "project": "test-project",
+            "runner": "DirectGKERunner",
+        },
+        "job_config": {},
+    }
+    mock_klio_config.setup(config_data, None, None)
+
+    mock_stop_gke = mocker.patch.object(
+        cli.job_commands.run_gke, "StopPipelineGKE"
+    )
+
+    cli_inputs = ["job", "stop"]
+
+    result = runner.invoke(cli.main, cli_inputs)
+
+    core_testing.assert_execution_success(result)
+    assert "" == result.output
+
+    mock_klio_config.assert_calls()
+    mock_stop_gke.assert_called_once_with(mock_klio_config.meta.job_dir)
 
 
 @pytest.mark.parametrize(

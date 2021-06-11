@@ -109,7 +109,8 @@ def klio_config(config):
 # `/usr/src/config/.effective-klio-job.yaml`
 mock_config = kconfig.KlioConfig(_config())
 patcher = mock.patch(
-    "klio.transforms.core.RunConfig.get", lambda: mock_config,
+    "klio.transforms.core.RunConfig.get",
+    lambda: mock_config,
 )
 patcher.start()
 
@@ -218,8 +219,13 @@ def test_run_pipeline(
     patch_run_basic_pipeline,
 ):
     mock_compare_runtime_to_buildtime_config.return_value = True
+    # TODO: Add test for DirectGKERunner
     runtime_conf = cli.RuntimeConfig(
-        image_tag=None, direct_runner=False, update=None, blocking=None
+        image_tag=None,
+        direct_runner=False,
+        update=None,
+        blocking=None,
+        runner=cli_runner,
     )
     cli_inputs = []
     if image_tag:
@@ -251,7 +257,8 @@ def test_run_pipeline(
 
 
 @pytest.mark.parametrize(
-    "config_file_override", (None, "klio-job2.yaml"),
+    "config_file_override",
+    (None, "klio-job2.yaml"),
 )
 def test_run_pipeline_conf_override(
     config_file_override,

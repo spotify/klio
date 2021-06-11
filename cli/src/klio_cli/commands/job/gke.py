@@ -184,7 +184,9 @@ class StopPipelineGKE(GKECommandMixin):
             full_image = image_base + f":{image_tag}"
             glom.assign(self._deployment_config, image_path, full_image)
         resp = self.kubernetes_client.patch_namespaced_deployment(
-            name=deployment_name, namespace=namespace, body=dep,
+            name=deployment_name,
+            namespace=namespace,
+            body=dep,
         )
         logging.info(f"Scaled deployment {resp.metadata.name}")
 

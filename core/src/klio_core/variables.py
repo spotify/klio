@@ -35,3 +35,10 @@ DATAFLOW_REGIONS = (
     "us-west1",
 )
 """Default tuple of regions/locations for which to query."""
+
+
+class KlioRunners:
+    DIRECT_GKE_RUNNER = "DirectGKERunner"
+
+
+runners = KlioRunners()

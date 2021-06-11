@@ -39,7 +39,8 @@ logging.getLogger().setLevel(logging.INFO)
 
 
 RuntimeConfig = collections.namedtuple(
-    "RuntimeConfig", ["image_tag", "direct_runner", "update", "blocking"]
+    "RuntimeConfig",
+    ["image_tag", "direct_runner", "update", "blocking", "runner"],
 )
 
 
@@ -87,7 +88,11 @@ def run_pipeline(
     if blocking is None:  # if it's not explicitly set in CLI, look at config
         blocking = klio_config.job_config.blocking
 
-    runtime_conf = RuntimeConfig(image_tag, direct_runner, update, blocking)
+    runner = klio_config.pipeline_options.runner
+
+    runtime_conf = RuntimeConfig(
+        image_tag, direct_runner, update, blocking, runner
+    )
 
     klio_pipeline = run.KlioPipeline(
         klio_config.job_name, klio_config, runtime_conf
@@ -112,8 +117,7 @@ def stop_job(config_file):
 @options.config_file
 @click.argument("pytest_args", nargs=-1, type=click.UNPROCESSED)
 def test_job(config_file, pytest_args):
-    """Thin wrapper around pytest. Any arguments after -- are passed through.
-    """
+    """Thin wrapper around pytest. Any arguments after -- are passed through."""
     import os
     import pytest
 

@@ -24,6 +24,7 @@ import click
 
 from klio_core import options as core_options
 from klio_core import utils as core_utils
+from klio_core import variables as var
 
 from klio_cli import __version__ as version
 from klio_cli import options
@@ -59,7 +60,8 @@ RunJobConfig = collections.namedtuple(
     "RunJobConfig", ["direct_runner", "update", "git_sha"]
 )
 ProfileConfig = collections.namedtuple(
-    "ProfileConfig", ["input_file", "output_file", "show_logs", "entity_ids"],
+    "ProfileConfig",
+    ["input_file", "output_file", "show_logs", "entity_ids"],
 )
 
 
@@ -103,7 +105,8 @@ def profile():
 
 
 @job.group(
-    "config", help=("View and edit a Klio job's configuration."),
+    "config",
+    help=("View and edit a Klio job's configuration."),
 )
 def configuration():
     pass
@@ -155,7 +158,8 @@ def run_job(klio_config, config_meta, **kwargs):
 
     if (
         not direct_runner
-        and klio_config.pipeline_options.runner == "DirectGKERunner"
+        and klio_config.pipeline_options.runner
+        == var.runners.DIRECT_GKE_RUNNER
     ):
         run_gke = job_commands.run_gke.RunPipelineGKE(
             config_meta.job_dir, klio_config, runtime_config, run_job_config
@@ -343,8 +347,7 @@ def delete_job(klio_config, config_meta):
 def test_job(
     klio_config, config_meta, force_build, image_tag, pytest_args, **kwargs
 ):
-    """Thin wrapper around pytest. Any arguments after -- are passed through.
-    """
+    """Thin wrapper around pytest. Any arguments after -- are passed through."""
     pytest_args = list(pytest_args)
 
     if pytest_args:
@@ -441,7 +444,8 @@ def _job_config(job_dir, config_file, verb, *args, **kwargs):
 
 
 @configuration.command(
-    "show", help="Show the complete effective configuration for a Klio job.",
+    "show",
+    help="Show the complete effective configuration for a Klio job.",
 )
 @core_options.job_dir
 @core_options.config_file
@@ -470,7 +474,8 @@ def set_job_config(job_dir, config_file, target_to_value):
 
 
 @configuration.command(
-    "unset", help="Unset a configuration value for a Klio job.",
+    "unset",
+    help="Unset a configuration value for a Klio job.",
 )
 @core_options.job_dir
 @core_options.config_file
@@ -480,7 +485,8 @@ def unset_job_config(job_dir, config_file, section_property):
 
 
 @configuration.command(
-    "get", help="Get the value for a configuration property of a Klio job.",
+    "get",
+    help="Get the value for a configuration property of a Klio job.",
 )
 @core_options.job_dir
 @core_options.config_file

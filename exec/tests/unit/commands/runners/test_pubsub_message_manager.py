@@ -16,7 +16,12 @@
 import logging
 import threading
 
+import apache_beam as beam
 import pytest
+
+from apache_beam.testing import test_pipeline as beam_test_pipeline
+
+from klio_core.proto import klio_pb2
 
 from klio_exec.runners import pubsub_message_manager as pmm
 
@@ -45,8 +50,8 @@ def test_pubsub_klio_msg_init(pubsub_klio_msg):
     assert 1 == pubsub_klio_msg.ack_id
     assert 2 == pubsub_klio_msg.kmsg_id
 
-    assert None == pubsub_klio_msg.last_extended
-    assert None == pubsub_klio_msg.ext_duration
+    assert pubsub_klio_msg.last_extended is None
+    assert pubsub_klio_msg.ext_duration is None
     assert isinstance(pubsub_klio_msg.event, threading.Event)
 
 
@@ -113,8 +118,8 @@ def test_msg_manager_init(
     assert exp_mgr_sleep == mm.manager_sleep
     assert 0 == len(mm.messages)
     # threading.Lock is a factory that outputs the right
-    # lock implementation for the current platform, so... testing like this
-    assert type(threading.Lock()) == type(mm.messages_lock)
+    # lock implementation for the current platform
+    assert isinstance(mm.messages_lock, type(threading.Lock()))
     assert mm_logger == mm.mgr_logger
     assert hb_logger == mm.hrt_logger
 
@@ -312,3 +317,34 @@ def test_msg_manager_remove_raises(msg_manager, caplog):
     assert 4 == len(caplog.records)
     assert not pmm.ENTITY_ID_TO_ACK_ID.get(kmsg1.kmsg_id)
     assert 0 == len(msg_manager.messages)
+
+
+def _generate_kmsg(element):
+    message = klio_pb2.KlioMessage()
+    message.data.element = bytes(str(element), "utf-8")
+    return message.SerializeToString()
+
+
+def _assert_expected_msg(actual):
+    actual_msg = klio_pb2.KlioMessage()
+    actual_msg.ParseFromString(actual)
+
+    expected_msg = klio_pb2.KlioMessage()
+    expected_msg.data.element = b"d34db33f"
+    assert actual_msg == expected_msg
+
+
+def test_klio_ack_input_msg(mocker):
+    entity_id = "d34db33f"
+    mock_pklio_msg = mocker.Mock()
+    pmm.ENTITY_ID_TO_ACK_ID[entity_id] = mock_pklio_msg
+    with beam_test_pipeline.TestPipeline() as p:
+        (
+            p
+            | beam.Create([entity_id])
+            | beam.Map(_generate_kmsg)
+            | beam.ParDo(pmm.KlioAckInputMessage())
+            | beam.Map(_assert_expected_msg)
+        )
+
+    mock_pklio_msg.event.set.assert_called_once_with()

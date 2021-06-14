@@ -415,9 +415,9 @@ class KlioPipeline(object):
                 >> helpers.KlioGcsCheckInputExists()
             )
 
-            # TODO: update me if the name/string/lookup of the direct on
-            # GKE runner is different - this is just a placeholder
-            if self.config.pipeline_options.runner == "DirectGKE":
+            # TODO: update me to `var.runners.DIRECT_GKE_RUNNER` once
+            #       direct_on_gke_runner_clean is merged
+            if self.config.pipeline_options.runner == "DirectGKERunner":
                 ack_inp_lbl = lbl("Ack Input Message")
                 _ = input_exists.not_found | ack_inp_lbl >> beam.ParDo(
                     pubsub_message_manager.KlioAckInputMessage()
@@ -468,9 +468,9 @@ class KlioPipeline(object):
         to_drop_flatten = (v1_to_process.drop, v2_to_process.drop)
         to_drop = to_drop_flatten | flatten_ign_lbl >> beam.Flatten()
 
-        # TODO: update me if the name/string/lookup of the direct on GKE runner
-        # is different - this is just a placeholder
-        if self.config.pipeline_options.runner == "DirectGKE":
+        # TODO: update me to `var.runners.DIRECT_GKE_RUNNER` once
+        #       direct_on_gke_runner_clean is merged
+        if self.config.pipeline_options.runner == "DirectGKERunner":
             ack_inp_lbl = lbl("Ack Input Message")
             _ = to_drop | ack_inp_lbl >> beam.ParDo(
                 pubsub_message_manager.KlioAckInputMessage()
@@ -558,9 +558,9 @@ class KlioPipeline(object):
 
         out_pcol = run_callable(to_process, self.config)
 
-        # TODO: update me if the name/string/lookup of the direct on GKE runner
-        # is different - this is just a placeholder
-        if self.config.pipeline_options.runner == "DirectGKE":
+        # TODO: update me to `var.runners.DIRECT_GKE_RUNNER` once
+        #       direct_on_gke_runner_clean is merged
+        if self.config.pipeline_options.runner == "DirectGKERunner":
             to_ack_input = (
                 out_pcol,
                 to_pass_thru,
@@ -613,9 +613,11 @@ class KlioPipeline(object):
             logging.error("Error running pipeline: %s" % e)
             raise SystemExit(1)
 
-        # TODO: update me if the name/string/lookup of the direct on GKE runner
-        # is different - this is just a placeholder
-        is_direct_gke = self.config.pipeline_options.runner == "DirectGKE"
+        # TODO: update me to `var.runners.DIRECT_GKE_RUNNER` once
+        #       direct_on_gke_runner_clean is merged
+        is_direct_gke = (
+            self.config.pipeline_options.runner == "DirectGKERunner"
+        )
         should_block = (
             self.runtime_conf.direct_runner,
             self.runtime_conf.blocking,

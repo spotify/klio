@@ -288,6 +288,12 @@ class KlioAckInputMessage(beam.DoFn):
         # This call, `set`, will tell the MessageManager that this
         # message is now ready to be acknowledged and no longer being
         # worked upon.
-        msg.event.set()
+        if msg:
+            msg.event.set()
+        else:
+            mm_logger = logging.getLogger(
+                "klio.gke_direct_runner.message_manager"
+            )
+            mm_logger.warn(f"Unable to acknowledge {entity_id}: Not found.")
 
         yield element

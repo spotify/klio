@@ -161,7 +161,7 @@ def run_job(klio_config, config_meta, **kwargs):
         and klio_config.pipeline_options.runner
         == var.runners.DIRECT_GKE_RUNNER
     ):
-        run_gke = job_commands.run_gke.RunPipelineGKE(
+        run_gke = job_commands.gke.RunPipelineGKE(
             config_meta.job_dir, klio_config, runtime_config, run_job_config
         )
         rc = run_gke.run()
@@ -219,7 +219,7 @@ def stop_job(klio_config, config_meta, job_name, region, gcp_project):
     # TODO: make this a click option once draining is supported @lynn
     strategy = "cancel"
     if klio_config.pipeline_options.runner == "DirectGKERunner":
-        job_commands.run_gke.StopPipelineGKE(config_meta.job_dir).stop()
+        job_commands.gke.StopPipelineGKE(config_meta.job_dir).stop()
     else:
         job_commands.stop.StopJob().stop(
             job_name, gcp_project, region, strategy
@@ -274,7 +274,7 @@ def deploy_job(klio_config, config_meta, **kwargs):
         not direct_runner
         and klio_config.pipeline_options.runner == "DirectGKERunner"
     ):
-        run_gke = job_commands.run_gke.RunPipelineGKE(
+        run_gke = job_commands.gke.RunPipelineGKE(
             config_meta.job_dir, klio_config, runtime_config, run_job_config
         )
         rc = run_gke.run()
@@ -329,7 +329,7 @@ def create_job(addl_job_opts, output, **known_kwargs):
 @core_utils.with_klio_config
 def delete_job(klio_config, config_meta):
     if klio_config.pipeline_options.runner == "DirectGKERunner":
-        job_commands.run_gke.DeletePipelineGKE(config_meta.job_dir).delete()
+        job_commands.gke.DeletePipelineGKE(config_meta.job_dir).delete()
     else:
         job_commands.delete.DeleteJob(klio_config).delete()
 

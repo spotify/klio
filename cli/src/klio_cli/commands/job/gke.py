@@ -80,17 +80,46 @@ class GKECommandMixin(object):
         namespace = dep["metadata"]["namespace"]
         deployment_name = dep["metadata"]["name"]
         resp = self.kubernetes_client.list_namespaced_deployment(
-            namespace=namespace
+            namespace=namespace,
+            timeout_seconds=30  # Do we need this?
         )
         for i in resp.items:
             if i.metadata.name == deployment_name:
                 return True
         return False
 
+    def _update_deployment(self, replica_count=None, image_tag=None):
+        """
+        This will update a deployment with a provided replica count or image tag
+        :param int replica_count
+            Number of replicas the deployment will be updated with
+            If not provided then this will not be changed
+        :param str image_tag
+            The image tag that will be applied to the updated deployment
+            If not provided then this will not be updated
+        """
+        deployment_name = glom.glom(self.deployment_config, "metadata.name")
+        namespace = glom.glom(self.deployment_config, "metadata.namespace")
+        if replica_count is not None:
+            glom.assign(self._deployment_config, "spec.replicas", replica_count)
+        if image_tag:
+            image_path = "spec.template.spec.containers.0.image"
+            image_base = glom.glom(self._deployment_config, image_path)
+            # Strip off existing image tag if present
+            image_base = re.split(":", image_base)[0]
+            full_image = image_base + f":{image_tag}"
+            glom.assign(self._deployment_config, image_path, full_image)
+        resp = self.kubernetes_client.patch_namespaced_deployment(
+            name=deployment_name,
+            namespace=namespace,
+            body=self.deployment_config,
+        )
+        logging.info(f"Scaled deployment {resp.metadata.name}")
+
 
 class RunPipelineGKE(GKECommandMixin, base.BaseDockerizedPipeline):
     def __init__(
-        self, job_dir, klio_config, docker_runtime_config, run_job_config
+            self, job_dir, klio_config, docker_runtime_config, run_job_config
     ):
         super().__init__(job_dir, klio_config, docker_runtime_config)
         self.run_job_config = run_job_config
@@ -161,40 +190,12 @@ class StopPipelineGKE(GKECommandMixin):
         super().__init__()
         self.job_dir = job_dir
 
-    def _update_deployment(self, replica_count=None, image_tag=None):
-        """
-        This will update a deployment with a provided replica count or image tag
-        :param int replica_count
-            Number of replicas the deployment will be updated with
-            If not provided then this will not be changed
-        :param str image_tag
-            The image tag that will be applied to the updated deployment
-            If not provided then this will not be updated
-        """
-        dep = self.deployment_config
-        deployment_name = glom.glom(dep, "metadata.name")
-        namespace = glom.glom(dep, "metadata.namespace")
-        if replica_count:
-            glom.assign(dep, "spec.replicas", replica_count)
-        if image_tag:
-            image_path = "spec.template.spec.containers.0.image"
-            image_base = glom.glom(dep, image_path)
-            # Strip off existing image tag if present
-            image_base = re.split(":", image_base)[0]
-            full_image = image_base + f":{image_tag}"
-            glom.assign(self._deployment_config, image_path, full_image)
-        resp = self.kubernetes_client.patch_namespaced_deployment(
-            name=deployment_name,
-            namespace=namespace,
-            body=dep,
-        )
-        logging.info(f"Scaled deployment {resp.metadata.name}")
-
     def stop(self):
         """
         Delete a namespaced deployment
         Expects existence of a kubernetes/deployment.yaml
         """
+        print("STOP COMMAND CALLED")
         self._update_deployment(replica_count=0)
 
 

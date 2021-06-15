@@ -21,13 +21,13 @@ from kubernetes import client
 from klio_core import config
 
 from klio_cli import cli
-from klio_cli.commands.job import run_gke as run_job_gke
+from klio_cli.commands.job import gke as job_gke
 
 
 @pytest.fixture
 def mock_os_environ(mocker):
     return mocker.patch.dict(
-        run_job_gke.base.os.environ, {"USER": "cookiemonster"}
+        job_gke.base.os.environ, {"USER": "cookiemonster"}
     )
 
 
@@ -96,7 +96,7 @@ def run_pipeline_gke(
     monkeypatch,
 ):
     job_dir = "/test/dir/jobs/test_run_job"
-    pipeline = run_job_gke.RunPipelineGKE(
+    pipeline = job_gke.RunPipelineGKE(
         job_dir=job_dir,
         klio_config=klio_config,
         docker_runtime_config=docker_runtime_config,
@@ -251,15 +251,15 @@ def test_update_deployment(
     mock_k8s_client = mocker.Mock()
     mock_k8s_client.patch_namespaced_deployment.return_value = deployment_resp
 
-    stop_pipeline_gke = run_job_gke.StopPipelineGKE("/some/job/dir")
+    # run_pipeline_gke = job_gke.RunPipelineGKE("/some/job/dir")
 
     monkeypatch.setattr(
-        stop_pipeline_gke, "_kubernetes_client", mock_k8s_client
+        run_pipeline_gke, "_kubernetes_client", mock_k8s_client
     )
     monkeypatch.setattr(
-        stop_pipeline_gke, "_deployment_config", deployment_config
+        run_pipeline_gke, "_deployment_config", deployment_config
     )
-    stop_pipeline_gke._update_deployment()
+    run_pipeline_gke._update_deployment()
     mock_k8s_client.patch_namespaced_deployment.assert_called_once_with(
         name=deployment_name, namespace=namespace, body=deployment_config,
     )
@@ -375,7 +375,7 @@ def test_delete(
         deployment_response_list
     )
 
-    delete_pipeline_gke = run_job_gke.DeletePipelineGKE("/some/job/dir")
+    delete_pipeline_gke = job_gke.DeletePipelineGKE("/some/job/dir")
 
     monkeypatch.setattr(
         delete_pipeline_gke, "_kubernetes_client", mock_k8s_client
@@ -399,7 +399,7 @@ def test_stop(deployment_resp, deployment_config, monkeypatch, mocker):
     mock_k8s_client = mocker.Mock()
     mock_k8s_client.patch_namespaced_deployment.return_value = deployment_resp
 
-    stop_pipeline_gke = run_job_gke.StopPipelineGKE("/some/job/dir")
+    stop_pipeline_gke = job_gke.StopPipelineGKE("/some/job/dir")
 
     monkeypatch.setattr(
         stop_pipeline_gke, "_kubernetes_client", mock_k8s_client

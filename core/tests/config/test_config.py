@@ -187,6 +187,7 @@ def final_pipeline_config_dict():
         "profile_cpu": None,
         "profile_memory": None,
         "profile_sample_rate": None,
+        "gke_namespace": None,
     }
 
 

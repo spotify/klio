@@ -326,7 +326,7 @@ def test_delete_job_gke(
     mock_klio_config.setup(config, None, None)
 
     mock_delete_gke = mocker.patch.object(
-        cli.job_commands.run_gke, "DeletePipelineGKE"
+        cli.job_commands.gke, "DeletePipelineGKE"
     )
 
     cli_inputs = ["job", "delete"]
@@ -449,7 +449,7 @@ def test_run_job_gke(
     mock_klio_config,
 ):
     mock_run_gke = mocker.patch.object(
-        cli.job_commands.run_gke.RunPipelineGKE, "run"
+        cli.job_commands.gke.RunPipelineGKE, "run"
     )
     mock_run_gke.return_value = 0
     mock_run = mocker.patch.object(cli.job_commands.run.RunPipeline, "run")
@@ -605,7 +605,7 @@ def test_stop_job_gke(
     mock_klio_config.setup(config_data, None, None)
 
     mock_stop_gke = mocker.patch.object(
-        cli.job_commands.run_gke, "StopPipelineGKE"
+        cli.job_commands.gke, "StopPipelineGKE"
     )
 
     cli_inputs = ["job", "stop"]

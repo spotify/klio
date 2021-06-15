@@ -13,7 +13,6 @@
 # limitations under the License.
 #
 
-import errno
 import logging
 import os
 import re
@@ -33,19 +32,6 @@ class GKECommandMixin(object):
         super().__init__(*args, **kwargs)
         self._deployment_config = None
         self._kubernetes_client = None
-
-    def _validate_deployment_config(self):
-        # TODO: Where should we call this?
-        #  We should also validate presence of fields @shireenk
-        path_to_deployment_config = os.path.join(
-            self.job_dir, "kubernetes", "deployment.yaml"
-        )
-        if not os.path.exists(path_to_deployment_config):
-            raise FileNotFoundError(
-                errno.ENOENT,
-                os.strerror(errno.ENOENT),
-                path_to_deployment_config,
-            )
 
     @property
     def kubernetes_client(self):
@@ -81,7 +67,6 @@ class GKECommandMixin(object):
         deployment_name = dep["metadata"]["name"]
         resp = self.kubernetes_client.list_namespaced_deployment(
             namespace=namespace,
-            timeout_seconds=30  # Do we need this?
         )
         for i in resp.items:
             if i.metadata.name == deployment_name:
@@ -118,9 +103,11 @@ class GKECommandMixin(object):
 
 
 class RunPipelineGKE(GKECommandMixin, base.BaseDockerizedPipeline):
-    def __init__(
-            self, job_dir, klio_config, docker_runtime_config, run_job_config
-    ):
+    def __init__(self,
+                 job_dir,
+                 klio_config,
+                 docker_runtime_config,
+                 run_job_config):
         super().__init__(job_dir, klio_config, docker_runtime_config)
         self.run_job_config = run_job_config
 

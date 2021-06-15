@@ -69,9 +69,7 @@ def _compare_runtime_to_buildtime_config(klio_config):
 @options.blocking
 @core_options.update
 @core_utils.with_klio_config
-def run_pipeline(
-    image_tag, direct_runner, update, klio_config, config_meta, blocking
-):
+def run_pipeline(image_tag, direct_runner, update, klio_config, config_meta, blocking):
 
     # RunConfig ensures config is pickled and sent to worker.  Note this
     # depends on save_main_session being True
@@ -90,13 +88,9 @@ def run_pipeline(
 
     runner = klio_config.pipeline_options.runner
 
-    runtime_conf = RuntimeConfig(
-        image_tag, direct_runner, update, blocking, runner
-    )
+    runtime_conf = RuntimeConfig(image_tag, direct_runner, update, blocking, runner)
 
-    klio_pipeline = run.KlioPipeline(
-        klio_config.job_name, klio_config, runtime_conf
-    )
+    klio_pipeline = run.KlioPipeline(klio_config.job_name, klio_config, runtime_conf)
     klio_pipeline.run()
 
 
@@ -252,8 +246,7 @@ def profile_memory(
     "memory-per-line",
     short_help="Profile memory usage per line.",
     help=(
-        "Profile memory per line for every Klio-based transforms' process "
-        "method."
+        "Profile memory per line for every Klio-based transforms' process " "method."
     ),
 )
 @core_options.maximum

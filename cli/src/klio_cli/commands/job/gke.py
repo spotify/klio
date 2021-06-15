@@ -105,9 +105,11 @@ class GKECommandMixin(object):
 
 
 class RunPipelineGKE(GKECommandMixin, base.BaseDockerizedPipeline):
-    def __init__(
-        self, job_dir, klio_config, docker_runtime_config, run_job_config
-    ):
+    def __init__(self,
+                 job_dir,
+                 klio_config,
+                 docker_runtime_config,
+                 run_job_config):
         super().__init__(job_dir, klio_config, docker_runtime_config)
         self.run_job_config = run_job_config
 
@@ -182,7 +184,6 @@ class StopPipelineGKE(GKECommandMixin):
         Delete a namespaced deployment
         Expects existence of a kubernetes/deployment.yaml
         """
-        print("STOP COMMAND CALLED")
         self._update_deployment(replica_count=0)
 
 

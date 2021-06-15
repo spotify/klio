@@ -135,13 +135,9 @@ def build_image(klio_config, config_meta, **kwargs):
 @options.runtime
 @core_utils.with_klio_config
 def run_job(klio_config, config_meta, **kwargs):
-    direct_runner = cli_utils.is_direct_runner(
-        klio_config, kwargs.pop("direct_runner")
-    )
+    direct_runner = cli_utils.is_direct_runner(klio_config, kwargs.pop("direct_runner"))
 
-    git_sha = cli_utils.get_git_sha(
-        config_meta.job_dir, kwargs.get("image_tag")
-    )
+    git_sha = cli_utils.get_git_sha(config_meta.job_dir, kwargs.get("image_tag"))
     image_tag = kwargs.get("image_tag") or git_sha
 
     runtime_config = DockerRuntimeConfig(
@@ -158,8 +154,7 @@ def run_job(klio_config, config_meta, **kwargs):
 
     if (
         not direct_runner
-        and klio_config.pipeline_options.runner
-        == var.runners.DIRECT_GKE_RUNNER
+        and klio_config.pipeline_options.runner == var.runners.DIRECT_GKE_RUNNER
     ):
         run_gke = job_commands.gke.RunPipelineGKE(
             config_meta.job_dir, klio_config, runtime_config, run_job_config
@@ -175,10 +170,7 @@ def run_job(klio_config, config_meta, **kwargs):
 
 @job.command(
     "stop",
-    help=(
-        "Cancel a currently running job.\n\n**NOTE:** Draining is not "
-        "supported."
-    ),
+    help=("Cancel a currently running job.\n\n**NOTE:** Draining is not " "supported."),
 )
 @core_options.job_dir
 @core_options.config_file
@@ -199,8 +191,7 @@ def run_job(klio_config, config_meta, **kwargs):
 def stop_job(klio_config, config_meta, job_name, region, gcp_project):
     if job_name and any([config_meta.job_dir, config_meta.config_file]):
         logging.error(
-            "'--job-name' can not be used with '--config-file' and/or "
-            "'--job-dir'."
+            "'--job-name' can not be used with '--config-file' and/or " "'--job-dir'."
         )
         raise SystemExit(1)
 
@@ -221,9 +212,7 @@ def stop_job(klio_config, config_meta, job_name, region, gcp_project):
     if klio_config.pipeline_options.runner == "DirectGKERunner":
         job_commands.gke.StopPipelineGKE(config_meta.job_dir).stop()
     else:
-        job_commands.stop.StopJob().stop(
-            job_name, gcp_project, region, strategy
-        )
+        job_commands.stop.StopJob().stop(job_name, gcp_project, region, strategy)
 
 
 @job.command(
@@ -237,13 +226,9 @@ def stop_job(klio_config, config_meta, job_name, region, gcp_project):
 @options.runtime
 @core_utils.with_klio_config
 def deploy_job(klio_config, config_meta, **kwargs):
-    direct_runner = cli_utils.is_direct_runner(
-        klio_config, kwargs.pop("direct_runner")
-    )
+    direct_runner = cli_utils.is_direct_runner(klio_config, kwargs.pop("direct_runner"))
 
-    git_sha = cli_utils.get_git_sha(
-        config_meta.job_dir, kwargs.get("image_tag")
-    )
+    git_sha = cli_utils.get_git_sha(config_meta.job_dir, kwargs.get("image_tag"))
     image_tag = kwargs.get("image_tag") or git_sha
     if config_meta.config_file:
         basename = os.path.basename(config_meta.config_file)
@@ -266,14 +251,9 @@ def deploy_job(klio_config, config_meta, **kwargs):
         gcp_project = klio_config.pipeline_options.project
         region = klio_config.pipeline_options.region
         strategy = "cancel"
-        job_commands.stop.StopJob().stop(
-            job_name, gcp_project, region, strategy
-        )
+        job_commands.stop.StopJob().stop(job_name, gcp_project, region, strategy)
 
-    if (
-        not direct_runner
-        and klio_config.pipeline_options.runner == "DirectGKERunner"
-    ):
+    if not direct_runner and klio_config.pipeline_options.runner == "DirectGKERunner":
         run_gke = job_commands.gke.RunPipelineGKE(
             config_meta.job_dir, klio_config, runtime_config, run_job_config
         )
@@ -323,9 +303,7 @@ def create_job(addl_job_opts, output, **known_kwargs):
     job.create(addl_job_opts, known_kwargs, output)
 
 
-@job.command(
-    "delete", help=("Delete GCP-related resources created by a Klio job")
-)
+@job.command("delete", help=("Delete GCP-related resources created by a Klio job"))
 @core_utils.with_klio_config
 def delete_job(klio_config, config_meta):
     if klio_config.pipeline_options.runner == "DirectGKERunner":
@@ -344,9 +322,7 @@ def delete_job(klio_config, config_meta):
 @options.force_build
 @click.argument("pytest_args", nargs=-1, type=click.UNPROCESSED)
 @core_utils.with_klio_config
-def test_job(
-    klio_config, config_meta, force_build, image_tag, pytest_args, **kwargs
-):
+def test_job(klio_config, config_meta, force_build, image_tag, pytest_args, **kwargs):
     """Thin wrapper around pytest. Any arguments after -- are passed through."""
     pytest_args = list(pytest_args)
 
@@ -360,9 +336,7 @@ def test_job(
         image_tag = cli_utils.get_git_sha(config_meta.job_dir)
 
     if config_meta.config_file:
-        image_tag = "{}-{}".format(
-            image_tag, os.path.basename(config_meta.config_file)
-        )
+        image_tag = "{}-{}".format(image_tag, os.path.basename(config_meta.config_file))
 
     runtime_config = DockerRuntimeConfig(
         image_tag=image_tag,
@@ -436,9 +410,7 @@ def audit_job(klio_config, config_meta, force_build, image_tag, list_steps):
 def _job_config(job_dir, config_file, verb, *args, **kwargs):
     _, config_path = core_utils.get_config_job_dir(job_dir, config_file)
 
-    effective_job_config = job_commands.configuration.EffectiveJobConfig(
-        config_path
-    )
+    effective_job_config = job_commands.configuration.EffectiveJobConfig(config_path)
     func = getattr(effective_job_config, verb)
     func(*args, **kwargs)
 
@@ -525,9 +497,7 @@ def get_job_config(job_dir, config_file, section_property):
     help="Dump collected cProfile data to a desired output file.",
 )
 @options.sort_stats
-@click.argument(
-    "restrictions", nargs=-1, required=False, type=click.UNPROCESSED
-)
+@click.argument("restrictions", nargs=-1, required=False, type=click.UNPROCESSED)
 @core_utils.with_klio_config
 def collect_profiling_data(
     klio_config,
@@ -596,9 +566,7 @@ def _profile(subcommand, klio_config, config_meta, **kwargs):
         image_tag = cli_utils.get_git_sha(config_meta.job_dir)
 
     if config_meta.config_file:
-        image_tag = "{}-{}".format(
-            image_tag, os.path.basename(config_meta.config_file)
-        )
+        image_tag = "{}-{}".format(image_tag, os.path.basename(config_meta.config_file))
 
     runtime_config = DockerRuntimeConfig(
         image_tag=image_tag,
@@ -651,8 +619,7 @@ def profile_memory(klio_config, config_meta, **kwargs):
     "memory-per-line",
     short_help="Profile memory usage per line.",
     help=(
-        "Profile memory per line for every Klio-based transforms' process "
-        "method."
+        "Profile memory per line for every Klio-based transforms' process " "method."
     ),
 )
 @core_options.maximum

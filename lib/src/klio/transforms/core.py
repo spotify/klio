@@ -28,6 +28,7 @@ from klio_core.proto import klio_pb2
 from klio.metrics import client as metrics_client
 from klio.metrics import logger as metrics_logger
 from klio.metrics import native as native_metrics
+from klio.metrics import shumway
 from klio.metrics import stackdriver
 
 
@@ -118,6 +119,7 @@ class KlioContext(object):
         # None (use default config), or a dict of configured values
         use_logger = metrics_config.get("logger")
         use_stackdriver = metrics_config.get("stackdriver_logger")
+        use_shumway = metrics_config.get("shumway")
 
         # TODO: set runner in OS environment (via klio-exec), since
         #       the runner defined in config could be overwritten via
@@ -145,6 +147,13 @@ class KlioContext(object):
                 # metrics reporting doesn't work when running locally
                 use_stackdriver = False
 
+        # use shumway when running on DirectGKERunner unless it's explicitly
+        # turned off/set to False. Don't set it to True if it's set to False
+        # or it's a dictionary (aka has some configuration)
+        if runner.lower() == "directgkerunner":
+            if use_shumway is None:
+                use_shumway = True
+
         if use_stackdriver is not False:
             # FYI there's a deprecation warning when the SD Client is init'ed
             # StackdriverLogMetricsClient is init'ed
@@ -154,6 +163,10 @@ class KlioContext(object):
         if use_logger is not False:
             logger_client = metrics_logger.MetricsLoggerClient(self.config)
             clients.append(logger_client)
+
+        if use_shumway is not False:
+            shumway_client = shumway.ShumwayMetricsClient(self.config)
+            clients.append(shumway_client)
 
         return metrics_client.MetricsRegistry(
             clients, transform_name=self._transform_name

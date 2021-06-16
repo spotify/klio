@@ -409,7 +409,7 @@ class KlioPipeline(object):
             # TODO: update me to `var.runners.DIRECT_GKE_RUNNER` once
             #       direct_on_gke_runner_clean is merged
             if self.config.pipeline_options.runner == "DirectGKERunner":
-                ack_inp_lbl = lbl("Ack Input Message")
+                ack_inp_lbl = lbl("Ack Input Message from No Data Input Found")
                 _ = input_exists.not_found | ack_inp_lbl >> beam.ParDo(
                     pubsub_message_manager.KlioAckInputMessage()
                 )
@@ -462,7 +462,7 @@ class KlioPipeline(object):
         # TODO: update me to `var.runners.DIRECT_GKE_RUNNER` once
         #       direct_on_gke_runner_clean is merged
         if self.config.pipeline_options.runner == "DirectGKERunner":
-            ack_inp_lbl = lbl("Ack Input Message")
+            ack_inp_lbl = lbl("Ack Dropped Input Message")
             _ = to_drop | ack_inp_lbl >> beam.ParDo(
                 pubsub_message_manager.KlioAckInputMessage()
             )

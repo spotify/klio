@@ -159,6 +159,7 @@ INSTALL_REQUIRES = [
     "psutil",
     "pyyaml",
     "six",
+    "shumway",  # Q: should this be an 'extras'? i.e. `klio[gke]`?
 ]
 EXTRAS_REQUIRE = {
     "docs": ["sphinx", "interrogate"],

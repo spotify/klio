@@ -23,6 +23,7 @@ from apache_beam.io.gcp import pubsub as beam_pubsub
 from apache_beam.runners.direct import direct_runner
 from apache_beam.runners.direct import transform_evaluator
 from apache_beam.utils import timestamp as beam_timestamp
+from google.api_core import exceptions as g_exceptions
 from google.cloud import pubsub as g_pubsub
 
 from klio_core.proto import klio_pb2
@@ -193,6 +194,7 @@ class KlioPubSubReadEvaluator(transform_evaluator._PubSubReadEvaluator):
         self.sub_client = g_pubsub.SubscriberClient()
         self.message_manager = MessageManager(self._sub_name)
         self.message_manager.start_threads()
+        self.logger = logging.getLogger("klio.pubsub_read_evaluator")
 
     def _read_from_pubsub(self, timestamp_attribute):
         # Klio maintainer note: This code is the eact same logic in
@@ -252,6 +254,13 @@ class KlioPubSubReadEvaluator(transform_evaluator._PubSubReadEvaluator):
                 _get_element(rm.ack_id, rm.message)
                 for rm in response.received_messages
             ]
+
+        # only catching/ignoring this for now - if new exceptions raise, we'll
+        # figure it out as they come on how to handle them
+        except g_exceptions.DeadlineExceeded as e:
+            # this seems mostly a benign error when there are 20+ seconds
+            # between messages
+            self.logger.debug(e)
 
         finally:
             self.sub_client.api.transport.channel.close()

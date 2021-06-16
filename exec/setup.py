@@ -170,6 +170,7 @@ EXTRAS_REQUIRE = {
         "pytest>=4.3.0",  # 4.3.0 dropped last use of `convert`
         "pytest-cov",
         "pytest-mock",
+        "PyHamcrest"
     ],
     "debug": [
         "line_profiler<3.2",  # wall time profiling

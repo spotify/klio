@@ -552,10 +552,14 @@ class KlioPipeline(object):
         # TODO: update me to `var.runners.DIRECT_GKE_RUNNER` once
         #       direct_on_gke_runner_clean is merged
         if self.config.pipeline_options.runner == "DirectGKERunner":
-            to_ack_input = (
-                out_pcol,
-                to_pass_thru,
-            ) | "Flatten to Ack Input Messages" >> beam.Flatten()
+            if to_pass_thru:
+                to_ack_input = (
+                    out_pcol,
+                    to_pass_thru,
+                ) | "Flatten to Ack Input Messages" >> beam.Flatten()
+            else:
+                to_ack_input = out_pcol
+
             _ = to_ack_input | "Ack Input Messages" >> beam.ParDo(
                 pubsub_message_manager.KlioAckInputMessage()
             )

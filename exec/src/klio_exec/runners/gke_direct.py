@@ -41,6 +41,12 @@ _LOGGER = logging.getLogger("klio.gke_direct_runner")
 
 
 class GkeDirectRunner(direct_runner.BundleBasedDirectRunner):
+    """Custom DirectRunner class for running on GKE.
+
+    Acknowledges PubsubMessages after they are finished processing rather than
+    before they start processing, but otherwise is meant to behave identically
+    to the BundleBasedDirectRunner.
+    """
     def run_pipeline(self, pipeline, options):
         """Execute the entire pipeline and returns an DirectPipelineResult."""
 

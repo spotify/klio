@@ -33,6 +33,8 @@ ENTITY_ID_TO_ACK_ID = {}
 
 
 class PubSubKlioMessage:
+    """Contains state needed to manage ACKs for a KlioMessage"""
+
     def __init__(self, ack_id, kmsg_id):
         self.ack_id = ack_id
         self.kmsg_id = kmsg_id
@@ -49,9 +51,33 @@ class PubSubKlioMessage:
 
 
 class MessageManager:
+    """Manages the ack deadline for in-progress KlioMessages.
+
+    Extends the ack deadline while the KlioMessage is still processing, and
+    stops extending them when the message is done.
+
+    This class is used by ``KlioPubSubReadEvaluator`` to manage message
+    acknowledgement.
+
+    Usage:
+
+    .. code-block:: python
+        m = MessageManager("subscription-name")
+        m.start_threads()
+    """
+
     DEFAULT_DEADLINE_EXTENSION = 30
 
     def __init__(self, sub_name, heartbeat_sleep=10, manager_sleep=5):
+        """Initialize a MessageManager instance.
+
+        Args:
+             sub_name(str): PubSub subscription name to listen on.
+             heartbeat_sleep(float):
+                Seconds to sleep between heartbeat messages.
+             manager_sleep(float):
+                Seconds to sleep between deadline extension checks.
+        """
         self._client = g_pubsub.SubscriberClient()
         self._sub_name = sub_name
         self.heartbeat_sleep = heartbeat_sleep
@@ -64,6 +90,14 @@ class MessageManager:
         self.hrt_logger = logging.getLogger("klio.gke_direct_runner.heartbeat")
 
     def start_threads(self):
+        """Launch message management threads.
+
+        Two threads are launched:
+            1. The manager thread which keeps track of in-progress messages
+            and extends their deadlines.
+            2. The heartbeat thread which logs which messages
+            are still in-progress
+        """
         mgr_thread = threading.Thread(
             target=self.manage,
             args=(self.manager_sleep,),
@@ -81,6 +115,11 @@ class MessageManager:
         heartbeat_thread.start()
 
     def manage(self, to_sleep):
+        """Continuously track in-progress messages and extends their deadlines.
+
+        Args:
+            to_sleep(float): Seconds to sleep between checks.
+        """
         while True:
             to_remove = []
             with self.messages_lock:
@@ -95,6 +134,11 @@ class MessageManager:
             time.sleep(to_sleep)
 
     def heartbeat(self, to_sleep):
+        """Continuously log heartbeats for in-progress messages.
+
+        Args:
+            to_sleep(float): Second to sleep between log messages.
+        """
         while True:
             for message in self.messages:
                 self.hrt_logger.info(
@@ -103,6 +147,16 @@ class MessageManager:
             time.sleep(to_sleep)
 
     def _extend_or_remove(self, message):
+        """Check to see if message is done and extends deadline if not.
+
+        Deadline extension is only done when 80% of the message's extension
+        duration has passed.
+
+        Args:
+            message(PubSubKlioMessage): In-progress message to check.
+        Returns:
+            True if work associated with message is complete; False otherwise.
+        """
         diff = 0
         if not message.event.is_set():
             now = time.monotonic()
@@ -124,6 +178,13 @@ class MessageManager:
         return True
 
     def extend_deadline(self, message, duration=None):
+        """Extend deadline for a PubSubKlioMessage.
+
+        Args:
+            message(PubSubKlioMessage): The message to extend the deadline for.
+            duration(float): Seconds. If not specified, defaults to
+                MessageManager.DEFAULT_DEADLINE_EXTENSION.
+        """
         if duration is None:
             duration = self.DEFAULT_DEADLINE_EXTENSION
         request = {
@@ -152,6 +213,14 @@ class MessageManager:
         message.extend(duration)
 
     def add(self, message):
+        """Add message to set of in-progress messages.
+
+        Messages added via this method will have their deadlines extended
+        until they are finished processing.
+
+        Args:
+            message(PubSubKlioMessage): Message to add.
+        """
         self.mgr_logger.debug(f"Received {message.kmsg_id} from Pub/Sub.")
         self.extend_deadline(message)
         ENTITY_ID_TO_ACK_ID[message.kmsg_id] = message
@@ -159,6 +228,13 @@ class MessageManager:
             self.messages.append(message)
 
     def remove(self, message):
+        """Remove message from set of in-progress messages.
+
+        Messages removed via this method will be acknowledged.
+
+        Args:
+            message(PubSubKlioMessage): Message to remove.
+        """
         try:
             # TODO: this method also has `retry`, `timeout` and metadata
             # kwargs which we may be interested in using
@@ -188,6 +264,12 @@ class MessageManager:
 
 
 class KlioPubSubReadEvaluator(transform_evaluator._PubSubReadEvaluator):
+    """PubSubReadEvaluator for Klio's GkeDirectRunner.
+
+    Behaves in the same way as _PubSubReadEvaluator, except for the fact
+    that it acknowledges PubSub messages after they are done processing.
+    """
+
     def __init__(self, *args, **kwargs):
         super(KlioPubSubReadEvaluator, self).__init__(*args, **kwargs)
         # Heads up: self._sub_name is from init'ing parent class
@@ -271,6 +353,11 @@ class KlioPubSubReadEvaluator(transform_evaluator._PubSubReadEvaluator):
 class KlioTransformEvaluatorRegistry(
     transform_evaluator.TransformEvaluatorRegistry
 ):
+    """TransformEvaluatorRegistry for Klio
+
+    Makes DirectRunner's ReadFromPubSub use KlioPubSubReadEvaluator.
+    """
+
     def __init__(self, *args, **kwargs):
         super(KlioTransformEvaluatorRegistry, self).__init__(*args, **kwargs)
         self._evaluators[
@@ -279,6 +366,14 @@ class KlioTransformEvaluatorRegistry(
 
 
 class KlioAckInputMessage(beam.DoFn):
+    """Message acknowledgement DoFn.
+
+    Marks a KlioMessage as done after it is finished processing.
+
+    Used in conjunction with the KlioPubSubReadEvaluator, which tracks
+    KlioMessages and extends their deadlines until they are marked as done.
+    """
+
     def process(self, element):
         kmsg = klio_pb2.KlioMessage()
         kmsg.ParseFromString(element)

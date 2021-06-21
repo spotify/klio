@@ -263,18 +263,36 @@ def test_retry_metrics(mock_config, kmsg):
         p | beam.Create(pcoll) | beam.ParDo(RetryDoFn())
 
     actual_counters = p.result.metrics().query()["counters"]
-    assert 2 == len(actual_counters)
+    actual_timers = p.result.metrics().query()["distributions"]
+    assert 4 == len(actual_counters)
+    assert 1 == len(actual_timers)
 
-    retry_ctr = actual_counters[0]
-    drop_ctr = actual_counters[1]
+    received_ctr = actual_counters[0]
+    retry_ctr = actual_counters[1]
+    retry_err_ctr = actual_counters[2]
+    drop_ctr = actual_counters[3]
+    msg_timer = actual_timers[0]
+
+    assert 1 == received_ctr.committed
+    assert "RetryDoFn.process" == received_ctr.key.metric.namespace
+    assert "kmsg-received" == received_ctr.key.metric.name
 
     assert 2 == retry_ctr.committed
     assert "RetryDoFn.process" == retry_ctr.key.metric.namespace
     assert "kmsg-retry-attempt" == retry_ctr.key.metric.name
 
+    assert 1 == retry_err_ctr.committed
+    assert "RetryDoFn.process" == retry_err_ctr.key.metric.namespace
+    assert "kmsg-drop-retry-error" == retry_err_ctr.key.metric.name
+
     assert 1 == drop_ctr.committed
     assert "RetryDoFn.process" == drop_ctr.key.metric.namespace
-    assert "kmsg-drop-retry-error" == drop_ctr.key.metric.name
+    assert "kmsg-drop-error" == drop_ctr.key.metric.name
+
+    assert 0 < msg_timer.committed.sum
+    assert len(pcoll) == msg_timer.committed.count
+    assert "RetryDoFn.process" == msg_timer.key.metric.namespace
+    assert "kmsg-timer" == msg_timer.key.metric.name
 
 
 class TimeoutDoFn(beam.DoFn):
@@ -296,7 +314,97 @@ def test_timeout_metrics(mock_config, kmsg):
         p | beam.Create(pcoll) | beam.ParDo(TimeoutDoFn())
 
     actual_counters = p.result.metrics().query()["counters"]
-    assert 1 == len(actual_counters)
-    assert 1 == actual_counters[0].committed
-    assert "TimeoutDoFn.process" == actual_counters[0].key.metric.namespace
-    assert "kmsg-drop-timed-out" == actual_counters[0].key.metric.name
+    actual_timers = p.result.metrics().query()["distributions"]
+    assert 3 == len(actual_counters)
+    assert 1 == len(actual_timers)
+
+    received_ctr = actual_counters[0]
+    drop_error = actual_counters[1]
+    drop_timed_out = actual_counters[2]
+
+    assert 1 == received_ctr.committed
+    assert "TimeoutDoFn.process" == received_ctr.key.metric.namespace
+    assert "kmsg-received" == received_ctr.key.metric.name
+
+    assert 1 == drop_error.committed
+    assert "TimeoutDoFn.process" == drop_error.key.metric.namespace
+    assert "kmsg-drop-error" == drop_error.key.metric.name
+
+    assert 1 == drop_timed_out.committed
+    assert "TimeoutDoFn.process" == drop_timed_out.key.metric.namespace
+    assert "kmsg-drop-error" == drop_timed_out.key.metric.name
+
+    assert 0 < actual_timers[0].committed.sum
+    assert len(pcoll) == actual_timers[0].committed.count
+    assert "TimeoutDoFn.process" == actual_timers[0].key.metric.namespace
+    assert "kmsg-timer" == actual_timers[0].key.metric.name
+
+
+class SimpleDoFn(beam.DoFn):
+    @decorators._handle_klio
+    def process(self, item):
+        yield item
+
+
+def test_handle_klio_metrics(mock_config, kmsg):
+    pcoll = [kmsg.SerializeToString()]
+
+    with test_pipeline.TestPipeline() as p:
+        p | beam.Create(pcoll) | beam.ParDo(SimpleDoFn())
+
+    actual_counters = p.result.metrics().query()["counters"]
+    actual_timers = p.result.metrics().query()["distributions"]
+    assert 2 == len(actual_counters)
+    assert 1 == len(actual_timers)
+
+    received_ctr = actual_counters[0]
+    success_ctr = actual_counters[1]
+    msg_timer = actual_timers[0]
+
+    assert 1 == received_ctr.committed
+    assert "SimpleDoFn.process" == received_ctr.key.metric.namespace
+    assert "kmsg-received" == received_ctr.key.metric.name
+
+    assert 1 == success_ctr.committed
+    assert "SimpleDoFn.process" == success_ctr.key.metric.namespace
+    assert "kmsg-success" == success_ctr.key.metric.name
+
+    assert 0 < msg_timer.committed.sum
+    assert len(pcoll) == msg_timer.committed.count
+    assert "SimpleDoFn.process" == msg_timer.key.metric.namespace
+    assert "kmsg-timer" == msg_timer.key.metric.name
+
+
+@decorators._inject_klio_context
+@decorators._serialize_klio_message
+def simple_map(ctx, item):
+    return item
+
+
+def test_serialize_klio_metrics(mock_config, kmsg):
+    pcoll = [kmsg.SerializeToString()]
+
+    with test_pipeline.TestPipeline() as p:
+        p | beam.Create(pcoll) | beam.Map(simple_map)
+
+    actual_counters = p.result.metrics().query()["counters"]
+    actual_timers = p.result.metrics().query()["distributions"]
+    assert 2 == len(actual_counters)
+    assert 1 == len(actual_timers)
+
+    received_ctr = actual_counters[0]
+    success_ctr = actual_counters[1]
+    msg_timer = actual_timers[0]
+
+    assert 1 == received_ctr.committed
+    assert "simple_map" == received_ctr.key.metric.namespace
+    assert "kmsg-received" == received_ctr.key.metric.name
+
+    assert 1 == success_ctr.committed
+    assert "simple_map" == success_ctr.key.metric.namespace
+    assert "kmsg-success" == success_ctr.key.metric.name
+
+    assert 0 < msg_timer.committed.sum
+    assert len(pcoll) == msg_timer.committed.count
+    assert "simple_map" == msg_timer.key.metric.namespace
+    assert "kmsg-timer" == msg_timer.key.metric.name

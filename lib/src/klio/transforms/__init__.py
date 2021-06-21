@@ -17,9 +17,11 @@
 from klio.transforms.io import (
     KlioReadFromAvro,
     KlioReadFromBigQuery,
+    KlioReadFromPubSub,
     KlioReadFromText,
     KlioWriteToAvro,
     KlioWriteToBigQuery,
+    KlioWriteToPubSub,
     KlioWriteToText,
 )
 
@@ -27,8 +29,10 @@ from klio.transforms.io import (
 __all__ = (
     "KlioReadFromAvro",
     "KlioReadFromBigQuery",
+    "KlioReadFromPubSub",
     "KlioReadFromText",
     "KlioWriteToAvro",
     "KlioWriteToBigQuery",
+    "KlioWriteToPubSub",
     "KlioWriteToText",
 )

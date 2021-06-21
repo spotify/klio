@@ -15,3 +15,4 @@ Helpers
 .. autoclass:: KlioUpdateAuditLog()
 .. autoclass:: KlioDebugMessage()
 .. autoclass:: KlioSetTrace()
+.. autoclass:: KlioTriggerUpstream()

@@ -724,35 +724,20 @@ class KlioTriggerUpstream(beam.PTransform):
         current_job = self._generate_current_job_object()
         lmtd.recipients.extend([current_job])
         lmtd.trigger_children_of.CopyFrom(current_job)
+
+        if self.log_level is not None:
+            msg = "Triggering upstream {} for {}".format(
+                self.upstream_job_name, kmsg.data.element.decode("utf-8")
+            )
+            self._klio.logger.log(self.log_level, msg)
         return serializer.from_klio_message(kmsg)
-
-    @decorators._handle_klio(max_thread_count=kutils.ThreadLimit.NONE)
-    def log(self, data):
-        """Log KlioMessage being published to upstream job.
-
-        Args:
-            data (klio_core.proto.KlioMessage.data): data of ``KlioMessage``.
-        Returns:
-            klio_core.proto.KlioMessage.data: unchanged data of
-                ``KlioMessage``.
-        """
-        element = data.element.decode("utf-8")
-        msg = "Triggering upstream {} for {}".format(
-            self.upstream_job_name, element
-        )
-        self._klio.logger.log(self.log_level, msg)
-        return data
 
     def expand(self, pcoll):
         name = self.upstream_job_name
         lbl1 = "Update KlioMessage for Upstream {}".format(name)
-        lbl2 = "Log Triggering Upstream {}".format(name)
-        lbl3 = "Publish KlioMessage to Upstream {}".format(name)
+        lbl2 = "Publish KlioMessage to Upstream {}".format(name)
 
         updated_kmsg = pcoll | lbl1 >> beam.Map(self.update_kmsg_metadata)
-
-        if self.log_level is not None:
-            _ = updated_kmsg | lbl2 >> beam.Map(self.log)
 
         return (
             updated_kmsg
@@ -763,5 +748,5 @@ class KlioTriggerUpstream(beam.PTransform):
                     bind_transform="KlioTriggerUpstream",
                 )
             )
-            | lbl3 >> beam.io.WriteToPubSub(topic=self.upstream_topic)
+            | lbl2 >> beam.io.WriteToPubSub(topic=self.upstream_topic)
         )

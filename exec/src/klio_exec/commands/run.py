@@ -59,8 +59,8 @@ HERE = os.path.abspath(".")
 # NOTE: hopefully we don't get an dict lookup errors since KlioConfig
 # should raise if given an unsupported event IO transform
 class StreamingEventMapper(object):
-    input = {"pubsub": beam.io.ReadFromPubSub}
-    output = {"pubsub": beam.io.WriteToPubSub}
+    input = {"pubsub": transforms.KlioReadFromPubSub}
+    output = {"pubsub": transforms.KlioWriteToPubSub}
 
 
 class BatchEventMapper(object):

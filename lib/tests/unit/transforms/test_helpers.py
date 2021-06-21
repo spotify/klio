@@ -14,6 +14,8 @@
 #
 import sys
 
+from unittest import mock
+
 import apache_beam as beam
 import pytest
 
@@ -22,8 +24,19 @@ from apache_beam.testing import test_pipeline
 
 from klio_core.proto import klio_pb2
 
-from klio.transforms import helpers
+from klio.transforms import core
+from tests.unit import conftest
 
+# NOTE: When the config attribute is accessed (when setting up
+# a metrics counter object), it will try to read a
+# `/usr/src/config/.effective-klio-job.yaml` file. Since some helper transforms
+# use some decorators that access config, we just patch on the module level
+# instead of within each and every test function.
+patcher = mock.patch.object(core.RunConfig, "get", conftest._klio_config)
+patcher.start()
+
+
+from klio.transforms import helpers  # NOQA: E402, I100, I202
 
 IS_PY36 = sys.version_info < (3, 7)
 
@@ -422,7 +435,7 @@ def test_update_klio_log(mocker, monkeypatch, caplog, mock_config):
 
 
 @pytest.mark.skipif(IS_PY36, reason="This test fails to pickle on 3.6")
-def test_trigger_upstream_job(mock_config, mocker, capsys):
+def test_trigger_upstream_job(mock_config, mocker, caplog):
     mock_gcs_client = mocker.patch("klio.transforms._helpers.gcsio.GcsIO")
     mock_gcs_client.return_value.exists.return_value = False
     mock_pubsub_client = mocker.patch("google.cloud.pubsub.PublisherClient")
@@ -475,6 +488,14 @@ def test_trigger_upstream_job(mock_config, mocker, capsys):
     assert "KlioTriggerUpstream" == trigger_upstream_ctr.key.metric.namespace
     assert "kmsg-trigger-upstream" == trigger_upstream_ctr.key.metric.name
 
+    expected_log_msg = "Triggering upstream upstream-job for does_not_exist"
+    for record in caplog.records:
+        if expected_log_msg in record.message:
+            assert True
+            break
+    else:
+        assert False, "Expected log message not found"
+
 
 def test_klio_drop(mock_config, caplog):
     kmsg = klio_pb2.KlioMessage()
@@ -492,10 +513,22 @@ def test_klio_drop(mock_config, caplog):
         assert False, "Expected log message not found"
 
     actual_counters = p.result.metrics().query()["counters"]
-    assert 1 == len(actual_counters)
-    assert 1 == actual_counters[0].committed
-    assert "KlioDrop" == actual_counters[0].key.metric.namespace
-    assert "kmsg-drop" == actual_counters[0].key.metric.name
+    assert 3 == len(actual_counters)
+    received_ctr = actual_counters[0]
+    drop_ctr = actual_counters[1]
+    success_ctr = actual_counters[2]
+
+    assert 1 == received_ctr.committed
+    assert "KlioDrop.process" == received_ctr.key.metric.namespace
+    assert "kmsg-received" == received_ctr.key.metric.name
+
+    assert 1 == drop_ctr.committed
+    assert "KlioDrop" == drop_ctr.key.metric.namespace
+    assert "kmsg-drop" == drop_ctr.key.metric.name
+
+    assert 1 == success_ctr.committed
+    assert "KlioDrop.process" == success_ctr.key.metric.namespace
+    assert "kmsg-success" == success_ctr.key.metric.name
 
 
 def test_klio_debug(mock_config):

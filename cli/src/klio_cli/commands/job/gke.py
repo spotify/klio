@@ -86,7 +86,9 @@ class GKECommandMixin(object):
         deployment_name = glom.glom(self.deployment_config, "metadata.name")
         namespace = glom.glom(self.deployment_config, "metadata.namespace")
         if replica_count is not None:
-            glom.assign(self._deployment_config, "spec.replicas", replica_count)
+            glom.assign(
+                self._deployment_config, "spec.replicas", replica_count
+            )
         if image_tag:
             image_path = "spec.template.spec.containers.0.image"
             image_base = glom.glom(self._deployment_config, image_path)
@@ -103,11 +105,9 @@ class GKECommandMixin(object):
 
 
 class RunPipelineGKE(GKECommandMixin, base.BaseDockerizedPipeline):
-    def __init__(self,
-                 job_dir,
-                 klio_config,
-                 docker_runtime_config,
-                 run_job_config):
+    def __init__(
+        self, job_dir, klio_config, docker_runtime_config, run_job_config
+    ):
         super().__init__(job_dir, klio_config, docker_runtime_config)
         self.run_job_config = run_job_config
 

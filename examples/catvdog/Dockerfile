@@ -7,7 +7,7 @@ ENV PYTHONPATH=/usr/src/app
 RUN pip install --upgrade pip setuptools
 
 COPY job-requirements.txt job-requirements.txt
-RUN pip install -r job-requirements.txt --use-feature=2020-resolver
+RUN pip install -r job-requirements.txt
 
 COPY __init__.py \
      run.py \

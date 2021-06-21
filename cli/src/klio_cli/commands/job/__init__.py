@@ -17,7 +17,6 @@ from klio_cli.commands.job import audit
 from klio_cli.commands.job import configuration
 from klio_cli.commands.job import create
 from klio_cli.commands.job import delete
-from klio_cli.commands.job import gke
 from klio_cli.commands.job import profile
 from klio_cli.commands.job import run
 from klio_cli.commands.job import stop
@@ -32,7 +31,6 @@ __all__ = (
     delete,
     profile,
     run,
-    gke,
     stop,
     test,
     verify,

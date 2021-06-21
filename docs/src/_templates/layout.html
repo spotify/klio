@@ -62,7 +62,7 @@
         {%- if meta is defined and meta is not none and 'nodocstoc' in meta %}
         {%- else %}
           {% block docs_toc %}
-              {% if not (meta is not none and 'notoc' in meta) %}
+              {% if meta is defined and not (meta is not none and 'notoc' in meta) %}
                 {%- include "docs-toc.html" %}
               {% endif %}
           {% endblock %}

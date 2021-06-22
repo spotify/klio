@@ -261,9 +261,7 @@ def test_update_deployment(
     )
     run_pipeline_gke._update_deployment()
     mock_k8s_client.patch_namespaced_deployment.assert_called_once_with(
-        name=deployment_name,
-        namespace=namespace,
-        body=deployment_config,
+        name=deployment_name, namespace=namespace, body=deployment_config,
     )
 
 
@@ -367,10 +365,7 @@ def test_apply_deployment(
 
 
 def test_delete(
-    monkeypatch,
-    mocker,
-    deployment_response_list,
-    deployment_config,
+    monkeypatch, mocker, deployment_response_list, deployment_config,
 ):
     namespace = deployment_config["metadata"]["namespace"]
     deployment_name = deployment_config["metadata"]["name"]
@@ -414,7 +409,5 @@ def test_stop(deployment_resp, deployment_config, monkeypatch, mocker):
     )
     stop_pipeline_gke.stop()
     mock_k8s_client.patch_namespaced_deployment.assert_called_once_with(
-        name=deployment_name,
-        namespace=namespace,
-        body=deployment_config,
+        name=deployment_name, namespace=namespace, body=deployment_config,
     )

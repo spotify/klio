@@ -60,8 +60,7 @@ RunJobConfig = collections.namedtuple(
     "RunJobConfig", ["direct_runner", "update", "git_sha"]
 )
 ProfileConfig = collections.namedtuple(
-    "ProfileConfig",
-    ["input_file", "output_file", "show_logs", "entity_ids"],
+    "ProfileConfig", ["input_file", "output_file", "show_logs", "entity_ids"],
 )
 
 
@@ -105,8 +104,7 @@ def profile():
 
 
 @job.group(
-    "config",
-    help=("View and edit a Klio job's configuration."),
+    "config", help=("View and edit a Klio job's configuration."),
 )
 def configuration():
     pass
@@ -336,6 +334,7 @@ def create_job(addl_job_opts, output, **known_kwargs):
 def delete_job(klio_config, config_meta):
     if klio_config.pipeline_options.runner == "DirectGKERunner":
         from klio_cli.commands.job.gke import DeletePipelineGKE
+
         DeletePipelineGKE(config_meta.job_dir).delete()
     else:
         job_commands.delete.DeleteJob(klio_config).delete()
@@ -451,8 +450,7 @@ def _job_config(job_dir, config_file, verb, *args, **kwargs):
 
 
 @configuration.command(
-    "show",
-    help="Show the complete effective configuration for a Klio job.",
+    "show", help="Show the complete effective configuration for a Klio job.",
 )
 @core_options.job_dir
 @core_options.config_file
@@ -481,8 +479,7 @@ def set_job_config(job_dir, config_file, target_to_value):
 
 
 @configuration.command(
-    "unset",
-    help="Unset a configuration value for a Klio job.",
+    "unset", help="Unset a configuration value for a Klio job.",
 )
 @core_options.job_dir
 @core_options.config_file
@@ -492,8 +489,7 @@ def unset_job_config(job_dir, config_file, section_property):
 
 
 @configuration.command(
-    "get",
-    help="Get the value for a configuration property of a Klio job.",
+    "get", help="Get the value for a configuration property of a Klio job.",
 )
 @core_options.job_dir
 @core_options.config_file

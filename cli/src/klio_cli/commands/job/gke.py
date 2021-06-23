@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Spotify AB
+# Copyright 2021 Spotify AB
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,11 +56,11 @@ class GKECommandMixin(object):
         return self._deployment_config
 
     def _deployment_exists(self):
-        """
-        Check to see if a deployment already exists
+        """Check to see if a deployment already exists
 
-        :return bool
-            Whether a deployment for the given name-namespace combo exists
+        Returns:
+            bool: Whether a deployment for the given name-namespace
+                combination exists
         """
         dep = self.deployment_config
         namespace = dep["metadata"]["namespace"]
@@ -74,21 +74,25 @@ class GKECommandMixin(object):
         return False
 
     def _update_deployment(self, replica_count=None, image_tag=None):
-        """
-        This will update a deployment with a provided replica count or image tag
-        :param int replica_count
-            Number of replicas the deployment will be updated with
-            If not provided then this will not be changed
-        :param str image_tag
-            The image tag that will be applied to the updated deployment
-            If not provided then this will not be updated
+        """This will update a deployment with a provided
+            replica count or image tag
+
+        Args:
+            replica_count (int): Number of replicas the
+                deployment will be updated with.
+                If not provided then this will not be changed
+            image_tag (str): The image tag that will be applied
+                to the updated deployment.
+                If not provided then this will not be updated.
         """
         deployment_name = glom.glom(self.deployment_config, "metadata.name")
         namespace = glom.glom(self.deployment_config, "metadata.namespace")
+        log_messages = []
         if replica_count is not None:
             glom.assign(
                 self._deployment_config, "spec.replicas", replica_count
             )
+            log_messages.append(f"Scaled deployment to {replica_count}")
         if image_tag:
             image_path = "spec.template.spec.containers.0.image"
             image_base = glom.glom(self._deployment_config, image_path)
@@ -96,20 +100,23 @@ class GKECommandMixin(object):
             image_base = re.split(":", image_base)[0]
             full_image = image_base + f":{image_tag}"
             glom.assign(self._deployment_config, image_path, full_image)
+            log_messages.append(
+                f"Update deployment with image tag {image_tag}"
+            )
         resp = self.kubernetes_client.patch_namespaced_deployment(
             name=deployment_name,
             namespace=namespace,
             body=self.deployment_config,
         )
-        logging.info(f"Scaled deployment {resp.metadata.name}")
+        log_messages.append(f"Update deployment with {resp.metadata.name}")
+        for message in log_messages:
+            logging.info(message)
 
 
 class RunPipelineGKE(GKECommandMixin, base.BaseDockerizedPipeline):
-    def __init__(self,
-                 job_dir,
-                 klio_config,
-                 docker_runtime_config,
-                 run_job_config):
+    def __init__(
+        self, job_dir, klio_config, docker_runtime_config, run_job_config
+    ):
         super().__init__(job_dir, klio_config, docker_runtime_config)
         self.run_job_config = run_job_config
 
@@ -127,8 +134,7 @@ class RunPipelineGKE(GKECommandMixin, base.BaseDockerizedPipeline):
             glom.assign(self._deployment_config, image_path, full_image)
 
     def _apply_deployment(self):
-        """
-        Create a namespaced deploy if the deployment does not already exist.
+        """Create a namespaced deploy if the deployment does not already exist.
         If the namespaced deployment already exists then
         `self.run_job_config.update` will determine if the
         deployment will be updated or not.
@@ -180,8 +186,7 @@ class StopPipelineGKE(GKECommandMixin):
         self.job_dir = job_dir
 
     def stop(self):
-        """
-        Delete a namespaced deployment
+        """Delete a namespaced deployment
         Expects existence of a kubernetes/deployment.yaml
         """
         self._update_deployment(replica_count=0)
@@ -211,8 +216,7 @@ class DeletePipelineGKE(GKECommandMixin):
             )
 
     def delete(self):
-        """
-        Delete a namespaced deployment
+        """Delete a namespaced deployment
         Expects existence of a kubernetes/deployment.yaml
         """
         self._delete_deployment()

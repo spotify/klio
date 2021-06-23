@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Spotify AB
+# Copyright 2021 Spotify AB
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,13 +26,9 @@ from klio_cli.commands.job import gke as job_gke
 
 @pytest.fixture
 def mock_os_environ(mocker):
-<<<<<<< HEAD
     return mocker.patch.dict(
         job_gke.base.os.environ, {"USER": "cookiemonster"}
     )
-=======
-    return mocker.patch.dict(job_gke.base.os.environ, {"USER": "cookiemonster"})
->>>>>>> 8c5989b... [cli][core] Fix GKE ref, fix update command error, fix klio job stop restarting pods
 
 
 @pytest.fixture
@@ -75,7 +71,9 @@ def docker_runtime_config():
 
 @pytest.fixture
 def run_job_config():
-    return cli.RunJobConfig(direct_runner=False, update=False, git_sha="12345678")
+    return cli.RunJobConfig(
+        direct_runner=False, update=False, git_sha="12345678"
+    )
 
 
 @pytest.fixture
@@ -150,7 +148,10 @@ def deployment_config():
                     "containers": [
                         {
                             "name": "gke-baseline-random-music",
-                            "image": ("gcr.io/sigint/gke-base" "line-random-music-gke"),
+                            "image": (
+                                "gcr.io/sigint/gke-base"
+                                "line-random-music-gke"
+                            ),
                             "resources": {
                                 "requests": {"cpu": 4, "memory": "16G"},
                                 "limits": {"cpu": 8, "memory": "20G"},
@@ -176,52 +177,47 @@ def deployment_config():
 
 
 @pytest.fixture
-def deployment_resp():
-    # TODO: We can grab these from deployment_config
-
+def deployment_resp(deployment_config):
+    container_config = glom.glom(
+        deployment_config, "spec.template.spec.containers.0"
+    )
     container = client.V1Container(
-        name="gke-baseline-random-music",
-        image="gcr.io/sigint/gke-baseline-random-music-gke",
+        name=container_config["name"],
+        image=container_config["image"],
         ports=[client.V1ContainerPort(container_port=80)],
         resources=client.V1ResourceRequirements(
-            requests={"cpu": 4, "memory": "16G"},
-            limits={"cpu": 8, "memory": "20G"},
+            requests=container_config["resources"]["requests"],
+            limits=container_config["resources"]["limits"],
         ),
     )
 
-    # Create and configurate a spec section
+    # Create and configure a spec section
+    container_spec_config = glom.glom(
+        deployment_config, "spec.template.metadata"
+    )
     template = client.V1PodTemplateSpec(
         metadata=client.V1ObjectMeta(
-            labels={
-                "app": "gke-baseline-random-music",
-                "role": "gkebaselinerandommusic",
-            },
-            annotations={
-                "podpreset.admission.spotify.com/exclude": (
-                    "container/" "ffwd-java-shim, environment/ffwd"
-                )
-            },
+            labels=container_spec_config["labels"],
+            annotations=container_spec_config["annotations"],
         ),
         spec=client.V1PodSpec(containers=[container]),
     )
 
     # Create the specification of deployment
+    deployment_spec_config = deployment_config["spec"]
     spec = client.V1DeploymentSpec(
-        replicas=100,
+        replicas=deployment_spec_config["replicas"],
         template=template,
-        selector={
-            "matchLabels": {
-                "app": "gke-baseline-random-music",
-                "role": "gkebaselinerandommusic",
-            }
-        },
+        selector=deployment_spec_config["selector"],
     )
 
     # Instantiate the deployment object
     deployment = client.V1Deployment(
-        api_version="apps/v1",
-        kind="Deployment",
-        metadata=client.V1ObjectMeta(name="gke-baseline-random-music"),
+        api_version=deployment_config["apiVersion"],
+        kind=deployment_config["kind"],
+        metadata=client.V1ObjectMeta(
+            name=deployment_config["metadata"]["name"]
+        ),
         spec=spec,
     )
 
@@ -230,7 +226,9 @@ def deployment_resp():
 
 @pytest.fixture
 def deployment_response_list(deployment_config, deployment_resp):
-    resp = client.models.v1_deployment_list.V1DeploymentList(items=[deployment_resp])
+    resp = client.models.v1_deployment_list.V1DeploymentList(
+        items=[deployment_resp]
+    )
     return resp
 
 
@@ -248,19 +246,13 @@ def test_update_deployment(
     mock_k8s_client = mocker.Mock()
     mock_k8s_client.patch_namespaced_deployment.return_value = deployment_resp
 
-    # run_pipeline_gke = job_gke.RunPipelineGKE("/some/job/dir")
-
-<<<<<<< HEAD
     monkeypatch.setattr(
         run_pipeline_gke, "_kubernetes_client", mock_k8s_client
     )
     monkeypatch.setattr(
         run_pipeline_gke, "_deployment_config", deployment_config
     )
-=======
-    monkeypatch.setattr(run_pipeline_gke, "_kubernetes_client", mock_k8s_client)
-    monkeypatch.setattr(run_pipeline_gke, "_deployment_config", deployment_config)
->>>>>>> 8c5989b... [cli][core] Fix GKE ref, fix update command error, fix klio job stop restarting pods
+
     run_pipeline_gke._update_deployment()
     mock_k8s_client.patch_namespaced_deployment.assert_called_once_with(
         name=deployment_name,
@@ -289,9 +281,15 @@ def test_deployment_exists(
 ):
     mock_k8s_client = mocker.Mock()
     mock_k8s_client.patch_namespaced_deployment.return_value = deployment_resp
-    mock_k8s_client.list_namespaced_deployment.return_value = deployment_response_list
-    monkeypatch.setattr(run_pipeline_gke, "_kubernetes_client", mock_k8s_client)
-    monkeypatch.setattr(run_pipeline_gke, "_deployment_config", deployment_config)
+    mock_k8s_client.list_namespaced_deployment.return_value = (
+        deployment_response_list
+    )
+    monkeypatch.setattr(
+        run_pipeline_gke, "_kubernetes_client", mock_k8s_client
+    )
+    monkeypatch.setattr(
+        run_pipeline_gke, "_deployment_config", deployment_config
+    )
     run_pipeline_gke._deployment_exists()
     mock_k8s_client.list_namespaced_deployment.assert_called_once_with(
         namespace=deployment_config["metadata"]["namespace"]
@@ -331,8 +329,12 @@ def test_apply_deployment(
         if deployment_exists
         else deployment_response_list_not_exist
     )
-    monkeypatch.setattr(run_pipeline_gke, "_kubernetes_client", mock_k8s_client)
-    monkeypatch.setattr(run_pipeline_gke, "_deployment_config", deployment_config)
+    monkeypatch.setattr(
+        run_pipeline_gke, "_kubernetes_client", mock_k8s_client
+    )
+    monkeypatch.setattr(
+        run_pipeline_gke, "_deployment_config", deployment_config
+    )
     deployment_name = deployment_config["metadata"]["name"]
     namespace = deployment_config["metadata"]["namespace"]
     image_path = "spec.template.spec.containers.0.image"
@@ -340,7 +342,10 @@ def test_apply_deployment(
     full_image = f"{image_base}:{docker_runtime_config.image_tag}"
     run_pipeline_gke._apply_image_to_deployment_config()
     run_pipeline_gke._apply_deployment()
-    assert glom.glom(run_pipeline_gke._deployment_config, image_path) == full_image
+    assert (
+        glom.glom(run_pipeline_gke._deployment_config, image_path)
+        == full_image
+    )
     glom.assign(deployment_config, image_path, full_image)
     if deployment_exists:
         if update_flag:
@@ -365,12 +370,18 @@ def test_delete(
     deployment_name = deployment_config["metadata"]["name"]
     mock_k8s_client = mocker.Mock()
     mock_k8s_client.patch_namespaced_deployment.return_value = deployment_resp
-    mock_k8s_client.list_namespaced_deployment.return_value = deployment_response_list
+    mock_k8s_client.list_namespaced_deployment.return_value = (
+        deployment_response_list
+    )
 
     delete_pipeline_gke = job_gke.DeletePipelineGKE("/some/job/dir")
 
-    monkeypatch.setattr(delete_pipeline_gke, "_kubernetes_client", mock_k8s_client)
-    monkeypatch.setattr(delete_pipeline_gke, "_deployment_config", deployment_config)
+    monkeypatch.setattr(
+        delete_pipeline_gke, "_kubernetes_client", mock_k8s_client
+    )
+    monkeypatch.setattr(
+        delete_pipeline_gke, "_deployment_config", deployment_config
+    )
     delete_pipeline_gke.delete()
     mock_k8s_client.delete_namespaced_deployment.assert_called_once_with(
         name=deployment_name,
@@ -389,9 +400,15 @@ def test_stop(deployment_resp, deployment_config, monkeypatch, mocker):
 
     stop_pipeline_gke = job_gke.StopPipelineGKE("/some/job/dir")
 
-    monkeypatch.setattr(stop_pipeline_gke, "_kubernetes_client", mock_k8s_client)
-    monkeypatch.setattr(stop_pipeline_gke, "_deployment_config", deployment_config)
+    monkeypatch.setattr(
+        stop_pipeline_gke, "_kubernetes_client", mock_k8s_client
+    )
+    monkeypatch.setattr(
+        stop_pipeline_gke, "_deployment_config", deployment_config
+    )
     stop_pipeline_gke.stop()
     mock_k8s_client.patch_namespaced_deployment.assert_called_once_with(
-        name=deployment_name, namespace=namespace, body=deployment_config,
+        name=deployment_name,
+        namespace=namespace,
+        body=deployment_config,
     )

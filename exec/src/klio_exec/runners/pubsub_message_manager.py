@@ -328,6 +328,7 @@ class KlioPubSubReadEvaluator(transform_evaluator._PubSubReadEvaluator):
 
             return timestamp, parsed_message
 
+        results = None
         try:
             response = self.sub_client.pull(
                 self._sub_name, max_messages=1, return_immediately=True

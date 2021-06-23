@@ -84,14 +84,15 @@ def import_gke_commands():
     # kubernetes dependency is not part of the base install dependencies
     try:
         from klio_cli.commands.job import gke as gke_commands
+
         # the import is only local to this function so we need to return the
         # module
         return gke_commands
     except ImportError as e:
         if "kubernetes" in e.msg:
             logging.error(
-                "Failed to import DirectGKERunner dependencies. Did you install "
-                "`klio-cli[kubernetes]`?"
+                "Failed to import DirectGKERunner dependencies."
+                " Did you install `klio-cli[kubernetes]`?"
             )
             raise SystemExit(1)
         logging.error(e)

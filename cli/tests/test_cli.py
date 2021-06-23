@@ -26,6 +26,7 @@ from klio_core import config as kconfig
 from klio_core import utils as core_utils
 
 from klio_cli import cli
+from klio_cli.commands.job import gke as gke_commands
 from klio_cli.utils import cli_utils
 
 
@@ -449,7 +450,7 @@ def test_run_job_gke(
     mock_klio_config,
 ):
     mock_run_gke = mocker.patch.object(
-        cli.job_commands.gke.RunPipelineGKE, "run"
+        gke_commands.RunPipelineGKE, "run"
     )
     mock_run_gke.return_value = 0
     mock_run = mocker.patch.object(cli.job_commands.run.RunPipeline, "run")

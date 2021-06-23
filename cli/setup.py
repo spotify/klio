@@ -177,7 +177,7 @@ EXTRAS_REQUIRE = {
         "pytest-cov",
         "pytest-mock",
     ],
-    "gke": ["kubernetes"],
+    "kubernetes": ["kubernetes"],
 }
 EXTRAS_REQUIRE["dev"] = (
     EXTRAS_REQUIRE["docs"]

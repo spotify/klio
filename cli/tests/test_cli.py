@@ -449,9 +449,7 @@ def test_run_job_gke(
     mock_get_git_sha,
     mock_klio_config,
 ):
-    mock_run_gke = mocker.patch.object(
-        gke_commands.RunPipelineGKE, "run"
-    )
+    mock_run_gke = mocker.patch.object(gke_commands.RunPipelineGKE, "run")
     mock_run_gke.return_value = 0
     mock_run = mocker.patch.object(cli.job_commands.run.RunPipeline, "run")
     mock_run.return_value = 0

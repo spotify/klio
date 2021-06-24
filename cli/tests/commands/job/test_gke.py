@@ -16,7 +16,7 @@
 import glom
 import pytest
 
-from kubernetes import client
+from kubernetes import client as k8s_client
 
 from klio_core import config
 
@@ -181,13 +181,13 @@ def deployment_resp(deployment_config):
     container_config = glom.glom(
         deployment_config, "spec.template.spec.containers.0"
     )
-    container = client.V1Container(
+    container = k8s_client.V1Container(
         name=container_config["name"],
         image=container_config["image"],
-        ports=[client.V1ContainerPort(container_port=80)],
-        resources=client.V1ResourceRequirements(
-            requests=container_config["resources"]["requests"],
-            limits=container_config["resources"]["limits"],
+        ports=[k8s_client.V1ContainerPort(container_port=80)],
+        resources=k8s_client.V1ResourceRequirements(
+            requests=glom.glom(container_config, "resources.requests"),
+            limits=glom.glom(container_config, "resources.limits"),
         ),
     )
 
@@ -195,28 +195,28 @@ def deployment_resp(deployment_config):
     container_spec_config = glom.glom(
         deployment_config, "spec.template.metadata"
     )
-    template = client.V1PodTemplateSpec(
-        metadata=client.V1ObjectMeta(
+    template = k8s_client.V1PodTemplateSpec(
+        metadata=k8s_client.V1ObjectMeta(
             labels=container_spec_config["labels"],
             annotations=container_spec_config["annotations"],
         ),
-        spec=client.V1PodSpec(containers=[container]),
+        spec=k8s_client.V1PodSpec(containers=[container]),
     )
 
     # Create the specification of deployment
     deployment_spec_config = deployment_config["spec"]
-    spec = client.V1DeploymentSpec(
+    spec = k8s_client.V1DeploymentSpec(
         replicas=deployment_spec_config["replicas"],
         template=template,
         selector=deployment_spec_config["selector"],
     )
 
     # Instantiate the deployment object
-    deployment = client.V1Deployment(
+    deployment = k8s_client.V1Deployment(
         api_version=deployment_config["apiVersion"],
         kind=deployment_config["kind"],
-        metadata=client.V1ObjectMeta(
-            name=deployment_config["metadata"]["name"]
+        metadata=k8s_client.V1ObjectMeta(
+            name=glom.glom(deployment_config, "metadata.name")
         ),
         spec=spec,
     )
@@ -226,7 +226,7 @@ def deployment_resp(deployment_config):
 
 @pytest.fixture
 def deployment_response_list(deployment_config, deployment_resp):
-    resp = client.models.v1_deployment_list.V1DeploymentList(
+    resp = k8s_client.models.v1_deployment_list.V1DeploymentList(
         items=[deployment_resp]
     )
     return resp
@@ -234,15 +234,15 @@ def deployment_response_list(deployment_config, deployment_resp):
 
 @pytest.fixture
 def deployment_response_list_not_exist():
-    resp = client.models.v1_deployment_list.V1DeploymentList(items=[])
+    resp = k8s_client.models.v1_deployment_list.V1DeploymentList(items=[])
     return resp
 
 
 def test_update_deployment(
     deployment_config, run_pipeline_gke, deployment_resp, monkeypatch, mocker
 ):
-    deployment_name = deployment_config["metadata"]["name"]
-    namespace = deployment_config["metadata"]["namespace"]
+    deployment_name = glom.glom(deployment_config, "metadata.name")
+    namespace = glom.glom(deployment_config, "metadata.namespace")
     mock_k8s_client = mocker.Mock()
     mock_k8s_client.patch_namespaced_deployment.return_value = deployment_resp
 
@@ -290,7 +290,7 @@ def test_deployment_exists(
     )
     run_pipeline_gke._deployment_exists()
     mock_k8s_client.list_namespaced_deployment.assert_called_once_with(
-        namespace=deployment_config["metadata"]["namespace"]
+        namespace=glom.glom(deployment_config, "metadata.namespace")
     )
 
 
@@ -333,8 +333,8 @@ def test_apply_deployment(
     monkeypatch.setattr(
         run_pipeline_gke, "_deployment_config", deployment_config
     )
-    deployment_name = deployment_config["metadata"]["name"]
-    namespace = deployment_config["metadata"]["namespace"]
+    deployment_name = glom.glom(deployment_config, "metadata.name")
+    namespace = glom.glom(deployment_config, "metadata.namespace")
     image_path = "spec.template.spec.containers.0.image"
     image_base = glom.glom(deployment_config, image_path)
     full_image = f"{image_base}:{docker_runtime_config.image_tag}"
@@ -361,8 +361,8 @@ def test_apply_deployment(
 def test_delete(
     monkeypatch, mocker, deployment_response_list, deployment_config,
 ):
-    namespace = deployment_config["metadata"]["namespace"]
-    deployment_name = deployment_config["metadata"]["name"]
+    namespace = glom.glom(deployment_config, "metadata.namespace")
+    deployment_name = glom.glom(deployment_config, "metadata.name")
     mock_k8s_client = mocker.Mock()
     mock_k8s_client.patch_namespaced_deployment.return_value = deployment_resp
     mock_k8s_client.list_namespaced_deployment.return_value = (
@@ -381,15 +381,15 @@ def test_delete(
     mock_k8s_client.delete_namespaced_deployment.assert_called_once_with(
         name=deployment_name,
         namespace=namespace,
-        body=client.V1DeleteOptions(
+        body=k8s_client.V1DeleteOptions(
             propagation_policy="Foreground", grace_period_seconds=5
         ),
     )
 
 
 def test_stop(deployment_resp, deployment_config, monkeypatch, mocker):
-    deployment_name = deployment_config["metadata"]["name"]
-    namespace = deployment_config["metadata"]["namespace"]
+    deployment_name = glom.glom(deployment_config, "metadata.name")
+    namespace = glom.glom(deployment_config, "metadata.namespace")
     mock_k8s_client = mocker.Mock()
     mock_k8s_client.patch_namespaced_deployment.return_value = deployment_resp
 

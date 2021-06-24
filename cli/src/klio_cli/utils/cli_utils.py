@@ -73,12 +73,6 @@ def is_direct_runner(klio_config, direct_runner):
     return direct_runner
 
 
-def get_runner(klio_config, runner):
-    if not runner:
-        runner = klio_config.pipeline_options.runner
-    return runner
-
-
 def import_gke_commands():
     # Importing GKE commands needs to be behind a try/except because the
     # kubernetes dependency is not part of the base install dependencies

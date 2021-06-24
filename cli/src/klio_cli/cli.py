@@ -157,7 +157,7 @@ def run_job(klio_config, config_meta, **kwargs):
     if (
         not direct_runner
         and klio_config.pipeline_options.runner
-        == var.runners.DIRECT_GKE_RUNNER
+        == var.KlioRunner.DIRECT_GKE_RUNNER
     ):
         gke_commands = cli_utils.import_gke_commands()
 
@@ -216,7 +216,7 @@ def stop_job(klio_config, config_meta, job_name, region, gcp_project):
 
     # TODO: make this a click option once draining is supported @lynn
     strategy = "cancel"
-    if klio_config.pipeline_options.runner == "DirectGKERunner":
+    if klio_config.pipeline_options.runner == var.KlioRunner.DIRECT_GKE_RUNNER:
         gke_commands = cli_utils.import_gke_commands()
 
         gke_commands.StopPipelineGKE(config_meta.job_dir).stop()

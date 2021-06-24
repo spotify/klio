@@ -146,7 +146,7 @@ class KlioPipeline(object):
 
         elif (
             self.config.pipeline_options.runner
-            == var.runners.DIRECT_GKE_RUNNER
+            == var.KlioRunner.DIRECT_GKE_RUNNER
         ):
             standard_opts.runner = (
                 "klio_exec.runners.gke_direct.GkeDirectRunner"

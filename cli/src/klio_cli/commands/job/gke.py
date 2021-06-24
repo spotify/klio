@@ -19,7 +19,8 @@ import re
 
 import glom
 import yaml
-from kubernetes import client, config
+from kubernetes import client as k8s_client
+from kubernetes import config as k8s_config
 
 from klio_cli.commands import base
 from klio_cli.utils import docker_utils
@@ -41,8 +42,8 @@ class GKECommandMixin(object):
             # If it does not exist then we should create configurations.
             # See link:
             # https://github.com/kubernetes-client/python-base/blob/master/config/kube_config.py#L825
-            config.load_kube_config()
-            self._kubernetes_client = client.AppsV1Api()
+            k8s_config.load_kube_config()
+            self._kubernetes_client = k8s_client.AppsV1Api()
         return self._kubernetes_client
 
     @property
@@ -63,8 +64,8 @@ class GKECommandMixin(object):
                 combination exists
         """
         dep = self.deployment_config
-        namespace = dep["metadata"]["namespace"]
-        deployment_name = dep["metadata"]["name"]
+        namespace = glom.glom(dep, "metadata.namespace")
+        deployment_name = glom.glom(dep, "metadata.name")
         resp = self.kubernetes_client.list_namespaced_deployment(
             namespace=namespace,
         )
@@ -140,8 +141,8 @@ class RunPipelineGKE(GKECommandMixin, base.BaseDockerizedPipeline):
         deployment will be updated or not.
         """
         dep = self.deployment_config
-        namespace = dep["metadata"]["namespace"]
-        deployment_name = dep["metadata"]["name"]
+        namespace = glom.glom(dep, "metadata.namespace")
+        deployment_name = glom.glom(dep, "metadata.name")
         if not self._deployment_exists():
             resp = self.kubernetes_client.create_namespaced_deployment(
                 body=dep, namespace=namespace
@@ -153,8 +154,12 @@ class RunPipelineGKE(GKECommandMixin, base.BaseDockerizedPipeline):
                 self._update_deployment()
             else:
                 logging.warning(
-                    f"Cannot apply deployment for {deployment_name}."
-                    f"If deployment already exists, set `update` to True."
+                    f"Cannot apply deployment for {deployment_name}. "
+                    f"To update an existing deployment, run "
+                    f"`klio job run --update`, or set `pipeline_options.update`"
+                    f" to `True` in the job's`klio-job.yaml` file. "
+                    f"Run `klio job stop` to scale a deployment down to 0. "
+                    f"Run `klio job delete` to delete a deployment entirely."
                 )
 
     def _setup_docker_image(self):
@@ -205,7 +210,7 @@ class DeletePipelineGKE(GKECommandMixin):
             resp = self.kubernetes_client.delete_namespaced_deployment(
                 name=deployment_name,
                 namespace=namespace,
-                body=client.V1DeleteOptions(
+                body=k8s_client.V1DeleteOptions(
                     propagation_policy="Foreground", grace_period_seconds=5
                 ),
             )

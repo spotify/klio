@@ -76,7 +76,7 @@ class KlioTimeoutWrapper(object):
         self._timeout_exception = timeout_exception or KlioTimeoutError
         self._exception_message = exception_message
         self._timeout_ctr = klio_context.metrics.counter(
-            "klio-drop-timed-out", transform=self._func_name
+            "kmsg-drop-timed-out", transform=self._func_name
         )
 
     def __call__(self, *args, **kwargs):

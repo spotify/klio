@@ -272,7 +272,7 @@ def deploy_job(klio_config, config_meta, **kwargs):
 
     if (
         not direct_runner
-        and klio_config.pipeline_options.runner == "DirectGKERunner"
+        and klio_config.pipeline_options.runner == var.KlioRunner.DIRECT_GKE_RUNNER
     ):
         gke_commands = cli_utils.import_gke_commands()
 
@@ -329,7 +329,7 @@ def create_job(addl_job_opts, output, **known_kwargs):
 )
 @core_utils.with_klio_config
 def delete_job(klio_config, config_meta):
-    if klio_config.pipeline_options.runner == "DirectGKERunner":
+    if klio_config.pipeline_options.runner == var.KlioRunner.DIRECT_GKE_RUNNER:
         gke_commands = cli_utils.import_gke_commands()
 
         gke_commands.DeletePipelineGKE(config_meta.job_dir).delete()

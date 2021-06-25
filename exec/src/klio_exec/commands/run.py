@@ -30,7 +30,6 @@ from klio_core import variables as var
 from klio_core.config import core as config_core
 
 from klio_exec import __version__ as klio_exec_version
-from klio_exec.runners import pubsub_message_manager
 
 
 DATAFLOW_LABEL_KEY_TO_OS_ENVIRON = {
@@ -420,7 +419,7 @@ class KlioPipeline(object):
             if self.config.pipeline_options.runner == "DirectGKERunner":
                 ack_inp_lbl = lbl("Ack Input Message from No Data Input Found")
                 _ = input_exists.not_found | ack_inp_lbl >> beam.ParDo(
-                    pubsub_message_manager.KlioAckInputMessage()
+                    helpers.KlioAckInputMessage()
                 )
             _ = (
                 input_exists.not_found
@@ -473,7 +472,7 @@ class KlioPipeline(object):
         if self.config.pipeline_options.runner == "DirectGKERunner":
             ack_inp_lbl = lbl("Ack Dropped Input Message")
             _ = to_drop | ack_inp_lbl >> beam.ParDo(
-                pubsub_message_manager.KlioAckInputMessage()
+                helpers.KlioAckInputMessage()
             )
 
         ignore_lbl = lbl("Drop Messages to Ignore")
@@ -570,7 +569,7 @@ class KlioPipeline(object):
                 to_ack_input = out_pcol
 
             _ = to_ack_input | "Ack Input Messages" >> beam.ParDo(
-                pubsub_message_manager.KlioAckInputMessage()
+                helpers.KlioAckInputMessage()
             )
 
         if self._has_event_outputs:

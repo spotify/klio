@@ -29,7 +29,7 @@ from apache_beam.runners.direct import evaluation_context as eval_ctx
 from apache_beam.runners.direct import executor as beam_exec
 from apache_beam.testing import test_stream
 
-from klio_exec.runners import pubsub_message_manager
+from klio_exec.runners import evaluators
 
 
 # without this, users would get flooded with warnings of "your application has
@@ -47,6 +47,7 @@ class GkeDirectRunner(direct_runner.BundleBasedDirectRunner):
     before they start processing, but otherwise is meant to behave identically
     to the BundleBasedDirectRunner.
     """
+
     def run_pipeline(self, pipeline, options):
         """Execute the entire pipeline and returns an DirectPipelineResult."""
 
@@ -108,9 +109,7 @@ class GkeDirectRunner(direct_runner.BundleBasedDirectRunner):
         # using our own `KlioTransformEvaluatorRegistry`.
         executor = beam_exec.Executor(
             self.consumer_tracking_visitor.value_to_consumers,
-            pubsub_message_manager.KlioTransformEvaluatorRegistry(
-                evaluation_context
-            ),
+            evaluators.KlioTransformEvaluatorRegistry(evaluation_context),
             evaluation_context,
         )
         # DirectRunner does not support injecting

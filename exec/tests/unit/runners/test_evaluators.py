@@ -27,6 +27,7 @@ was kept, as well checking that:
 """
 
 import pytest
+
 from apache_beam import transforms as beam_transforms
 from apache_beam import utils as beam_utils
 from apache_beam.io.gcp import pubsub as b_pubsub
@@ -37,42 +38,45 @@ from apache_beam.testing import test_pipeline as beam_test_pipeline
 from apache_beam.testing import test_utils as beam_test_utils
 from apache_beam.testing import util as beam_testing_util
 
+from klio.message import pubsub_message_manager as pmm
 from klio_core.proto import klio_pb2
 
-from klio_exec.runners import pubsub_message_manager as pmm
+from klio_exec.runners import evaluators
 
 
 @pytest.fixture
 def patch_msg_manager(mocker, monkeypatch):
-    p = mocker.Mock()
+    p = mocker.Mock(name="patch_msg_manager")
     monkeypatch.setattr(pmm, "MessageManager", p)
     return p.return_value
 
 
-@pytest.fixture
-def mock_pubsub_klio_msg(mocker):
-    return mocker.Mock()
+# @pytest.fixture
+# def mock_pubsub_klio_msg(mocker):
+#     return mocker.Mock(name="mock_pubsub_klio_msg")
 
 
-@pytest.fixture
-def patch_pubsub_klio_msg_init(mocker, monkeypatch, mock_pubsub_klio_msg):
-    p = mocker.Mock(return_value=mock_pubsub_klio_msg)
-    monkeypatch.setattr(pmm, "PubSubKlioMessage", p)
-    return p
+# @pytest.fixture
+# def patch_pubsub_klio_msg_init(mocker, monkeypatch, mock_pubsub_klio_msg):
+#     p = mocker.Mock(
+#         return_value=mock_pubsub_klio_msg, name="patch_pubsub_klio_msg_init"
+#     )
+#     monkeypatch.setattr(evaluators.beam_pubsub, "PubsubMessage", p)
+#     return p
 
 
 @pytest.fixture
 def patch_sub_client(mocker, monkeypatch):
     # patch out network calls in SubscriberClient instantiation
-    c = mocker.Mock()
-    monkeypatch.setattr(pmm.g_pubsub, "SubscriberClient", c)
+    c = mocker.Mock(name="patch_sub_client")
+    monkeypatch.setattr(evaluators.g_pubsub, "SubscriberClient", c)
     return c.return_value
 
 
 class KlioTestPubSubReadEvaluator(object):
     """Wrapper of _PubSubReadEvaluator that makes it bounded."""
 
-    _pubsub_read_evaluator = pmm.KlioPubSubReadEvaluator
+    _pubsub_read_evaluator = evaluators.KlioPubSubReadEvaluator
 
     def __init__(self, *args, **kwargs):
         self._evaluator = self._pubsub_read_evaluator(*args, **kwargs)
@@ -96,11 +100,7 @@ transform_evaluator.TransformEvaluatorRegistry._test_evaluators_overrides = {
 
 
 def test_klio_pubsub_read_eval_read_messages_success(
-    mocker,
-    patch_sub_client,
-    patch_msg_manager,
-    patch_pubsub_klio_msg_init,
-    mock_pubsub_klio_msg,
+    mocker, patch_sub_client, patch_msg_manager,
 ):
 
     exp_entity_id = "entity_id"
@@ -119,9 +119,10 @@ def test_klio_pubsub_read_eval_read_messages_success(
             )
         ]
     )
+    pmsg = b_pubsub.PubsubMessage(data, attributes)
     expected_elements = [
         beam_testing_util.TestWindowedValue(
-            b_pubsub.PubsubMessage(data, attributes),
+            pmsg,
             beam_utils.timestamp.Timestamp(1520861821.234567),
             [beam_transforms.window.GlobalWindow()],
         )
@@ -146,8 +147,7 @@ def test_klio_pubsub_read_eval_read_messages_success(
     # 2. Check that MessageManager daemon threads were started
     patch_msg_manager.start_threads.assert_called_once_with()
     # 3. Check that messages were added to the MessageManager
-    patch_pubsub_klio_msg_init.assert_called_once_with(ack_id, exp_entity_id)
-    patch_msg_manager.add.assert_called_once_with(mock_pubsub_klio_msg)
+    patch_msg_manager.add.assert_called_once_with(ack_id, pmsg)
     # 4. Check that one message is handled at a time, instead of the
     #    original 10
     patch_sub_client.pull.assert_called_once_with(
@@ -158,11 +158,7 @@ def test_klio_pubsub_read_eval_read_messages_success(
 
 
 def test_read_messages_timestamp_attribute_milli_success(
-    mocker,
-    patch_sub_client,
-    patch_msg_manager,
-    patch_pubsub_klio_msg_init,
-    mock_pubsub_klio_msg,
+    mocker, patch_sub_client, patch_msg_manager,
 ):
     exp_entity_id = "entity_id"
     kmsg = klio_pb2.KlioMessage()
@@ -180,9 +176,10 @@ def test_read_messages_timestamp_attribute_milli_success(
             )
         ]
     )
+    pmsg = b_pubsub.PubsubMessage(data, attributes)
     expected_elements = [
         beam_testing_util.TestWindowedValue(
-            b_pubsub.PubsubMessage(data, attributes),
+            pmsg,
             beam_utils.timestamp.Timestamp(
                 micros=int(attributes["time"]) * 1000
             ),
@@ -214,8 +211,7 @@ def test_read_messages_timestamp_attribute_milli_success(
     # 2. Check that MessageManager daemon threads were started
     patch_msg_manager.start_threads.assert_called_once_with()
     # 3. Check that messages were added to the MessageManager
-    patch_pubsub_klio_msg_init.assert_called_once_with(ack_id, exp_entity_id)
-    patch_msg_manager.add.assert_called_once_with(mock_pubsub_klio_msg)
+    patch_msg_manager.add.assert_called_once_with(ack_id, pmsg)
     # 4. Check that one message is handled at a time, instead of the
     #    original 10
     patch_sub_client.pull.assert_called_once_with(
@@ -226,11 +222,7 @@ def test_read_messages_timestamp_attribute_milli_success(
 
 
 def test_read_messages_timestamp_attribute_rfc3339_success(
-    mocker,
-    patch_sub_client,
-    patch_msg_manager,
-    patch_pubsub_klio_msg_init,
-    mock_pubsub_klio_msg,
+    mocker, patch_sub_client, patch_msg_manager,
 ):
     exp_entity_id = "entity_id"
     kmsg = klio_pb2.KlioMessage()
@@ -247,9 +239,10 @@ def test_read_messages_timestamp_attribute_rfc3339_success(
             )
         ]
     )
+    pmsg = b_pubsub.PubsubMessage(data, attributes)
     expected_elements = [
         beam_testing_util.TestWindowedValue(
-            b_pubsub.PubsubMessage(data, attributes),
+            pmsg,
             beam_utils.timestamp.Timestamp.from_rfc3339(attributes["time"]),
             [beam_transforms.window.GlobalWindow()],
         ),
@@ -279,8 +272,7 @@ def test_read_messages_timestamp_attribute_rfc3339_success(
     # 2. Check that MessageManager daemon threads were started
     patch_msg_manager.start_threads.assert_called_once_with()
     # 3. Check that messages were added to the MessageManager
-    patch_pubsub_klio_msg_init.assert_called_once_with(ack_id, exp_entity_id)
-    patch_msg_manager.add.assert_called_once_with(mock_pubsub_klio_msg)
+    patch_msg_manager.add.assert_called_once_with(ack_id, pmsg)
     # 4. Check that one message is handled at a time, instead of the
     #    original 10
     patch_sub_client.pull.assert_called_once_with(
@@ -291,11 +283,7 @@ def test_read_messages_timestamp_attribute_rfc3339_success(
 
 
 def test_read_messages_timestamp_attribute_missing(
-    mocker,
-    patch_sub_client,
-    patch_msg_manager,
-    patch_pubsub_klio_msg_init,
-    mock_pubsub_klio_msg,
+    mocker, patch_sub_client, patch_msg_manager,
 ):
     exp_entity_id = "entity_id"
     kmsg = klio_pb2.KlioMessage()
@@ -314,9 +302,10 @@ def test_read_messages_timestamp_attribute_missing(
             )
         ]
     )
+    pmsg = b_pubsub.PubsubMessage(data, attributes)
     expected_elements = [
         beam_testing_util.TestWindowedValue(
-            b_pubsub.PubsubMessage(data, attributes),
+            pmsg,
             beam_utils.timestamp.Timestamp.from_rfc3339(publish_time),
             [beam_transforms.window.GlobalWindow()],
         ),
@@ -346,8 +335,7 @@ def test_read_messages_timestamp_attribute_missing(
     # 2. Check that MessageManager daemon threads were started
     patch_msg_manager.start_threads.assert_called_once_with()
     # 3. Check that messages were added to the MessageManager
-    patch_pubsub_klio_msg_init.assert_called_once_with(ack_id, exp_entity_id)
-    patch_msg_manager.add.assert_called_once_with(mock_pubsub_klio_msg)
+    patch_msg_manager.add.assert_called_once_with(ack_id, pmsg)
     # 4. Check that one message is handled at a time, instead of the
     #    original 10
     patch_sub_client.pull.assert_called_once_with(
@@ -357,9 +345,7 @@ def test_read_messages_timestamp_attribute_missing(
     patch_sub_client.api.transport.channel.close.assert_called_once_with()
 
 
-def test_read_messages_timestamp_attribute_fail_parse(
-    patch_sub_client, patch_msg_manager, patch_pubsub_klio_msg_init,
-):
+def test_read_messages_timestamp_attribute_fail_parse(patch_sub_client):
     exp_entity_id = "entity_id"
     kmsg = klio_pb2.KlioMessage()
     kmsg.data.element = bytes(exp_entity_id, "utf-8")

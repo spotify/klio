@@ -41,6 +41,21 @@ import timeit
 from concurrent import futures
 
 
+_CACHED_THREADPOOL_EXEC = None
+
+
+def _get_or_create_executor(num_clients):
+    # We create one threadpool executor in case the dispatcher gets
+    # init'ed more than once (which seems to be the case on direct runner)
+    global _CACHED_THREADPOOL_EXEC
+    if _CACHED_THREADPOOL_EXEC is None:
+        _CACHED_THREADPOOL_EXEC = futures.ThreadPoolExecutor(
+            thread_name_prefix="KlioMetricsDispatcher", max_workers=num_clients
+        )
+
+    return _CACHED_THREADPOOL_EXEC
+
+
 # not making it an ABC because there shouldn't be a need to create custom
 # dispatchers
 class BaseMetricDispatcher(object):
@@ -60,9 +75,7 @@ class BaseMetricDispatcher(object):
         self.metric_key = self._setup_metric_key()
         self.kwargs = kwargs
         self.relay_to_metric = self._setup_metric_relay(relay_clients)
-        self._thread_pool = futures.ThreadPoolExecutor(
-            max_workers=len(relay_clients)
-        )
+        self._thread_pool = _get_or_create_executor(len(relay_clients))
 
     def _setup_metric_relay(self, relay_clients):
         raise NotImplementedError()

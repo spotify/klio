@@ -272,7 +272,8 @@ def deploy_job(klio_config, config_meta, **kwargs):
 
     if (
         not direct_runner
-        and klio_config.pipeline_options.runner == var.KlioRunner.DIRECT_GKE_RUNNER
+        and klio_config.pipeline_options.runner
+        == var.KlioRunner.DIRECT_GKE_RUNNER
     ):
         gke_commands = cli_utils.import_gke_commands()
 

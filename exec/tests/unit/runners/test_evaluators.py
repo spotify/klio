@@ -48,21 +48,7 @@ from klio_exec.runners import evaluators
 def patch_msg_manager(mocker, monkeypatch):
     p = mocker.Mock(name="patch_msg_manager")
     monkeypatch.setattr(pmm, "MessageManager", p)
-    return p.return_value
-
-
-# @pytest.fixture
-# def mock_pubsub_klio_msg(mocker):
-#     return mocker.Mock(name="mock_pubsub_klio_msg")
-
-
-# @pytest.fixture
-# def patch_pubsub_klio_msg_init(mocker, monkeypatch, mock_pubsub_klio_msg):
-#     p = mocker.Mock(
-#         return_value=mock_pubsub_klio_msg, name="patch_pubsub_klio_msg_init"
-#     )
-#     monkeypatch.setattr(evaluators.beam_pubsub, "PubsubMessage", p)
-#     return p
+    return p
 
 
 @pytest.fixture
@@ -145,9 +131,11 @@ def test_klio_pubsub_read_eval_read_messages_success(
     # 1. Check that auto-acking is skipped
     patch_sub_client.acknowledge.assert_not_called()
     # 2. Check that MessageManager daemon threads were started
-    patch_msg_manager.start_threads.assert_called_once_with()
+    patch_msg_manager.assert_called_once_with(
+        patch_sub_client.subscription_path()
+    )
     # 3. Check that messages were added to the MessageManager
-    patch_msg_manager.add.assert_called_once_with(ack_id, pmsg)
+    patch_msg_manager.return_value.add.assert_called_once_with(ack_id, pmsg)
     # 4. Check that one message is handled at a time, instead of the
     #    original 10
     patch_sub_client.pull.assert_called_once_with(
@@ -209,9 +197,11 @@ def test_read_messages_timestamp_attribute_milli_success(
     # 1. Check that auto-acking is skipped
     patch_sub_client.acknowledge.assert_not_called()
     # 2. Check that MessageManager daemon threads were started
-    patch_msg_manager.start_threads.assert_called_once_with()
+    patch_msg_manager.assert_called_once_with(
+        patch_sub_client.subscription_path()
+    )
     # 3. Check that messages were added to the MessageManager
-    patch_msg_manager.add.assert_called_once_with(ack_id, pmsg)
+    patch_msg_manager.return_value.add.assert_called_once_with(ack_id, pmsg)
     # 4. Check that one message is handled at a time, instead of the
     #    original 10
     patch_sub_client.pull.assert_called_once_with(
@@ -270,9 +260,11 @@ def test_read_messages_timestamp_attribute_rfc3339_success(
     # 1. Check that auto-acking is skipped
     patch_sub_client.acknowledge.assert_not_called()
     # 2. Check that MessageManager daemon threads were started
-    patch_msg_manager.start_threads.assert_called_once_with()
+    patch_msg_manager.assert_called_once_with(
+        patch_sub_client.subscription_path()
+    )
     # 3. Check that messages were added to the MessageManager
-    patch_msg_manager.add.assert_called_once_with(ack_id, pmsg)
+    patch_msg_manager.return_value.add.assert_called_once_with(ack_id, pmsg)
     # 4. Check that one message is handled at a time, instead of the
     #    original 10
     patch_sub_client.pull.assert_called_once_with(
@@ -333,9 +325,11 @@ def test_read_messages_timestamp_attribute_missing(
     # 1. Check that auto-acking is skipped
     patch_sub_client.acknowledge.assert_not_called()
     # 2. Check that MessageManager daemon threads were started
-    patch_msg_manager.start_threads.assert_called_once_with()
+    patch_msg_manager.assert_called_once_with(
+        patch_sub_client.subscription_path()
+    )
     # 3. Check that messages were added to the MessageManager
-    patch_msg_manager.add.assert_called_once_with(ack_id, pmsg)
+    patch_msg_manager.return_value.add.assert_called_once_with(ack_id, pmsg)
     # 4. Check that one message is handled at a time, instead of the
     #    original 10
     patch_sub_client.pull.assert_called_once_with(

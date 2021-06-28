@@ -37,8 +37,10 @@ def patch_subscriber_client(mocker, monkeypatch):
 
 
 @pytest.fixture
-def msg_manager(patch_subscriber_client):
+def msg_manager(patch_subscriber_client, mocker, monkeypatch):
     m = pmm.MessageManager("subscription")
+    mock_threadpool_exec = mocker.Mock()
+    monkeypatch.setattr(m, "executor", mock_threadpool_exec)
     return m
 
 
@@ -116,92 +118,49 @@ def test_msg_manager_init(
     assert exp_hb_sleep == mm.heartbeat_sleep
     assert exp_mgr_sleep == mm.manager_sleep
     assert 0 == len(mm.messages)
-    # threading.Lock is a factory that outputs the right
-    # lock implementation for the current platform
-    assert isinstance(mm.messages_lock, type(threading.Lock()))
     assert mm_logger == mm.mgr_logger
     assert hb_logger == mm.hrt_logger
-
-
-def test_msg_manager_start_threads(
-    mocker, msg_manager, patch_thread_init, mock_thread
-):
-    msg_manager.start_threads()
-    mgr_call = mocker.call(
-        target=msg_manager.manage,
-        args=(msg_manager.manager_sleep,),
-        name="KlioMessageManager",
-        daemon=True,
-    )
-    hb_call = mocker.call(
-        target=msg_manager.heartbeat,
-        args=(msg_manager.heartbeat_sleep,),
-        name="KlioMessageHeartbeat",
-        daemon=True,
-    )
-    patch_thread_init.assert_has_calls([mgr_call, hb_call])
-    assert 2 == len(mock_thread.start.mock_calls)
 
 
 def test_msg_manager_manage(mocker, monkeypatch, msg_manager):
     mock_time = mocker.Mock()
     monkeypatch.setattr(pmm, "time", mock_time)
-    stop_loop_exception = Exception("exit loop")
-    mock_time.sleep.side_effect = [None, stop_loop_exception]
 
-    msg_manager.messages = [mocker.Mock(kmsg_id=1), mocker.Mock(kmsg_id=2)]
-
-    ext_or_rm = [True, False, False, False]
-    mock_ext_or_rm = mocker.Mock()
-    mock_ext_or_rm.side_effect = ext_or_rm
-    monkeypatch.setattr(msg_manager, "_extend_or_remove", mock_ext_or_rm)
-
+    maybe_extend = mocker.Mock()
+    monkeypatch.setattr(msg_manager, "_maybe_extend", maybe_extend)
     mock_rm = mocker.Mock()
     monkeypatch.setattr(msg_manager, "remove", mock_rm)
 
-    to_slp = 0.1
-    try:
-        msg_manager.manage(to_slp)
-    except Exception as e:
-        # do this check so that we don't accidentally
-        # swallow a real exception
-        assert e == stop_loop_exception
+    msg = mocker.Mock(kmsg_id=1)
+    msg.event = mocker.Mock()
+    msg.event.is_set.side_effect = [False, True]
 
-    mock_ext_or_rm.assert_has_calls(
-        [
-            mocker.call(msg_manager.messages[0]),
-            mocker.call(msg_manager.messages[1]),
-        ]
-        * 2
-    )
-    mock_rm.assert_called_once_with(msg_manager.messages[0])
-    mock_time.sleep.assert_has_calls([mocker.call(to_slp)] * 2)
+    msg_manager.manage(msg)
+
+    maybe_extend.assert_called_once_with(msg)
+    mock_rm.assert_called_once_with(msg)
+    mock_time.sleep.assert_called_once_with(msg_manager.manager_sleep)
 
 
-def test_msg_manager_heartbeat(mocker, monkeypatch, msg_manager):
-    msg_manager.messages = [mocker.Mock(kmsg_id=1)]
-
-    # set the last log message as an exception so that we
-    # can exit the while loop
-    mock_logger = mocker.Mock()
-    monkeypatch.setattr(msg_manager, "hrt_logger", mock_logger)
-    stop_loop_exception = Exception("exit loop")
-    mock_logger.info.side_effect = [None, stop_loop_exception]
-
+def test_msg_manager_heartbeat(mocker, monkeypatch, msg_manager, caplog):
     mock_time = mocker.Mock()
     monkeypatch.setattr(pmm, "time", mock_time)
 
-    try:
-        msg_manager.heartbeat(1)
-    except Exception as e:
-        # make sure we haven't swallowed a real exception
-        assert e == stop_loop_exception
+    maybe_extend = mocker.Mock()
+    monkeypatch.setattr(msg_manager, "_maybe_extend", maybe_extend)
+    mock_rm = mocker.Mock()
+    monkeypatch.setattr(msg_manager, "remove", mock_rm)
 
-    assert 2 == len(mock_logger.mock_calls)
-    assert mock_time.sleep.called_once_with(1)
+    msg = mocker.Mock(kmsg_id=1)
+    msg.event = mocker.Mock()
+    msg.event.is_set.side_effect = [False, True]
+
+    msg_manager.heartbeat(msg)
+
+    assert 1 == len(caplog.records)
+    mock_time.sleep.assert_called_once_with(msg_manager.heartbeat_sleep)
 
 
-@pytest.mark.parametrize("processing_complete", (True, False))
 @pytest.mark.parametrize(
     "last_extended, deadline_extended",
     [
@@ -213,14 +172,8 @@ def test_msg_manager_heartbeat(mocker, monkeypatch, msg_manager):
         (10, False),
     ],
 )
-def test_msg_manager_ext_or_rm(
-    mocker,
-    monkeypatch,
-    msg_manager,
-    processing_complete,
-    last_extended,
-    deadline_extended,
-    caplog,
+def test_msg_manager_maybe_extend(
+    mocker, monkeypatch, msg_manager, last_extended, deadline_extended, caplog,
 ):
     mock_time = mocker.Mock()
     monkeypatch.setattr(pmm, "time", mock_time)
@@ -232,24 +185,21 @@ def test_msg_manager_ext_or_rm(
     kmsg = pmm.PubSubKlioMessage(ack_id=1, kmsg_id=2)
     kmsg.last_extended = last_extended
     kmsg.ext_duration = 10  # threshold = 0.8 * 10 = 8s
-    kmsg.event.is_set = mocker.Mock(return_value=processing_complete)
-    actual = msg_manager._extend_or_remove(kmsg)
 
-    assert processing_complete == actual
+    msg_manager._maybe_extend(kmsg)
+
     mgr_logs = [
         c
         for c in caplog.records
         if c.name == msg_manager.mgr_logger.name and c.levelno == logging.DEBUG
     ]
-    if not processing_complete:
-        if deadline_extended:
-            mock_ext_deadline.assert_called_once_with(kmsg)
-            assert 0 == len(mgr_logs)
-        else:
-            mock_ext_deadline.assert_not_called()
-            assert 1 == len(mgr_logs)
+
+    if deadline_extended:
+        mock_ext_deadline.assert_called_once_with(kmsg)
+        assert 0 == len(mgr_logs)
     else:
         mock_ext_deadline.assert_not_called()
+        assert 1 == len(mgr_logs)
 
 
 @pytest.mark.parametrize("duration", (None, 1))
@@ -323,12 +273,7 @@ def test_msg_manager_add(mocker, monkeypatch, msg_manager, caplog):
     msg_manager.add(ack_id=1, raw_pubsub_message=pmsg1)
     msg_manager.add(ack_id=3, raw_pubsub_message=pmsg2)
 
-    assert 2 == len(msg_manager.messages)
-    # comparing class attributes (via __dict__) since we'd need to implement
-    # __eq__ on the PubSubKlioMessage class, but doing so would make it un-
-    # hashable. Which can be addressed, but this just seems easier for now.
-    assert _compare_objects_dicts(psk_msg1, msg_manager.messages[0])
-    assert _compare_objects_dicts(psk_msg2, msg_manager.messages[1])
+    assert 4 == msg_manager.executor.submit.call_count
     assert 2 == len(caplog.records)
     assert _compare_objects_dicts(
         psk_msg1, pmm.ENTITY_ID_TO_ACK_ID[psk_msg1.kmsg_id]
@@ -339,37 +284,28 @@ def test_msg_manager_add(mocker, monkeypatch, msg_manager, caplog):
 
 
 def test_msg_manager_remove(mocker, monkeypatch, msg_manager, caplog):
-    # mock_event = mocker.Mock()
-    # monkeypatch.setattr(pmm.threading, "Event", mock_event)
-    # extend_deadline = mocker.Mock()
-    # monkeypatch.setattr(msg_manager, "extend_deadline", extend_deadline)
+    ack_id, kmsg_id = 1, "2"
+    psk_msg1 = pmm.PubSubKlioMessage(ack_id, kmsg_id)
+    monkeypatch.setitem(pmm.ENTITY_ID_TO_ACK_ID, psk_msg1.kmsg_id, psk_msg1)
 
-    ack_id1, kmsg_id1 = 1, "2"
-    ack_id2, kmsg_id2 = 3, "4"
-    pmsg1 = _get_pubsub_message(kmsg_id1)
-    pmsg2 = _get_pubsub_message(kmsg_id2)
-
-    msg_manager.add(ack_id=ack_id2, raw_pubsub_message=pmsg2)
-    msg_manager.add(ack_id=ack_id1, raw_pubsub_message=pmsg1)
-
-    msg_manager.remove(msg_manager.messages[0])
+    msg_manager.remove(psk_msg1)
     msg_manager._client.acknowledge.assert_called_once_with(
-        msg_manager._sub_name, [ack_id2]
+        msg_manager._sub_name, [ack_id]
     )
-    assert not pmm.ENTITY_ID_TO_ACK_ID.get(kmsg_id2)
-    assert 5 == len(caplog.records)
-    assert 1 == len(msg_manager.messages) == len(pmm.ENTITY_ID_TO_ACK_ID)
-
-
-def test_msg_manager_remove_raises(msg_manager, caplog):
-    pmsg1 = _get_pubsub_message("2")
-
-    msg_manager.add(ack_id=1, raw_pubsub_message=pmsg1)
-    msg_manager._client.acknowledge.side_effect = Exception("oh no")
-    msg_manager.remove(msg_manager.messages[0])
-    assert 4 == len(caplog.records)
+    assert not pmm.ENTITY_ID_TO_ACK_ID.get(kmsg_id)
+    assert 1 == len(caplog.records)
     assert not pmm.ENTITY_ID_TO_ACK_ID.get("2")
-    assert 0 == len(msg_manager.messages)
+
+
+def test_msg_manager_remove_raises(msg_manager, monkeypatch, caplog):
+    ack_id, kmsg_id = 1, "2"
+    psk_msg1 = pmm.PubSubKlioMessage(ack_id, kmsg_id)
+    monkeypatch.setitem(pmm.ENTITY_ID_TO_ACK_ID, psk_msg1.kmsg_id, psk_msg1)
+
+    msg_manager._client.acknowledge.side_effect = Exception("oh no")
+    msg_manager.remove(psk_msg1)
+    assert 2 == len(caplog.records)
+    assert not pmm.ENTITY_ID_TO_ACK_ID.get("2")
 
 
 def _generate_kmsg(element):
@@ -387,10 +323,10 @@ def _assert_expected_msg(actual):
     assert actual_msg == expected_msg
 
 
-def test_klio_ack_input_msg(mocker):
+def test_klio_ack_input_msg(mocker, monkeypatch):
     entity_id = "d34db33f"
     mock_pklio_msg = mocker.Mock()
-    pmm.ENTITY_ID_TO_ACK_ID[entity_id] = mock_pklio_msg
+    monkeypatch.setitem(pmm.ENTITY_ID_TO_ACK_ID, entity_id, mock_pklio_msg)
     with beam_test_pipeline.TestPipeline() as p:
         (
             p

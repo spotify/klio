@@ -17,12 +17,30 @@ import logging
 import threading
 import time
 
+from concurrent import futures
+
 from google.cloud import pubsub as g_pubsub
 
 from klio_core.proto import klio_pb2
 
 
 ENTITY_ID_TO_ACK_ID = {}
+_CACHED_THREADPOOL_EXEC = None
+
+
+def _get_or_create_executor():
+    # We create one threadpool executor since the MessageManager does
+    # get initialized more than once (pretty frequently, actually). So
+    # let's reuse our executor rather than re-create it.
+    global _CACHED_THREADPOOL_EXEC
+    if _CACHED_THREADPOOL_EXEC is None:
+        # max_workers is equal to the number of threads we want to run in
+        # the background - 1 message maanger, and 1 heartbeat
+        _CACHED_THREADPOOL_EXEC = futures.ThreadPoolExecutor(
+            thread_name_prefix="KlioMessageManager", max_workers=2
+        )
+
+    return _CACHED_THREADPOOL_EXEC
 
 
 class PubSubKlioMessage:
@@ -79,70 +97,38 @@ class MessageManager:
         self.heartbeat_sleep = heartbeat_sleep
         self.manager_sleep = manager_sleep
         self.messages = []
-        self.messages_lock = threading.Lock()
         self.mgr_logger = logging.getLogger(
             "klio.gke_direct_runner.message_manager"
         )
         self.hrt_logger = logging.getLogger("klio.gke_direct_runner.heartbeat")
+        self.executor = _get_or_create_executor()
 
-    def start_threads(self):
-        """Launch message management threads.
-
-        Two threads are launched:
-            1. The manager thread which keeps track of in-progress messages
-            and extends their deadlines.
-            2. The heartbeat thread which logs which messages
-            are still in-progress
-        """
-        mgr_thread = threading.Thread(
-            target=self.manage,
-            args=(self.manager_sleep,),
-            name="KlioMessageManager",
-            daemon=True,
-        )
-        mgr_thread.start()
-
-        heartbeat_thread = threading.Thread(
-            target=self.heartbeat,
-            args=(self.heartbeat_sleep,),
-            name="KlioMessageHeartbeat",
-            daemon=True,
-        )
-        heartbeat_thread.start()
-
-    def manage(self, to_sleep):
+    def manage(self, message):
         """Continuously track in-progress messages and extends their deadlines.
 
         Args:
             to_sleep(float): Seconds to sleep between checks.
         """
-        while True:
-            to_remove = []
-            with self.messages_lock:
-                for message in self.messages:
-                    should_remove = self._extend_or_remove(message)
-                    if should_remove:
-                        to_remove.append(message)
+        while not message.event.is_set():
+            self._maybe_extend(message)
+            time.sleep(self.manager_sleep)
 
-            for message in to_remove:
-                self.remove(message)
+        else:
+            self.remove(message)
 
-            time.sleep(to_sleep)
-
-    def heartbeat(self, to_sleep):
+    def heartbeat(self, message):
         """Continuously log heartbeats for in-progress messages.
 
         Args:
             to_sleep(float): Second to sleep between log messages.
         """
-        while True:
-            for message in self.messages:
-                self.hrt_logger.info(
-                    f"Job is still processing {message.kmsg_id}..."
-                )
-            time.sleep(to_sleep)
+        while not message.event.is_set():
+            self.hrt_logger.info(
+                f"Job is still processing {message.kmsg_id}..."
+            )
+            time.sleep(self.heartbeat_sleep)
 
-    def _extend_or_remove(self, message):
+    def _maybe_extend(self, message):
         """Check to see if message is done and extends deadline if not.
 
         Deadline extension is only done when 80% of the message's extension
@@ -150,28 +136,22 @@ class MessageManager:
 
         Args:
             message(PubSubKlioMessage): In-progress message to check.
-        Returns:
-            True if work associated with message is complete; False otherwise.
         """
         diff = 0
-        if not message.event.is_set():
-            now = time.monotonic()
-            if message.last_extended is not None:
-                diff = now - message.last_extended
+        now = time.monotonic()
+        if message.last_extended is not None:
+            diff = now - message.last_extended
 
-            # taking 80% of the deadline extension as a
-            # threshold to comfortably request a message deadline
-            # extension before the deadline comes around
-            threshold = message.ext_duration * 0.8
-            if message.last_extended is None or diff >= threshold:
-                self.extend_deadline(message)
-            else:
-                self.mgr_logger.debug(
-                    f"Skipping extending Pub/Sub ack deadline for {message}"
-                )
-            return False
-
-        return True
+        # taking 80% of the deadline extension as a
+        # threshold to comfortably request a message deadline
+        # extension before the deadline comes around
+        threshold = message.ext_duration * 0.8
+        if message.last_extended is None or diff >= threshold:
+            self.extend_deadline(message)
+        else:
+            self.mgr_logger.debug(
+                f"Skipping extending Pub/Sub ack deadline for {message}"
+            )
 
     def extend_deadline(self, message, duration=None):
         """Extend deadline for a PubSubKlioMessage.
@@ -235,8 +215,8 @@ class MessageManager:
         self.mgr_logger.debug(f"Received {psk_msg.kmsg_id} from Pub/Sub.")
         self.extend_deadline(psk_msg)
         ENTITY_ID_TO_ACK_ID[psk_msg.kmsg_id] = psk_msg
-        with self.messages_lock:
-            self.messages.append(psk_msg)
+        self.executor.submit(self.manage, psk_msg)
+        self.executor.submit(self.heartbeat, psk_msg)
 
     def remove(self, psk_msg):
         """Remove message from set of in-progress messages.
@@ -268,9 +248,6 @@ class MessageManager:
                 f"Acknowledged {psk_msg.kmsg_id}. Job is no longer processing "
                 "this message."
             )
-        with self.messages_lock:
-            index = self.messages.index(psk_msg)
-            self.messages.pop(index)
         ENTITY_ID_TO_ACK_ID.pop(psk_msg.kmsg_id, None)
 
     @staticmethod

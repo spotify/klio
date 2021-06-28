@@ -37,7 +37,6 @@ class KlioPubSubReadEvaluator(transform_evaluator._PubSubReadEvaluator):
         # Heads up: self._sub_name is from init'ing parent class
         self.sub_client = g_pubsub.SubscriberClient()
         self.message_manager = pmsg_mgr.MessageManager(self._sub_name)
-        self.message_manager.start_threads()
         self.logger = logging.getLogger("klio.pubsub_read_evaluator")
 
     def _read_from_pubsub(self, timestamp_attribute):

@@ -218,13 +218,8 @@ def test_run_pipeline(
     patch_run_basic_pipeline,
 ):
     mock_compare_runtime_to_buildtime_config.return_value = True
-    # TODO: Add test for DirectGKERunner
     runtime_conf = cli.RuntimeConfig(
-        image_tag=None,
-        direct_runner=False,
-        update=None,
-        blocking=None,
-        runner=cli_runner,
+        image_tag=None, direct_runner=False, update=None, blocking=None
     )
     cli_inputs = []
     if image_tag:

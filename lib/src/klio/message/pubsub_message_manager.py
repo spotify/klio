@@ -17,13 +17,6 @@ import logging
 import threading
 import time
 
-import apache_beam as beam
-
-from apache_beam.io.gcp import pubsub as beam_pubsub
-from apache_beam.runners.direct import direct_runner
-from apache_beam.runners.direct import transform_evaluator
-from apache_beam.utils import timestamp as beam_timestamp
-from google.api_core import exceptions as g_exceptions
 from google.cloud import pubsub as g_pubsub
 
 from klio_core.proto import klio_pb2
@@ -58,6 +51,9 @@ class MessageManager:
 
     This class is used by ``KlioPubSubReadEvaluator`` to manage message
     acknowledgement.
+
+    Warning: non-KlioMessages are not (yet) supported. ``klio-job.yaml::
+    job_config.allow_non_klio_messages`` must be ``False``.
 
     Usage:
 
@@ -212,174 +208,94 @@ class MessageManager:
             )
         message.extend(duration)
 
-    def add(self, message):
+    @staticmethod
+    def _convert_raw_pubsub_message(ack_id, pmessage):
+        # TODO: either use klio.mssage.serializer.to_klio_message, or
+        # figure out how to handle when a parsed_message can't be parsed
+        # into a KlioMessage (will need to somehow get the klio context)
+        kmsg = klio_pb2.KlioMessage()
+        kmsg.ParseFromString(pmessage.data)
+        entity_id = kmsg.data.element.decode("utf-8")
+        psk_msg = PubSubKlioMessage(ack_id, entity_id)
+        return psk_msg
+
+    def add(self, ack_id, raw_pubsub_message):
         """Add message to set of in-progress messages.
 
         Messages added via this method will have their deadlines extended
         until they are finished processing.
 
         Args:
-            message(PubSubKlioMessage): Message to add.
+            ack_id (str): Pub/Sub message's ack ID
+            raw_pubsub_message (apache_beam.io.gcp.pubsub.PubsubMessage):
+                Pub/Sub message to add.
         """
-        self.mgr_logger.debug(f"Received {message.kmsg_id} from Pub/Sub.")
-        self.extend_deadline(message)
-        ENTITY_ID_TO_ACK_ID[message.kmsg_id] = message
-        with self.messages_lock:
-            self.messages.append(message)
+        psk_msg = self._convert_raw_pubsub_message(ack_id, raw_pubsub_message)
 
-    def remove(self, message):
+        self.mgr_logger.debug(f"Received {psk_msg.kmsg_id} from Pub/Sub.")
+        self.extend_deadline(psk_msg)
+        ENTITY_ID_TO_ACK_ID[psk_msg.kmsg_id] = psk_msg
+        with self.messages_lock:
+            self.messages.append(psk_msg)
+
+    def remove(self, psk_msg):
         """Remove message from set of in-progress messages.
 
         Messages removed via this method will be acknowledged.
 
         Args:
-            message(PubSubKlioMessage): Message to remove.
+            psk_msg (PubSubKlioMessage): Message to remove.
         """
         try:
             # TODO: this method also has `retry`, `timeout` and metadata
             # kwargs which we may be interested in using
-            self._client.acknowledge(self._sub_name, [message.ack_id])
+            self._client.acknowledge(self._sub_name, [psk_msg.ack_id])
         except Exception as e:
             # Note: we are just catching & logging any potential error we
             # encounter. We will still remove the message from our message
             # manager so we no longer try to extend.
             self.mgr_logger.error(
-                f"Error encountered when trying to acknowledge {message} with "
-                f"ack ID '{message.ack_id}': {e}",
+                f"Error encountered when trying to acknowledge {psk_msg} with "
+                f"ack ID '{psk_msg.ack_id}': {e}",
                 exc_info=True,
             )
             self.mgr_logger.warning(
-                f"The message {message} may be re-delivered due to Klio's "
+                f"The message {psk_msg} may be re-delivered due to Klio's "
                 "inability to acknowledge it."
             )
         else:
             self.mgr_logger.info(
-                f"Acknowledged {message.kmsg_id}. Job is no longer processing "
+                f"Acknowledged {psk_msg.kmsg_id}. Job is no longer processing "
                 "this message."
             )
         with self.messages_lock:
-            index = self.messages.index(message)
+            index = self.messages.index(psk_msg)
             self.messages.pop(index)
-        ENTITY_ID_TO_ACK_ID.pop(message.kmsg_id, None)
+        ENTITY_ID_TO_ACK_ID.pop(psk_msg.kmsg_id, None)
 
+    @staticmethod
+    def mark_done(kmsg_or_bytes):
+        """Mark a KlioMessage as done and to be removed from handling.
 
-class KlioPubSubReadEvaluator(transform_evaluator._PubSubReadEvaluator):
-    """PubSubReadEvaluator for Klio's GkeDirectRunner.
+        This method just sets the PubSubKlioMessage.event object where then
+        in the next iteration in `MessageManager.manage`, it is then
+        acknowledged and removed from further "babysitting".
 
-    Behaves in the same way as _PubSubReadEvaluator, except for the fact
-    that it acknowledges PubSub messages after they are done processing.
-    """
+        Args:
+            kmsg_or_bytes (klio_pb2.KlioMessage or bytes): the KlioMessage
+                (or a KlioMessage that has been serialzied to bytes) to be
+                marked as done.
+        """
+        kmsg = kmsg_or_bytes
 
-    def __init__(self, *args, **kwargs):
-        super(KlioPubSubReadEvaluator, self).__init__(*args, **kwargs)
-        # Heads up: self._sub_name is from init'ing parent class
-        self.sub_client = g_pubsub.SubscriberClient()
-        self.message_manager = MessageManager(self._sub_name)
-        self.message_manager.start_threads()
-        self.logger = logging.getLogger("klio.pubsub_read_evaluator")
-
-    def _read_from_pubsub(self, timestamp_attribute):
-        # Klio maintainer note: This code is the eact same logic in
-        # _PubSubReadEvaluator._read_from_pubsub with the
-        # following changes:
-        # 1. Import statements that were originally inside this method
-        #    was moved to the top of this module.
-        # 2. Import statements adjusted to import module and not objects
-        #    according to the google style guide.
-        # 3. The functionalty we needed to override, which skips auto-acking
-        #    consumed pubsub messages, and adds them to the MessageManager
-        #    to handle deadline extension and acking once done.
-
-        def _get_element(ack_id, message):
-            parsed_message = beam_pubsub.PubsubMessage._from_message(message)
-            if (
-                timestamp_attribute
-                and timestamp_attribute in parsed_message.attributes
-            ):
-                rfc3339_or_milli = parsed_message.attributes[
-                    timestamp_attribute
-                ]
-                try:
-                    timestamp = beam_timestamp.Timestamp(
-                        micros=int(rfc3339_or_milli) * 1000
-                    )
-                except ValueError:
-                    try:
-                        timestamp = beam_timestamp.Timestamp.from_rfc3339(
-                            rfc3339_or_milli
-                        )
-                    except ValueError as e:
-                        raise ValueError("Bad timestamp value: %s" % e)
-            else:
-                timestamp = beam_timestamp.Timestamp(
-                    message.publish_time.seconds,
-                    message.publish_time.nanos // 1000,
-                )
-
-            # TODO: either use klio.mssage.serializer.to_klio_message, or
-            # figure out how to handle when a parsed_message can't be parsed
-            # into a KlioMessage
+        # TODO: either use klio.mssage.serializer.to_klio_message, or
+        # figure out how to handle when a parsed_message can't be parsed
+        # into a KlioMessage (will need to somehow get the klio context).
+        if not isinstance(kmsg_or_bytes, klio_pb2.KlioMessage):
             kmsg = klio_pb2.KlioMessage()
-            kmsg.ParseFromString(parsed_message.data)
-            entity_id = kmsg.data.element.decode("utf-8")
+            kmsg.ParseFromString(kmsg_or_bytes)
 
-            pmsg = PubSubKlioMessage(ack_id, entity_id)
-            self.message_manager.add(pmsg)
-
-            return timestamp, parsed_message
-
-        results = None
-        try:
-            response = self.sub_client.pull(
-                self._sub_name, max_messages=1, return_immediately=True
-            )
-            results = [
-                _get_element(rm.ack_id, rm.message)
-                for rm in response.received_messages
-            ]
-
-        # only catching/ignoring this for now - if new exceptions raise, we'll
-        # figure it out as they come on how to handle them
-        except g_exceptions.DeadlineExceeded as e:
-            # this seems mostly a benign error when there are 20+ seconds
-            # between messages
-            self.logger.debug(e)
-
-        finally:
-            self.sub_client.api.transport.channel.close()
-
-        return results
-
-
-class KlioTransformEvaluatorRegistry(
-    transform_evaluator.TransformEvaluatorRegistry
-):
-    """TransformEvaluatorRegistry for Klio
-
-    Makes DirectRunner's ReadFromPubSub use KlioPubSubReadEvaluator.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super(KlioTransformEvaluatorRegistry, self).__init__(*args, **kwargs)
-        self._evaluators[
-            direct_runner._DirectReadFromPubSub
-        ] = KlioPubSubReadEvaluator
-
-
-class KlioAckInputMessage(beam.DoFn):
-    """Message acknowledgement DoFn.
-
-    Marks a KlioMessage as done after it is finished processing.
-
-    Used in conjunction with the KlioPubSubReadEvaluator, which tracks
-    KlioMessages and extends their deadlines until they are marked as done.
-    """
-
-    def process(self, element):
-        kmsg = klio_pb2.KlioMessage()
-        kmsg.ParseFromString(element)
         entity_id = kmsg.data.element.decode("utf-8")
-
         msg = ENTITY_ID_TO_ACK_ID.get(entity_id)
         # This call, `set`, will tell the MessageManager that this
         # message is now ready to be acknowledged and no longer being
@@ -387,9 +303,10 @@ class KlioAckInputMessage(beam.DoFn):
         if msg:
             msg.event.set()
         else:
+            # NOTE: this logger exists as `self.mgr_logger`, but this method
+            # needs to be a staticmethod so we don't need to unnecessarily
+            # init the class in order to just mark a message as done.
             mm_logger = logging.getLogger(
                 "klio.gke_direct_runner.message_manager"
             )
             mm_logger.warn(f"Unable to acknowledge {entity_id}: Not found.")
-
-        yield element

@@ -19,11 +19,13 @@ import threading
 import apache_beam as beam
 import pytest
 
+from apache_beam.io.gcp import pubsub as beam_pubsub
 from apache_beam.testing import test_pipeline as beam_test_pipeline
 
 from klio_core.proto import klio_pb2
 
-from klio_exec.runners import pubsub_message_manager as pmm
+from klio.message import pubsub_message_manager as pmm
+from klio.transforms import helpers
 
 
 @pytest.fixture
@@ -46,13 +48,14 @@ def pubsub_klio_msg():
     return m
 
 
-def test_pubsub_klio_msg_init(pubsub_klio_msg):
+def test_pubsub_klio_msg(pubsub_klio_msg):
     assert 1 == pubsub_klio_msg.ack_id
     assert 2 == pubsub_klio_msg.kmsg_id
 
     assert pubsub_klio_msg.last_extended is None
     assert pubsub_klio_msg.ext_duration is None
     assert isinstance(pubsub_klio_msg.event, threading.Event)
+    assert "PubSubKlioMessage(kmsg_id=2)" == repr(pubsub_klio_msg)
 
 
 def test_pubsub_klio_msg_extend(mocker, monkeypatch, pubsub_klio_msg):
@@ -64,10 +67,6 @@ def test_pubsub_klio_msg_extend(mocker, monkeypatch, pubsub_klio_msg):
 
     assert exp_dur == pubsub_klio_msg.ext_duration
     assert exp_last_ts == pubsub_klio_msg.last_extended
-
-
-def test_pubsub_klio_msg_repr(pubsub_klio_msg):
-    assert "PubSubKlioMessage(kmsg_id=2)" == repr(pubsub_klio_msg)
 
 
 @pytest.fixture
@@ -281,41 +280,95 @@ def test_msg_manager_extend_deadline_raises(msg_manager, caplog):
     assert 2 == len(caplog.records)
 
 
-def test_msg_manager_add(mocker, msg_manager, caplog):
-    msg_manager.extend_deadline = mocker.Mock()
-    kmsg1 = pmm.PubSubKlioMessage(ack_id=1, kmsg_id=2)
-    kmsg2 = pmm.PubSubKlioMessage(ack_id=3, kmsg_id=4)
-    msg_manager.add(kmsg1)
-    msg_manager.add(kmsg2)
+def _get_pubsub_message(klio_element):
+    kmsg = klio_pb2.KlioMessage()
+    kmsg.data.element = bytes(klio_element.encode("utf-8"))
+    kmsg_bytes = kmsg.SerializeToString()
+    pmsg = beam_pubsub.PubsubMessage(data=kmsg_bytes, attributes={})
+    return pmsg
+
+
+def _compare_objects_dicts(first, second):
+    return first.__dict__ == second.__dict__
+
+
+def test_convert_raw_pubsub_message(mocker, monkeypatch, msg_manager):
+    mock_event = mocker.Mock()
+    monkeypatch.setattr(pmm.threading, "Event", mock_event)
+    exp_message = pmm.PubSubKlioMessage("ack_id1", "kmsg_id1")
+
+    kmsg = klio_pb2.KlioMessage()
+    kmsg.data.element = b"kmsg_id1"
+    kmsg_bytes = kmsg.SerializeToString()
+    pmsg = beam_pubsub.PubsubMessage(data=kmsg_bytes, attributes={})
+
+    act_message = msg_manager._convert_raw_pubsub_message("ack_id1", pmsg)
+    # comparing class attributes (via __dict__) since we'd need to implement
+    # __eq__ on the PubSubKlioMessage class, but doing so would make it un-
+    # hashable. Which can be addressed, but this just seems easier for now.
+    assert _compare_objects_dicts(exp_message, act_message)
+
+
+def test_msg_manager_add(mocker, monkeypatch, msg_manager, caplog):
+    extend_deadline = mocker.Mock()
+    monkeypatch.setattr(msg_manager, "extend_deadline", extend_deadline)
+    mock_event = mocker.Mock()
+    monkeypatch.setattr(pmm.threading, "Event", mock_event)
+
+    pmsg1 = _get_pubsub_message("2")
+    pmsg2 = _get_pubsub_message("4")
+    psk_msg1 = pmm.PubSubKlioMessage(ack_id=1, kmsg_id="2")
+    psk_msg2 = pmm.PubSubKlioMessage(ack_id=3, kmsg_id="4")
+
+    msg_manager.add(ack_id=1, raw_pubsub_message=pmsg1)
+    msg_manager.add(ack_id=3, raw_pubsub_message=pmsg2)
+
     assert 2 == len(msg_manager.messages)
-    assert kmsg2 == msg_manager.messages[-1]
+    # comparing class attributes (via __dict__) since we'd need to implement
+    # __eq__ on the PubSubKlioMessage class, but doing so would make it un-
+    # hashable. Which can be addressed, but this just seems easier for now.
+    assert _compare_objects_dicts(psk_msg1, msg_manager.messages[0])
+    assert _compare_objects_dicts(psk_msg2, msg_manager.messages[1])
     assert 2 == len(caplog.records)
-    assert kmsg1 == pmm.ENTITY_ID_TO_ACK_ID[kmsg1.kmsg_id]
-    assert kmsg2 == pmm.ENTITY_ID_TO_ACK_ID[kmsg2.kmsg_id]
-
-
-def test_msg_manager_remove(msg_manager, caplog):
-    kmsg1 = pmm.PubSubKlioMessage(ack_id=1, kmsg_id=2)
-    kmsg2 = pmm.PubSubKlioMessage(ack_id=3, kmsg_id=4)
-    msg_manager.add(kmsg2)
-    msg_manager.add(kmsg1)
-    msg_manager.remove(kmsg1)
-    msg_manager._client.acknowledge.assert_called_once_with(
-        msg_manager._sub_name, [kmsg1.ack_id]
+    assert _compare_objects_dicts(
+        psk_msg1, pmm.ENTITY_ID_TO_ACK_ID[psk_msg1.kmsg_id]
     )
-    assert not pmm.ENTITY_ID_TO_ACK_ID.get(kmsg1.kmsg_id)
+    assert _compare_objects_dicts(
+        psk_msg2, pmm.ENTITY_ID_TO_ACK_ID[psk_msg2.kmsg_id]
+    )
+
+
+def test_msg_manager_remove(mocker, monkeypatch, msg_manager, caplog):
+    # mock_event = mocker.Mock()
+    # monkeypatch.setattr(pmm.threading, "Event", mock_event)
+    # extend_deadline = mocker.Mock()
+    # monkeypatch.setattr(msg_manager, "extend_deadline", extend_deadline)
+
+    ack_id1, kmsg_id1 = 1, "2"
+    ack_id2, kmsg_id2 = 3, "4"
+    pmsg1 = _get_pubsub_message(kmsg_id1)
+    pmsg2 = _get_pubsub_message(kmsg_id2)
+
+    msg_manager.add(ack_id=ack_id2, raw_pubsub_message=pmsg2)
+    msg_manager.add(ack_id=ack_id1, raw_pubsub_message=pmsg1)
+
+    msg_manager.remove(msg_manager.messages[0])
+    msg_manager._client.acknowledge.assert_called_once_with(
+        msg_manager._sub_name, [ack_id2]
+    )
+    assert not pmm.ENTITY_ID_TO_ACK_ID.get(kmsg_id2)
     assert 5 == len(caplog.records)
-    assert 1 == len(msg_manager.messages)
-    assert kmsg2 == msg_manager.messages[0]
+    assert 1 == len(msg_manager.messages) == len(pmm.ENTITY_ID_TO_ACK_ID)
 
 
 def test_msg_manager_remove_raises(msg_manager, caplog):
-    kmsg1 = pmm.PubSubKlioMessage(ack_id=1, kmsg_id=2)
-    msg_manager.add(kmsg1)
+    pmsg1 = _get_pubsub_message("2")
+
+    msg_manager.add(ack_id=1, raw_pubsub_message=pmsg1)
     msg_manager._client.acknowledge.side_effect = Exception("oh no")
-    msg_manager.remove(kmsg1)
+    msg_manager.remove(msg_manager.messages[0])
     assert 4 == len(caplog.records)
-    assert not pmm.ENTITY_ID_TO_ACK_ID.get(kmsg1.kmsg_id)
+    assert not pmm.ENTITY_ID_TO_ACK_ID.get("2")
     assert 0 == len(msg_manager.messages)
 
 
@@ -343,7 +396,7 @@ def test_klio_ack_input_msg(mocker):
             p
             | beam.Create([entity_id])
             | beam.Map(_generate_kmsg)
-            | beam.ParDo(pmm.KlioAckInputMessage())
+            | beam.ParDo(helpers.KlioAckInputMessage())
             | beam.Map(_assert_expected_msg)
         )
 

@@ -190,7 +190,7 @@ class MessageManager:
 
     @staticmethod
     def _convert_raw_pubsub_message(ack_id, pmessage):
-        # TODO: either use klio.mssage.serializer.to_klio_message, or
+        # TODO: either use klio.message.serializer.to_klio_message, or
         # figure out how to handle when a parsed_message can't be parsed
         # into a KlioMessage (will need to somehow get the klio context)
         kmsg = klio_pb2.KlioMessage()
@@ -265,7 +265,7 @@ class MessageManager:
         """
         kmsg = kmsg_or_bytes
 
-        # TODO: either use klio.mssage.serializer.to_klio_message, or
+        # TODO: either use klio.message.serializer.to_klio_message, or
         # figure out how to handle when a parsed_message can't be parsed
         # into a KlioMessage (will need to somehow get the klio context).
         if not isinstance(kmsg_or_bytes, klio_pb2.KlioMessage):

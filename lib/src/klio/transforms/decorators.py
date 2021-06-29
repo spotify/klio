@@ -177,7 +177,7 @@ def __get_thread_limiter(max_thread_count, thread_limiter, func_name=None):
 
 
 def __ack_pubsub_if_direct_gke(kmsg_or_bytes, ctx):
-    # TODO: update me to `var.runners.DIRECT_GKE_RUNNER` once
+    # TODO: update me to `var.KlioRunner.DIRECT_GKE_RUNNER` once
     #       direct_on_gke_runner_clean is merged
     is_direct_on_gke = ctx.config.pipeline_options.runner == "DirectGKERunner"
     if not is_direct_on_gke:

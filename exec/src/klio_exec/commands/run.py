@@ -414,7 +414,7 @@ class KlioPipeline(object):
                 >> helpers.KlioGcsCheckInputExists()
             )
 
-            # TODO: update me to `var.runners.DIRECT_GKE_RUNNER` once
+            # TODO: update me to `var.KlioRunner.DIRECT_GKE_RUNNER` once
             #       direct_on_gke_runner_clean is merged
             if self.config.pipeline_options.runner == "DirectGKERunner":
                 ack_inp_lbl = lbl("Ack Input Message from No Data Input Found")
@@ -467,7 +467,7 @@ class KlioPipeline(object):
         to_drop_flatten = (v1_to_process.drop, v2_to_process.drop)
         to_drop = to_drop_flatten | flatten_ign_lbl >> beam.Flatten()
 
-        # TODO: update me to `var.runners.DIRECT_GKE_RUNNER` once
+        # TODO: update me to `var.KlioRunner.DIRECT_GKE_RUNNER` once
         #       direct_on_gke_runner_clean is merged
         if self.config.pipeline_options.runner == "DirectGKERunner":
             ack_inp_lbl = lbl("Ack Dropped Input Message")
@@ -557,7 +557,7 @@ class KlioPipeline(object):
 
         out_pcol = run_callable(to_process, self.config)
 
-        # TODO: update me to `var.runners.DIRECT_GKE_RUNNER` once
+        # TODO: update me to `var.KlioRunner.DIRECT_GKE_RUNNER` once
         #       direct_on_gke_runner_clean is merged
         if self.config.pipeline_options.runner == "DirectGKERunner":
             if to_pass_thru:
@@ -616,7 +616,7 @@ class KlioPipeline(object):
             logging.error("Error running pipeline: %s" % e)
             raise SystemExit(1)
 
-        # TODO: update me to `var.runners.DIRECT_GKE_RUNNER` once
+        # TODO: update me to `var.KlioRunner.DIRECT_GKE_RUNNER` once
         #       direct_on_gke_runner_clean is merged
         is_direct_gke = (
             self.config.pipeline_options.runner == "DirectGKERunner"

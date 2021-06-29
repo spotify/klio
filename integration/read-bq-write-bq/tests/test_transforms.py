@@ -15,6 +15,7 @@
 
 import json
 import logging
+import time
 
 import pytest
 
@@ -100,6 +101,9 @@ def test_process(klio_msg, expected_log_messages, caplog):
 
     assert expected_kmsg.SerializeToString() == list(output)[0]
 
+    # logs may not all be available yet since some may be on a different thread
+    # so we'll wait a second
+    time.sleep(1)
     assert len(caplog.records) == len(expected_log_messages)
 
     for index, record in enumerate(caplog.records):

@@ -760,9 +760,9 @@ class KlioAckInputMessage(beam.DoFn):
 
     Marks a KlioMessage as done after it is finished processing.
 
-    Used when running on ``DirectGKERunner`` and in conjunction with the 
-    ``klio_exec.runners.evaluators.KlioPubSubReadEvaluator``, which tracks 
-    ``KlioMessages`` and extends their Pub/Sub acknowledgement deadlines 
+    Used when running on ``DirectGKERunner`` and in conjunction with the
+    ``klio_exec.runners.evaluators.KlioPubSubReadEvaluator``, which tracks
+    ``KlioMessages`` and extends their Pub/Sub acknowledgement deadlines
     until they are marked as done.
     """
 

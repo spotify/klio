@@ -38,7 +38,7 @@ rsync -rp ../audio/setup.py ${KLIO_TEST_DIR}/audio/setup.py
 rsync -rp ../audio/README.rst ${KLIO_TEST_DIR}/audio/README.rst
 
 if [ -f "${KLIO_TEST_DIR}/it/test-requirements.txt" ];
-  then pip install -r ${KLIO_TEST_DIR}/it/test-requirements.txt --use-feature=2020-resolver;
+  then pip install -r ${KLIO_TEST_DIR}/it/test-requirements.txt;
 fi
 if [ -f "${KLIO_TEST_DIR}/it/before.py" ];
   then python ${KLIO_TEST_DIR}/it/before.py;

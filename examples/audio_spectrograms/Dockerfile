@@ -17,4 +17,4 @@ COPY __init__.py \
      job-requirements.txt \
      /usr/src/app/
 
-RUN pip install . --use-feature=2020-resolver
+RUN pip install .

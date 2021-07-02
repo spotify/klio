@@ -71,3 +71,23 @@ def is_direct_runner(klio_config, direct_runner):
         validate_dataflow_runner_config(klio_config)
 
     return direct_runner
+
+
+def import_gke_commands():
+    # Importing GKE commands needs to be behind a try/except because the
+    # kubernetes dependency is not part of the base install dependencies
+    try:
+        from klio_cli.commands.job import gke as gke_commands
+
+        # the import is only local to this function so we need to return the
+        # module
+        return gke_commands
+    except ImportError as e:
+        if "kubernetes" in e.msg:
+            logging.error(
+                "Failed to import DirectGKERunner dependencies."
+                " Did you install `klio-cli[kubernetes]`?"
+            )
+            raise SystemExit(1)
+        logging.error(e)
+        raise SystemExit(1)

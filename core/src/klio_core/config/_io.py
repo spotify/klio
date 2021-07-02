@@ -286,6 +286,12 @@ class KlioReadFileConfig(KlioEventInput, KlioFileConfig):
 @attr.attrs(frozen=True)
 class KlioWriteFileConfig(KlioEventOutput, KlioFileConfig):
     file_path_prefix = attr.attrib(type=str)
+    file_name_suffix = attr.attrib(type=str, default="")
+    append_trailing_newlines = attr.attrib(type=bool, default=True)
+    num_shards = attr.attrib(type=int, default=0)
+    shard_name_template = attr.attrib(type=str, default=None)
+    compression_type = attr.attrib(type=str, default="auto")
+    header = attr.attrib(type=str, default=None)
 
     @classmethod
     def from_dict(cls, config_dict, *args, **kwargs):

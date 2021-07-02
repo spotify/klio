@@ -248,9 +248,7 @@ def no_gcp_config_dict(job_config_dict, empty_pipeline_config_dict):
 
 @pytest.mark.parametrize("blocking", (True, False, None))
 def test_klio_job_config(
-    job_config_dict,
-    blocking,
-    final_job_config_dict,
+    job_config_dict, blocking, final_job_config_dict,
 ):
     if blocking is None:
         job_config_dict.pop("blocking")
@@ -338,8 +336,7 @@ def test_bare_klio_pipeline_config(bare_pipeline_config_dict):
 
 
 def test_klio_pipeline_config(
-    pipeline_config_dict,
-    final_pipeline_config_dict,
+    pipeline_config_dict, final_pipeline_config_dict,
 ):
 
     config_obj = config.KlioPipelineConfig(
@@ -439,10 +436,7 @@ def test_klio_read_file_config():
     "config_dict",
     (
         # The minimum inputs
-        {
-            "type": "GCS",
-            "location": "gs://sigint-output/test-parent-job-out",
-        },
+        {"type": "GCS", "location": "gs://sigint-output/test-parent-job-out"},
         # Other fields configured
         {
             "type": "GCS",
@@ -525,11 +519,7 @@ def test_klio_write_bigquery_config_raises(schema):
 
 @pytest.mark.parametrize(
     "include_topic,include_subscription",
-    (
-        (False, True),
-        (True, False),
-        (True, True),
-    ),
+    ((False, True), (True, False), (True, True),),
 )
 def test_pubsub_event_input_kwargs(include_topic, include_subscription):
     config_dict = {

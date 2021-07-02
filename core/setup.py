@@ -151,6 +151,7 @@ PROJECT_URLS = {
 }
 META_FILE = read(META_PATH)
 INSTALL_REQUIRES = [
+    "apache-beam[gcp]",
     "click",
     "glom",
     "google-api-python-client",

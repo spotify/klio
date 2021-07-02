@@ -413,6 +413,14 @@ class KlioPipeline(object):
                 | lbl("Input Exists Filter")
                 >> helpers.KlioGcsCheckInputExists()
             )
+
+            # TODO: update me to `var.KlioRunner.DIRECT_GKE_RUNNER` once
+            #       direct_on_gke_runner_clean is merged
+            if self.config.pipeline_options.runner == "DirectGKERunner":
+                ack_inp_lbl = lbl("Ack Input Message from No Data Input Found")
+                _ = input_exists.not_found | ack_inp_lbl >> beam.ParDo(
+                    helpers.KlioAckInputMessage()
+                )
             _ = (
                 input_exists.not_found
                 | lbl("Drop Not Found Data") >> helpers.KlioDrop()
@@ -458,6 +466,15 @@ class KlioPipeline(object):
         flatten_ign_lbl = lbl("Flatten to Drop Messages to Ignore")
         to_drop_flatten = (v1_to_process.drop, v2_to_process.drop)
         to_drop = to_drop_flatten | flatten_ign_lbl >> beam.Flatten()
+
+        # TODO: update me to `var.KlioRunner.DIRECT_GKE_RUNNER` once
+        #       direct_on_gke_runner_clean is merged
+        if self.config.pipeline_options.runner == "DirectGKERunner":
+            ack_inp_lbl = lbl("Ack Dropped Input Message")
+            _ = to_drop | ack_inp_lbl >> beam.ParDo(
+                helpers.KlioAckInputMessage()
+            )
+
         ignore_lbl = lbl("Drop Messages to Ignore")
         _ = to_drop | ignore_lbl >> helpers.KlioDrop()
 
@@ -540,6 +557,21 @@ class KlioPipeline(object):
 
         out_pcol = run_callable(to_process, self.config)
 
+        # TODO: update me to `var.KlioRunner.DIRECT_GKE_RUNNER` once
+        #       direct_on_gke_runner_clean is merged
+        if self.config.pipeline_options.runner == "DirectGKERunner":
+            if to_pass_thru:
+                to_ack_input = (
+                    out_pcol,
+                    to_pass_thru,
+                ) | "Flatten to Ack Input Messages" >> beam.Flatten()
+            else:
+                to_ack_input = out_pcol
+
+            _ = to_ack_input | "Ack Input Messages" >> beam.ParDo(
+                helpers.KlioAckInputMessage()
+            )
+
         if self._has_event_outputs:
             output_config = self.config.job_config.events.outputs[0]
             if not output_config.skip_klio_write:
@@ -584,6 +616,16 @@ class KlioPipeline(object):
             logging.error("Error running pipeline: %s" % e)
             raise SystemExit(1)
 
-        if self.runtime_conf.direct_runner or self.runtime_conf.blocking:
+        # TODO: update me to `var.KlioRunner.DIRECT_GKE_RUNNER` once
+        #       direct_on_gke_runner_clean is merged
+        is_direct_gke = (
+            self.config.pipeline_options.runner == "DirectGKERunner"
+        )
+        should_block = (
+            self.runtime_conf.direct_runner,
+            self.runtime_conf.blocking,
+            is_direct_gke,
+        )
+        if any(should_block):
             # the pipeline on direct runner will otherwise get garbage collected
             result.wait_until_finish()

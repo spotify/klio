@@ -25,6 +25,7 @@ import apache_beam as beam
 from apache_beam import pvalue
 
 from klio import utils as kutils
+from klio.message import pubsub_message_manager as pmsg_mgr
 from klio.message import serializer
 from klio.transforms import _retry as kretry
 from klio.transforms import _timeout as ktimeout
@@ -175,6 +176,16 @@ def __get_thread_limiter(max_thread_count, thread_limiter, func_name=None):
     return thread_limiter
 
 
+def __ack_pubsub_if_direct_gke(kmsg_or_bytes, ctx):
+    # TODO: update me to `var.KlioRunner.DIRECT_GKE_RUNNER` once
+    #       direct_on_gke_runner_clean is merged
+    is_direct_on_gke = ctx.config.pipeline_options.runner == "DirectGKERunner"
+    if not is_direct_on_gke:
+        return
+
+    pmsg_mgr.MessageManager.mark_done(kmsg_or_bytes)
+
+
 # A separate function from __serialize_klio_message_generator so we can
 # specifically `yield from` it (and exhaust transforms that have multiple
 # yields)
@@ -187,6 +198,7 @@ def __from_klio_message_generator(metrics, self, kmsg, payload, orig_item):
             _ERROR_MSG_KMSG_TO_BYTES.format(kmsg, err), exc_info=True
         )
         metrics.error.inc()
+        __ack_pubsub_if_direct_gke(kmsg, self._klio)
         # Since the yielded value in the `try` clause may not tagged, that
         # one will be used by default by whatever executed this function,
         # and anything that has a tagged output value (like this dropped one)
@@ -223,6 +235,7 @@ def __serialize_klio_message_generator(
                 exc_info=True,
             )
             metrics.error.inc()
+            __ack_pubsub_if_direct_gke(incoming_item, self._klio)
             # Since the yielded value in the `try` clause is not tagged, that
             # one will be used by default by whatever executed this function,
             # and anything that has a tagged output value (like this dropped
@@ -242,6 +255,7 @@ def __serialize_klio_message_generator(
             log_msg, exc_info = __get_user_error_message(err, func_path, kmsg)
             self._klio.logger.error(log_msg, exc_info=exc_info)
             metrics.error.inc()
+            __ack_pubsub_if_direct_gke(kmsg, self._klio)
             # Since the yielded value in the `try` clause is not tagged, that
             # one will be used by default by whatever executed this function,
             # and anything that has a tagged output value (like this dropped
@@ -271,6 +285,7 @@ def __serialize_klio_message_generator(
                     )
                     self._klio.logger.error(log_msg, exc_info=exc_info)
                     metrics.error.inc()
+                    __ack_pubsub_if_direct_gke(kmsg, self._klio)
                     # This will catch an exception present in the generator
                     # containing items yielded by a function/method
                     # decorated by @handle_klio.
@@ -311,6 +326,7 @@ def __serialize_klio_message(
                 exc_info=True,
             )
             metrics.error.inc()
+            __ack_pubsub_if_direct_gke(incoming_item, ctx)
             # Since the returned value in the `try` clause is not tagged, that
             # one will be used by default by whatever executed this function,
             # and anything that has a tagged output value (like this dropped
@@ -339,6 +355,7 @@ def __serialize_klio_message(
             )
             ctx.logger.error(log_msg, exc_info=exc_info)
             metrics.error.inc()
+            __ack_pubsub_if_direct_gke(kmsg, ctx)
             # Since the returned value in the `try` clause is not tagged, that
             # one will be used by default by whatever executed this function,
             # and anything that has a tagged output value (like this dropped
@@ -359,6 +376,7 @@ def __serialize_klio_message(
                 _ERROR_MSG_KMSG_TO_BYTES.format(kmsg, err), exc_info=True
             )
             metrics.error.inc()
+            __ack_pubsub_if_direct_gke(kmsg, ctx)
             # Since the returned value in the `try` clause is not tagged, that
             # one will be used by default by whatever executed this function,
             # and anything that has a tagged output value (like this dropped

@@ -22,6 +22,7 @@ from apache_beam import pvalue
 from klio_core.proto import klio_pb2
 
 from klio import utils as kutils
+from klio.message import pubsub_message_manager as ps_mgr
 from klio.message import serializer
 from klio.transforms import _helpers
 from klio.transforms import decorators
@@ -750,3 +751,21 @@ class KlioTriggerUpstream(beam.PTransform):
             )
             | lbl2 >> beam.io.WriteToPubSub(topic=self.upstream_topic)
         )
+
+
+# TODO: maybe expose a way for users to add messages to the pubsub message
+# manager as well? no idea if that'd be useful/needed
+class KlioAckInputMessage(beam.DoFn):
+    """Message acknowledgement DoFn.
+
+    Marks a KlioMessage as done after it is finished processing.
+
+    Used when running on ``DirectGKERunner`` and in conjunction with the
+    ``klio_exec.runners.evaluators.KlioPubSubReadEvaluator``, which tracks
+    ``KlioMessages`` and extends their Pub/Sub acknowledgement deadlines
+    until they are marked as done.
+    """
+
+    def process(self, element):
+        ps_mgr.MessageManager.mark_done(element)
+        yield element

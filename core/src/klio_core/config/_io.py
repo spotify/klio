@@ -18,8 +18,9 @@ import importlib
 import json
 import logging
 
-
 import attr
+from apache_beam.io.filesystem import CompressionTypes
+
 
 logger = logging.getLogger("klio")
 
@@ -255,6 +256,7 @@ class KlioPubSubEventOutput(KlioEventOutput, KlioPubSubConfig):
 
 class KlioFileConfig(object):
     name = "file"
+    compression_type = attr.attrib(type=str, default=CompressionTypes.AUTO)
 
 
 @attr.attrs(frozen=True)
@@ -290,7 +292,6 @@ class KlioWriteFileConfig(KlioEventOutput, KlioFileConfig):
     append_trailing_newlines = attr.attrib(type=bool, default=True)
     num_shards = attr.attrib(type=int, default=0)
     shard_name_template = attr.attrib(type=str, default=None)
-    compression_type = attr.attrib(type=str, default="auto")
     header = attr.attrib(type=str, default=None)
 
     @classmethod

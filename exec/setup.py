@@ -153,8 +153,9 @@ META_FILE = read(META_PATH)
 INSTALL_REQUIRES = [
     "attrs",
     "click",
-    "klio-core>=21.2.0",
-    "klio>=21.2.0",
+    # TODO: Update on release
+    "klio-core>=21.7.0.dev1",
+    "klio>=21.7.0.dev1",
     "pyyaml",
     # 2.22 added DirectRunner support for `DoFn.setup`
     "apache-beam[gcp]>2.21.0",

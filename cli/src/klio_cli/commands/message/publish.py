@@ -89,7 +89,9 @@ def _publish_messages(
             message = bytes(entity_id.encode("utf-8"))
 
         try:
-            publish(data=message)
+            future = publish(data=message)
+            # block until message is published or exception is raised
+            future.result()
             success_ids.append(entity_id)
 
         except Exception as e:

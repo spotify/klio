@@ -171,7 +171,7 @@ def test_msg_manager_heartbeat(mocker, monkeypatch, msg_manager, caplog):
 
     msg_manager.heartbeat(msg)
 
-    assert 1 == len(caplog.records)
+    assert 2 == len(caplog.records)
     mock_time.sleep.assert_called_once_with(msg_manager.heartbeat_sleep)
 
 

@@ -127,6 +127,21 @@ class MessageManager:
                 f"Job is still processing {message.kmsg_id}..."
             )
             time.sleep(self.heartbeat_sleep)
+            # Sometimes the heartbeat worker still continues in the `while`
+            # loop even though the message event flag has been set (not sure
+            # how this can happen...).
+            # So we're just checking to see if the message we're looping
+            # over still exists in ENTITY_ID_TO_ACK_ID; and if not, to
+            # go ahead and remove it. The `remove` method should be
+            # idempotent.
+            if message.kmsg_id not in ENTITY_ID_TO_ACK_ID:
+                self.hrt_logger.debug(
+                    f"No record of message {message.kmsg_id}. Assuming the "
+                    "pipeline is done processing it and will try to ack the "
+                    "message..."
+                )
+                self.remove(message)
+                break
 
     def _maybe_extend(self, message):
         """Check to see if message is done and extends deadline if not.
@@ -264,26 +279,39 @@ class MessageManager:
                 marked as done.
         """
         kmsg = kmsg_or_bytes
+        mm_logger = logging.getLogger("klio.gke_direct_runner.message_manager")
 
-        # TODO: either use klio.message.serializer.to_klio_message, or
-        # figure out how to handle when a parsed_message can't be parsed
-        # into a KlioMessage (will need to somehow get the klio context).
-        if not isinstance(kmsg_or_bytes, klio_pb2.KlioMessage):
-            kmsg = klio_pb2.KlioMessage()
-            kmsg.ParseFromString(kmsg_or_bytes)
+        # Wrap in a general try/except to make sure this method returns cleanly,
+        # aka no raised errors that may prevent the pipeline from consuming
+        # the next message available. Not sure if this causes problems
+        # of being unable to pull a message, but at least it's for
+        # sanity.
+        try:
+            # TODO: either use klio.message.serializer.to_klio_message, or
+            # figure out how to handle when a parsed_message can't be parsed
+            # into a KlioMessage (will need to somehow get the klio context).
+            if not isinstance(kmsg_or_bytes, klio_pb2.KlioMessage):
+                kmsg = klio_pb2.KlioMessage()
+                kmsg.ParseFromString(kmsg_or_bytes)
 
-        entity_id = kmsg.data.element.decode("utf-8")
-        msg = ENTITY_ID_TO_ACK_ID.get(entity_id)
-        # This call, `set`, will tell the MessageManager that this
-        # message is now ready to be acknowledged and no longer being
-        # worked upon.
-        if msg:
-            msg.event.set()
-        else:
-            # NOTE: this logger exists as `self.mgr_logger`, but this method
-            # needs to be a staticmethod so we don't need to unnecessarily
-            # init the class in order to just mark a message as done.
-            mm_logger = logging.getLogger(
-                "klio.gke_direct_runner.message_manager"
+            entity_id = kmsg.data.element.decode("utf-8")
+            msg = ENTITY_ID_TO_ACK_ID.get(entity_id)
+            # This call, `set`, will tell the MessageManager that this
+            # message is now ready to be acknowledged and no longer being
+            # worked upon.
+            if msg:
+                msg.event.set()
+            else:
+                # NOTE: this logger exists as `self.mgr_logger`, but this method
+                # needs to be a staticmethod so we don't need to unnecessarily
+                # init the class in order to just mark a message as done.
+                mm_logger.warn(
+                    f"Unable to acknowledge {entity_id}: Not found."
+                )
+        except Exception as e:
+            # Catch all Exceptions so that the pipeline doesn't enter into
+            # a weird state because of an uncaught error.
+            mm_logger.warning(
+                f"Error occurred while trying to remove message {kmsg}: {e}",
+                exc_info=True,
             )
-            mm_logger.warn(f"Unable to acknowledge {entity_id}: Not found.")

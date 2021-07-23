@@ -111,8 +111,8 @@ def patch_thread_init(mocker, monkeypatch, mock_thread):
 @pytest.mark.parametrize(
     "sleep_args, exp_hb_sleep, exp_mgr_sleep",
     [
-        ({}, 10, 10),
-        ({"heartbeat_sleep": 15}, 15, 10),
+        ({}, 10, 3),
+        ({"heartbeat_sleep": 15}, 15, 3),
         ({"manager_sleep": 15}, 10, 15),
         ({"heartbeat_sleep": 15, "manager_sleep": 15}, 15, 15),
     ],

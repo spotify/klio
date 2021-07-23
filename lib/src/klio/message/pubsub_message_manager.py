@@ -82,7 +82,7 @@ class MessageManager:
 
     DEFAULT_DEADLINE_EXTENSION = 30
 
-    def __init__(self, sub_name, heartbeat_sleep=10, manager_sleep=10):
+    def __init__(self, sub_name, heartbeat_sleep=10, manager_sleep=3):
         """Initialize a MessageManager instance.
 
         Args:

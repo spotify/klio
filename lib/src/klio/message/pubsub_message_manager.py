@@ -25,6 +25,7 @@ from klio_core.proto import klio_pb2
 
 
 ENTITY_ID_TO_ACK_ID = {}
+MESSAGE_LOCK = threading.Lock()
 _CACHED_THREADPOOL_EXEC = None
 
 
@@ -109,12 +110,15 @@ class MessageManager:
         Args:
             to_sleep(float): Seconds to sleep between checks.
         """
-        while not message.event.is_set():
-            self._maybe_extend(message)
-            time.sleep(self.manager_sleep)
-
-        else:
-            self.remove(message)
+        while True:
+            with MESSAGE_LOCK:
+                msg_is_active = message.kmsg_id in ENTITY_ID_TO_ACK_ID
+            if msg_is_active:
+                self._maybe_extend(message)
+                time.sleep(self.manager_sleep)
+            else:
+                self.remove(message)
+                break
 
     def heartbeat(self, message):
         """Continuously log heartbeats for in-progress messages.
@@ -122,25 +126,18 @@ class MessageManager:
         Args:
             to_sleep(float): Second to sleep between log messages.
         """
-        while not message.event.is_set():
-            self.hrt_logger.info(
-                f"Job is still processing {message.kmsg_id}..."
-            )
-            time.sleep(self.heartbeat_sleep)
-            # Sometimes the heartbeat worker still continues in the `while`
-            # loop even though the message event flag has been set (not sure
-            # how this can happen...).
-            # So we're just checking to see if the message we're looping
-            # over still exists in ENTITY_ID_TO_ACK_ID; and if not, to
-            # go ahead and remove it. The `remove` method should be
-            # idempotent.
-            if message.kmsg_id not in ENTITY_ID_TO_ACK_ID:
-                self.hrt_logger.debug(
-                    f"No record of message {message.kmsg_id}. Assuming the "
-                    "pipeline is done processing it and will try to ack the "
-                    "message..."
+        while True:
+            with MESSAGE_LOCK:
+                msg_is_active = message.kmsg_id in ENTITY_ID_TO_ACK_ID
+            if msg_is_active:
+                self.hrt_logger.info(
+                    f"Job is still processing {message.kmsg_id}..."
                 )
-                self.remove(message)
+                time.sleep(self.heartbeat_sleep)
+            else:
+                self.hrt_logger.debug(
+                    f"Job is no longer processing {message.kmsg_id}."
+                )
                 break
 
     def _maybe_extend(self, message):
@@ -263,7 +260,6 @@ class MessageManager:
                 f"Acknowledged {psk_msg.kmsg_id}. Job is no longer processing "
                 "this message."
             )
-        ENTITY_ID_TO_ACK_ID.pop(psk_msg.kmsg_id, None)
 
     @staticmethod
     def mark_done(kmsg_or_bytes):
@@ -295,13 +291,14 @@ class MessageManager:
                 kmsg.ParseFromString(kmsg_or_bytes)
 
             entity_id = kmsg.data.element.decode("utf-8")
-            msg = ENTITY_ID_TO_ACK_ID.get(entity_id)
-            # This call, `set`, will tell the MessageManager that this
-            # message is now ready to be acknowledged and no longer being
-            # worked upon.
-            if msg:
-                msg.event.set()
-            else:
+
+            # This call to remove the message from the dict ENTITY_ID_TO_ACK_ID
+            # will tell the MessageManager that this message is now ready to
+            # be acknowledged and no longer being worked upon.
+            with MESSAGE_LOCK:
+                msg = ENTITY_ID_TO_ACK_ID.pop(entity_id, None)
+
+            if not msg:
                 # NOTE: this logger exists as `self.mgr_logger`, but this method
                 # needs to be a staticmethod so we don't need to unnecessarily
                 # init the class in order to just mark a message as done.

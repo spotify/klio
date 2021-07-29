@@ -25,6 +25,7 @@ from klio_core.proto import klio_pb2
 
 
 ENTITY_ID_TO_ACK_ID = {}
+MESSAGE_LOCK = threading.Lock()
 _CACHED_THREADPOOL_EXEC = None
 
 
@@ -82,7 +83,7 @@ class MessageManager:
 
     DEFAULT_DEADLINE_EXTENSION = 30
 
-    def __init__(self, sub_name, heartbeat_sleep=10, manager_sleep=10):
+    def __init__(self, sub_name, heartbeat_sleep=10, manager_sleep=3):
         """Initialize a MessageManager instance.
 
         Args:
@@ -109,12 +110,15 @@ class MessageManager:
         Args:
             to_sleep(float): Seconds to sleep between checks.
         """
-        while not message.event.is_set():
-            self._maybe_extend(message)
-            time.sleep(self.manager_sleep)
-
-        else:
-            self.remove(message)
+        while True:
+            with MESSAGE_LOCK:
+                msg_is_active = message.kmsg_id in ENTITY_ID_TO_ACK_ID
+            if msg_is_active:
+                self._maybe_extend(message)
+                time.sleep(self.manager_sleep)
+            else:
+                self.remove(message)
+                break
 
     def heartbeat(self, message):
         """Continuously log heartbeats for in-progress messages.
@@ -122,11 +126,19 @@ class MessageManager:
         Args:
             to_sleep(float): Second to sleep between log messages.
         """
-        while not message.event.is_set():
-            self.hrt_logger.info(
-                f"Job is still processing {message.kmsg_id}..."
-            )
-            time.sleep(self.heartbeat_sleep)
+        while True:
+            with MESSAGE_LOCK:
+                msg_is_active = message.kmsg_id in ENTITY_ID_TO_ACK_ID
+            if msg_is_active:
+                self.hrt_logger.info(
+                    f"Job is still processing {message.kmsg_id}..."
+                )
+                time.sleep(self.heartbeat_sleep)
+            else:
+                self.hrt_logger.debug(
+                    f"Job is no longer processing {message.kmsg_id}."
+                )
+                break
 
     def _maybe_extend(self, message):
         """Check to see if message is done and extends deadline if not.
@@ -248,7 +260,6 @@ class MessageManager:
                 f"Acknowledged {psk_msg.kmsg_id}. Job is no longer processing "
                 "this message."
             )
-        ENTITY_ID_TO_ACK_ID.pop(psk_msg.kmsg_id, None)
 
     @staticmethod
     def mark_done(kmsg_or_bytes):
@@ -264,26 +275,40 @@ class MessageManager:
                 marked as done.
         """
         kmsg = kmsg_or_bytes
+        mm_logger = logging.getLogger("klio.gke_direct_runner.message_manager")
 
-        # TODO: either use klio.message.serializer.to_klio_message, or
-        # figure out how to handle when a parsed_message can't be parsed
-        # into a KlioMessage (will need to somehow get the klio context).
-        if not isinstance(kmsg_or_bytes, klio_pb2.KlioMessage):
-            kmsg = klio_pb2.KlioMessage()
-            kmsg.ParseFromString(kmsg_or_bytes)
+        # Wrap in a general try/except to make sure this method returns cleanly,
+        # aka no raised errors that may prevent the pipeline from consuming
+        # the next message available. Not sure if this causes problems
+        # of being unable to pull a message, but at least it's for
+        # sanity.
+        try:
+            # TODO: either use klio.message.serializer.to_klio_message, or
+            # figure out how to handle when a parsed_message can't be parsed
+            # into a KlioMessage (will need to somehow get the klio context).
+            if not isinstance(kmsg_or_bytes, klio_pb2.KlioMessage):
+                kmsg = klio_pb2.KlioMessage()
+                kmsg.ParseFromString(kmsg_or_bytes)
 
-        entity_id = kmsg.data.element.decode("utf-8")
-        msg = ENTITY_ID_TO_ACK_ID.get(entity_id)
-        # This call, `set`, will tell the MessageManager that this
-        # message is now ready to be acknowledged and no longer being
-        # worked upon.
-        if msg:
-            msg.event.set()
-        else:
-            # NOTE: this logger exists as `self.mgr_logger`, but this method
-            # needs to be a staticmethod so we don't need to unnecessarily
-            # init the class in order to just mark a message as done.
-            mm_logger = logging.getLogger(
-                "klio.gke_direct_runner.message_manager"
+            entity_id = kmsg.data.element.decode("utf-8")
+
+            # This call to remove the message from the dict ENTITY_ID_TO_ACK_ID
+            # will tell the MessageManager that this message is now ready to
+            # be acknowledged and no longer being worked upon.
+            with MESSAGE_LOCK:
+                msg = ENTITY_ID_TO_ACK_ID.pop(entity_id, None)
+
+            if not msg:
+                # NOTE: this logger exists as `self.mgr_logger`, but this method
+                # needs to be a staticmethod so we don't need to unnecessarily
+                # init the class in order to just mark a message as done.
+                mm_logger.warn(
+                    f"Unable to acknowledge {entity_id}: Not found."
+                )
+        except Exception as e:
+            # Catch all Exceptions so that the pipeline doesn't enter into
+            # a weird state because of an uncaught error.
+            mm_logger.warning(
+                f"Error occurred while trying to remove message {kmsg}: {e}",
+                exc_info=True,
             )
-            mm_logger.warn(f"Unable to acknowledge {entity_id}: Not found.")

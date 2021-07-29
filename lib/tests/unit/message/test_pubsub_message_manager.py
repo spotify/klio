@@ -111,8 +111,8 @@ def patch_thread_init(mocker, monkeypatch, mock_thread):
 @pytest.mark.parametrize(
     "sleep_args, exp_hb_sleep, exp_mgr_sleep",
     [
-        ({}, 10, 10),
-        ({"heartbeat_sleep": 15}, 15, 10),
+        ({}, 10, 3),
+        ({"heartbeat_sleep": 15}, 15, 3),
         ({"manager_sleep": 15}, 10, 15),
         ({"heartbeat_sleep": 15, "manager_sleep": 15}, 15, 15),
     ],
@@ -136,6 +136,23 @@ def test_msg_manager_init(
     assert hb_logger == mm.hrt_logger
 
 
+# This plus the MockTrueFunc class is meant to mock the `foo in my_dict`
+# call, particularly helpful when needing to break out of a `while True` loop.
+# I couldn't otherwise find a way to mock a dictionary to return a different
+# value for the same key lookup.
+def true_once():
+    yield True
+    yield False
+
+
+class MockTrueFunc:
+    def __init__(self):
+        self.gen = true_once()
+
+    def __call__(self, *args, **kwargs):
+        return next(self.gen)
+
+
 def test_msg_manager_manage(mocker, monkeypatch, msg_manager):
     mock_time = mocker.Mock()
     monkeypatch.setattr(pmm, "time", mock_time)
@@ -145,10 +162,11 @@ def test_msg_manager_manage(mocker, monkeypatch, msg_manager):
     mock_rm = mocker.Mock()
     monkeypatch.setattr(msg_manager, "remove", mock_rm)
 
-    msg = mocker.Mock(kmsg_id=1)
-    msg.event = mocker.Mock()
-    msg.event.is_set.side_effect = [False, True]
+    mock_entity_id_to_ack_id = mock.MagicMock()
+    mock_entity_id_to_ack_id.__contains__ = MockTrueFunc()
+    monkeypatch.setattr(pmm, "ENTITY_ID_TO_ACK_ID", mock_entity_id_to_ack_id)
 
+    msg = mocker.Mock(kmsg_id=1)
     msg_manager.manage(msg)
 
     maybe_extend.assert_called_once_with(msg)
@@ -165,13 +183,14 @@ def test_msg_manager_heartbeat(mocker, monkeypatch, msg_manager, caplog):
     mock_rm = mocker.Mock()
     monkeypatch.setattr(msg_manager, "remove", mock_rm)
 
-    msg = mocker.Mock(kmsg_id=1)
-    msg.event = mocker.Mock()
-    msg.event.is_set.side_effect = [False, True]
+    mock_entity_id_to_ack_id = mock.MagicMock()
+    mock_entity_id_to_ack_id.__contains__ = MockTrueFunc()
+    monkeypatch.setattr(pmm, "ENTITY_ID_TO_ACK_ID", mock_entity_id_to_ack_id)
 
+    msg = mocker.Mock(kmsg_id=1)
     msg_manager.heartbeat(msg)
 
-    assert 1 == len(caplog.records)
+    assert 2 == len(caplog.records)
     mock_time.sleep.assert_called_once_with(msg_manager.heartbeat_sleep)
 
 
@@ -300,26 +319,21 @@ def test_msg_manager_add(mocker, monkeypatch, msg_manager, caplog):
 def test_msg_manager_remove(mocker, monkeypatch, msg_manager, caplog):
     ack_id, kmsg_id = 1, "2"
     psk_msg1 = pmm.PubSubKlioMessage(ack_id, kmsg_id)
-    monkeypatch.setitem(pmm.ENTITY_ID_TO_ACK_ID, psk_msg1.kmsg_id, psk_msg1)
 
     msg_manager.remove(psk_msg1)
     msg_manager._client.acknowledge.assert_called_once_with(
         msg_manager._sub_name, [ack_id]
     )
-    assert not pmm.ENTITY_ID_TO_ACK_ID.get(kmsg_id)
     assert 1 == len(caplog.records)
-    assert not pmm.ENTITY_ID_TO_ACK_ID.get("2")
 
 
 def test_msg_manager_remove_raises(msg_manager, monkeypatch, caplog):
     ack_id, kmsg_id = 1, "2"
     psk_msg1 = pmm.PubSubKlioMessage(ack_id, kmsg_id)
-    monkeypatch.setitem(pmm.ENTITY_ID_TO_ACK_ID, psk_msg1.kmsg_id, psk_msg1)
 
     msg_manager._client.acknowledge.side_effect = Exception("oh no")
     msg_manager.remove(psk_msg1)
     assert 2 == len(caplog.records)
-    assert not pmm.ENTITY_ID_TO_ACK_ID.get("2")
 
 
 def _generate_kmsg(element):
@@ -333,21 +347,21 @@ def _assert_expected_msg(actual):
     actual_msg.ParseFromString(actual)
 
     expected_msg = klio_pb2.KlioMessage()
-    expected_msg.data.element = b"d34db33f"
+    expected_msg.data.element = b"2"
     assert actual_msg == expected_msg
 
 
 def test_klio_ack_input_msg(mocker, monkeypatch):
-    entity_id = "d34db33f"
-    mock_pklio_msg = mocker.Mock()
-    monkeypatch.setitem(pmm.ENTITY_ID_TO_ACK_ID, entity_id, mock_pklio_msg)
+    ack_id, kmsg_id = 1, "2"
+    psk_msg1 = pmm.PubSubKlioMessage(ack_id, kmsg_id)
+    monkeypatch.setitem(pmm.ENTITY_ID_TO_ACK_ID, psk_msg1.kmsg_id, psk_msg1)
     with beam_test_pipeline.TestPipeline() as p:
         (
             p
-            | beam.Create([entity_id])
+            | beam.Create([kmsg_id])
             | beam.Map(_generate_kmsg)
             | beam.ParDo(helpers.KlioAckInputMessage())
             | beam.Map(_assert_expected_msg)
         )
 
-    mock_pklio_msg.event.set.assert_called_once_with()
+    assert not pmm.ENTITY_ID_TO_ACK_ID.get("2")

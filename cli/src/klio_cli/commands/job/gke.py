@@ -133,6 +133,7 @@ class RunPipelineGKE(GKECommandMixin, base.BaseDockerizedPipeline):
 
     def _apply_image_to_deployment_config(self):
         image_tag = self.docker_runtime_config.image_tag
+        pipeline_options = self.klio_config.pipeline_options
         if image_tag:
             dep = self.deployment_config
             image_path = "spec.template.spec.containers.0.image"
@@ -143,6 +144,21 @@ class RunPipelineGKE(GKECommandMixin, base.BaseDockerizedPipeline):
             image_base = re.split(":", image_base)[0]
             full_image = f"{image_base}:{image_tag}"
             glom.assign(self._deployment_config, image_path, full_image)
+        # Check to see if the kubernetes image to be deployed is the same
+        # image that is built
+        k8s_image = glom.glom(self.deployment_config, image_path)
+        built_image_base = pipeline_options.worker_harness_container_image
+        built_image = f"{built_image_base}:{image_tag}"
+        if built_image != k8s_image:
+            logging.warning(
+                f"Image deployed by kubernetes {k8s_image} does not match "
+                f"the built image {built_image}. "
+                "This may result in an `ImagePullBackoff` for the deployment. "
+                "If this is not intended, please change "
+                "`pipeline_options.worker_harness_container_image` "
+                "and rebuild  or change the container image"
+                "set in kubernetes/deployment.yaml file."
+            )
 
     def _apply_deployment(self):
         """Create a namespaced deploy if the deployment does not already exist.
@@ -169,11 +185,11 @@ class RunPipelineGKE(GKECommandMixin, base.BaseDockerizedPipeline):
             else:
                 logging.warning(
                     f"Cannot apply deployment for {deployment_name}. "
-                    f"To update an existing deployment, run "
-                    f"`klio job run --update`, or set `pipeline_options.update`"
-                    f" to `True` in the job's`klio-job.yaml` file. "
-                    f"Run `klio job stop` to scale a deployment down to 0. "
-                    f"Run `klio job delete` to delete a deployment entirely."
+                    "To update an existing deployment, run "
+                    "`klio job run --update`, or set `pipeline_options.update`"
+                    " to `True` in the job's`klio-job.yaml` file. "
+                    "Run `klio job stop` to scale a deployment down to 0. "
+                    "Run `klio job delete` to delete a deployment entirely."
                 )
 
     def _setup_docker_image(self):

@@ -33,6 +33,7 @@ class GKECommandMixin(object):
         super().__init__(*args, **kwargs)
         self._deployment_config = None
         self._kubernetes_client = None
+        self._kubernetes_active_context = None
 
     @property
     def kubernetes_client(self):
@@ -44,7 +45,16 @@ class GKECommandMixin(object):
             # https://github.com/kubernetes-client/python-base/blob/master/config/kube_config.py#L825
             k8s_config.load_kube_config()
             self._kubernetes_client = k8s_client.AppsV1Api()
+
         return self._kubernetes_client
+
+    @property
+    def kubernetes_active_context(self):
+        if not self._kubernetes_active_context:
+            _, active_context = k8s_config.list_kube_config_contexts()
+            self._kubernetes_active_context = active_context
+
+        return self._kubernetes_active_context
 
     @property
     def deployment_config(self):
@@ -148,7 +158,11 @@ class RunPipelineGKE(GKECommandMixin, base.BaseDockerizedPipeline):
                 body=dep, namespace=namespace
             )
             deployment_name = resp.metadata.name
-            logging.info(f"Deployment created for {deployment_name}")
+            current_cluster = self.kubernetes_active_context["name"]
+            logging.info(
+                f"Deployment created for {deployment_name} "
+                f"in cluster {current_cluster}"
+            )
         else:
             if self.run_job_config.update:
                 self._update_deployment()
@@ -206,6 +220,8 @@ class DeletePipelineGKE(GKECommandMixin):
         dep = self.deployment_config
         deployment_name = glom.glom(dep, "metadata.name")
         namespace = glom.glom(dep, "metadata.namespace")
+        # Some messaging might change if we multi-cluster deployments
+        current_cluster = self.kubernetes_active_context["name"]
         if self._deployment_exists():
             resp = self.kubernetes_client.delete_namespaced_deployment(
                 name=deployment_name,
@@ -217,7 +233,8 @@ class DeletePipelineGKE(GKECommandMixin):
             logging.info(f"Deployment deleted: {resp}.")
         else:
             logging.error(
-                f"Deployment {namespace}:{deployment_name}" f"does not exist."
+                f"Deployment {namespace}:{deployment_name} "
+                f"does not exist in cluster {current_cluster}."
             )
 
     def delete(self):

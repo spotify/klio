@@ -238,8 +238,25 @@ def deployment_response_list_not_exist():
     return resp
 
 
+@pytest.fixture
+def active_context():
+    return {
+        "context": {
+            "cluster": "gke_gke-xpn-1_us-east1_us-east1-kn0t",
+            "namespace": "sigint",
+            "user": "gke_gke-xpn-1_us-east1_us-east1-kn0t",
+        },
+        "name": "gke_gke-xpn-1_us-east1_us-east1-kn0t",
+    }
+
+
 def test_update_deployment(
-    deployment_config, run_pipeline_gke, deployment_resp, monkeypatch, mocker
+    deployment_config,
+    run_pipeline_gke,
+    deployment_resp,
+    active_context,
+    monkeypatch,
+    mocker,
 ):
     deployment_name = glom.glom(deployment_config, "metadata.name")
     namespace = glom.glom(deployment_config, "metadata.namespace")
@@ -248,6 +265,9 @@ def test_update_deployment(
 
     monkeypatch.setattr(
         run_pipeline_gke, "_kubernetes_client", mock_k8s_client
+    )
+    monkeypatch.setattr(
+        run_pipeline_gke, "_kubernetes_active_context", active_context
     )
     monkeypatch.setattr(
         run_pipeline_gke, "_deployment_config", deployment_config
@@ -270,6 +290,7 @@ def test_update_deployment(
 def test_deployment_exists(
     deployment_resp,
     deployment_config,
+    active_context,
     run_pipeline_gke,
     deployment_response_list,
     monkeypatch,
@@ -284,6 +305,9 @@ def test_deployment_exists(
     )
     monkeypatch.setattr(
         run_pipeline_gke, "_kubernetes_client", mock_k8s_client
+    )
+    monkeypatch.setattr(
+        run_pipeline_gke, "_kubernetes_active_context", active_context
     )
     monkeypatch.setattr(
         run_pipeline_gke, "_deployment_config", deployment_config
@@ -308,6 +332,7 @@ def test_apply_deployment(
     mocker,
     run_pipeline_gke,
     run_job_config,
+    active_context,
     docker_runtime_config,
     deployment_config,
     deployment_resp,
@@ -329,6 +354,9 @@ def test_apply_deployment(
     )
     monkeypatch.setattr(
         run_pipeline_gke, "_kubernetes_client", mock_k8s_client
+    )
+    monkeypatch.setattr(
+        run_pipeline_gke, "_kubernetes_active_context", active_context
     )
     monkeypatch.setattr(
         run_pipeline_gke, "_deployment_config", deployment_config
@@ -359,7 +387,11 @@ def test_apply_deployment(
 
 
 def test_delete(
-    monkeypatch, mocker, deployment_response_list, deployment_config,
+    monkeypatch,
+    mocker,
+    deployment_response_list,
+    deployment_config,
+    active_context,
 ):
     namespace = glom.glom(deployment_config, "metadata.namespace")
     deployment_name = glom.glom(deployment_config, "metadata.name")
@@ -375,6 +407,9 @@ def test_delete(
         delete_pipeline_gke, "_kubernetes_client", mock_k8s_client
     )
     monkeypatch.setattr(
+        delete_pipeline_gke, "_kubernetes_active_context", active_context
+    )
+    monkeypatch.setattr(
         delete_pipeline_gke, "_deployment_config", deployment_config
     )
     delete_pipeline_gke.delete()
@@ -387,7 +422,9 @@ def test_delete(
     )
 
 
-def test_stop(deployment_resp, deployment_config, monkeypatch, mocker):
+def test_stop(
+    deployment_resp, deployment_config, active_context, monkeypatch, mocker
+):
     deployment_name = glom.glom(deployment_config, "metadata.name")
     namespace = glom.glom(deployment_config, "metadata.namespace")
     mock_k8s_client = mocker.Mock()
@@ -397,6 +434,9 @@ def test_stop(deployment_resp, deployment_config, monkeypatch, mocker):
 
     monkeypatch.setattr(
         stop_pipeline_gke, "_kubernetes_client", mock_k8s_client
+    )
+    monkeypatch.setattr(
+        stop_pipeline_gke, "_kubernetes_active_context", active_context
     )
     monkeypatch.setattr(
         stop_pipeline_gke, "_deployment_config", deployment_config

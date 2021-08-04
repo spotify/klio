@@ -1,6 +1,14 @@
 CLI Changelog
 =============
 
+21.8.0 (UNRELEASED)
+-------------------
+
+Added
+*****
+
+* Safety check built image vs deployed image differences when deploying with `DirectGKERunner`
+
 21.7.0 (UNRELEASED)
 -------------------
 
@@ -8,6 +16,11 @@ Fixed
 *****
 
 * Fixed bug with ``klio message publish`` not working on ``google-cloud-pubsub > 2.3.0``
+
+Added
+*****
+
+* Support for deploying, stopping, and deleting jobs with `DirectGKERunner`
 
 .. _cli-21.2.0:
 

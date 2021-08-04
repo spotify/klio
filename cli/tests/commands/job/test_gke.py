@@ -37,7 +37,9 @@ def klio_config():
         "job_name": "test-job",
         "version": 1,
         "pipeline_options": {
-            "worker_harness_container_image": "test-image",
+            "worker_harness_container_image": (
+                "gcr.io/sigint/gke-baseline-random-music-gke"
+            ),
             "region": "some-region",
             "project": "test-project",
         },
@@ -320,11 +322,12 @@ def test_deployment_exists(
 
 # Tests for user facing functions
 @pytest.mark.parametrize(
-    "deployment_exists,update_flag",
+    "deployment_exists,update_flag,mismatched_image",
     (
-        (True, False),
-        (False, True),
-        # TODO: Add False, False and confirm warning log
+        (True, False, False),
+        (False, True, False),
+        (False, False, False),
+        (False, True, True),
     ),
 )
 def test_apply_deployment(
@@ -340,9 +343,19 @@ def test_apply_deployment(
     deployment_response_list_not_exist,
     deployment_exists,
     update_flag,
+    mismatched_image,
+    caplog,
 ):
     # New Deployment
+    caplog_counter = 0
+    test_image_base = "test-image"
     run_job_config = run_job_config._replace(update=update_flag)
+    if mismatched_image:
+        monkeypatch.setattr(
+            run_pipeline_gke.klio_config.pipeline_options,
+            "worker_harness_container_image",
+            test_image_base,
+        )
     monkeypatch.setattr(run_pipeline_gke, "run_job_config", run_job_config)
     mock_k8s_client = mocker.Mock()
     mock_k8s_client.create_namespaced_deployment.return_value = deployment_resp
@@ -365,14 +378,13 @@ def test_apply_deployment(
     namespace = glom.glom(deployment_config, "metadata.namespace")
     image_path = "spec.template.spec.containers.0.image"
     image_base = glom.glom(deployment_config, image_path)
-    full_image = f"{image_base}:{docker_runtime_config.image_tag}"
+    k8s_image = f"{image_base}:{docker_runtime_config.image_tag}"
     run_pipeline_gke._apply_image_to_deployment_config()
     run_pipeline_gke._apply_deployment()
     assert (
-        glom.glom(run_pipeline_gke._deployment_config, image_path)
-        == full_image
+        glom.glom(run_pipeline_gke._deployment_config, image_path) == k8s_image
     )
-    glom.assign(deployment_config, image_path, full_image)
+    glom.assign(deployment_config, image_path, k8s_image)
     if deployment_exists:
         if update_flag:
             mock_k8s_client.patch_namespaced_deployment.assert_called_once_with(
@@ -380,10 +392,38 @@ def test_apply_deployment(
                 namespace=namespace,
                 body=deployment_config,
             )
+            caplog_counter += 1
+        else:
+            caplog_counter += 1
     else:
         mock_k8s_client.create_namespaced_deployment.assert_called_once_with(
             body=deployment_config, namespace=namespace
         )
+        caplog_counter += 1
+
+    if deployment_exists and not update_flag:
+        assert caplog.records[-1].msg == (
+            f"Cannot apply deployment for {deployment_name}. "
+            "To update an existing deployment, run "
+            "`klio job run --update`, or set `pipeline_options.update`"
+            " to `True` in the job's`klio-job.yaml` file. "
+            "Run `klio job stop` to scale a deployment down to 0. "
+            "Run `klio job delete` to delete a deployment entirely."
+        )
+
+    if mismatched_image:
+        caplog_counter += 1
+        built_image = f"{test_image_base}:{docker_runtime_config.image_tag}"
+        assert caplog.records[0].msg == (
+            f"Image deployed by kubernetes {k8s_image} does not match "
+            f"the built image {built_image}. "
+            "This may result in an `ImagePullBackoff` for the deployment. "
+            "If this is not intended, please change "
+            "`pipeline_options.worker_harness_container_image` "
+            "and rebuild  or change the container image"
+            "set in kubernetes/deployment.yaml file."
+        )
+    assert len(caplog.records) == caplog_counter
 
 
 def test_delete(

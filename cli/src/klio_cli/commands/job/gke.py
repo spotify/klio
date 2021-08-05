@@ -184,7 +184,7 @@ class RunPipelineGKE(GKECommandMixin, base.BaseDockerizedPipeline):
                 body=dep, namespace=namespace
             )
             deployment_name = resp.metadata.name
-            current_cluster = self.kubernetes_active_context["name"]
+            current_cluster = self.kubernetes_active_context["name"][-1]
             ui_link = self._build_ui_link_from_current_context()
             logging.info(
                 f"Deployment created for {deployment_name} "
@@ -249,7 +249,7 @@ class DeletePipelineGKE(GKECommandMixin):
         deployment_name = glom.glom(dep, "metadata.name")
         namespace = glom.glom(dep, "metadata.namespace")
         # Some messaging might change if we multi-cluster deployments
-        current_cluster = self.kubernetes_active_context["name"]
+        current_cluster = self.kubernetes_active_context["name"][-1]
         if self._deployment_exists():
             resp = self.kubernetes_client.delete_namespaced_deployment(
                 name=deployment_name,

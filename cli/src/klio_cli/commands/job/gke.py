@@ -27,6 +27,11 @@ from klio_cli.utils import docker_utils
 
 
 class GKECommandMixin(object):
+    GKE_UI_LINK_FORMAT = (
+        "https://console.cloud.google.com/kubernetes"
+        "/deployment/{region}/{cluster}/{namespace}/{app}"
+        "/overview?project={gke_project}"
+    )
     # NOTE : This command requires a job_dir attribute
 
     def __init__(self, *args, **kwargs):
@@ -123,6 +128,27 @@ class GKECommandMixin(object):
         for message in log_messages:
             logging.info(message)
 
+        ui_link = self._build_ui_link_from_current_context()
+        logging.info(f"Deployment details: {ui_link}")
+
+    def _build_ui_link_from_current_context(self):
+        context_name = self.kubernetes_active_context["name"]
+        # context seems to follow the format
+        # gke_{project}_{region}_{clustername}
+        _, gke_project, region, current_cluster = context_name.split("_")
+
+        dep = self.deployment_config
+        namespace = glom.glom(dep, "metadata.namespace")
+        deployment_name = glom.glom(dep, "metadata.name")
+        link = GKECommandMixin.GKE_UI_LINK_FORMAT.format(
+            region=region,
+            cluster=current_cluster,
+            namespace=namespace,
+            app=deployment_name,
+            gke_project=gke_project,
+        )
+        return link
+
 
 class RunPipelineGKE(GKECommandMixin, base.BaseDockerizedPipeline):
     def __init__(
@@ -159,9 +185,11 @@ class RunPipelineGKE(GKECommandMixin, base.BaseDockerizedPipeline):
             )
             deployment_name = resp.metadata.name
             current_cluster = self.kubernetes_active_context["name"]
+            ui_link = self._build_ui_link_from_current_context()
             logging.info(
                 f"Deployment created for {deployment_name} "
                 f"in cluster {current_cluster}"
+                f"Deployment details: {ui_link}"
             )
         else:
             if self.run_job_config.update:

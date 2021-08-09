@@ -1,6 +1,20 @@
 Changelog
 =========
 
+.. _core-21.8.0:
+
+21.8.0 (UNRELEASED)
+-------------------
+
+.. start-21.8.0
+
+Added
+*****
+
+* Add ``KlioRunner.DIRECT_GKE_RUNNER`` to variables to support ``DirectGKERunner``
+
+.. end-21.8.0
+
 .. _core-21.2.0:
 
 21.2.0 (2021-03-16)

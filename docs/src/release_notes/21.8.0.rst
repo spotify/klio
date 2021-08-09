@@ -1,0 +1,96 @@
+21.8.0
+======
+
+Direct runner on GKE
+--------------------
+
+Klio can now be run on the :ref:`additional runner of DirectGKERunner <run-on-k8s>`.
+
+Under the hood, when using the new DirectGKERunner with a Klio job, Klio creates a GKE deployment. When GKE starts the containers for the deployment, it runs the Klio job in DirectRunner mode (just like you would locally with ``klio job run --direct-runner``.
+
+The difference between ``DirectGKERunner`` and ``DirectRunner`` is that the latter automatically acknowledges messages it reads from the Pub/Sub queue before running it through the defined pipeline. This logic has been adapted on DirectGKERunner to acknowledge the message once it’s considered done running through the pipeline (i.e. either it successfully completed the pipeline, was filtered out, or was dropped due to an error in processing). Without this ability, if a container gets OOM-killed or the job gets otherwise interrupted, then the failing or in-progress messages do not return to the Pub/Sub queue for re-delivery. Those messages would be lost.
+
+Using the ``DirectGKERunner`` for a Klio job comes with inherent limitations:
+
+* The Klio job must:
+    * be a streaming job (and therefore read event input from a Pub/Sub subscription or topic)
+    * not need any aggregation transforms (e.g. ``GroupByKey``, ``CombinePerKey``, ``Distinct``, etc). ``Reshuffle`` & ``Flatten`` are also not supported.
+    * not process non-KlioMessages (``klio-job.yaml::job_config.allow_non_klio_messages``)
+    * be deployed manually (i.e. via ``klio job run [OPTIONS]``).
+
+Logs can be viewed via **kubectl** [#f1]_ commands. This release also ensures required and best-practices labels are set which are helpful for cost association and debugging. Other enabled labels include a "deployed by", a "klio cli version", and other custom labels configured in the Klio job config.
+Klio now supports configuration fields to enable the use of **shumway** [#f2]_, a library for sending metrics to a **FFWD** [#f3]_ agent.
+
+
+Metrics
+-------
+
+Default metrics [#f4]_ have been added for the following transform classes, with the name of the metric in parens:
+
+* IO transforms:
+    * ``KlioReadFromText`` (kmsg-read)
+    * ``KlioReadFromBigQuery`` (kmsg-read)
+    * ``KlioReadFromAvro`` (kmsg-read)
+    * ``KlioWriteToText`` (kmsg-write)
+    * ``KlioWriteToBigQuery`` (kmsg-write)
+    * ``KlioWriteToAvro`` (kmsg-write)
+    * ``KlioReadFromPubSub`` (kmsg-read)
+    * ``KlioWriteToPubSub`` (kmsg-write)
+* Helper Transforms:
+    * ``KlioGcsCheckInputExists`` (kmsg-data-found-input, kmsg-data-not-found-input)
+    * ``KlioGcsCheckOutputExists`` (kmsg-data-found-output, kmsg-data-not-found-output)
+    * ``KlioFilterPing`` (kmsg-process-ping, kmsg-skip-ping)
+    * ``KlioFilterForce`` (kmsg-process-force, kmsg-skip-force)
+    * ``KlioWriteToEventOutput`` (kmsg-output)
+    * ``KlioDrop`` (kmsg-drop)
+    * ``KlioCheckRecipients`` (kmsg-drop-not-recipient)
+    * ``KlioDebugMessage`` (kmsg-debug)
+    * ``KlioTriggerUpstream`` (kmsg-trigger-upstream)
+* Decorators:
+    * ``@retry`` (kmsg-retry-attempt, kmsg-drop-retry-error)
+    * ``@timeout`` (kmsg-drop-timed-out)
+    * ``@handle_klio`` (counters: kmsg-received, kmsg-drop-error, kmsg-success; timer: kmsg-timer)
+    * ``@serialize_klio_message`` (same metrics as @handle_klio`)
+
+These metrics also show up in Stackdriver monitoring when configured to use Stackdriver and are available to select in Metrics Explorer when building a dashboard.
+
+A user-facing metrics interface for shumway [#f2]_ has been added for when log-based metrics is not feasible.
+
+Changes
+-------
+
+:ref:`klio-cli <cli-21.8.0>`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. include:: /reference/cli/changelog.rst
+    :start-after: start-21.8.0
+    :end-before: end-21.8.0
+
+:ref:`klio <lib-21.8.0>`
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. include:: /reference/lib/changelog.rst
+    :start-after: start-21.8.0
+    :end-before: end-21.8.0
+
+
+:ref:`klio-core <core-21.8.0>`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. include:: /reference/core/changelog.rst
+    :start-after: start-21.8.0
+    :end-before: end-21.8.0
+
+:ref:`klio-exec <exec-21.8.0>`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. include:: /reference/executor/changelog.rst
+    :start-after: start-21.8.0
+    :end-before: end-21.8.0
+
+.. rubric:: Footnotes
+
+.. [#f1] https://kubernetes.io/docs/reference/kubectl/cheatsheet/
+.. [#f2] https://github.com/spotify/shumway
+.. [#f3] https://github.com/spotify/ffwd
+.. [#f4] https://docs.klio.io/en/stable/userguide/pipeline/metrics.html#default-metrics-provided

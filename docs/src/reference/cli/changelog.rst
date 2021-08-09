@@ -1,26 +1,30 @@
 CLI Changelog
 =============
 
+.. _cli-21.8.0:
+
 21.8.0 (UNRELEASED)
 -------------------
+
+.. start-21.8.0
 
 Added
 *****
 
-* Safety check built image vs deployed image differences when deploying with `DirectGKERunner`
-
-21.7.0 (UNRELEASED)
--------------------
+* Support for deploying, stopping, and deleting jobs with ``DirectGKERunner``
+* Support for setting required and best-practices labels for Kubernetes
+    deployments as well as user-set labels
+* Enable job test command to use the ``--config-file`` option
 
 Fixed
 *****
 
+* Fixed bug with writing of ``klio-job-run-effective.yaml`` for ``klio job profile`` commands
 * Fixed bug with ``klio message publish`` not working on ``google-cloud-pubsub > 2.3.0``
 
-Added
-*****
 
-* Support for deploying, stopping, and deleting jobs with `DirectGKERunner`
+.. end-21.8.0
+
 
 .. _cli-21.2.0:
 

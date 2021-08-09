@@ -1,8 +1,18 @@
 Changelog
 =========
 
-21.4.0rc1 (UNRELEASED)
-----------------------
+.. _exec-21.8.0:
+
+21.8.0 (UNRELEASED)
+-------------------
+
+.. start-21.8.0
+
+Added
+*****
+
+* Add support for calling ``DirectGKERunner`` when set in job configuration.
+
 
 Changed
 *******
@@ -13,11 +23,10 @@ Fixed
 *****
 
 * Limit version of ``line_profiler`` as the latest introduced breaking API changes.
+* Limit google-cloud-pubsub dependency
 
-21.3.0 (UNRELEASED)
--------------------
 
-*  Delete me: placeholder for when ``21.3.0`` is merged in.
+.. end-21.8.0
 
 .. _exec-21.2.0:
 

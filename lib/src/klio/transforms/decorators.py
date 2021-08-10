@@ -49,6 +49,40 @@ MetricsObjects = collections.namedtuple(
 )
 
 
+class ThreadLimitGenerator(object):
+    """A Generator that wraps another generator with thread-limiting.  The lock
+    is acquired once upon instantiation and held for all items returned by the
+    wrapped generator.  This very specific behavior is only intended to be used
+    in the @handle_klio decorator to wrap generators returned by DoFn process
+    method.
+    """
+
+    def __init__(self, thread_limiter, inner_generator):
+        self.thread_limiter = thread_limiter
+        self.inner_generator = inner_generator
+        self.thread_limiter.acquire()
+
+    def __iter__(self):
+        return self
+
+    def __del__(self):
+        self._release()
+
+    def _release(self):
+        if self.thread_limiter is not None:
+            self.thread_limiter.release()
+            self.thread_limiter = None
+
+    def __next__(self):
+        try:
+            return next(self.inner_generator)
+        except:  # noqa: E722
+            # Notice, this will catch StopIteration which is
+            # how the generator indicates it's done
+            self._release()
+            raise
+
+
 # TODO: This may be nice to make generic and move into the public helpers
 # module since users may want to use something like this.
 def __get_or_create_instance(function):
@@ -492,22 +526,34 @@ def _handle_klio(*args, max_thread_count=None, thread_limiter=None, **kwargs):
 
         @functools.wraps(func_or_meth)
         def method_wrapper(self, *args, **kwargs):
-            with thd_limiter:
-                setattr(self, "_klio", kctx)
+            setattr(self, "_klio", kctx)
 
-                # SO. HACKY. We check to see if this method is named "expand"
-                # to designate  if the class is a Composite-type transform
-                # (rather than a DoFn with a "process" method).
-                # A Composite transform handles a pcoll / pipeline,
-                # not the individual elements, and therefore doesn't need
-                # to be given a KlioMessage. It should only need the KlioContext
-                # attached.
-                if func_or_meth.__name__ == "expand":
-                    return func_or_meth(self, *args, **kwargs)
+            # SO. HACKY. We check to see if this method is named "expand"
+            # to designate  if the class is a Composite-type transform
+            # (rather than a DoFn with a "process" method).
+            # A Composite transform handles a pcoll / pipeline,
+            # not the individual elements, and therefore doesn't need
+            # to be given a KlioMessage. It should only need the KlioContext
+            # attached.
+            if func_or_meth.__name__ == "expand":
+                return func_or_meth(self, *args, **kwargs)
 
-                incoming_item = args[0]
-                args = args[1:]
+            incoming_item = args[0]
+            args = args[1:]
 
+            # Only the process method of a DoFn is a generator - otherwise
+            # beam can't pickle a generator
+            if __is_dofn_process_method(self, func_or_meth):
+                wrapper = __serialize_klio_message_generator
+                wrapper_kwargs = {
+                    "self": self,
+                    "meth": func_or_meth,
+                    "incoming_item": incoming_item,
+                    "metrics": metrics_objs,
+                }
+                result = wrapper(*args, **wrapper_kwargs, **kwargs)
+                return ThreadLimitGenerator(thd_limiter, result)
+            else:
                 wrapper = __serialize_klio_message
                 wrapper_kwargs = {
                     "ctx": self,
@@ -515,18 +561,8 @@ def _handle_klio(*args, max_thread_count=None, thread_limiter=None, **kwargs):
                     "incoming_item": incoming_item,
                     "metrics": metrics_objs,
                 }
-                # Only the process method of a DoFn is a generator - otherwise
-                # beam can't pickle a generator
-                if __is_dofn_process_method(self, func_or_meth):
-                    wrapper = __serialize_klio_message_generator
-                    wrapper_kwargs = {
-                        "self": self,
-                        "meth": func_or_meth,
-                        "incoming_item": incoming_item,
-                        "metrics": metrics_objs,
-                    }
-
-                return wrapper(*args, **wrapper_kwargs, **kwargs)
+                with thd_limiter:
+                    return wrapper(*args, **wrapper_kwargs, **kwargs)
 
         @functools.wraps(func_or_meth)
         def func_wrapper(incoming_item, *args, **kwargs):

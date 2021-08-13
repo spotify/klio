@@ -22,8 +22,24 @@ import yaml
 from kubernetes import client as k8s_client
 from kubernetes import config as k8s_config
 
+from klio_cli import __version__ as klio_cli_version
 from klio_cli.commands import base
 from klio_cli.utils import docker_utils
+
+
+# Regex according to https://kubernetes.io/docs/concepts/overview/
+# working-with-objects/labels/#syntax-and-character-set
+K8S_LABEL_KEY_PREFIX_REGEX = re.compile(
+    r"^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])"
+    r"(\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$"
+)
+K8S_LABEL_KEY_NAME_REGEX = re.compile(
+    r"^[a-zA-Z0-9]$|^[a-zA-Z0-9]([a-zA-Z0-9\._\-]){,61}[a-zA-Z0-9]$"
+)
+K8S_LABEL_VALUE_REGEX = re.compile(
+    r"^[a-zA-Z0-9]{0,1}$|^[a-zA-Z0-9]([a-zA-Z0-9\._\-]){,61}[a-zA-Z0-9]$"
+)
+K8S_RESERVED_KEY_PREFIXES = ("kubernetes.io", "k8s.io")
 
 
 class GKECommandMixin(object):
@@ -160,6 +176,153 @@ class RunPipelineGKE(GKECommandMixin, base.BaseDockerizedPipeline):
                 "set in kubernetes/deployment.yaml file."
             )
 
+    @staticmethod
+    def _validate_labels(label_path, label_dict):
+        help_url = (
+            "https://kubernetes.io/docs/concepts/overview/working-with-objects"
+            "/labels/#syntax-and-character-set"
+        )
+        for key, value in label_dict.items():
+            # Both key and value must be strings
+            if not isinstance(key, str):
+                raise ValueError(f"Key '{label_path}.{key}' must be a string.")
+            if not isinstance(value, str):
+                raise ValueError(
+                    f"Value '{value}' for key '{label_path}.{key}' must be a "
+                    "string"
+                )
+
+            # Handle any prefixes in keys
+            if "/" in key:
+                # validate that there's at most one forward slash
+                prefix, *name = key.split("/")
+                if len(name) > 1:
+                    raise ValueError(
+                        f"Unsupported key name in {label_path}: '{key}' "
+                        f"contains more than one forward slash. See {help_url} "
+                        "for valid label keys."
+                    )
+
+                # validate prefix
+                prefix_match = K8S_LABEL_KEY_PREFIX_REGEX.match(prefix)
+                if (
+                    prefix_match is None
+                    or prefix in K8S_RESERVED_KEY_PREFIXES
+                    or len(prefix) > 253
+                ):
+                    raise ValueError(
+                        f"Unsupported prefix key name in {label_path}: "
+                        f"'{prefix}'. See {help_url} for valid label key "
+                        "prefixes."
+                    )
+                key = name[0]
+
+            # Validate the key
+            key_match = K8S_LABEL_KEY_NAME_REGEX.match(key)
+            if key_match is None:
+                raise ValueError(
+                    f"Unsupported key name in {label_path}: '{key}'. "
+                    f"See {help_url} for valid label keys."
+                )
+
+            # Validate the value
+            value_match = K8S_LABEL_VALUE_REGEX.match(value)
+            if not value_match:
+                raise ValueError(
+                    f"Unsupported value '{value}' for '{label_path}.{key}'. "
+                    f"See {help_url} for valid values."
+                )
+
+    def _apply_labels_to_deployment_config(self):
+        # `metadata.labels` are a best practices thing, but not required
+        # (these would be "deployment labels"). At least one label defined in
+        # `spec.template.metadata.labels` is required for k8s deployments
+        # ("pod labels").
+        # There also must be at least one "selector label"
+        # (`spec.selector.matchLabels`) which connects the deployment to pod.
+        # More info: https://stackoverflow.com/a/54854179
+        # TODO: add environment labels if/when we support dev/test/prod envs
+        metadata_labels, pod_labels, selector_labels = {}, {}, {}
+
+        # standard practice labels ("app" and "role")
+        existing_metadata_labels = glom.glom(
+            self.deployment_config, "metadata.labels", default={}
+        )
+        metadata_app = glom.glom(existing_metadata_labels, "app", default=None)
+        if not metadata_app:
+            job_name = self.klio_config.job_name
+            metadata_labels["app"] = job_name
+        metadata_labels.update(existing_metadata_labels)
+
+        existing_pod_labels = glom.glom(
+            self.deployment_config, "spec.template.metadata.labels", default={}
+        )
+        pod_app = glom.glom(existing_pod_labels, "app", default=None)
+        pod_role = glom.glom(existing_pod_labels, "role", default=None)
+        if not pod_app:
+            pod_app = metadata_labels["app"]
+        if not pod_role:
+            # just drop hyphens from `app` value
+            pod_role = "".join(pod_app.split("-"))
+        pod_labels["app"] = pod_app
+        pod_labels["role"] = pod_role
+        pod_labels.update(existing_pod_labels)
+
+        existing_selector_labels = glom.glom(
+            self.deployment_config, "spec.selector.matchLabels", default={}
+        )
+        selector_app = glom.glom(existing_selector_labels, "app", default=None)
+        selector_role = glom.glom(
+            existing_selector_labels, "role", default=None
+        )
+        if not selector_app:
+            selector_labels["app"] = pod_labels["app"]
+        if not selector_role:
+            selector_labels["role"] = pod_labels["role"]
+        selector_labels.update(existing_selector_labels)
+
+        # klio-specific labels
+        pod_labels["klio/klio_cli_version"] = klio_cli_version
+
+        # deployment labels
+        deploy_user = os.environ.get("USER", "unknown")
+        if os.environ.get("CI", "").lower() == "true":
+            deploy_user = "ci"
+        pod_labels["klio/deployed_by"] = deploy_user
+
+        # any user labels from klio_config.pipeline_options
+        # note: if pipeline_options.label (singular) is define in
+        # klio-job.yaml, klio-core appends it to pipeline_options.labels
+        # (plural) automatically
+        user_labels_list = self.klio_config.pipeline_options.labels
+        # user labels in beam/klio config are lists of strings, where the
+        # strings are key=value pairs, e.g. "keyfoo=valuebar"
+        user_labels = {}
+        for user_label in user_labels_list:
+            if "=" not in user_label:
+                # skip - not a valid label; this should technically be
+                # caught when validating configuration (not yet implemented)
+                continue
+
+            # theoretically user_label could be key=value1=value2, so
+            # we just take the first one, but value1=value2 is not
+            # valid and will be caught during validation below.
+            key, value = user_label.split("=", 1)
+            user_labels[key] = value
+        pod_labels.update(user_labels)
+
+        path_to_labels = (
+            ("metadata.labels", metadata_labels),
+            ("spec.selector.matchLabels", selector_labels),
+            ("spec.template.metadata.labels", pod_labels),
+        )
+        for label_path, label_dict in path_to_labels:
+            # raises if not valid
+            RunPipelineGKE._validate_labels(label_path, label_dict)
+            glom.assign(
+                self.deployment_config, label_path, label_dict, missing=dict
+            )
+
     def _apply_deployment(self):
         """Create a namespaced deploy if the deployment does not already exist.
         If the namespaced deployment already exists then
@@ -212,6 +375,8 @@ class RunPipelineGKE(GKECommandMixin, base.BaseDockerizedPipeline):
         self._setup_docker_image()
 
         self._apply_image_to_deployment_config()
+        self._apply_labels_to_deployment_config()
+
         self._apply_deployment(**kwargs)
 
 

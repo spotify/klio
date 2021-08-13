@@ -320,6 +320,192 @@ def test_deployment_exists(
     )
 
 
+@pytest.mark.parametrize(
+    "label_dict",
+    (
+        {"foo": ""},
+        {"f": "b"},
+        {"foo/bar": "baz"},
+        {"f" * 63: "b" * 63},
+        {"foo.bar_baz-bla": "foo_bar-baz.bla"},
+        # avoid hitting total max of 253 chars for prefix
+        {
+            "a" * 63
+            + "."
+            + "b" * 63
+            + "."
+            + "c" * 63
+            + "."
+            + "d" * 61
+            + "/abcd": "bla"
+        },
+    ),
+)
+def test_validate_labels(label_dict):
+    assert job_gke.RunPipelineGKE._validate_labels("f.b", label_dict) is None
+
+
+@pytest.mark.parametrize(
+    "label_dict",
+    (
+        # invalid keys
+        {"": "bar"},
+        {"-foo": "bar"},
+        {"foo-": "bar"},
+        {"f?oo": "bar"},
+        {"f" * 64: "bar"},
+        # invalid prefixes
+        {"/foo": "bar"},
+        {"-/foo": "bar"},
+        {"foo/bar/baz": "bar"},
+        {"kubernetes.io/foo": "bar"},
+        {"k8s.io/foo": "bar"},
+        # hit max chars for subdomain in prefix
+        {"a" * 64 + "." + "b" * 63 + "/ab": "bla"},
+        # hit total max chars for prefix
+        {
+            "a" * 63
+            + "."
+            + "b" * 63
+            + "."
+            + "c" * 63
+            + "."
+            + "d" * 63
+            + "/abcd": "bla"
+        },
+        # invalid values
+        {"foo": "-bar"},
+        {"foo": "bar-"},
+        {"foo": "ba?r"},
+        {"foo": "b" * 64},
+        {"foo": "bar=baz"},
+    ),
+)
+def test_validate_labels_raises(label_dict):
+    with pytest.raises(ValueError):
+        job_gke.RunPipelineGKE._validate_labels("foo.bar", label_dict)
+
+
+@pytest.mark.parametrize(
+    "input_config",
+    (
+        # minimal
+        {"metadata": {"name": "test-job"}},
+        # metadata labels defined
+        {"metadata": {"name": "test-job", "labels": {"app": "test-job"}}},
+        # pod labels defined
+        {
+            "metadata": {"name": "test-job"},
+            "spec": {
+                "template": {
+                    "metadata": {
+                        "labels": {"app": "test-job", "role": "testjob"}
+                    }
+                }
+            },
+        },
+        # selector labels defined
+        {
+            "metadata": {"name": "test-job"},
+            "spec": {
+                "selector": {
+                    "matchLabels": {"app": "test-job", "role": "testjob"}
+                }
+            },
+        },
+    ),
+)
+@pytest.mark.parametrize(
+    "is_ci,exp_deployed_by", (("true", "ci"), ("false", "stub-user"))
+)
+def test_apply_labels_to_deployment_config(
+    input_config, is_ci, exp_deployed_by, run_pipeline_gke, monkeypatch
+):
+    monkeypatch.setitem(job_gke.os.environ, "USER", "stub-user")
+    monkeypatch.setitem(job_gke.os.environ, "CI", is_ci)
+    monkeypatch.setattr(job_gke, "klio_cli_version", "stub-version")
+
+    # TODO: patch user config for user labels
+    monkeypatch.setattr(run_pipeline_gke, "_deployment_config", input_config)
+    user_labels = [
+        "label_a=value_a",
+        "label-b=value-b",
+        "label-c=",
+        "labeld",  # invalid, expected to be ignored
+    ]
+    monkeypatch.setattr(
+        run_pipeline_gke.klio_config.pipeline_options, "labels", user_labels
+    )
+
+    expected_config = {
+        "metadata": {"name": "test-job", "labels": {"app": "test-job"}},
+        "spec": {
+            "template": {
+                "metadata": {
+                    "labels": {
+                        "app": "test-job",
+                        "role": "testjob",
+                        "klio/deployed_by": exp_deployed_by,
+                        "klio/klio_cli_version": "stub-version",
+                        "label_a": "value_a",
+                        "label-b": "value-b",
+                        "label-c": "",
+                    }
+                },
+            },
+            "selector": {
+                "matchLabels": {"app": "test-job", "role": "testjob"}
+            },
+        },
+    }
+
+    run_pipeline_gke._apply_labels_to_deployment_config()
+    assert expected_config == run_pipeline_gke.deployment_config
+
+
+def test_apply_labels_to_deployment_config_overrides(
+    run_pipeline_gke, monkeypatch
+):
+    monkeypatch.setitem(job_gke.os.environ, "USER", "stub-user")
+    monkeypatch.setattr(job_gke, "klio_cli_version", "stub-version")
+
+    input_config = {
+        "metadata": {
+            "name": "test-job",
+            "labels": {"app": "different-app-name"},
+        }
+    }
+    monkeypatch.setattr(run_pipeline_gke, "_deployment_config", input_config)
+
+    expected_config = {
+        "metadata": {
+            "name": "test-job",
+            "labels": {"app": "different-app-name"},
+        },
+        "spec": {
+            "template": {
+                "metadata": {
+                    "labels": {
+                        "app": "different-app-name",
+                        "role": "differentappname",
+                        "klio/deployed_by": "stub-user",
+                        "klio/klio_cli_version": "stub-version",
+                    }
+                },
+            },
+            "selector": {
+                "matchLabels": {
+                    "app": "different-app-name",
+                    "role": "differentappname",
+                }
+            },
+        },
+    }
+
+    run_pipeline_gke._apply_labels_to_deployment_config()
+    assert expected_config == run_pipeline_gke.deployment_config
+
+
 # Tests for user facing functions
 @pytest.mark.parametrize(
     "deployment_exists,update_flag,mismatched_image",

@@ -30,6 +30,7 @@ FAQs
     migrate_from_setup
     setup_packaging
     streaming_to_batch_conversion
+    run_on_kubernetes
 
 
 General
@@ -82,3 +83,4 @@ Technical
     migrate_from_setup
     setup_packaging
     streaming_to_batch_conversion
+    run_on_kubernetes

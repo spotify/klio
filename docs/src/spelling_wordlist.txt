@@ -1,5 +1,7 @@
 BaseMetricDispatcher
+Dockerfile
 Dockerized
+Downsample
 Dropwizard
 FnAPI
 GaugeDispatcher
@@ -7,7 +9,9 @@ Kleio
 KlioMessage
 KlioMessages
 Kubeflow
+Kubernetes
 Makefile
+OOM
 PCollection
 PCollections
 Pythonic
@@ -19,6 +23,7 @@ TimerDispatcher
 acyclic
 api
 attrs
+autoscaling
 backend
 backfills
 bigquery
@@ -55,11 +60,13 @@ kmsgs
 latinized
 mel
 melspectrogram
+multithreading
 namespace
 namespaced
 ns
 num
 org
+observability
 pb
 performant
 png
@@ -80,6 +87,7 @@ reshard
 rst
 run
 runtime
+scalability
 schemas
 scikit
 spectrogram
@@ -90,6 +98,7 @@ stateful
 subdirectories
 subpackage
 subpackages
+subprocesses
 threadpool
 timePartitioning
 todo

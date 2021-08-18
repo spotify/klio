@@ -251,9 +251,7 @@ Quickstart Example
 
     class LogKlioMessage(beam.DoFn):
         @decorators.set_klio_context
-        def __init__(self):
-            self.model = None
-
+        def setup(self):
             # a simple counter
             self.entity_ctr = self._klio.metrics.counter("entity-counter")
 
@@ -283,8 +281,6 @@ Quickstart Example
                 tags={"units": "ms", "model_version": "2019-01-01"},
             )
 
-        @decorators.set_klio_context
-        def setup(self):
             # use timer as a context manager
             with self.load_model_latency:
                 self.model = load("my-model.pb")
@@ -319,7 +315,7 @@ Quickstart Example
 .. tip::
 
     Metrics objects should be
-    created in the ``__init__`` method or the ``setup`` method of your transform.
+    created in the ``setup`` method of your transform.
 
 
 Configuration
@@ -438,8 +434,7 @@ Every metric will have a tag key/value pair for ``metric_type``.
 
 .. note::
 
-    Metrics objects should be created in the ``__init__`` method
-    or the ``setup`` method of your transform.
+    Metrics objects should be created in the ``setup`` method of your transform.
 
 
 .. caution::

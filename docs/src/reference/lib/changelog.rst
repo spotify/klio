@@ -101,7 +101,7 @@ Fixed
 Fixed
 *****
 
-* Requires klio-core<0.2.1,>=0.2.0 to prevent useage of 0.2.1 until dependent code is released
+* Requires klio-core<0.2.1,>=0.2.0 to prevent usage of 0.2.1 until dependent code is released
 * Klio lib requires changes not yet released in klio-core
 
 0.2.1 (2020-11-24)
@@ -119,7 +119,7 @@ Fixed
 Fixed
 *****
 
-* Limited apache beam dependency to <2.25.0 due to a breaking change
+* Limited Apache beam dependency to <2.25.0 due to a breaking change
 
 0.2.0 (2020-10-02)
 ------------------

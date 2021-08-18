@@ -502,7 +502,7 @@ class KlioReadFromAvro(beam.PTransform):
     element``.
 
     ``KlioReadFromAvro`` is the default read for event input config type avro.
-    However, ``KlioReadFromAvro`` can also be called explicity in a pipeline.
+    However, ``KlioReadFromAvro`` can also be called explicitly in a pipeline.
 
     Example pipeline reading in elements from an avro file:
 
@@ -618,7 +618,7 @@ class KlioWriteToAvro(beam.PTransform):
     and dumped into avro format.
 
     ``KlioWriteToAvro`` is the default write for event output config type avro.
-    However, ``KlioWriteToAvro`` can also be called explicity in a pipeline.
+    However, ``KlioWriteToAvro`` can also be called explicitly in a pipeline.
 
     Example pipeline for writing elements to an avro file:
 

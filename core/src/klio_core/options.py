@@ -192,7 +192,7 @@ def maximum(func):
 
 
 def per_element(*args, **kwargs):
-    """Print memory useage per line for each input element processed"""
+    """Print memory usage per line for each input element processed"""
 
     def wrapper(func):
         return click.option(

@@ -60,7 +60,7 @@ Withdrawn
     Similar to ``Rejected``, the KEP author themselves has decided that the KEP is a bad idea.
 
 Superseded
-    A KEP can have a ``Superseded`` status when another KEP renders it obsolute.
+    A KEP can have a ``Superseded`` status when another KEP renders it obsolete.
 
 
 

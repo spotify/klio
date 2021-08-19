@@ -1,4 +1,6 @@
 apache-beam[gcp]==2.28.0
 librosa
 pytest
+# see https://github.com/spotify/klio/pull/210#issuecomment-898969607
+matplotlib --only-binary matplotlib
 # Note: klio packages are installed via docker

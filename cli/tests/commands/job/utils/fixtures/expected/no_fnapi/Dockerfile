@@ -6,7 +6,7 @@ WORKDIR /usr/src/app
 ENV GOOGLE_CLOUD_PROJECT=test-gcp-project \
     PYTHONPATH=/usr/src/app
 
-RUN pip install --upgrade pip setuptools
+RUN pip install --no-cache-dir --upgrade pip setuptools
 
 COPY __init__.py \
      run.py \
@@ -21,4 +21,4 @@ COPY __init__.py \
 ARG KLIO_CONFIG=klio-job.yaml
 COPY $KLIO_CONFIG klio-job-run-effective.yaml
 
-RUN pip install .
+RUN pip install --no-cache-dir .

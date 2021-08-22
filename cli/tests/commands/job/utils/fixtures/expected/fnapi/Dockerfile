@@ -7,7 +7,7 @@ RUN mkdir -p /usr/src/config
 ENV GOOGLE_CLOUD_PROJECT=test-gcp-project \
     PYTHONPATH=/usr/src/app
 
-RUN pip install --upgrade pip setuptools
+RUN pip install --no-cache-dir --upgrade pip setuptools
 
 ###############################################################
 # DO NOT EDIT ABOVE THIS LINE. Or you may break klio.         #
@@ -25,7 +25,7 @@ RUN pip install --upgrade pip setuptools
 ###############################################################
 
 COPY job-requirements.txt job-requirements.txt
-RUN pip install -r job-requirements.txt
+RUN pip install --no-cache-dir -r job-requirements.txt
 
 COPY __init__.py \
      run.py \

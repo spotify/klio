@@ -5,7 +5,7 @@ RUN mkdir -p /usr/src/config
 
 ENV PYTHONPATH=/usr/src/app
 
-RUN pip install --upgrade pip setuptools
+RUN pip install --no-cache-dir --upgrade pip setuptools
 
 COPY __init__.py \
      run.py \
@@ -17,4 +17,4 @@ COPY __init__.py \
      job-requirements.txt \
      /usr/src/app/
 
-RUN pip install .
+RUN pip install --no-cache-dir .

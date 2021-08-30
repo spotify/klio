@@ -1,3 +1,5 @@
+.. _run-on-k8s:
+
 How do I run a Klio job on Kubernetes?
 ======================================
 
@@ -10,14 +12,14 @@ So far, this has only been tested using `Google Kubernetes Engine`_ (GKE), but *
     However, it has been found to be extremely performant, and particularly helps jobs processing large/long media files.
 
 Under the hood, when using the new ``DirectGKERunner``, Klio creates a Kubernetes `deployment`_.
-When Kubernetes starts the containers for the deployment, 
+When Kubernetes starts the containers for the deployment,
 it runs the Klio job in ``DirectRunner`` mode (just like you would locally with ``klio job run --direct-runner``).
 
-The difference between ``DirectGKERunner`` and ``DirectRunner`` is that the latter automatically acknowledges messages it reads from the Pub/Sub queue before running it through the defined pipeline. 
+The difference between ``DirectGKERunner`` and ``DirectRunner`` is that the latter automatically acknowledges messages it reads from the Pub/Sub queue before running it through the defined pipeline.
 The logic in the direct runner has been adapted to acknowledge the message once it’s considered done running through the pipeline
-(i.e. either it successfully completed the pipeline, was filtered out, or was dropped due to an error in processing). 
-Without this ability, if a container gets OOM-killed or the job gets otherwise interrupted, 
-then the failing or in-progress messages do not return to the Pub/Sub queue for re-delivery. 
+(i.e. either it successfully completed the pipeline, was filtered out, or was dropped due to an error in processing).
+Without this ability, if a container gets OOM-killed or the job gets otherwise interrupted,
+then the failing or in-progress messages do not return to the Pub/Sub queue for re-delivery.
 Those messages would be lost.
 
 Limitations
@@ -40,7 +42,7 @@ Using the ``DirectGKERunner`` for a Klio job comes with inherent limitations:
 Job Setup
 ---------
 
-.. note:: 
+.. note::
     The following instructions assumes your local environment is setup for deploying workloads to your Kubernetes cluster(s).
 
 Pre-requisites
@@ -118,16 +120,16 @@ Step 5: Create a Service Account
     This step is required when using `GKE`_.
     If not using GKE, then you may need to setup authentication between your job and the other resources it uses (Pub/Sub, logging, etc.).
 
-A service account is needed for your GKE job to be able to access other GCP resources (Pub/Sub, Logs, etc). 
+A service account is needed for your GKE job to be able to access other GCP resources (Pub/Sub, Logs, etc).
 
-You may choose to create one service account for all jobs running on GKE, 
+You may choose to create one service account for all jobs running on GKE,
 or create an individual service account for each GKE job.
 
 Step 5.1: Creating a Service Account JSON Key
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Within your GCP project, go to `IAM & Admin > Service Accounts`_.
-2. Click "+ Create Service Account" at the top.	
+2. Click "+ Create Service Account" at the top.
 3. Fill in the Service Account Details, and then click "Create and Continue".
 4. Add the following roles, then click "Continue" (you can also add these roles later):
     a. Pub/Sub Subscriber
@@ -186,7 +188,7 @@ Copy & paste the following into that new ``kubernetes/deployment.yaml`` file, an
         # Add any more labels needed.
     spec:
       # Set the number of replicas/workers your job requires.
-      # Replicas can be considered equivalent to `pipeline_options.num_workers` in 
+      # Replicas can be considered equivalent to `pipeline_options.num_workers` in
       # `klio-job.yaml`.
       replicas: $NUM_OF_REPLICAS # this is equivalent to `pipeline_options.num_workers`
       strategy:
@@ -207,10 +209,10 @@ Copy & paste the following into that new ``kubernetes/deployment.yaml`` file, an
             app: $JOB_NAME # name of job as defined in klio-job.yaml::job_name
         spec:
           containers:
-          # custom name of container - helpful for using `kubectl` to 
-          # observe the deployment. This may be the same “base name” in $GCR_IMAGE 
+          # custom name of container - helpful for using `kubectl` to
+          # observe the deployment. This may be the same “base name” in $GCR_IMAGE
           # without the “gcr.io/<project>/” prefix.
-          - name: $IMAGE_NAME  
+          - name: $IMAGE_NAME
             # `image` must match `pipeline_options.worker_harness_container_image`
             # in `klio-job.yaml`.
             # Coming soon: Klio dynamically filling this in automatically.
@@ -221,11 +223,11 @@ Copy & paste the following into that new ``kubernetes/deployment.yaml`` file, an
                   memory: $MEM_REQ # Memory that the container is guaranteed to get
                 limits:
                   cpu: $CPU_LIM # Limit where your container starts getting throttled
-                  # May want to increase the limits of memory if the job will be 
+                  # May want to increase the limits of memory if the job will be
                   # handling the occasional really long audio.
                   memory: $MEM_LIM # Limit where container gets OOM-killed & restarted
             volumeMounts:
-            # Mount job's service account 
+            # Mount job's service account
             - name: $SECRET_NAME # must match below in volumes.name
               mountPath: /var/secrets/google
             env:
@@ -239,7 +241,7 @@ Copy & paste the following into that new ``kubernetes/deployment.yaml`` file, an
             secret:
               secretName: $KEY_NAME # key name given in Step 5.2.
 
-Depending on your Kubernetes setup, you may want to add more containers such utility/sidecar containers, 
+Depending on your Kubernetes setup, you may want to add more containers such utility/sidecar containers,
 other environment variables, mounts, probes, etc.
 The above is what's considered the minimum for a deployment of a Klio job.
 
@@ -255,7 +257,7 @@ After completing all the above, you can deploy the job via ``klio job run [OPTIO
 
 Some suggestions to test out the deployment:
 
-* Start with a small number of replicas in ``kubernetes/deployment.yaml`` to make sure the job runs smoothly first. 
+* Start with a small number of replicas in ``kubernetes/deployment.yaml`` to make sure the job runs smoothly first.
 * You may want to test the job with large files to see if you need to request more memory.
 * If you’re running this Klio job in production right now, and don't want to affect traffic before you're ready to cut over, create a new subscription to the Pub/Sub topic for the Kubernetes-based job. This will allow the Kubernetes job to get the same traffic as the production job. You may want to update the event output and/or the data output location if you don't want to overwrite the production outputs.
 * Once it looks all good, you can update the ``kubernetes/deployment.yaml`` file to the number of replicas needed and/or the resources (memory, CPU) needed. Run ``klio job run --update`` to update the existing job without taking it down.
@@ -308,11 +310,11 @@ You can view logs locally:
 
 .. code-block:: sh
 
-    kubectl logs -l app=$APP_LABEL --container=$IMAGE_NAME 
+    kubectl logs -l app=$APP_LABEL --container=$IMAGE_NAME
 
 Add ``--follow=true`` to tail the logs, and ``--timestamps=true`` to include logs' timestamps.
 
-Drop ``--container=$IMAGE_NAME`` and replace it with ``--all-containers`` if you want to follow the logs for other containers on the pods, 
+Drop ``--container=$IMAGE_NAME`` and replace it with ``--all-containers`` if you want to follow the logs for other containers on the pods,
 like any sidecars you may have.
 
 If you have more than 10 replicas/pods, you'll want to add ``--max-log-requests=$NUM_OF_REPLICAS`` to be able to grab the logs of all pods.
@@ -326,7 +328,7 @@ To view a snapshot of each container's CPU and memory usage:
 
     kubectl top pod -l app=$APP_LABEL --containers | grep $IMAGE_NAME
 
-Omit the ``--containers | grep $IMAGE_NAME`` to include other containers on your pods 
+Omit the ``--containers | grep $IMAGE_NAME`` to include other containers on your pods
 (e.g. any sidecars for your deployment).
 
 "ssh"/exec into a container or run a one-off command
@@ -339,7 +341,7 @@ First, find the names of the pods:
     kubectl get pods \
       -l app=$APP_LABEL \
       --no-headers \
-      -o custom-columns=":metadata.name" 
+      -o custom-columns=":metadata.name"
 
 Then, you can either exec into the container directly (replacing ``$POD_NAME`` with one of the pod names from the previous command):
 
@@ -360,8 +362,8 @@ Code Suggestions
 Additional Loggers
 ~~~~~~~~~~~~~~~~~~
 
-A couple of loggers were added with the ``DirectGKERunner`` support. 
-Some of them are noisy, but can be helpful when debugging or trying to deploy a job for the first time. 
+A couple of loggers were added with the ``DirectGKERunner`` support.
+Some of them are noisy, but can be helpful when debugging or trying to deploy a job for the first time.
 The following loggers will give some insight into the progress of each consumed Pub/Sub message:
 
 * ``klio.gke_direct_runner.heartbeat``
@@ -393,16 +395,16 @@ To make sure those logs are actually seen, add the following to your ``run.py``:
         ...
 
 
-Without the above, only warning and error messages will show. 
+Without the above, only warning and error messages will show.
 You may also choose to set the level to ``logging.INFO`` to ignore the debug-level logs.
 
 Metrics
 ~~~~~~~
 
-Since running a job on GKE does not have the nice Dataflow Job UI with the job's graph, 
+Since running a job on GKE does not have the nice Dataflow Job UI with the job's graph,
 Klio now emits some :ref:`metrics by default <metrics>`, but you may wish to add your own metrics too with custom metrics.
 
-For example, this Downsample transform keeps track of successful downloads, successful uploads, 
+For example, this Downsample transform keeps track of successful downloads, successful uploads,
 the time it takes to download, and a gauge on the memory footprint of the loaded file:
 
 .. code-block:: py
@@ -467,7 +469,7 @@ the time it takes to download, and a gauge on the memory footprint of the loaded
 
             yield data
 
-This is just an example of what can be done in a job. 
+This is just an example of what can be done in a job.
 Please refer to the :ref:`Klio docs on metrics <metrics>` for more info.
 
 
@@ -476,17 +478,17 @@ Please refer to the :ref:`Klio docs on metrics <metrics>` for more info.
 Limiting Disruption
 -------------------
 
-If you want your job to be highly available with a limited amount of downtime, 
-it's advisable to set up a `budget for pod disruptions`_. 
+If you want your job to be highly available with a limited amount of downtime,
+it's advisable to set up a `budget for pod disruptions`_.
 
-One can configure the amount of concurrent "disruptions" that a deployment experiences. 
+One can configure the amount of concurrent "disruptions" that a deployment experiences.
 Disruptions can be:
 
 * When vertical autoscaling tears down (evicts) pods to bring up new pods with new resource requirements & limitations;
 * Involuntary disruptions that out of our control, like hardware failure, cluster maintenance gone wrong, node being out of resources, etc
 * New Docker image for deployments
 
-A "Pod Disruption Budget" (a separate YAML file) can then configure the following to minimize disruptions 
+A "Pod Disruption Budget" (a separate YAML file) can then configure the following to minimize disruptions
 (further docs on how to configure a `budget for pod disruptions`_):
 
 * minimum number of pods available

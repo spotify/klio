@@ -1,35 +1,42 @@
 Changelog
 =========
 
-21.4.0rc1 (UNRELEASED)
-----------------------
+.. _lib-21.8.0:
+
+21.8.0 (UNRELEASED)
+-------------------
+
+.. start-21.8.0
 
 Added
 *****
 
+* Add ``KlioReadFromPubSub`` and ``KlioWriteToPubSub`` IO transforms.
 * Add default metrics to be collected in Klio's IO transforms.
 * Add default metrics to be collected in Klio's helper transforms.
 * Add default metrics to be collected in Klio's decorators.
-* Add ``KlioReadFromPubSub`` and ``KlioWriteToPubSub`` IO transforms.
+* Add support for using Beam's metrics API directly.
+* Add DirectGKERunner, runs direct runner on GKE with added logic to only ack pub/sub message when:
+  * the pipeline successfully ran, but before any write to event output happens if any,
+  * the message is skipped because output data already exists,
+  * the message is dropped because input data does not exist, or
+  * the message is dropped because it was not the intended recipient.
+
+* Add metrics interface for shumway
 
 Fixed
 *****
 
 * ``KlioTriggerUpstream`` no longer raises a pickling error when trying to log.
 
-21.3.0rc1 (UNRELEASED)
-----------------------
-
-Added
-*****
-
-* Add support for using Beam's metrics API directly.
-
 Changed
 *******
 
 * The Beam metrics client will always be used, no matter the configured runner.
 * Marked Klio's support for Stackdriver log-based metrics for deprecation and eventual removal.
+
+.. end-21.8.0
+
 
 .. _lib-21.2.0:
 

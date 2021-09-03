@@ -151,8 +151,7 @@ PROJECT_URLS = {
 }
 META_FILE = read(META_PATH)
 INSTALL_REQUIRES = [
-    # TODO: Update on release
-    "klio-core>=21.7.0.dev1",
+    "klio-core>=21.8.0",
     "click",
     "dateparser",
     "docker",

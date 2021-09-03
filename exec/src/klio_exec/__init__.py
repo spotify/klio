@@ -14,7 +14,7 @@
 #
 
 __author__ = "The klio developers"
-__version__ = "21.8.0rc1"
+__version__ = "21.8.0"
 __email__ = "opensource+klio@spotify.com"
 __description__ = "Component of klio project that reduces boilerplate while \
                    writing YAML-config-driven, Dockerized python Beam pipelines\

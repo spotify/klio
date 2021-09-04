@@ -105,7 +105,7 @@ run both of these (with ``black`` in non-edit mode), so be sure to run these you
 Run tests via ``pytest`` and ``pyenv`` for Multi-project Dev
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The above testing with ``tox`` will not work if you need to makes changes across several projects
+The above testing with ``tox`` will not work if you need to make changes across several projects
 at once, instead you will need to create your own virtualenv and install your checked-out code as
 a local dependency.  Then you'll bypass ``tox`` and run ``pytest`` directly.
 
@@ -123,7 +123,7 @@ We then have to activate it in order to use it:
 
     $ pyenv activate klio-dev
 
-Your console's prompt should now include ``(klio-dev)`` to help you keep track of which venv
+Your console's prompt should now include ``(klio-dev)`` to help you to keep track of which env
 you're currently using.  Now we will install your local ``klio-core`` as a library:
 
 .. code-block:: sh
@@ -131,7 +131,7 @@ you're currently using.  Now we will install your local ``klio-core`` as a libra
     $ cd <klio-core-directory>
     $ pip install -e ".[dev]"
 
-Next, navigate to the ``klio-cli`` dir and do the same thing:
+Next, navigate to the ``klio-cli`` directory and do the same thing:
 
 .. code-block:: sh
 

@@ -671,3 +671,19 @@ def test_stop(
     mock_k8s_client.patch_namespaced_deployment.assert_called_once_with(
         name=deployment_name, namespace=namespace, body=deployment_config,
     )
+
+
+def test_gke_mixin_build_ui_link(mocker, monkeypatch, deployment_config):
+    g = job_gke.GKECommandMixin()
+    monkeypatch.setattr(g, "_deployment_config", deployment_config)
+    monkeypatch.setattr(
+        g,
+        "_kubernetes_active_context",
+        {"name": "gke_test-project_some-region_some-region-cluster123"},
+    )
+    expected = (
+        "https://console.cloud.google.com/kubernetes/deployment"
+        "/some-region/some-region-cluster123/sigint/gke-baseline-random-music"
+        "/overview?project=test-project"
+    )
+    assert expected == g._build_ui_link_from_current_context()

@@ -453,11 +453,11 @@ def test_gke_mixin_build_ui_link(mocker, monkeypatch, deployment_config):
     monkeypatch.setattr(
         g,
         "_kubernetes_active_context",
-        {"name": "gke_gke-xpn-1_us-east1_us-east1-kn0t"},
+        {"name": "gke_test-project_some-region_some-region-cluster123"},
     )
     expected = (
         "https://console.cloud.google.com/kubernetes/deployment"
-        "/us-east1/us-east1-kn0t/sigint/gke-baseline-random-music"
-        "/overview?project=gke-xpn-1"
+        "/some-region/some-region-cluster123/sigint/gke-baseline-random-music"
+        "/overview?project=test-project"
     )
     assert expected == g._build_ui_link_from_current_context()

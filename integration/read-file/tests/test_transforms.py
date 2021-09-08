@@ -53,13 +53,6 @@ def expected_log_messages(klio_msg):
         {
             "level": "DEBUG",
             "message": (
-                "KlioThreadLimiter(name=LogKlioMessage.process) Released "
-                "semaphore (available threads:"
-            ),
-        },
-        {
-            "level": "DEBUG",
-            "message": (
                 "[kmsg-received] value: 1 transform: 'LogKlioMessage.process' "
                 "tags: {'metric_type': 'counter'}"
             )
@@ -72,6 +65,13 @@ def expected_log_messages(klio_msg):
         {
             "level": "INFO",
             "message": "Received payload {}".format(klio_msg.data.payload),
+        },
+        {
+            "level": "DEBUG",
+            "message": (
+                "KlioThreadLimiter(name=LogKlioMessage.process) Released "
+                "semaphore (available threads:"
+            ),
         },
         {
             "level": "DEBUG",

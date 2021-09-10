@@ -41,6 +41,8 @@ patcher.start()
 
 from klio.transforms import helpers  # NOQA: E402, I100, I202
 
+patcher.stop()
+
 
 @pytest.fixture
 def patch_subscriber_client(mocker, monkeypatch):

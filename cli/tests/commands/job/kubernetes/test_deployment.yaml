@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: gke-baseline-random-music
+  name: gke-baseline-random-music
+  namespace: sigint
+spec:
+  replicas: 100
+  selector:
+    matchLabels:
+      app: gke-baseline-random-music
+      role: gkebaselinerandommusic
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: gke-baseline-random-music
+        role: gkebaselinerandommusic
+    spec:
+      containers:
+      - env:
+        - name: MY_CREDENTIALS
+          value: /my_key.json
+        image: gcr.io/sigint/gke-baseline-random-music-gke
+        name: gke-baseline-random-music
+        resources:
+          limits:
+            cpu: 8
+            memory: 20G
+          requests:
+            cpu: 4
+            memory: 16G
+        volumeMounts:
+        - mountPath: /var/secrets/google
+          name: google-cloud-key

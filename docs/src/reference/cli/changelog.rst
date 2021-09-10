@@ -1,6 +1,21 @@
 CLI Changelog
 =============
 
+.. _cli-21.9.0:
+
+21.9.0 (UNRELEASED)
+-------------------
+
+.. start-21.9.0
+
+Added
+*****
+
+* Support for applying and deleting all resource (e.g., deployment, hpa, vpa)
+    types configured in yaml files in a job's kubernetes directory.
+
+.. end-21.9.0
+
 .. _cli-21.8.0:
 
 21.8.0 (2021-09-03)

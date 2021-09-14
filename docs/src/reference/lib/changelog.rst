@@ -8,6 +8,11 @@ Changelog
 
 .. start-21.9.0
 
+Fixed
+*****
+
+* ``max_thread_count`` parameter in the ``handle_klio`` decorator now correctly works for ``DoFn`` ``process`` methods (See `PR 209 <https://github.com/spotify/klio/pull/209>`_).
+
 Changed
 *******
 

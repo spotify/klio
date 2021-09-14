@@ -1,6 +1,21 @@
 Changelog
 =========
 
+.. _lib-21.9.0:
+
+21.9.0 (UNRELEASED)
+-------------------
+
+.. start-21.9.0
+
+Changed
+*******
+
+* Klio's config file is now read from disk once per worker instead of once per thread (See `PR 218 <https://github.com/spotify/klio/pull/218>`_).
+
+.. end-21.9.0
+
+
 .. _lib-21.8.0:
 
 21.8.0 (2021-09-03)

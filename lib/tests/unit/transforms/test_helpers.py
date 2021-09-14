@@ -38,6 +38,8 @@ patcher.start()
 
 from klio.transforms import helpers  # NOQA: E402, I100, I202
 
+patcher.stop()
+
 IS_PY36 = sys.version_info < (3, 7)
 
 

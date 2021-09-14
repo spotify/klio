@@ -537,3 +537,6 @@ def test_threadlimitgenerator_del_release(mocker):
 
     subfunc()
     limiter.release.assert_called_once_with()
+
+
+patcher.stop()

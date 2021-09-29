@@ -13,12 +13,7 @@
 # limitations under the License.
 #
 
-import os
-
 import pytest
-import yaml
-
-from klio_core import config
 
 from klio.metrics import logger as logger_metrics
 from klio.metrics import native as native_metrics
@@ -67,68 +62,6 @@ def test_klio_metrics(
         assert any([isinstance(actual_relay, ec) for ec in exp_clients])
         if isinstance(actual_relay, logger_metrics.MetricsLoggerClient):
             assert actual_relay.disabled is False
-
-
-@pytest.mark.parametrize("usr_local_exists", (True, False))
-@pytest.mark.parametrize("usr_glob_exists", (True, False))
-def test_load_config_from_file(
-    usr_local_exists, usr_glob_exists, config_dict, mocker, monkeypatch,
-):
-    monkeypatch.setattr(os.path, "exists", lambda x: usr_local_exists)
-    effective_klio_yaml_file = "/usr/src/app/klio-job-run-effective.yaml"
-    expected_open_file = "/usr/src/config/.effective-klio-job.yaml"
-
-    if usr_local_exists:
-        expected_open_file = "/usr/local/klio-job-run-effective.yaml"
-    elif usr_glob_exists:
-        expected_open_file = effective_klio_yaml_file
-
-    mock_iglob = mocker.Mock()
-    if usr_glob_exists:
-        mock_iglob.return_value = [effective_klio_yaml_file]
-    else:
-        mock_iglob.return_value = []
-
-    monkeypatch.setattr(core_transforms.glob, "iglob", mock_iglob)
-
-    open_name = "klio.transforms.core.open"
-    config_str = yaml.dump(config_dict)
-    m_open = mocker.mock_open(read_data=config_str)
-    m = mocker.patch(open_name, m_open)
-
-    klio_config = core_transforms.RunConfig._load_config_from_file()
-
-    m.assert_called_once_with(expected_open_file, "r")
-    assert isinstance(klio_config, config.KlioConfig)
-    if not usr_local_exists:
-        mock_iglob.assert_called_once_with(
-            "/usr/**/klio-job-run-effective.yaml", recursive=True
-        )
-    else:
-        mock_iglob.assert_not_called()
-
-
-def test_load_config_from_file_raises(config_dict, mocker, monkeypatch):
-    monkeypatch.setattr(os.path, "exists", lambda x: False)
-
-    mock_iglob = mocker.Mock()
-    mock_iglob.return_value = iter([])
-    monkeypatch.setattr(core_transforms.glob, "iglob", mock_iglob)
-
-    with pytest.raises(IOError):
-        core_transforms.RunConfig._load_config_from_file()
-
-
-def test_runconfig_load_once(mocker, monkeypatch):
-    # ensures config is only loaded once
-    mock_load = mocker.Mock()
-    monkeypatch.setattr(
-        core_transforms.RunConfig, "_load_config_from_file", mock_load
-    )
-    core_transforms.RunConfig._config = None
-    core_transforms.RunConfig.get()
-    core_transforms.RunConfig.get()
-    assert 1 == mock_load.call_count
 
 
 @pytest.mark.parametrize("thread_local_ret", (True, False))

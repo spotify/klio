@@ -151,8 +151,7 @@ PROJECT_URLS = {
 }
 META_FILE = read(META_PATH)
 INSTALL_REQUIRES = [
-    # 2.22 added DirectRunner support for `DoFn.setup`
-    "apache-beam[gcp]>2.21.0",
+    "apache-beam[gcp]>=2.31.0",
     "google-api-python-client",
     "klio-core>=21.9.0",
     "protobuf",

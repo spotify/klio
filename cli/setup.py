@@ -151,7 +151,7 @@ PROJECT_URLS = {
 }
 META_FILE = read(META_PATH)
 INSTALL_REQUIRES = [
-    "klio-core>=21.9.0.dev1",
+    "klio-core>=21.9.0rc1",
     "click",
     "dateparser",
     "docker",

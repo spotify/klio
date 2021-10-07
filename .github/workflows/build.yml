@@ -76,8 +76,7 @@ jobs:
       # Upload artifact so it can be downloaded & used in other releasing steps
       - name: Archive artifacts
         uses: actions/upload-artifact@v2
-        working-directory: ${{ github.event.inputs.package-dir }}
         with:
           name: dist-${{ github.event.inputs.package-name }}
-          path: dist/*
+          path: ${{ github.event.inputs.package-dir }}/dist/*
           retention-days: 1

@@ -36,11 +36,11 @@ jobs:
         with:
           python-version: 3.8
 
-      - name: Install pypa/build
+      - name: Install dependencies
         run: |
           set -xe
           python -VV
-          python -m pip install build --user
+          python -m pip install build virtualenv --user
 
       - name: "${{ github.event.inputs.package-name }}: Build wheel & sdist"
         working-directory: ${{ github.event.inputs.package-dir }}
@@ -56,17 +56,22 @@ jobs:
         run: |
           set -xe
           python -VV
-          python -m pip install dist/*.tar.gz --user
+          python -m virtualenv sdist-test
+          source sdist-test/bin/activate
+          python -m pip install dist/*.tar.gz
           python -c 'import ${{ github.event.inputs.package-name }}; print(${{ github.event.inputs.package-name }}.__version__)'
-          python -m pip uninstall -y ${{ github.event.inputs.package-name }}
+          deactivate
 
       - name: "${{ github.event.inputs.package-name }}: Test wheel installation"
         working-directory: ${{ github.event.inputs.package-dir }}
         run: |
           set -xe
           python -VV
-          python -m pip install dist/*.whl --user
+          python -m virtualenv wheel-test
+          source wheel-test/bin/activate
+          python -m pip install dist/*.whl
           python -c 'import ${{ github.event.inputs.package-name }}; print(${{ github.event.inputs.package-name }}.__version__)'
+          deactivate
 
       # Upload artifact so it can be downloaded & used in other releasing steps
       - name: Archive artifacts

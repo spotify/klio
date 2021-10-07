@@ -1,0 +1,78 @@
+# "Template" workflow that can be called by other workflows as well as manually triggered
+# https://docs.github.com/en/actions/learn-github-actions/reusing-workflows
+
+name: Build Artifact & Test Local Installation
+
+on:
+  workflow_call:  # allows calls from other workflows
+    inputs:
+      package-dir:
+        description: "Directory of package to build"
+        required: true
+        type: string
+      package-name:
+        description: "Name of package to build"
+        required: true
+        type: string
+  workflow_dispatch:  # manual trigger
+    inputs:
+      package-dir:
+        description: "Directory of package to build"
+        required: true
+        type: string
+      package-name:
+        description: "Name of package to build"
+        required: true
+        type: string
+
+jobs:
+  build_install:
+    name: "Build & Install ${{ github.event.inputs.package-name }}"
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v2"
+      - name: Set up Python 3.8
+        uses: "actions/setup-python@v2"
+        with:
+          python-version: 3.8
+
+      - name: Install pypa/build
+        run: |
+          set -xe
+          python -VV
+          python -m pip install build --user
+
+      - name: "${{ github.event.inputs.package-name }}: Build wheel & sdist"
+        working-directory: ${{ github.event.inputs.package-dir }}
+        run: |
+          set -xe
+          python -VV
+          python -m build --sdist --wheel --outdir dist/ .
+
+      # Last command in this step is to uninstall, so we can try installing
+      # the wheel after it
+      - name: "${{ github.event.inputs.package-name }}: Test sdist installation"
+        working-directory: ${{ github.event.inputs.package-dir }}
+        run: |
+          set -xe
+          python -VV
+          python -m pip install dist/*.tar.gz --user
+          python -c 'import ${{ github.event.inputs.package-name }}; print(${{ github.event.inputs.package-name }}.__version__)'
+          python -m pip uninstall -y ${{ github.event.inputs.package-name }}
+
+      - name: "${{ github.event.inputs.package-name }}: Test wheel installation"
+        working-directory: ${{ github.event.inputs.package-dir }}
+        run: |
+          set -xe
+          python -VV
+          python -m pip install dist/*.whl --user
+          python -c 'import ${{ github.event.inputs.package-name }}; print(${{ github.event.inputs.package-name }}.__version__)'
+
+      # Upload artifact so it can be downloaded & used in other releasing steps
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v2
+        working-directory: ${{ github.event.inputs.package-dir }}
+        with:
+          name: dist-${{ github.event.inputs.package-name }}
+          path: dist/*
+          retention-days: 1

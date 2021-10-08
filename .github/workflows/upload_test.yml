@@ -1,0 +1,91 @@
+# "Template" workflow that can be called by other workflows as well as manually triggered
+# https://docs.github.com/en/actions/learn-github-actions/reusing-workflows
+
+name: Upload to Test PyPI
+
+on:
+  workflow_call:  # allows calls from other workflows
+    inputs:
+      package-name:
+        description: "Import name of package to upload (e.g. klio_core, not klio-core)"
+        required: true
+        type: string
+  workflow_dispatch:  # manual trigger
+    inputs:
+      package-name:
+        description: "Import name of package to upload (e.g. klio_core, not klio-core)"
+        required: true
+        type: string
+
+# Note: this needs the build.yml workflow to run for the desired package first 
+# so that the artifact is uploaded to GH temp storage, but since this workflow 
+# is a reusable workflow, it can't call another reusable workflow 
+# (GH limitations https://docs.github.com/en/actions/learn-github-actions/reusing-workflows#limitations)
+jobs:
+  upload_test_pypi:
+    name: Upload packages to PyPI Test Server
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Download ${{ github.event.inputs.package-name }} artifacts from GH
+        id: download
+        uses: actions/download-artifact@v2
+        with:
+          name: dist-${{ github.event.inputs.package-name }}
+
+      # Save the version as a variable we can use later when we test
+      # the installation
+      - name: Grab Package Version
+        id: version
+        shell: bash
+        run: |
+          set -xe
+          FULL_PATH=$(ls ${{ steps.download.outputs.download-path }}/*.tar.gz)
+          BASE_NAME=$(basename ${FULL_PATH} .tar.gz)
+          VERSION=$(echo ${BASE_NAME} | cut -d- -f3)
+          echo ::set-output name=version::$(echo ${VERSION})
+
+      - name: Upload artifacts to Test PyPI
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
+          verbose: true
+          packages_dir: ${{ steps.download.outputs.download-path }}
+
+  install_test_pypi:
+    name: Test installation from Test PyPI
+    needs: upload_test_pypi
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Set up Python 3.8
+        uses: "actions/setup-python@v2"
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: |
+          set -xe
+          python -VV
+          python -m pip install virtualenv --user
+
+      # Since not all of our dependencies are on the Test PyPI, we pass in
+      # an `--extra-index-url` to include prod so the klio* package can be properly installed 
+      - name: Test wheel install from Test PyPI
+        run: |
+          set -xe
+          python -m virtualenv test-pypi-wheel
+          source test-pypi-wheel/bin/activate
+          python -m pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple --only-binary=${{ github.event.inputs.package-name }} ${{ github.event.inputs.package-name }}==${{ needs.upload_test_pypi.outputs.version }}
+          python -c 'import ${{ github.event.inputs.package-name }}; assert ${{ github.event.inputs.package-name }}.__version__ == "${{ needs.upload_test_pypi.outputs.version }}"'
+          deactivate
+
+      - name: Test sdist install from Test PyPI
+        run: |
+          set -xe
+          python -m virtualenv test-pypi-sdist
+          source test-pypi-sdist/bin/activate
+          python -m pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple --no-binary=${{ github.event.inputs.package-name }} ${{ github.event.inputs.package-name }}==${{ needs.upload_test_pypi.outputs.version }}
+          python -c 'import ${{ github.event.inputs.package-name }}; assert ${{ github.event.inputs.package-name }}.__version__ == "${{ needs.upload_test_pypi.outputs.version }}"'
+          deactivate

@@ -11,7 +11,7 @@ on:
         required: true
         type: string
       package-name:
-        description: "Name of package to build"
+        description: "Import name of package to build (e.g. klio_core, not klio-core)"
         required: true
         type: string
   workflow_dispatch:  # manual trigger
@@ -21,7 +21,7 @@ on:
         required: true
         type: string
       package-name:
-        description: "Name of package to build"
+        description: "Import name of package to build (e.g. klio_core, not klio-core)"
         required: true
         type: string
 

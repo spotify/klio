@@ -1,4 +1,6 @@
 INFO:root:Found worker image: integration-test-klio-read-file-write-file:read-file
+WARNING:root:Make sure that locally built Python SDK docker image has Python 3.6 interpreter.
+INFO:root:Default Python SDK image for environment is apache/beam_python3.6_sdk:2.33.0
 /usr/src/app/transforms.py:25: KlioFutureWarning: 'handle_klio' is experimental and is subject to incompatible changes, or removal in a future release of Klio.
   @decorators.handle_klio
 INFO:klio:Hello, Klio!

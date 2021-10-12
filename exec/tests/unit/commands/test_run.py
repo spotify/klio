@@ -372,6 +372,7 @@ def test_set_standard_options(
     all_options, config, direct_runner, mocker, monkeypatch
 ):
     all_options["runner"] = "dataflow"
+    config.pipeline_options.runner = "dataflow"
     options = pipeline_options.PipelineOptions().from_dictionary(all_options)
     actual_std_options = options.view_as(pipeline_options.StandardOptions)
 

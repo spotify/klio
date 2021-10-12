@@ -166,8 +166,9 @@ The following metrics are collected by default:
             
         1. ``.timer_unit``
         2. ``.native.timer_unit``
-        3. ``.logger.timer_unit``
-        4. If nothing is set, then ``seconds`` will be used.
+        3. ``.shumway.timer_unit``
+        4. ``.logger.timer_unit``
+        5. If nothing is set, then ``seconds`` will be used.
 
       - | :func:`@handle_klio <klio.transforms.decorators.handle_klio>`
         | :func:`@serialize_klio_message <klio.transforms.decorators.serialize_klio_message>`

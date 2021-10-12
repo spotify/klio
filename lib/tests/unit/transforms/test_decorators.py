@@ -539,4 +539,39 @@ def test_threadlimitgenerator_del_release(mocker):
     limiter.release.assert_called_once_with()
 
 
+@pytest.mark.parametrize(
+    "metrics_conf,expected_unit",
+    (
+        # default - no config
+        ({}, "s"),
+        # config set
+        ({"timer_unit": "ms"}, "ms"),
+        ({"logger": {"timer_unit": "ms"}}, "ms"),
+        ({"native": {"timer_unit": "ms"}}, "ms"),
+        ({"shumway": {"timer_unit": "ms"}}, "ms"),
+        # expected order
+        ({"timer_unit": "ms", "logger": {"timer_unit": "ns"}}, "ms"),
+        (
+            {"logger": {"timer_unit": "ns"}, "native": {"timer_unit": "ms"}},
+            "ms",
+        ),
+        (
+            {"shumway": {"timer_unit": "ns"}, "native": {"timer_unit": "ms"}},
+            "ms",
+        ),
+        (
+            {"shumway": {"timer_unit": "ns"}, "logger": {"timer_unit": "ms"}},
+            "ns",
+        ),
+        # various combos
+        ({"logger": {"level": "info"}}, "s"),
+        ({"native": False}, "s"),
+        (False, "s"),
+    ),
+)
+def test_get_timer_unit(metrics_conf, expected_unit):
+    actual_unit = decorators.__get_timer_unit(metrics_conf)
+    assert expected_unit == actual_unit
+
+
 patcher.stop()

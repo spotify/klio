@@ -23,6 +23,7 @@ Changed
 *******
 
 * When running a job, effective config is no longer written to ``klio-job-run-effective.yaml``, but instead to a temp file.  This file no longer needs to be included in ``setup.py`` projects (See `PR 233 <https://github.com/spotify/klio/pull/233>`_).
+* Error out when a user tries to run a Dataflow-based job with Stackdriver log-based metrics client configured.
 
 .. end-21.10.0
 

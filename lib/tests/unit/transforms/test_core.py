@@ -22,69 +22,31 @@ from klio_core import config
 
 from klio.metrics import logger as logger_metrics
 from klio.metrics import native as native_metrics
-from klio.metrics import stackdriver as sd_metrics
-from klio.transforms import _utils as utils
+from klio.metrics import shumway
 from klio.transforms import core as core_transforms
 
 
-# FIXME: for some reason, the mocks that are patched on various objects within
-# this test function linger, creating warnings in test_helpers.py and
-# test_io.py. These particular warnings show that something is not patched
-# correctly for them, and therefore creating HTTP calls (i.e. a google auth
-# user warning).
-@pytest.mark.skip("FIXME: patches linger causing HTTP calls in other modules")
 @pytest.mark.parametrize(
-    "runner,metrics_config,exp_clients,exp_warn",
+    "runner,metrics_config,exp_clients",
     (
         # default metrics client config for respective runner
-        ("dataflow", {}, [sd_metrics.StackdriverLogMetricsClient], True),
-        ("direct", {}, [logger_metrics.MetricsLoggerClient], False),
+        ("direct", {}, [logger_metrics.MetricsLoggerClient]),
+        ("directgkerunner", {}, [shumway.ShumwayMetricsClient]),
+        ("dataflow", {}, []),  # default to native
         # explicitly turn on metrics for respective runner
-        (
-            "dataflow",
-            {"stackdriver_logger": True},
-            [sd_metrics.StackdriverLogMetricsClient],
-            True,
-        ),
-        (
-            "direct",
-            {"logger": True},
-            [logger_metrics.MetricsLoggerClient],
-            False,
-        ),
+        ("direct", {"logger": True}, [logger_metrics.MetricsLoggerClient],),
+        ("directgkerunner", {"shumway": True}, [shumway.ShumwayMetricsClient]),
         # turn off default client for respective runner
-        ("dataflow", {"stackdriver_logger": False}, [], False),
-        ("direct", {"logger": False}, [], False),
-        # ignore SD config when on direct
-        (
-            "direct",
-            {"stackdriver_logger": True},
-            [logger_metrics.MetricsLoggerClient],
-            False,
-        ),
-        # ignore logger config when on dataflow
-        (
-            "dataflow",
-            {"logger": False},
-            [sd_metrics.StackdriverLogMetricsClient],
-            True,
-        ),
+        ("direct", {"logger": False}, []),
+        ("directgkerunner", {"shumway": False}, []),
+        # turn off other clients should have no effect
+        ("directgkerunner", {"logger": False}, [shumway.ShumwayMetricsClient]),
+        ("direct", {"shumway": False}, [logger_metrics.MetricsLoggerClient]),
+        ("dataflow", {"shumway": False, "logger": False}, []),
     ),
 )
-@pytest.mark.filterwarnings(
-    (
-        "ignore:StackdriverLogMetricsClient has been deprecated since `klio` "
-        "version 0.2.6"
-    )
-)
 def test_klio_metrics(
-    runner,
-    metrics_config,
-    exp_clients,
-    exp_warn,
-    klio_config,
-    mocker,
-    monkeypatch,
+    runner, metrics_config, exp_clients, klio_config, mocker, monkeypatch,
 ):
     # all should have the native metrics client
     exp_clients.append(native_metrics.NativeMetricsClient)
@@ -98,11 +60,7 @@ def test_klio_metrics(
     mock_config = mocker.PropertyMock(return_value=klio_config)
     monkeypatch.setattr(core_transforms.KlioContext, "config", mock_config)
 
-    if exp_warn:
-        with pytest.warns(utils.KlioDeprecationWarning):
-            registry = klio_ns.metrics
-    else:
-        registry = klio_ns.metrics
+    registry = klio_ns.metrics
 
     assert len(exp_clients) == len(registry._relays)
     for actual_relay in registry._relays:

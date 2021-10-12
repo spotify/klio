@@ -41,6 +41,12 @@ DATAFLOW_REGIONS = (
 
 class KlioRunner(enum.Enum):
     DIRECT_GKE_RUNNER = "DirectGKERunner"
+    DIRECT_RUNNER = "DirectRunner"
+    DATAFLOW_RUNNER = "DataflowRunner"
 
     def __eq__(self, other):
-        return self.value.lower() == other.lower()
+        if not other.lower().endswith("runner"):
+            other = other + "runner"
+        if "direct" in other.lower():
+            return self.value.lower() == other.lower()
+        return other.lower() in self.value.lower()

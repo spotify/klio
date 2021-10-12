@@ -100,3 +100,39 @@ def test_is_direct_runner(mocker, monkeypatch, direct_runner):
         cli_utils.is_direct_runner(mock_klio_cfg, direct_runner)
         == direct_runner
     )
+
+
+@pytest.mark.parametrize(
+    "sd_config",
+    (
+        {"stackdriver_logger": True},
+        {"stackdriver_logger": {"timer_unit": "s"}},
+    ),
+)
+def test_error_stackdriver_logger_metrics_raises(sd_config, mocker, caplog):
+    mock_klio_config = mocker.Mock()
+    mock_klio_config.pipeline_options.runner = "DataflowRunner"
+    mock_klio_config.job_config.metrics = {"stackdriver_logger": sd_config}
+
+    with pytest.raises(SystemExit):
+        cli_utils.error_stackdriver_logger_metrics(mock_klio_config, False)
+
+    assert 1 == len(caplog.records)
+    assert (
+        "The Stackdriver log-based metric client has been deprecated"
+        in caplog.records[0].message
+    )
+
+
+@pytest.mark.parametrize(
+    "metrics_conf",
+    ({"stackdriver_logger": False}, {"native": {"timer_unit": "s"}}, {},),
+)
+def test_error_stackdriver_logger_metrics(metrics_conf, mocker, caplog):
+    mock_klio_config = mocker.Mock()
+    mock_klio_config.pipeline_options.runner = "DataflowRunner"
+    mock_klio_config.job_config.metrics = metrics_conf
+
+    cli_utils.error_stackdriver_logger_metrics(mock_klio_config, False)
+
+    assert 0 == len(caplog.records)

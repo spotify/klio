@@ -7,7 +7,7 @@ Default Metrics Provided
 ------------------------
 
 Klio collects :ref:`some metrics <default-metrics-collected>` by default. 
-When running on Dataflow, these metrics will be :ref:`automatically available <dataflow-metrics-ui>` in the job's UI as custom counters, as well as custom metrics in Stackdriver monitoring.
+When running on Dataflow, these metrics will be :ref:`automatically available <dataflow-metrics-ui>` in the job's UI as custom counters, as well as custom metrics in Stackdriver Monitoring.
 
 .. _default-metrics-collected:
 
@@ -165,9 +165,10 @@ The following metrics are collected by default:
         This timer defaults to measuring in units as configured in ``klio-job.yaml`` under |job_config.metrics|_ in the following order of precedence:
             
         1. ``.timer_unit``
-        2. ``.stackdriver_logger.timer_unit``
-        3. ``.logger.timer_unit``
-        4. If nothing is set, then ``seconds`` will be used.
+        2. ``.native.timer_unit``
+        3. ``.shumway.timer_unit``
+        4. ``.logger.timer_unit``
+        5. If nothing is set, then ``seconds`` will be used.
 
       - | :func:`@handle_klio <klio.transforms.decorators.handle_klio>`
         | :func:`@serialize_klio_message <klio.transforms.decorators.serialize_klio_message>`
@@ -227,18 +228,6 @@ Klio defaults to using `Apache Beam's metrics <https://beam.apache.org/documenta
 (referred to as "native" metrics within Klio), and additionally provides a metrics logger 
 (via the standard library's :mod:`logging` module).
 
-.. _stackdriver-log-metrics-deprecation-notice:
-
-.. admonition:: Deprecated: Stackdriver Log-based Metrics
-    :class: warning
-
-    Klio's support for `Stackdriver log-based metrics <https://cloud.google.com/logging/docs/logs-based-metrics/>`_ 
-    has been deprecated since version ``21.3.0`` and will be removed in a future release.
-    Instead, Klio now provides a :class:`NativeMetricsClient <klio.metrics.native.NativeMetricsClient>` 
-    that will automatically create and emit metrics to Dataflow Monitoring when the job runs on 
-    Dataflow via Beam's `metrics API <https://beam.apache.org/documentation/programming-guide/#metrics>`_.
-    
-    Klio uses this native metrics client automatically, so **no migration changes are needed**.
 
 Quickstart Example
 ------------------
@@ -325,7 +314,8 @@ With no additional configuration needed, metrics will be turned on and collected
 
 The default client depends on the runner:
 
-| **Dataflow:** Stackdriver Log-based Metric Client
+| **Dataflow**: Native Apache Beam Metrics Client
+| **DirectGKERunner**: Shumway Metrics Client
 | **Direct:** Standard Library Log Metric Client
 
 Default Configuration
@@ -347,9 +337,7 @@ Setting no metrics configuration is the same as:
         level: debug
         # default timer unit in nanoseconds
         timer_unit: ns
-      stackdriver_logger: 
-        # level that metrics are emitted
-        level: debug
+      shumway:
         # default timer unit in nanoseconds
         timer_unit: ns
 
@@ -360,12 +348,15 @@ The default configuration above is the same as setting metrics clients to `True`
   job_config:
     metrics:
       logger: true
-      stackdriver_logger: true
+      shumway: true
 
 
 .. note::
 
     The native client can not be turned off.
+    If you no longer want to emit metrics to Stackdriver from Dataflow, 
+    remove the ``enable_stackdriver_agent_metrics`` from ``job_config.pipeline_options.experiments``
+    as detailed :ref:`below <stackdriver_experiment>`.
 
 
 To turn off/on a metrics client, set its value to `false`/`true`:
@@ -374,26 +365,15 @@ To turn off/on a metrics client, set its value to `false`/`true`:
 
   job_config:
     metrics:
-      stackdriver_logger: false
+      logger: false
+      shumway: false
 
-.. note::
-
-    While on Dataflow, setting ``logger`` to ``False``
-    will have **no effect** when ``stackdriver_logger`` is still turned on.
-
-.. note::
-
-    While using the Direct runner, turning on ``stackdriver_logger``
-    will have **no effect**.
-
-    This is because Stackdriver log-based metrics requires logs to be sent to Stackdriver
-    while the Direct runner sends logs to ``stdout``/``stderr``.
 
 
 Available Configuration
 ***********************
 
-For all three clients, ``native``, ``logger`` and ``stackdriver_logger``, the following configuration is available:
+For all three clients, ``native``, ``shumway``, and ``logger``, the following configuration is available:
 
 
 .. program:: metrics-config
@@ -408,7 +388,7 @@ For all three clients, ``native``, ``logger`` and ``stackdriver_logger``, the fo
   Default: ``ns``
 
 
-For both ``logger`` and ``stackdriver_logger``, the following additional configuration is available:
+For ``logger``, the following additional configuration is available:
 
 .. program:: metrics-config
 
@@ -483,18 +463,11 @@ How it looks with the :class:`logger <klio.metrics.logger.MetricsLoggerClient>` 
 
 .. hint::
 
-    The :class:`NativeMetricsClient <klio.metrics.native.NativeMetricsClient>` will not log anything.
+    Both the :class:`NativeMetricsClient <klio.metrics.native.NativeMetricsClient>` and 
+    :class:`ShumwayMetricsClient <klio.metrics.shumway.ShumwayMetricsClient>` will not log anything.
 
 Gauges
 ******
-
-.. warning::
-
-    At the moment, the Stackdriver log-based metrics client within Klio
-    can **only** support counter-type metrics.
-    You may still create gauge-type & timer-type metrics,
-    but those will only show up in logs, not on Stackdriver.
-
 
 .. warning::
 
@@ -543,17 +516,11 @@ How it looks with the :class:`logger <klio.metrics.logger.MetricsLoggerClient>` 
 
 .. hint::
 
-    The :class:`NativeMetricsClient <klio.metrics.native.NativeMetricsClient>` will not log anything.
+    Both the :class:`NativeMetricsClient <klio.metrics.native.NativeMetricsClient>` and 
+    :class:`ShumwayMetricsClient <klio.metrics.shumway.ShumwayMetricsClient>` will not log anything.
 
 Timers
 ******
-
-.. warning::
-
-    At the moment,
-    the Stackdriver log-based metrics client within Klio can **only** support counter-type metrics.
-    You may still create gauge-type & timer-type metrics,
-    but those will only show up in logs, not on Stackdriver.
 
 An integer reflected a duration of an event (i.e. time to process an entity, response latency).
 
@@ -613,7 +580,8 @@ How it looks with the :class:`logger <klio.metrics.logger.MetricsLoggerClient>` 
 
 .. hint::
 
-    The :class:`NativeMetricsClient <klio.metrics.native.NativeMetricsClient>` will not log anything.
+    Both the :class:`NativeMetricsClient <klio.metrics.native.NativeMetricsClient>` and 
+    :class:`ShumwayMetricsClient <klio.metrics.shumway.ShumwayMetricsClient>` will not log anything.
 
 Unsupported Types
 *****************
@@ -627,30 +595,33 @@ We will reinvestigate if/when those limitations are addressed.
 Stackdriver Required Setup
 --------------------------
 
-.. caution::
+.. _stackdriver_experiment:
 
-    Support for Stackdriver log-based metrics has been marked for deprecation.
-    See :ref:`above <stackdriver-log-metrics-deprecation-notice>` for more information.
+Update ``klio-job.yaml``
+************************
 
-Access Control
-**************
+In order for the Native metrics client to be able to report metrics to Stackdriver, 
+the following ``experiment`` must be added to ``klio-job.yaml``:
 
-Your default service account for the project must have at least
-`Logs Configuration Writer
-<https://cloud.google.com/logging/docs/access-control#permissions_and_roles>`_
-permission in order to create metrics based off of logs.
+.. code-block:: yaml
+
+    # <--snip-->
+    pipeline_options:
+      experiments:
+        - enable_stackdriver_agent_metrics
+    # <--snip-->
+
 
 Create Dashboard
 ****************
 
-During the runtime of a pipeline, Klio will automatically create or reuse the
-`user-defined metrics <https://console.cloud.google.com/logs/metrics>`_ in Stackdriver Logging.
+During the runtime of a pipeline, Klio's native Beam metrics will automatically create and emit
+both default Klio metrics and `user-defined metrics <https://cloud.google.com/dataflow/docs/guides/using-cloud-monitoring>`_ 
+in Stackdriver Monitoring.
 Klio is not yet able to programmatically create dashboards in Stackdriver Monitoring,
 but this functionality is coming soon!
 
-Follow the
-`Stackdriver documentation
-<https://cloud.google.com/logging/docs/logs-based-metrics/charts-and-alerts>`_
+Follow the `Stackdriver documentation <https://cloud.google.com/logging/docs/logs-based-metrics/charts-and-alerts>`_
 on creating dashboards & charts for log-based metrics.
 
 
@@ -659,26 +630,15 @@ on creating dashboards & charts for log-based metrics.
 Limitations
 -----------
 
-**Gauge & timer support in Stackdriver:**
-Klio does not yet support gauges or timers for log-based metrics in Stackdriver
-(they will still be logged to Stackdriver Logging, though).
-Right now, Klio only relies on
-`Stackdriver's construct of counters
-<https://cloud.google.com/logging/docs/logs-based-metrics/#counter-metric>`_.
-In the future, Klio may support gauges and/or timers through
-`distribution-type metrics
-<https://cloud.google.com/logging/docs/logs-based-metrics/#distribution-metric>`_.
-Users are free to experiment with creating distribution metrics by hand based off the logs.
+**Gauges**
+Dataflow does not yet support gauge-type metrics for jobs 
+(see `docs <https://cloud.google.com/dataflow/docs/guides/using-cloud-monitoring#custom_metrics>`_).
 
 **Metrics between transforms:**
 Because Dataflow does not yet support stateful processing
 for streaming Python pipelines (planned 2020),
 maintaining metrics between transforms of a pipeline can not be supported
 (i.e. timing an entity across a whole pipeline of multiple transforms.
-
-**Stackdriver metrics for historical logs:**
-In Stackdriver, metrics based off of logs will be tracked *after* the metric is created.
-Stackdriver **will ignore** any previous log lines before the metric is made.
 
 .. |job_config.metrics| replace:: ``job_config.metrics``
 .. _job_config.metrics: #job-config-metrics

@@ -1,6 +1,17 @@
 Changelog
 =========
 
+.. _exec-21.9.0:
+
+21.9.0 (2021-10-12)
+-------------------
+
+.. start-21.9.0
+
+No changes - bump version to sync with ``21.9.0`` release.
+
+.. end-21.9.0
+
 .. _exec-21.8.0:
 
 21.8.0 (2021-09-03)

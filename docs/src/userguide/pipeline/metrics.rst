@@ -354,6 +354,9 @@ The default configuration above is the same as setting metrics clients to `True`
 .. note::
 
     The native client can not be turned off.
+    If you no longer want to emit metrics to Stackdriver from Dataflow, 
+    remove the ``enable_stackdriver_agent_metrics`` from ``job_config.pipeline_options.experiments``
+    as detailed :ref:`below <stackdriver_experiment>`.
 
 
 To turn off/on a metrics client, set its value to `false`/`true`:
@@ -591,6 +594,8 @@ We will reinvestigate if/when those limitations are addressed.
 
 Stackdriver Required Setup
 --------------------------
+
+.. _stackdriver_experiment:
 
 Update ``klio-job.yaml``
 ************************

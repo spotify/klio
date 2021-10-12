@@ -9,7 +9,6 @@
    Native <native>
    Logger <logger>
    Shumway <shumway>
-   Stackdriver <stackdriver>
    Dispatcher <dispatcher>
    Base Classes <base>
 
@@ -88,21 +87,6 @@
     ShumwayGauge
     ShumwayTimer
 
-:doc:`stackdriver`
-^^^^^^^^^^^^^^^^^^
-
-.. currentmodule:: klio.metrics.stackdriver
-
-.. autosummary::
-    :nosignatures:
-
-    StackdriverLogMetricsClient
-    StackdriverLogMetricsClient.counter
-    StackdriverLogMetricsClient.gauge
-    StackdriverLogMetricsClient.timer
-    StackdriverLogMetricsCounter
-    StackdriverLogMetricsGauge
-    StackdriverLogMetricsTimer
 
 :doc:`dispatcher`
 ^^^^^^^^^^^^^^^^^

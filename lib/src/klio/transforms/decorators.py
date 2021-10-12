@@ -430,11 +430,11 @@ def __get_transform_metrics(func_name, kctx=None):
     default_unit = "s"  # seconds
     metrics_conf = kctx.config.job_config.metrics
     timer_unit = metrics_conf.get("timer_unit")
+    # TODO: fix where logger/native could return a boolean instead of a dict
     logger_unit = metrics_conf.get("logger", {}).get("timer_unit")
-    # TODO: delete line once stackdriver log-based metrics is fully removed
-    sd_unit = metrics_conf.get("stackdriver_logger", {}).get("timer_unit")
+    native_unit = metrics_conf.get("native", {}).get("timer_unit")
 
-    timer_unit = timer_unit or sd_unit or logger_unit or default_unit
+    timer_unit = timer_unit or native_unit or logger_unit or default_unit
     received_ctr = kctx.metrics.counter("kmsg-received", transform=func_name)
     success_ctr = kctx.metrics.counter("kmsg-success", transform=func_name)
     drop_err_ctr = kctx.metrics.counter("kmsg-drop-error", transform=func_name)

@@ -267,8 +267,22 @@ processed.
 With no additional configuration needed, metrics will be turned on and collected. The default
 client depends on the runner:
 
-| **DataflowRunner**: Stackdriver log-based metrics
+| **DataflowRunner**: Native Apache Beam metrics client
 | **DirectRunner**: Python standard library logging
+
+.. caution::
+
+    When running on Dataflow, in order for the Native metrics client to be able to report metrics to Stackdriver, 
+    the following ``experiment`` must be added to ``klio-job.yaml``:
+
+    .. code-block:: yaml
+
+        # <--snip-->
+        pipeline_options:
+          experiments:
+            - enable_stackdriver_agent_metrics
+        # <--snip-->
+
 
 See :doc:`documentation on metrics <../pipeline/metrics>` for information on how to emit metrics from a pipeline.
 
@@ -296,21 +310,12 @@ See :doc:`documentation on metrics <../pipeline/metrics>` for information on how
     | **Default**: ``ns``
 
 
-.. option:: job_config.metrics.stackdriver DICT | BOOL
+.. option:: job_config.metrics.native DICT | BOOL
 
-    Default metrics client on ``DataflowRunner``. To turn it off, set this key to ``False``. To
-    adjust its configuration, use the properties ``level`` and ``timer_unit``.
-
-
-.. option:: job_config.metrics.stackdriver.level STR
-
-    Log level at which metrics are emitted.
-
-    | **Options**: ``debug``, ``info``, ``warning``, ``error``, ``critical``
-    | **Default**: ``debug``
+    Default metrics client on ``DataflowRunner``. To turn it off, set this key to ``False``.
 
 
-.. option:: job_config.metrics.stackdriver.timer_unit STR
+.. option:: job_config.metrics.native.timer_unit STR
 
     Globally set the default unit of time for timers.
 

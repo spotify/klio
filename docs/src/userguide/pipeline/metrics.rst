@@ -315,6 +315,7 @@ With no additional configuration needed, metrics will be turned on and collected
 The default client depends on the runner:
 
 | **Dataflow**: Native Apache Beam Metrics Client
+| **DirectGKERunner**: Shumway Metrics Client
 | **Direct:** Standard Library Log Metric Client
 
 Default Configuration
@@ -336,6 +337,9 @@ Setting no metrics configuration is the same as:
         level: debug
         # default timer unit in nanoseconds
         timer_unit: ns
+      shumway:
+        # default timer unit in nanoseconds
+        timer_unit: ns
 
 The default configuration above is the same as setting metrics clients to `True`:
 
@@ -344,6 +348,7 @@ The default configuration above is the same as setting metrics clients to `True`
   job_config:
     metrics:
       logger: true
+      shumway: true
 
 
 .. note::
@@ -358,13 +363,14 @@ To turn off/on a metrics client, set its value to `false`/`true`:
   job_config:
     metrics:
       logger: false
+      shumway: false
 
 
 
 Available Configuration
 ***********************
 
-For both clients, ``native`` and ``logger``, the following configuration is available:
+For all three clients, ``native``, ``shumway``, and ``logger``, the following configuration is available:
 
 
 .. program:: metrics-config
@@ -454,7 +460,8 @@ How it looks with the :class:`logger <klio.metrics.logger.MetricsLoggerClient>` 
 
 .. hint::
 
-    The :class:`NativeMetricsClient <klio.metrics.native.NativeMetricsClient>` will not log anything.
+    Both the :class:`NativeMetricsClient <klio.metrics.native.NativeMetricsClient>` and 
+    :class:`ShumwayMetricsClient <klio.metrics.shumway.ShumwayMetricsClient>` will not log anything.
 
 Gauges
 ******
@@ -506,7 +513,8 @@ How it looks with the :class:`logger <klio.metrics.logger.MetricsLoggerClient>` 
 
 .. hint::
 
-    The :class:`NativeMetricsClient <klio.metrics.native.NativeMetricsClient>` will not log anything.
+    Both the :class:`NativeMetricsClient <klio.metrics.native.NativeMetricsClient>` and 
+    :class:`ShumwayMetricsClient <klio.metrics.shumway.ShumwayMetricsClient>` will not log anything.
 
 Timers
 ******
@@ -569,7 +577,8 @@ How it looks with the :class:`logger <klio.metrics.logger.MetricsLoggerClient>` 
 
 .. hint::
 
-    The :class:`NativeMetricsClient <klio.metrics.native.NativeMetricsClient>` will not log anything.
+    Both the :class:`NativeMetricsClient <klio.metrics.native.NativeMetricsClient>` and 
+    :class:`ShumwayMetricsClient <klio.metrics.shumway.ShumwayMetricsClient>` will not log anything.
 
 Unsupported Types
 *****************

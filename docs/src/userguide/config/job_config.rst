@@ -268,6 +268,7 @@ With no additional configuration needed, metrics will be turned on and collected
 client depends on the runner:
 
 | **DataflowRunner**: Native Apache Beam metrics client
+| **DirectGKERunner**: Shumway metrics client
 | **DirectRunner**: Python standard library logging
 
 .. caution::
@@ -316,6 +317,20 @@ See :doc:`documentation on metrics <../pipeline/metrics>` for information on how
 
 
 .. option:: job_config.metrics.native.timer_unit STR
+
+    Globally set the default unit of time for timers.
+
+    | **Options**: ``ns``, ``nanoseconds``, ``us``, ``microseconds``, ``ms``, ``milliseconds``,
+     ``s``, ``seconds``
+    | **Default**: ``ns``
+
+
+.. option:: job_config.metrics.shumway DICT | BOOL
+
+    Default metrics client on ``DirectGKERunner``. To turn it off, set this key to ``False``.
+
+
+.. option:: job_config.metrics.shumway.timer_unit STR
 
     Globally set the default unit of time for timers.
 

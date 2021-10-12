@@ -22,6 +22,7 @@ import threading
 import yaml
 
 from klio_core import config
+from klio_core import variables as kvars
 from klio_core.config import core as config_core
 from klio_core.proto import klio_pb2
 
@@ -29,7 +30,6 @@ from klio.metrics import client as metrics_client
 from klio.metrics import logger as metrics_logger
 from klio.metrics import native as native_metrics
 from klio.metrics import shumway
-from klio.metrics import stackdriver
 
 
 class RunConfig(object):
@@ -109,13 +109,12 @@ class KlioContext(object):
     def _get_metrics_registry(self):
         native_metrics_client = native_metrics.NativeMetricsClient(self.config)
         clients = [native_metrics_client]
-        use_logger, use_stackdriver = None, None
+        use_logger, use_shumway = None, None
         metrics_config = self.config.job_config.metrics
 
-        # use_logger and use_stackdriver could be False (turn off),
+        # use_logger/use_shumway could be False (turn off),
         # None (use default config), or a dict of configured values
         use_logger = metrics_config.get("logger")
-        use_stackdriver = metrics_config.get("stackdriver_logger")
         use_shumway = metrics_config.get("shumway")
 
         # TODO: set runner in OS environment (via klio-exec), since
@@ -124,38 +123,20 @@ class KlioContext(object):
         #       i.e.: runner = os.getenv("BEAM_RUNNER", "").lower()
         runner = self.config.pipeline_options.runner
 
-        if "dataflow" in runner.lower():
+        if kvars.KlioRunner.DIRECT_RUNNER != runner:
             if use_logger is None:
                 use_logger = False
-
-            if use_stackdriver is None:
-                use_stackdriver = True
-            # if use_stackdriver is explicitly False, then make sure
-            # logger client is disabled since the stackdriver client
-            # inherits the logger client
-            elif use_stackdriver is False:
-                use_logger = False
-
-        else:
-            if use_logger is None:
-                use_logger = True
-            if use_stackdriver is not False:
-                # Explicitly turn it off when not running on Dataflow as SD
-                # metrics reporting doesn't work when running locally
-                use_stackdriver = False
 
         # use shumway when running on DirectGKERunner unless it's explicitly
         # turned off/set to False. Don't set it to True if it's set to False
         # or it's a dictionary (aka has some configuration)
-        if runner.lower() == "directgkerunner":
+        if kvars.KlioRunner.DIRECT_GKE_RUNNER == runner:
             if use_shumway is None:
                 use_shumway = True
-
-        if use_stackdriver is not False:
-            # FYI there's a deprecation warning when the SD Client is init'ed
-            # StackdriverLogMetricsClient is init'ed
-            sd_client = stackdriver.StackdriverLogMetricsClient(self.config)
-            clients.append(sd_client)
+        # shumway only works on DirectGKERunner, so we explicitly set it
+        # to False
+        else:
+            use_shumway = False
 
         if use_logger is not False:
             logger_client = metrics_logger.MetricsLoggerClient(self.config)

@@ -1,5 +1,29 @@
 Changelog
 =========
+.. _lib-21.10.0:
+
+21.10.0 (UNRELEASED)
+--------------------
+
+.. start-21.10.0
+
+Fixed
+*****
+
+* Fixed bug in metrics parsing when metrics configuration was set to a bool instead of a dict.
+
+Removed
+*******
+
+* Removed deprecated Stackdriver log-based metrics client.
+
+Changes
+*******
+
+* Updated documentation related to the native metrics client.
+
+
+.. end-21.10.0
 
 .. _lib-21.10.0:
 

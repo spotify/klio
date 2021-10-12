@@ -74,6 +74,15 @@ def mock_warn_if_py2_job(mocker, monkeypatch):
 
 
 @pytest.fixture
+def mock_error_stackdriver_logger_metrics(mocker, monkeypatch):
+    mock_error = mocker.Mock()
+    monkeypatch.setattr(
+        cli_utils, "error_stackdriver_logger_metrics", mock_error
+    )
+    return mock_error
+
+
+@pytest.fixture
 def mock_get_config_job_dir(mocker, monkeypatch):
     mock = mocker.Mock()
     monkeypatch.setattr(cli.core_utils, "get_config_job_dir", mock)
@@ -363,6 +372,7 @@ def test_run_job(
     config_file,
     mock_get_git_sha,
     mock_klio_config,
+    mock_error_stackdriver_logger_metrics,
     is_job_dir_override,
 ):
     mock_run = mocker.patch.object(cli.job_commands.run.RunPipeline, "run")
@@ -426,6 +436,9 @@ def test_run_job(
     mock_get_git_sha.assert_called_once_with(
         mock_klio_config.meta.job_dir, image_tag
     )
+    mock_error_stackdriver_logger_metrics.assert_called_once_with(
+        mock_klio_config.klio_config, direct_runner
+    )
 
 
 @pytest.mark.parametrize(
@@ -448,6 +461,7 @@ def test_run_job_gke(
     config_file,
     mock_get_git_sha,
     mock_klio_config,
+    mock_error_stackdriver_logger_metrics,
 ):
     mock_run_gke = mocker.patch.object(gke_commands.RunPipelineGKE, "run")
     mock_run_gke.return_value = 0
@@ -511,6 +525,9 @@ def test_run_job_gke(
 
     mock_get_git_sha.assert_called_once_with(
         mock_klio_config.meta.job_dir, image_tag
+    )
+    mock_error_stackdriver_logger_metrics.assert_called_once_with(
+        mock_klio_config.klio_config, direct_runner
     )
 
 
@@ -640,6 +657,7 @@ def test_deploy_job(
     pipeline_config_dict,
     mock_get_git_sha,
     mock_klio_config,
+    mock_error_stackdriver_logger_metrics,
 ):
     mock_run = mocker.patch.object(cli.job_commands.run.RunPipeline, "run")
     mock_run.return_value = 0
@@ -692,6 +710,9 @@ def test_deploy_job(
         "test-job", "test-project", "us-central1", "cancel"
     )
     mock_run.assert_called_once_with()
+    mock_error_stackdriver_logger_metrics.assert_called_once_with(
+        mock_klio_config.klio_config, direct_runner
+    )
 
 
 def test_deploy_job_raises(

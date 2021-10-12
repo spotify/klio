@@ -16,6 +16,8 @@
 import logging
 import subprocess
 
+from klio_core import variables as var
+
 
 def get_git_sha(cwd=None, image_tag=None):
 
@@ -91,3 +93,29 @@ def import_gke_commands():
             raise SystemExit(1)
         logging.error(e)
         raise SystemExit(1)
+
+
+def error_stackdriver_logger_metrics(klio_config, direct_runner):
+    """Warn if deprecated + removed stackdriver_logger was configured."""
+    if direct_runner:
+        return
+    if klio_config.pipeline_options.runner == var.KlioRunner.DIRECT_GKE_RUNNER:
+        return
+
+    metrics_config = klio_config.job_config.metrics
+    if isinstance(metrics_config, dict):
+        stackdriver_conf = metrics_config.get("stackdriver_logger")
+        if stackdriver_conf not in (False, None):
+            msg = (
+                "The Stackdriver log-based metric client has been deprecated "
+                "since 21.3.0 and removed in 21.10.0, in favor of the Native "
+                "metrics client.\n"
+                "See docs on how to turn on the native client for Dataflow: "
+                "https://docs.klio.io/en/stable/userguide/pipeline/metrics.html"
+                "#stackdriver-required-setup\n"
+                "And docs how to configure the native client: "
+                "https://docs.klio.io/en/stable/userguide/pipeline/metrics.html"
+                "#configuration"
+            )
+            logging.error(msg)
+            raise SystemExit(1)

@@ -136,6 +136,7 @@ def run_job(klio_config, config_meta, **kwargs):
     direct_runner = cli_utils.is_direct_runner(
         klio_config, kwargs.pop("direct_runner")
     )
+    cli_utils.error_stackdriver_logger_metrics(klio_config, direct_runner)
 
     git_sha = cli_utils.get_git_sha(
         config_meta.job_dir, kwargs.get("image_tag")
@@ -240,6 +241,7 @@ def deploy_job(klio_config, config_meta, **kwargs):
     direct_runner = cli_utils.is_direct_runner(
         klio_config, kwargs.pop("direct_runner")
     )
+    cli_utils.error_stackdriver_logger_metrics(klio_config, direct_runner)
 
     git_sha = cli_utils.get_git_sha(
         config_meta.job_dir, kwargs.get("image_tag")

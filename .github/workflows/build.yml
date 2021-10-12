@@ -11,7 +11,7 @@ on:
         required: true
         type: string
       package-name:
-        description: "Name of package to build"
+        description: "Import name of package to build (e.g. klio_core, not klio-core)"
         required: true
         type: string
   workflow_dispatch:  # manual trigger
@@ -21,7 +21,7 @@ on:
         required: true
         type: string
       package-name:
-        description: "Name of package to build"
+        description: "Import name of package to build (e.g. klio_core, not klio-core)"
         required: true
         type: string
 
@@ -40,7 +40,7 @@ jobs:
         run: |
           set -xe
           python -VV
-          python -m pip install build virtualenv --user
+          python -m pip install build virtualenv twine --user
 
       - name: "${{ github.event.inputs.package-name }}: Build wheel & sdist"
         working-directory: ${{ github.event.inputs.package-dir }}
@@ -48,6 +48,13 @@ jobs:
           set -xe
           python -VV
           python -m build --sdist --wheel --outdir dist/ .
+
+      - name: "${{ github.event.inputs.package-name }}: Check Long Description"
+        working-directory: ${{ github.event.inputs.package-dir }}
+        run: |
+          set -xe
+          python -VV
+          python -m twine check dist/*
 
       # Last command in this step is to uninstall, so we can try installing
       # the wheel after it

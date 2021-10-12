@@ -40,6 +40,7 @@ patcher = mock.patch.object(core.RunConfig, "get", conftest._klio_config)
 patcher.start()
 from klio.transforms import io as io_transforms  # NOQA E402
 
+patcher.stop()
 
 HERE = os.path.abspath(os.path.join(os.path.abspath(__file__), os.path.pardir))
 FIXTURE_PATH = os.path.join(HERE, os.path.pardir, "fixtures")
@@ -52,6 +53,7 @@ def assert_expected_klio_msg_from_file(element):
     assert isinstance(message.data.element, bytes)
 
 
+@mock.patch.object(core.RunConfig, "get", conftest._klio_config)
 def test_read_from_file():
     file_path = os.path.join(FIXTURE_PATH, "elements_text_file.txt")
 

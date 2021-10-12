@@ -34,7 +34,8 @@ from klio.metrics import stackdriver
 
 class RunConfig(object):
 
-    _thread_local = threading.local()
+    _lock = threading.Lock()
+    _config = None
 
     @classmethod
     def _load_config_from_file(cls):
@@ -75,15 +76,11 @@ class RunConfig(object):
             )
 
     @classmethod
-    def _get_via_thread_local(cls):
-        klio_config = getattr(cls._thread_local, "klio_config", None)
-        if not klio_config:
-            cls._thread_local.klio_config = cls._load_config_from_file()
-        return cls._thread_local.klio_config
-
-    @classmethod
     def get(cls):
-        return cls._get_via_thread_local()
+        with cls._lock:
+            if cls._config is None:
+                cls._config = cls._load_config_from_file()
+            return cls._config
 
     @classmethod
     def set(cls, config):

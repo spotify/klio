@@ -1,6 +1,26 @@
 Changelog
 =========
 
+.. _lib-21.9.0:
+
+21.9.0 (2021-10-12)
+-------------------
+
+.. start-21.9.0
+
+Fixed
+*****
+
+* ``max_thread_count`` parameter in the ``handle_klio`` decorator now correctly works for ``DoFn`` ``process`` methods (See `PR 209 <https://github.com/spotify/klio/pull/209>`_).
+
+Changed
+*******
+
+* Klio's config file is now read from disk once per worker instead of once per thread (See `PR 218 <https://github.com/spotify/klio/pull/218>`_).
+
+.. end-21.9.0
+
+
 .. _lib-21.8.0:
 
 21.8.0 (2021-09-03)

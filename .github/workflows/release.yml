@@ -14,77 +14,118 @@ on:
         required: true
         type: string
 
+# Note: can't combine releasing to test & prod PyPI into one job with 
+# multiple steps, or use a matrix - this is not supported with reusable workflows
 jobs:
   # core needs to be released first since other klio packages depend on it
-  release_core:
-    name: "[core] Build & Release"
-    runs-on: "ubuntu-latest"
-    steps:
-      - name: "Build wheel & sdist"
-        uses: spotify/klio/.github/workflows/build.yml@develop
-        with:
-          package-dir: core
-          package-name: klio_core
-      - name: "Upload to Test PyPI"
-        uses: spotify/klio/.github/workflows/upload_test.yml@develop
-        with:
-          package-name: klio_core
-      - name: "Upload to Prod PyPI"
-        uses: spotify/klio/.github/workflows/upload_test.yml@develop
-        with:
-          package-name: klio_core
+  release_core_test:
+    name: "[core] Build & Release to Test PyPI"
+    uses: spotify/klio/.github/workflows/upload_test.yml@develop
+    with:
+      package-dir: core
+      package-name: klio_core
 
-  # lib & cli needs to be released next since exec & devtools depend on it
-  release_lib_cli_audio:
-    name: "[lib,cli,audio] Build & Release"
-    needs: release_core
-    runs-on: "ubuntu-latest"
-    strategy:
-      matrix:
-        include:
-          - package-dir: lib
-            package-name: klio
-          - package-dir: cli
-            package-name: klio_cli
-          - package-dir: audio
-            package-name: klio_audio            
-    steps:
-      - name: "[${{ matrix.package-name }}] Build wheel & sdist"
-        uses: spotify/klio/.github/workflows/build.yml@develop
-        with:
-          package-dir: ${{ matrix.package-dir}}
-          package-name: ${{ matrix.package-name}}
-      - name: "[${{ matrix.package-name }}] Upload to Test PyPI"
-        uses: spotify/klio/.github/workflows/upload_test.yml@develop
-        with:
-          package-name: ${{ matrix.package-name}}
-      - name: "[${{ matrix.package-name }}] Upload to Prod PyPI"
-        uses: spotify/klio/.github/workflows/upload_test.yml@develop
-        with:
-          package-name: ${{ matrix.package-name}}
+  release_core_prod:
+    name: "[core] Build & Release to Prod PyPI"
+    needs: release_core_test
+    uses: spotify/klio/.github/workflows/upload_prod.yml@develop
+    with:
+      package-dir: core
+      package-name: klio_core
 
-  release_exec_devtools:
-    name: "[exec,devtools] Build & Release"
-    needs: release_lib_cli_audio
-    runs-on: "ubuntu-latest"
-    strategy:
-      matrix:
-        include:
-          - package-dir: exec
-            package-name: klio_exec
-          - package-dir: devtools
-            package-name: klio_devtools
-    steps:
-      - name: "[${{ matrix.package-name }}] Build wheel & sdist"
-        uses: spotify/klio/.github/workflows/build.yml@develop
-        with:
-          package-dir: ${{ matrix.package-dir}}
-          package-name: ${{ matrix.package-name}}
-      - name: "[${{ matrix.package-name }}] Upload to Test PyPI"
-        uses: spotify/klio/.github/workflows/upload_test.yml@develop
-        with:
-          package-name: ${{ matrix.package-name}}
-      - name: "[${{ matrix.package-name }}] Upload to Prod PyPI"
-        uses: spotify/klio/.github/workflows/upload_test.yml@develop
-        with:
-          package-name: ${{ matrix.package-name}}
+  # lib & cli needs to be released next since exec & devtools depend on them
+  release_lib_test:
+    name: "[lib] Build & Release to Test PyPI"
+    needs: release_core_prod
+    uses: spotify/klio/.github/workflows/upload_test.yml@develop
+    with:
+      package-dir: lib
+      package-name: klio
+
+  release_lib_prod:
+    name: "[lib] Build & Release to Prod PyPI"
+    needs:
+      - release_lib_test
+      - release_core_prod
+    uses: spotify/klio/.github/workflows/upload_prod.yml@develop
+    with:
+      package-dir: lib
+      package-name: klio
+
+  release_cli_test:
+    name: "[cli] Build & Release to Test PyPI"
+    needs: release_core_prod
+    uses: spotify/klio/.github/workflows/upload_test.yml@develop
+    with:
+      package-dir: cli
+      package-name: klio_cli
+
+  release_cli_prod:
+    name: "[cli] Build & Release to Prod PyPI"
+    needs:
+      - release_cli_test
+      - release_core_prod
+    uses: spotify/klio/.github/workflows/upload_prod.yml@develop
+    with:
+      package-dir: cli
+      package-name: klio_cli
+
+  release_audio_test:
+    name: "[audio] Build & Release to Test PyPI"
+    needs: release_core_prod
+    uses: spotify/klio/.github/workflows/upload_test.yml@develop
+    with:
+      package-dir: cli
+      package-name: klio_cli
+
+  release_audio_prod:
+    name: "[audio] Build & Release to Prod PyPI"
+    needs:
+      - release_audio_test
+      - release_core_prod
+    uses: spotify/klio/.github/workflows/upload_prod.yml@develop
+    with:
+      package-dir: audio
+      package-name: klio_audio
+
+  release_exec_test:
+    name: "[exec] Build & Release to Test PyPI"
+    needs: 
+      - release_core_prod
+      - release_lib_prod
+    uses: spotify/klio/.github/workflows/upload_test.yml@develop
+    with:
+      package-dir: exec
+      package-name: klio_exec
+
+  release_exec_prod:
+    name: "[exec] Build & Release to Prod PyPI"
+    needs: 
+      - release_exec_test
+      - release_core_prod
+      - release_lib_prod
+    uses: spotify/klio/.github/workflows/upload_prod.yml@develop
+    with:
+      package-dir: exec
+      package-name: klio_exec
+
+  release_devtools_test:
+    name: "[devtools] Build & Release to Test PyPI"
+    needs: 
+      - release_core_prod
+      - release_cli_prod
+    uses: spotify/klio/.github/workflows/upload_test.yml@develop
+    with:
+      package-dir: devtools
+      package-name: klio_devtools
+
+  release_devtools_prod:
+    name: "[devtools] Build & Release to Prod PyPI"
+    needs: 
+      - release_devtools_test
+      - release_core_prod
+      - release_cli_prod
+    uses: spotify/klio/.github/workflows/upload_prod.yml@develop
+    with:
+      package-dir: devtools
+      package-name: klio_devtools

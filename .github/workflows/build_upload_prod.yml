@@ -1,0 +1,152 @@
+# "Template" workflow that can be called by other workflows as well as manually triggered
+# https://docs.github.com/en/actions/learn-github-actions/reusing-workflows
+
+name: Build & Upload to Prod PyPI
+
+on:
+  workflow_call:  # allows calls from other workflows
+    inputs:
+      package-dir:
+        description: "Directory of package to build & upload"
+        required: true
+        type: string
+      package-name:
+        description: "Import name of package (e.g. klio_core, not klio-core)"
+        required: true
+        type: string
+  workflow_dispatch:  # manual trigger
+    inputs:
+      package-dir:
+        description: "Directory of package to build & upload"
+        required: true
+        type: string
+      package-name:
+        description: "Import name of package (e.g. klio_core, not klio-core)"
+        required: true
+        type: string
+
+jobs:
+  build_install:
+    name: "Build & Install ${{ github.event.inputs.package-name }}"
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v2"
+      - name: "Set up Python 3.8"
+        uses: "actions/setup-python@v2"
+        with:
+          python-version: 3.8
+
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python -VV
+          python -m pip install build virtualenv twine --user
+
+      - name: "${{ github.event.inputs.package-name }}: Build wheel & sdist"
+        working-directory: ${{ github.event.inputs.package-dir }}
+        run: |
+          set -xe
+          python -VV
+          python -m build --sdist --wheel --outdir dist/ .
+
+      - name: "${{ github.event.inputs.package-name }}: Check Long Description"
+        working-directory: ${{ github.event.inputs.package-dir }}
+        run: |
+          set -xe
+          python -VV
+          python -m twine check dist/*
+
+      - name: "${{ github.event.inputs.package-name }}: Test sdist installation from local build"
+        working-directory: ${{ github.event.inputs.package-dir }}
+        run: |
+          set -xe
+          python -VV
+          python -m virtualenv sdist-test
+          source sdist-test/bin/activate
+          python -m pip install dist/*.tar.gz
+          python -c 'import ${{ github.event.inputs.package-name }}; print(${{ github.event.inputs.package-name }}.__version__)'
+          deactivate
+
+      - name: "${{ github.event.inputs.package-name }}: Test wheel installation from local build"
+        working-directory: ${{ github.event.inputs.package-dir }}
+        run: |
+          set -xe
+          python -VV
+          python -m virtualenv wheel-test
+          source wheel-test/bin/activate
+          python -m pip install dist/*.whl
+          python -c 'import ${{ github.event.inputs.package-name }}; print(${{ github.event.inputs.package-name }}.__version__)'
+          deactivate
+
+      # Upload artifact so it can be downloaded & used in the following job
+      - name: "Archive artifacts"
+        uses: actions/upload-artifact@v2
+        with:
+          name: dist-${{ github.event.inputs.package-name }}
+          path: ${{ github.event.inputs.package-dir }}/dist/*
+          retention-days: 1
+
+  upload_prod_pypi:
+    name: "Upload ${{ github.event.inputs.package-name }} to PyPI Prod Server"
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Download ${{ github.event.inputs.package-name }} artifacts from GH"
+        id: download
+        uses: actions/download-artifact@v2
+        with:
+          name: dist-${{ github.event.inputs.package-name }}
+
+      # Save the version as a variable we can use later when we test
+      # the installation
+      - name: "Grab Package Version for ${{ github.event.inputs.package-name }}"
+        id: version
+        shell: bash
+        run: |
+          set -xe
+          FULL_PATH=$(ls ${{ steps.download.outputs.download-path }}/*.tar.gz)
+          BASE_NAME=$(basename ${FULL_PATH} .tar.gz)
+          VERSION=$(echo ${BASE_NAME} | cut -d- -f3)
+          echo ::set-output name=version::$(echo ${VERSION})
+
+      - name: "Upload ${{ github.event.inputs.package-name }} artifacts to Prod PyPI"
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.PROD_PYPI_API_TOKEN }}
+          verbose: true
+          packages_dir: ${{ steps.download.outputs.download-path }}
+
+  install_prod_pypi:
+    name: "Test installation of ${{ github.event.inputs.package-name }} from Prod PyPI"
+    needs: upload_prod_pypi
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Set up Python 3.8
+        uses: "actions/setup-python@v2"
+        with:
+          python-version: 3.8
+
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python -VV
+          python -m pip install virtualenv --user
+
+      - name: "Test wheel install of ${{ github.event.inputs.package-name }} from Prod PyPI"
+        run: |
+          set -xe
+          python -m virtualenv prod-pypi-wheel
+          source prod-pypi-wheel/bin/activate
+          python -m pip install -i https://pypi.org/simple --only-binary=${{ github.event.inputs.package-name }} ${{ github.event.inputs.package-name }}==${{ needs.upload_prod_pypi.outputs.version }}
+          python -c 'import ${{ github.event.inputs.package-name }}; assert ${{ github.event.inputs.package-name }}.__version__ == "${{ needs.upload_prod_pypi.outputs.version }}"'
+          deactivate
+
+      - name: "Test sdist install of ${{ github.event.inputs.package-name }} from Prod PyPI"
+        run: |
+          set -xe
+          python -m virtualenv prod-pypi-sdist
+          source prod-pypi-sdist/bin/activate
+          python -m pip install -i https://pypi.org/simple --no-binary=${{ github.event.inputs.package-name }} ${{ github.event.inputs.package-name }}==${{ needs.upload_prod_pypi.outputs.version }}
+          python -c 'import ${{ github.event.inputs.package-name }}; assert ${{ github.event.inputs.package-name }}.__version__ == "${{ needs.upload_prod_pypi.outputs.version }}"'
+          deactivate

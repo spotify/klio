@@ -122,7 +122,9 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = [
+    "release_notes/template.rst",
+]
 
 # sphinx-build has a "nitpick" mode (used during CI docs workflow and
 # `make stricthtml`). We inherit some docs from Apache Beam, and some of

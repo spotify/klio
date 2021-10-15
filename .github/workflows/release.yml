@@ -4,15 +4,6 @@ on:
   # TODO: testing with manual triggering first - will update to trigger on push
   # for certain branches/tags/whatever is decided once we confirm this works
   workflow_dispatch:  # manual trigger
-    inputs:
-      package-dir:
-        description: "Directory of package to build & upload"
-        required: true
-        type: string
-      package-name:
-        description: "Import name of package to build & upload (e.g. klio_core, not klio-core)"
-        required: true
-        type: string
 
 # Note: can't combine releasing to test & prod PyPI into one job with 
 # multiple steps, or use a matrix - this is not supported with reusable workflows

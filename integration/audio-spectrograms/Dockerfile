@@ -7,19 +7,19 @@ ENV PYTHONPATH=/usr/src/app
 
 RUN apt-get update && apt-get install -y libsndfile1
 
-RUN pip install --upgrade pip setuptools
+RUN pip install --no-cache-dir --upgrade pip setuptools
 
 COPY core core
 COPY lib lib
 COPY exec exec
 COPY audio audio
-RUN pip install ./core
-RUN pip install ./lib
-RUN pip install ./exec
-RUN pip install ./audio
+RUN pip install --no-cache-dir ./core
+RUN pip install --no-cache-dir ./lib
+RUN pip install --no-cache-dir ./exec
+RUN pip install --no-cache-dir ./audio
 
 COPY job-requirements.txt job-requirements.txt
-RUN pip install -r job-requirements.txt
+RUN pip install --no-cache-dir -r job-requirements.txt
 
 COPY __init__.py \
      run.py \
@@ -31,4 +31,4 @@ COPY __init__.py \
 
 ARG KLIO_CONFIG=klio-job.yaml
 COPY $KLIO_CONFIG klio-job-run-effective.yaml
-RUN pip install .
+RUN pip install --no-cache-dir .

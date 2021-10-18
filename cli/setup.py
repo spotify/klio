@@ -150,19 +150,20 @@ PROJECT_URLS = {
     "Source Code": "https://github.com/spotify/klio"
 }
 META_FILE = read(META_PATH)
+PACKAGE_VERSION = find_meta("version")
 INSTALL_REQUIRES = [
-    "klio-core>=21.9.0",
     "click",
     "dateparser",
     "docker",
     "emoji",
-    "jinja2",
     "glom",
     "google-api-core",
     "google-api-python-client",
     "google-cloud-monitoring>=2.0.0",
     "google-cloud-pubsub>=2.0.0",
     "google-cloud-storage",
+    "jinja2",
+    f"klio-core>={PACKAGE_VERSION}",
     "protobuf",
     "pyyaml",
     "setuptools",
@@ -182,6 +183,9 @@ EXTRAS_REQUIRE = {
 EXTRAS_REQUIRE["dev"] = (
     EXTRAS_REQUIRE["docs"]
     + EXTRAS_REQUIRE["tests"]
+    # TODO: update version dep for klio-devtools to PACKAGE_VERSION
+    # once we make a new release of klio-devtools (it's not version
+    # synced right now)
     + ["klio-devtools", "bumpversion", "wheel"]
 )
 # support 3.6, 3.7, & 3.8, matching Beam's support
@@ -189,7 +193,7 @@ PYTHON_REQUIRES = ">=3.6, <3.9"
 
 setup(
     name=NAME,
-    version=find_meta("version"),
+    version=PACKAGE_VERSION,
     description=find_meta("description"),
     long_description=get_long_description("cli"),
     long_description_content_type="text/x-rst",

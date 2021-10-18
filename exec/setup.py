@@ -150,11 +150,12 @@ PROJECT_URLS = {
     "Source Code": "https://github.com/spotify/klio"
 }
 META_FILE = read(META_PATH)
+PACKAGE_VERSION = find_meta("version")
 INSTALL_REQUIRES = [
     "attrs",
     "click",
-    "klio-core>=21.9.0",
-    "klio>=21.9.0",
+    f"klio-core>={PACKAGE_VERSION}",
+    f"klio>={PACKAGE_VERSION}",
     "pyyaml",
     # 2.22 added DirectRunner support for `DoFn.setup`
     "apache-beam[gcp]>2.21.0",
@@ -201,7 +202,7 @@ AUDIT_PLUGINS = [
 
 setup(
     name=NAME,
-    version=find_meta("version"),
+    version=PACKAGE_VERSION,
     description=find_meta("description"),
     long_description=get_long_description("executor"),
     long_description_content_type="text/x-rst",

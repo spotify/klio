@@ -1,6 +1,20 @@
 CLI Changelog
 =============
 
+.. _cli-21.10.0:
+
+21.10.0 (UNRELEASED)
+--------------------
+
+.. start-21.10.0
+
+Fixed
+*****
+
+* Correctly validate existence of Dataflow-related Klio config when running on Dataflow (and not just "not --direct-runner").
+
+.. end-21.10.0
+
 .. _cli-21.9.0:
 
 21.9.0 (2021-10-12)

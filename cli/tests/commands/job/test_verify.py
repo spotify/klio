@@ -127,7 +127,23 @@ def mock_create_sd_group(mocker):
                 {
                     "role": "roles/monitoring.metricWriter",
                     "members": ["serviceAccount:the-default-svc-account"],
-                }
+                },
+                {
+                    "role": "roles/pubsub.publisher",
+                    "members": ["serviceAccount:the-default-svc-account"],
+                },
+                {
+                    "role": "roles/pubsub.subscriber",
+                    "members": ["serviceAccount:the-default-svc-account"],
+                },
+                {
+                    "role": "roles/storage.objectCreator",
+                    "members": ["serviceAccount:the-default-svc-account"],
+                },
+                {
+                    "role": "roles/storage.objectViewer",
+                    "members": ["serviceAccount:the-default-svc-account"],
+                },
             ],
             False,
         ),
@@ -205,6 +221,22 @@ def test_verify_iam_roles_editor(caplog, klio_config, mock_discovery_client):
             "members": ["serviceAccount:the-default-svc-account"],
         },
         {
+            "role": "roles/pubsub.publisher",
+            "members": ["serviceAccount:the-default-svc-account"],
+        },
+        {
+            "role": "roles/pubsub.subscriber",
+            "members": ["serviceAccount:the-default-svc-account"],
+        },
+        {
+            "role": "roles/storage.objectCreator",
+            "members": ["serviceAccount:the-default-svc-account"],
+        },
+        {
+            "role": "roles/storage.objectViewer",
+            "members": ["serviceAccount:the-default-svc-account"],
+        },
+        {
             "role": "roles/editor",
             "members": ["serviceAccount:the-default-svc-account"],
         },
@@ -246,6 +278,22 @@ def test_verify_iam_roles_with_svc_account(klio_config, mock_discovery_client):
     bindings = [
         {
             "role": "roles/monitoring.metricWriter",
+            "members": ["serviceAccount:my.sa@something.com"],
+        },
+        {
+            "role": "roles/pubsub.publisher",
+            "members": ["serviceAccount:my.sa@something.com"],
+        },
+        {
+            "role": "roles/pubsub.subscriber",
+            "members": ["serviceAccount:my.sa@something.com"],
+        },
+        {
+            "role": "roles/storage.objectCreator",
+            "members": ["serviceAccount:my.sa@something.com"],
+        },
+        {
+            "role": "roles/storage.objectViewer",
             "members": ["serviceAccount:my.sa@something.com"],
         },
         {

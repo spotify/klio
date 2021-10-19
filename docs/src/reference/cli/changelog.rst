@@ -8,6 +8,11 @@ CLI Changelog
 
 .. start-21.10.0
 
+Added
+*****
+
+* Include more GCP roles when verifying a job's service account in ``klio job verify``.
+
 Fixed
 *****
 

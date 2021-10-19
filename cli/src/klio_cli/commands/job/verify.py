@@ -24,15 +24,38 @@ from google.cloud import storage
 from googleapiclient import discovery
 from googleapiclient import errors as google_errors
 
+from klio_core import variables as var
+
 from klio_cli.utils import stackdriver_utils as sd_utils
 
 
 GCP_ROLE_METRIC_WRITER = "roles/monitoring.metricWriter"
+GCP_ROLE_PUBLISHER = "roles/pubsub.publisher"
+GCP_ROLE_SUBSCRIBER = "roles/pubsub.subscriber"
+GCP_ROLE_STORAGE_CREATOR = "roles/storage.objectCreator"
+GCP_ROLE_STORAGE_VIEWER = "roles/storage.objectViewer"
+GCP_ROLE_LOG_WRITER = "roles/logging.logWriter"
+GCP_ROLE_SERV_ACCT_USER = "roles/iam.serviceAccountUser"
 #
 # Add any extra roles we need to check on the default service account
 # to this set:
 #
-ROLES_TO_CHECK = {GCP_ROLE_METRIC_WRITER}
+BASE_ROLES_TO_CHECK = {
+    GCP_ROLE_METRIC_WRITER,
+    GCP_ROLE_STORAGE_CREATOR,
+    GCP_ROLE_STORAGE_VIEWER,
+}
+STREAMING_ROLES_TO_CHECK = {
+    *BASE_ROLES_TO_CHECK,
+    GCP_ROLE_PUBLISHER,
+    GCP_ROLE_SUBSCRIBER,
+}
+DIRECT_GKE_ROLES_TO_CHECK = {
+    *STREAMING_ROLES_TO_CHECK,
+    GCP_ROLE_LOG_WRITER,
+    GCP_ROLE_SERV_ACCT_USER,
+}
+
 
 logging.getLogger("googleapiclient.discovery").setLevel(logging.ERROR)
 
@@ -427,13 +450,21 @@ class VerifyJob(object):
                 "unsafe project editor or owner permissions."
             )
 
-        if ROLES_TO_CHECK.issubset(svc_account_roles):
+        runner = self.klio_config.pipeline_options.runner
+        if runner == var.KlioRunner.DIRECT_GKE_RUNNER:
+            roles_to_check = DIRECT_GKE_ROLES_TO_CHECK
+        if self.klio_config.pipeline_options.streaming:
+            roles_to_check = STREAMING_ROLES_TO_CHECK
+        else:
+            roles_to_check = BASE_ROLES_TO_CHECK
+
+        if roles_to_check.issubset(svc_account_roles):
             logging.info(
                 "Verified that the service account has the required roles"
             )
             return True
 
-        missing_roles = ROLES_TO_CHECK - svc_account_roles
+        missing_roles = roles_to_check - svc_account_roles
         logging.warning(
             "The configured compute service account is missing the following "
             f"IAM role(s): {', '.join(missing_roles)}"

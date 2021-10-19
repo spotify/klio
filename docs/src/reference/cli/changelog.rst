@@ -13,6 +13,11 @@ Fixed
 
 * Correctly validate existence of Dataflow-related Klio config when running on Dataflow (and not just "not --direct-runner").
 
+Changed
+*******
+
+* When running a job, effective config is no longer written to ``klio-job-run-effective.yaml``, but instead to a temp file.  This file no longer needs to be included in ``setup.py`` projects (See `PR 233 <https://github.com/spotify/klio/pull/233>`_).
+
 .. end-21.10.0
 
 .. _cli-21.9.0:

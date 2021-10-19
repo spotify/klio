@@ -13,13 +13,35 @@ following the scheme of ``YY.MM.MICRO(suffixN)``:
 * ``.MICRO`` starts at ``0`` , so ``YY.MM.0`` is the first release for the month;
 * ``YY.MM.0`` builds signify the scheduled release for the month
 * every ``MICRO`` increment after ``0`` is an unscheduled release (a hotfix, patch of some sort, etc)
-* The ``suffixN`` is optional, and is used to signify pre-releases (e.g. ``21.2.0.dev1`` for a development pre-release of ``21.2.0.dev1``, or ``21.2.0rc1`` for a release candidate of ``21.2.0``)
+* The ``suffixN`` is optional, and is used to signify pre-releases (e.g. ``21.2.0.dev1`` for a development pre-release of ``21.2.0``, or ``21.2.0rc1`` for a release candidate of ``21.2.0``)
+
+Read more about package versioning in `PEP-440 <https://www.python.org/dev/peps/pep-0440>`_.
 
 
 Release Process
 ---------------
 
 While the release process is mostly automated via GitHub Actions, there is still some manual work to prepare the release.
+
+Terminology
+~~~~~~~~~~~
+
+general release
+    A `final release <https://www.python.org/dev/peps/pep-0440/#final-releases>`_ where the version does not have any suffix.
+    For example, ``21.2.0``.
+
+pre-release
+    A `preview release <https://www.python.org/dev/peps/pep-0440/#pre-releases>`_ made available before the general release.
+    For example, ``21.2.0rc1``, ``21.2.0beta1``, ``21.2.0.dev1``.
+
+post-release
+    A `release after a general release <https://www.python.org/dev/peps/pep-0440/#post-releases>`_ that adds very minor fixes to a general release.
+    For example, ``21.2.0.post2``.
+
+devevelopmental release
+    A `type of pre-release <https://www.python.org/dev/peps/pep-0440/#developmental-releases>`_ typically meant for maintainers' development cycle and not meant for Klio users.
+    Also known as a "dev release". For example, ``21.2.0.dev1``.
+
 
 Checklist Overview
 ~~~~~~~~~~~~~~~~~~
@@ -40,6 +62,8 @@ Checklist Overview
 1. Prepare Remote General Release Branch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+**Skip this step for developmental releases and continue to the next step.**
+
 We first need to create a release branch based off of ``develop``.
 
 Locally, run the following commands, replacing the ``<VERSION>`` with the target general release version in the format of ``YY.MM.MICRO`` (no ``suffixN``):
@@ -48,8 +72,16 @@ Locally, run the following commands, replacing the ``<VERSION>`` with the target
 
     $ git checkout develop
     $ git pull --rebase origin develop
+
+    # if the release branch is NOT yet created
+    # or no new code needs to be added to the release
     $ git checkout -b release-<VERSION>
     $ git push origin release-<VERSION>
+
+    # if the release branch already exists 
+    # and additional code needs to be added to the release
+    $ git checkout release-<VERSION>
+    $ git merge develop
 
 The changes made in the following `Prepare Release <#2-prepare-release>`_ step will be in a pull request made against this ``release-<VERSION>`` branch.
 
@@ -60,6 +92,9 @@ The changes made in the following `Prepare Release <#2-prepare-release>`_ step w
 2a. Create Individual Release Branch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Non-developmental Releases
+**************************
+
 From the ``release-<VERSION>``, create a new local branch.
 
 For instance, if a pre-release is being made, then name the new branch with the ``suffixN`` added. 
@@ -68,11 +103,25 @@ If we're making a pre-release of ``21.2.0``,  e.g.:
 .. code-block:: sh
 
     $ git checkout release-21.2.0  # make sure we start from the correct branch
-    $ git checkout -b <name>/release-21.2.0.dev1
-    # or a general release
-    $ git checkout -b <name>/release-21.2.0
+    $ git checkout -b <USER>/release-21.2.0
  
 Make the changes in the next steps on this branch. This branch will eventually be merged into the ``release-<VERSION>`` branch via pull request.
+
+Developmental Releases
+**********************
+
+From the ``develop``, create a new local branch.
+
+For instance, if a pre-release is being made, then name the new branch with the ``suffixN`` added. 
+If we're making a pre-release of ``21.2.0``,  e.g.:
+
+.. code-block:: sh
+
+    $ git checkout develop
+    $ git pull --rebase origin develop
+    $ git checkout -b <USER>/release-21.2.0.dev1
+ 
+Make the changes in the next steps on this branch. This branch will eventually be merged into the ``develop`` branch via pull request.
 
 2b. Update Packages' Changelog
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -145,7 +194,7 @@ For example, for ``klio-core`` when bumping from ``21.9.0rc1`` to ``21.9.0``:
 2d. Update Release Notes
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-**For general releases only. Skip for pre-releases.**
+**For general releases only. Skip for dev, pre- and post-releases.**
 
 1. In ``docs/src/release_notes/``, make a copy of ``template.rst`` for the version being released, e.g. ``21.2.0.rst``.
     1. Populate the template with major user-facing changes, announcements, etc. Refer to previous release notes for ideas.
@@ -155,7 +204,7 @@ For example, for ``klio-core`` when bumping from ``21.9.0rc1`` to ``21.9.0``:
 
 2e. Create General Release Tag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-**For general releases only. Skip for pre-releases.**
+**For general and post-releases only. Skip for dev- and pre-releases.**
 
 Create a general release ``git`` tag in the form of ``YY.MM.build`` (no ``release-`` or ``<pkg>-`` prefixes).
 This tells Read The Docs (where `docs.klio.io <https://docs.klio.io>`_ is hosted) to create a new version of the documentation based off of this commit. 
@@ -164,6 +213,8 @@ This allows users to be able to navigate to the documentation for their specific
 .. code-block:: sh
 
     $ git tag <YY.MM.build>
+    # or if a post-release
+    $ git tag <YY.MM.buildpostN>
 
 2f. Push Changes to Origin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -177,33 +228,109 @@ Push these changes to a remote branch **with tags**, replacing ``<USER>`` with y
 3. Make Pull Requests Into Respective Branches
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Developmental Releases
+^^^^^^^^^^^^^^^^^^^^^^
+
+3a. PR to ``develop`` branch
+******************************
+
+Within GitHub, create a pull request into the ``develop`` branch from your branch that you pushed to in the `step above <#f-push-changes-to-origin>`_.
+The title of the pull request can just be ``Release <YY.MM.build(devN)>`` with no body.
+
+Once reviewed, go ahead and merge.
+
+If there are any changes that need to be made before merging, be mindful to re-tag as needed.
+To see if the tags are attached to the correct commit, you can run this command:
+
+.. code-block:: sh
+
+    $ git log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate
+    # Example output
+    626f48e (tag: 21.9.0) Release notes for 21.9.0 [Lynn Root]
+    f2ba7fb (tag: exec-21.9.0) [exec] Bump version: 21.9.0rc1 → 21.9.0 [Lynn Root]
+    a2ec9de (tag: core-21.9.0) [core] Bump version: 21.9.0rc1 → 21.9.0 [Lynn Root]
+    5e6061e (tag: lib-21.9.0) [lib] Bump version: 21.9.0rc1 → 21.9.0 [Lynn Root]
+    bfb3b71 (tag: cli-21.9.0) [cli] Bump version: 21.9.0rc1 → 21.9.0 [Lynn Root]
+
+If one or more tags have been lost due to edits, grab the commit where the tag should be, and run:
+
+.. code-block:: sh
+
+    $ git tag -f <pkg>-<YY.MM.build(suffixN)> <commit>
+    # for example
+    $ git tag -f exec-21.9.0 f2ba7fb
+
+    # after all is correctly tagged, push using --force-with-lease and --tags
+    $ git push --tags --force-with-lease origin HEAD:<USER>/release-<YY.MM.build(suffixN)>
+
+
+You can delete your branch once done.
+Continue on to `executing the GitHub Workflows <#4-execute-github-workflows>`_.
+
+
+Non-Developmental Releases
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 3a. PR to ``release-*`` branch
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+******************************
+
+**For non-developmental releases only. If making a dev release, go to the next step.**
 
 Within GitHub, create a pull request into the ``release-*`` branch from your branch that you pushed to in the `step above <#f-push-changes-to-origin>`_.
 The title of the pull request can just be ``Release <YY.MM.build(suffixN)>`` with no body.
 
 Once reviewed, go ahead and merge.
 
+If there are any changes that need to be made before merging, be mindful to re-tag as needed.
+To see if the tags are attached to the correct commit, you can run this command:
+
+.. code-block:: sh
+
+    $ git log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate
+    # Example output
+    626f48e (tag: 21.9.0) Release notes for 21.9.0 [Lynn Root]
+    f2ba7fb (tag: exec-21.9.0) [exec] Bump version: 21.9.0rc1 → 21.9.0 [Lynn Root]
+    a2ec9de (tag: core-21.9.0) [core] Bump version: 21.9.0rc1 → 21.9.0 [Lynn Root]
+    5e6061e (tag: lib-21.9.0) [lib] Bump version: 21.9.0rc1 → 21.9.0 [Lynn Root]
+    bfb3b71 (tag: cli-21.9.0) [cli] Bump version: 21.9.0rc1 → 21.9.0 [Lynn Root]
+
+If one or more tags have been lost due to edits, grab the commit where the tag should be, and run:
+
+.. code-block:: sh
+
+    $ git tag -f <pkg>-<YY.MM.build(suffixN)> <commit>
+    # for example
+    $ git tag -f exec-21.9.0 f2ba7fb
+
+    # after all is correctly tagged, push using --force-with-lease and --tags
+    $ git push --tags --force-with-lease origin HEAD:<USER>/release-<YY.MM.build(suffixN)>
+
+
+You can delete your branch once done.
+
 Here's an example `pull request to a release-* branch <https://github.com/spotify/klio/pull/227>`_ for reference.
 
 3b. PR to ``develop`` branch
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+****************************
 
 Once the above pull request is merged, make a pull request from the ``release-*`` branch to ``develop``.
 The title of the pull request can be the same as above.
 
 A review is not necessary. If comfortable, merge without review.
 
+**Do not** delete the ``release-*`` branch once it's merged into ``develop``.
+
 Here's an example `pull request to the develop branch <https://github.com/spotify/klio/pull/228>`_ for reference.
 
 3c. PR to ``master`` branch
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+***************************
 
 Once the above pull request is merged, make a pull request from the ``develop`` branch to ``master``.
 The title of the pull request can be the same as above.
 
 A review is not necessary. If comfortable, merge without review.
+
+**Do not** delete the ``develop`` branch once it's merged into ``master``.
 
 Here's an example `pull request to the master branch <https://github.com/spotify/klio/pull/229>`_ for reference.
 
@@ -214,7 +341,7 @@ Once everything is merged above, we're ready to release the packages!
 
 1. Navigate to the `releasing GitHub workflow <https://github.com/spotify/klio/actions/workflows/release.yml>`_ (titled "Build & Release to PyPI").
 2. In the upper-ish right corner, navigate to the drop down called "Run workflow". 
-3. Click on "Run workflow" and select the specific ``release-*`` branch.
+3. Click on "Run workflow" and select the specific ``release-*`` branch. If this is a developmental release, then select the ``develop`` branch.
 4. Once the release branch is selected, hit the green button for "Run workflow".
 
 This will kick off the following steps:

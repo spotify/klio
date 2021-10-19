@@ -185,7 +185,7 @@ def test_verify_iam_roles(
     result = job._verify_iam_roles()
     if create_resources:
         assert (
-            "--create-resources is not able to add these roles"
+            "Klio is unable to add the required role(s)"
             in caplog.records[-1].msg
         )
 

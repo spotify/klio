@@ -433,16 +433,28 @@ class VerifyJob(object):
             )
             return True
 
-        logging.error(
-            "The default compute service account is missing the following IAM "
-            "roles: {}".format(ROLES_TO_CHECK - svc_account_roles)
+        missing_roles = ROLES_TO_CHECK - svc_account_roles
+        logging.warning(
+            "The configured compute service account is missing the following "
+            f"IAM role(s): {', '.join(missing_roles)}"
         )
         if self.create_resources:
-            logging.error(
-                "--create-resources is not able to add"
-                " these roles to the service "
-                "account at this time. Please add them manually via the Google "
-                "Cloud console."
+            gcloud_cmd_base = (
+                f"\tgcloud projects add-iam-policy-binding {self.project} \\\n"
+                f"\t\t--member={svc_account_string} \\\n"
+                "\t\t--role="
+            )
+            gcloud_cmds = []
+            for role in missing_roles:
+                cmd = gcloud_cmd_base + role
+                gcloud_cmds.append(cmd)
+
+            gcloud_cmds = "\n".join(gcloud_cmds)
+            logging.warning(
+                "Klio is unable to add the required role(s) to the service "
+                "account at this time. Add them with the following gcloud "
+                "command(s):\n"
+                f"{gcloud_cmds}"
             )
         return False
 

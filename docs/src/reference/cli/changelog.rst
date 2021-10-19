@@ -12,6 +12,7 @@ Fixed
 *****
 
 * Correctly validate existence of Dataflow-related Klio config when running on Dataflow (and not just "not --direct-runner").
+* Print out ``gcloud`` commands to add necessary GCP roles when running ``klio job verify --create-resources``.
 
 .. end-21.10.0
 

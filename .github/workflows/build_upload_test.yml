@@ -45,6 +45,7 @@ jobs:
       - name: "${{ github.event.inputs.package-name }}: Build wheel & sdist"
         run: |
           set -xe
+          pwd
           python -VV
           python -m build --sdist --wheel --outdir ${{ github.event.inputs.package-dir }}/dist/ ${{ github.event.inputs.package-dir }}
 

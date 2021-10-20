@@ -85,6 +85,7 @@ jobs:
 
   upload_prod_pypi:
     name: "Upload ${{ github.event.inputs.package-name }} to PyPI Prod Server"
+    needs: build_install
     outputs:
       version: ${{ steps.version.outputs.version }}
     runs-on: "ubuntu-latest"

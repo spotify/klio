@@ -21,7 +21,7 @@ Fixed
 Changed
 *******
 
-* When running a job, effective config is no longer written to ``klio-job-run-effective.yaml``, but instead to a temp file.  This file no longer needs to be included in ``setup.py`` projects (See `PR 233 <https://github.com/spotify/klio/pull/233>`_).
+* When running a job, effective config is no longer written to ``klio-job-run-effective.yaml``, but instead to a temp file.  This file no longer needs to be included in ``setup.py`` projects (See `PR 220 <https://github.com/spotify/klio/pull/220>`_).
 
 .. end-21.10.0
 

@@ -35,7 +35,7 @@ Changes
 Changed
 *******
 
-* ``KlioConfig`` is now loaded on workers from pickled main session instead of a bundled config file (See `PR 233 <https://github.com/spotify/klio/pull/233>`_).
+* ``KlioConfig`` is now loaded on workers from pickled main session instead of a bundled config file (See `PR 220 <https://github.com/spotify/klio/pull/220>`_).
 
 .. end-21.10.0
 

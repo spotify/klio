@@ -14,7 +14,7 @@
 #
 
 __author__ = "The klio developers"
-__version__ = "21.10.0.dev1"
+__version__ = "21.10.0.dev2"
 __email__ = "opensource+klio@spotify.com"
 __description__ = "Klio pipeline executor within a job's Docker image."
 __uri__ = "https://github.com/spotify/klio"

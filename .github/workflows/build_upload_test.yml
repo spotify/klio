@@ -126,6 +126,11 @@ jobs:
         with:
           python-version: 3.8
 
+      - name: "Sleep to wait for propagation"
+        run: |
+          set -xe
+          sleep 120
+
       - name: "Install dependencies"
         run: |
           set -xe

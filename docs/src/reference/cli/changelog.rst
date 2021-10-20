@@ -8,10 +8,16 @@ CLI Changelog
 
 .. start-21.10.0
 
+Added
+*****
+
+* Include more GCP roles when verifying a job's service account in ``klio job verify``.
+
 Fixed
 *****
 
 * Correctly validate existence of Dataflow-related Klio config when running on Dataflow (and not just "not --direct-runner").
+* Print out ``gcloud`` commands to add necessary GCP roles when running ``klio job verify --create-resources``.
 
 Changed
 *******

@@ -210,26 +210,6 @@ def test_get_image_tag(image, tag, expected_image):
     assert expected_image == actual_image
 
 
-@pytest.mark.parametrize("direct_runner", (True, False))
-def test_write_run_effective_config(mocker, direct_runner):
-    if direct_runner:
-        expected_path = "/usr/local/klio-job-run-effective.yaml"
-    else:
-        expected_path = "/usr/src/app/klio-job-run-effective.yaml"
-
-    mock_config = mocker.Mock()
-    mock_runtime_conf = mocker.Mock()
-    mock_runtime_conf.direct_runner = direct_runner
-    m_open = mocker.mock_open()
-    mock_open = mocker.patch("klio_exec.commands.run.open", m_open)
-
-    kpipe = run.KlioPipeline("test-job", mock_config, mock_runtime_conf)
-    kpipe._write_run_effective_config()
-
-    mock_open.assert_called_once_with(expected_path, "w")
-    mock_config.write_to_file.assert_called_once_with(mock_open.return_value)
-
-
 @pytest.mark.parametrize("streaming", (True, False))
 @pytest.mark.parametrize(
     "exp,setup_file, requirements_file",
@@ -252,10 +232,6 @@ def test_verify_packaging(
     mock_path_exists = mocker.patch.object(os.path, "exists")
     mock_path_exists.return_value = True
 
-    mock_write_run_effective_config = mocker.patch.object(
-        run.KlioPipeline, "_write_run_effective_config"
-    )
-
     kpipe = run.KlioPipeline("test-job", mock_config, mocker.Mock())
 
     if not streaming and not any([requirements_file, setup_file, exp]):
@@ -263,11 +239,6 @@ def test_verify_packaging(
             kpipe._verify_packaging()
     else:
         kpipe._verify_packaging()
-
-    if setup_file and not exp:
-        mock_write_run_effective_config.assert_called_once()
-    else:
-        mock_write_run_effective_config.assert_not_called()
 
 
 def test_verify_packaging_with_both_packagaing_systems_raises(mocker):

@@ -150,11 +150,11 @@ PROJECT_URLS = {
     "Source Code": "https://github.com/spotify/klio"
 }
 META_FILE = read(META_PATH)
+PACKAGE_VERSION = find_meta("version")
 INSTALL_REQUIRES = [
-    # 2.22 added DirectRunner support for `DoFn.setup`
-    "apache-beam[gcp]>2.21.0",
+    "apache-beam[gcp]>=2.31.0",
     "google-api-python-client",
-    "klio-core>=21.10.0.dev1",
+    f"klio-core>={PACKAGE_VERSION}",
     "protobuf",
     "psutil",
     "pyyaml",
@@ -169,6 +169,9 @@ EXTRAS_REQUIRE = {
         "pytest-cov",
         "pytest-mock",
     ],
+    # TODO: update version dep for klio-audio to PACKAGE_VERSION
+    # once we make a new release of klio-audio (it's not version
+    # synced right now)
     "audio": ["klio-audio"]
 }
 EXTRAS_REQUIRE["dev"] = (
@@ -179,7 +182,7 @@ PYTHON_REQUIRES = ">=3.6, <3.9"
 
 setup(
     name=NAME,
-    version=find_meta("version"),
+    version=PACKAGE_VERSION,
     description=find_meta("description"),
     long_description=get_long_description("lib"),
     long_description_content_type="text/x-rst",

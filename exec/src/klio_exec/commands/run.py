@@ -27,7 +27,6 @@ from klio import transforms
 from klio.transforms import helpers
 from klio_core import __version__ as klio_core_version
 from klio_core import variables as var
-from klio_core.config import core as config_core
 
 from klio_exec import __version__ as klio_exec_version
 
@@ -279,34 +278,6 @@ class KlioPipeline(object):
             )
             raise SystemExit(1)
 
-    def _write_run_effective_config(self):
-        # this method assumes setup.py is being used!
-        if self.runtime_conf.direct_runner:
-            path = config_core.WORKER_RUN_EFFECTIVE_CONFIG_PATH
-        else:
-            path = config_core.RUN_EFFECTIVE_CONFIG_PATH
-        logging.debug(
-            "Writing runtime configuration to {}"
-            " in the job's running docker container.".format(path)
-        )
-        with open(path, "w") as f:
-            f.write(RUN_CONFIG_PREAMBLE)
-            self.config.write_to_file(f)
-
-    def _verify_setup_py(self):
-        # verify that setup.py has a reference to the runtime config file
-        data_files_line = f'(".", ["{config_core.RUN_EFFECTIVE_CONFIG_FILE}"])'
-        setup_file = self.config.pipeline_options.setup_file
-        with open(setup_file, "r") as r:
-            data = r.read()
-            if config_core.RUN_EFFECTIVE_CONFIG_FILE not in data:
-                logging.warning(
-                    "Reference to 'klio-job-run-effective.yaml'"
-                    " appears to be missing in 'setup.py'.  Please"
-                    " ensure that the 'data_files' list includes "
-                    f"the tuple: {data_files_line}."
-                )
-
     def _verify_packaging(self):
         pipeline_opts = self.config.pipeline_options
         experiments = pipeline_opts.experiments
@@ -343,12 +314,6 @@ class KlioPipeline(object):
                         "setup.py file either unspecified or not found."
                     )
                     raise SystemExit(1)
-
-        if setup_file_exists:
-            # when using setup.py, dump the current config to a runtime config
-            # file to be included in the distribution package
-            self._verify_setup_py()
-            self._write_run_effective_config()
 
     def _setup_data_io_filters(self, in_pcol, label_prefix=None):
         # label prefixes are required for multiple inputs (to avoid label

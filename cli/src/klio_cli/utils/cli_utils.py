@@ -68,11 +68,18 @@ def validate_dataflow_runner_config(klio_config):
         raise SystemExit(1)
 
 
-def is_direct_runner(klio_config, direct_runner):
-    if not direct_runner:
+def is_direct_runner(klio_config, direct_runner_flag):
+    if direct_runner_flag:
+        return True
+
+    runner = klio_config.pipeline_options.runner
+    if runner == var.KlioRunner.DIRECT_RUNNER:
+        return True
+
+    if runner == var.KlioRunner.DATAFLOW_RUNNER:
         validate_dataflow_runner_config(klio_config)
 
-    return direct_runner
+    return False
 
 
 def import_gke_commands():

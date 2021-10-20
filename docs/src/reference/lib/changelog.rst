@@ -25,6 +25,21 @@ Changes
 
 .. end-21.10.0
 
+.. _lib-21.10.0:
+
+21.10.0 (UNRELEASED)
+--------------------
+
+.. start-21.10.0
+
+Changed
+*******
+
+* ``KlioConfig`` is now loaded on workers from pickled main session instead of a bundled config file (See `PR 233 <https://github.com/spotify/klio/pull/233>`_).
+
+.. end-21.10.0
+
+
 .. _lib-21.9.0:
 
 21.9.0 (2021-10-12)

@@ -60,9 +60,9 @@ def find_version(*file_paths):
 # -- Set up build env
 
 # Set this env before building the docs as it's used to avoid loading the
-# `/usr/src/config/.effective-klio-job.yaml` when klio decorators are 
-# imported (to grab their docs for `autodocs` functionality). When set,
-# a mock object of KlioContext is returned (in `klio.transforms.decorators`).
+# `KlioConfig` object when klio decorators are imported (to grab their docs for
+# `autodocs` functionality). When set, a mock object of KlioContext is returned
+# (in `klio.transforms.decorators`).
 os.environ["KLIO_DOCS_MODE"] = "true"
 
 # -- Project information -----------------------------------------------------
@@ -122,7 +122,9 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = [
+    "release_notes/template.rst",
+]
 
 # sphinx-build has a "nitpick" mode (used during CI docs workflow and
 # `make stricthtml`). We inherit some docs from Apache Beam, and some of

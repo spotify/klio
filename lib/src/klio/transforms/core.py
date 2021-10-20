@@ -14,16 +14,10 @@
 #
 
 import __main__
-import glob
 import logging
-import os
 import threading
 
-import yaml
-
-from klio_core import config
 from klio_core import variables as kvars
-from klio_core.config import core as config_core
 from klio_core.proto import klio_pb2
 
 from klio.metrics import client as metrics_client
@@ -33,38 +27,16 @@ from klio.metrics import shumway
 
 
 class RunConfig(object):
+    """
+    Manages runtime storage of KlioConfig object used during pipeline
+    execution.
 
-    _lock = threading.Lock()
-    _config = None
+    In order for the config to be available on workers (which may include
+    values overridden from CLI arguments), it is stored to a main session
+    variable before the Beam pipeline is started.  Beam will ensure that
+    everything in ``__main__`` is pickled and made available on worker nodes.
+    """
 
-    @classmethod
-    def _load_config_from_file(cls):
-        klio_job_file = None
-
-        if os.path.exists(config_core.WORKER_RUN_EFFECTIVE_CONFIG_PATH):
-            klio_job_file = config_core.WORKER_RUN_EFFECTIVE_CONFIG_PATH
-        else:
-            run_config_path = os.path.join(
-                "/usr/**", config_core.RUN_EFFECTIVE_CONFIG_FILE
-            )
-            files = glob.iglob(run_config_path, recursive=True)
-            for f in files:
-                klio_job_file = f
-                # only grab the first one
-                break
-
-        if not klio_job_file:
-            klio_job_file = "/usr/src/config/.effective-klio-job.yaml"
-
-        logger = logging.getLogger("klio")
-        logger.debug(f"Loading config file from {klio_job_file}.")
-
-        with open(klio_job_file, "r") as f:
-            all_config_data = yaml.safe_load(f)
-        return config.KlioConfig(all_config_data)
-
-    # NOTE: for now this approach is not being used (and may be removed in the
-    # future)
     @classmethod
     def _get_via_main_session(cls):
         if hasattr(__main__, "run_config"):
@@ -77,10 +49,7 @@ class RunConfig(object):
 
     @classmethod
     def get(cls):
-        with cls._lock:
-            if cls._config is None:
-                cls._config = cls._load_config_from_file()
-            return cls._config
+        return cls._get_via_main_session()
 
     @classmethod
     def set(cls, config):

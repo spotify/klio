@@ -43,38 +43,35 @@ jobs:
           python -m pip install build virtualenv twine --user
 
       - name: "${{ github.event.inputs.package-name }}: Build wheel & sdist"
-        working-directory: ${{ github.event.inputs.package-dir }}
         run: |
           set -xe
+          pwd
           python -VV
-          python -m build --sdist --wheel --outdir dist/ .
+          python -m build --sdist --wheel --outdir ${{ github.event.inputs.package-dir }}/dist/ ${{ github.event.inputs.package-dir }}/
 
       - name: "${{ github.event.inputs.package-name }}: Check Long Description"
-        working-directory: ${{ github.event.inputs.package-dir }}
         run: |
           set -xe
           python -VV
-          python -m twine check dist/*
+          python -m twine check ${{ github.event.inputs.package-dir }}/dist/*
 
       - name: "${{ github.event.inputs.package-name }}: Test sdist installation from local build"
-        working-directory: ${{ github.event.inputs.package-dir }}
         run: |
           set -xe
           python -VV
           python -m virtualenv sdist-test
           source sdist-test/bin/activate
-          python -m pip install dist/*.tar.gz
+          python -m pip install ${{ github.event.inputs.package-dir }}/dist/*.tar.gz
           python -c 'import ${{ github.event.inputs.package-name }}; print(${{ github.event.inputs.package-name }}.__version__)'
           deactivate
 
       - name: "${{ github.event.inputs.package-name }}: Test wheel installation from local build"
-        working-directory: ${{ github.event.inputs.package-dir }}
         run: |
           set -xe
           python -VV
           python -m virtualenv wheel-test
           source wheel-test/bin/activate
-          python -m pip install dist/*.whl
+          python -m pip install ${{ github.event.inputs.package-dir }}/dist/*.whl
           python -c 'import ${{ github.event.inputs.package-name }}; print(${{ github.event.inputs.package-name }}.__version__)'
           deactivate
 

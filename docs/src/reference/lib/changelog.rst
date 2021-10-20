@@ -1,5 +1,6 @@
 Changelog
 =========
+
 .. _lib-21.10.0:
 
 21.10.0 (UNRELEASED)
@@ -21,20 +22,6 @@ Changes
 *******
 
 * Updated documentation related to the native metrics client.
-
-
-.. end-21.10.0
-
-.. _lib-21.10.0:
-
-21.10.0 (UNRELEASED)
---------------------
-
-.. start-21.10.0
-
-Changed
-*******
-
 * ``KlioConfig`` is now loaded on workers from pickled main session instead of a bundled config file (See `PR 220 <https://github.com/spotify/klio/pull/220>`_).
 
 .. end-21.10.0

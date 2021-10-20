@@ -150,12 +150,13 @@ PROJECT_URLS = {
     "Source Code": "https://github.com/spotify/klio"
 }
 META_FILE = read(META_PATH)
+PACKAGE_VERSION = find_meta("version")
 INSTALL_REQUIRES = [
     "click",
     "docker",
     "dockerpty",
-    "klio-cli>=1.0.0",
-    "klio-core>=0.2.0",
+    f"klio-cli>={PACKAGE_VERSION}",
+    f"klio-core>={PACKAGE_VERSION}",
 ]
 EXTRAS_REQUIRE = {
     "tests": [
@@ -171,7 +172,7 @@ PYTHON_REQUIRES = ">=3.6, <3.9"
 
 setup(
     name=NAME,
-    version=find_meta("version"),
+    version=PACKAGE_VERSION,
     description=find_meta("description"),
     long_description=get_long_description("devtools"),
     long_description_content_type="text/x-rst",

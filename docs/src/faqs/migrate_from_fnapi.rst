@@ -64,7 +64,7 @@ explicitly including non-Python files needed for a job (i.e. a model, a JSON sch
             description="My example job using setup.py",  # optional
             install_requires=["tensorflow"],  # optional
             data_files=[  # required
-                (".", ["klio-job-run-effective.yaml", "my-model.h5"]),
+                (".", ["my-model.h5"]),
             ],
             include_package_data=True,  # required
             py_modules=["run", "transforms"],  # required
@@ -184,31 +184,25 @@ Update: ``Dockerfile``
 Required Changes
 ~~~~~~~~~~~~~~~~
 
-1. **ADD** ``klio-job.yaml`` to be copied into ``/usr/src/app``.
-
-    .. collapsible:: Why is this needed?
-
-        We need to include Klio's configuration, but when creating a package of the job, the configuration must be within the same directory ``setup.py`` is in (subdirectories are fine). Relatedly, multi-configuration is not yet supported without the FnAPI since Klio expects the job configuration in a location that we can't manipulate with the ``setup.py`` approach.
-
-2. **ADD** the newly required files to be copied over - ``setup.py`` and ``MANIFEST.in`` - into the working directory, ``/usr/src/app``.
+1. **ADD** the newly required files to be copied over - ``setup.py`` and ``MANIFEST.in`` - into the working directory, ``/usr/src/app``.
 
     .. collapsible:: Why is this needed?
 
         ``setup.py`` and ``MANIFEST.in`` are needed to tell Klio and Dataflow how to build your pipeline as a Python package (i.e. what Python and non-Python files to include) since you're no longer using a Docker image as a "package" for your job.
 
-3. **DOUBLE CHECK** any non-Python files needed for the job, e.g. models, JSON schemas, etc, are copied into the working directory, ``/usr/src/app``.
+2. **DOUBLE CHECK** any non-Python files needed for the job, e.g. models, JSON schemas, etc, are copied into the working directory, ``/usr/src/app``.
 
     .. collapsible:: Why is this needed?
 
         Klio packages up your job to be installed (for unit tests, audits, and running on the direct runner), and to be uploaded to Dataflow locally on the job's worker image. Therefore, the Docker image needs to have all the required Python and non-Python files to run the job.
 
-4. **ADD** the following line to the end of the file: ``RUN pip install .``
+3. **ADD** the following line to the end of the file: ``RUN pip install .``
 
     .. collapsible:: Why is this needed?
 
         We install the package for the ability to run unit tests via ``klio job test``, run audits via ``klio job audit``, and - if needed - to run the job with Direct Runner.
 
-5. **DOUBLE CHECK** that you ``COPY`` in your ``job-requirements.txt`` file into the image (it should already exist if the job was made via ``klio job create``). It can be grouped into one ``COPY`` line like the example below.
+4. **DOUBLE CHECK** that you ``COPY`` in your ``job-requirements.txt`` file into the image (it should already exist if the job was made via ``klio job create``). It can be grouped into one ``COPY`` line like the example below.
 
 .. collapsible:: Example of Required Changes
 
@@ -218,7 +212,6 @@ Required Changes
         +     setup.py \
         +     MANIFEST.in \
         +     my-model.h5 \
-        +     klio-job.yaml \
         +     job-requirements.txt \
               run.py \
               transforms.py \
@@ -246,7 +239,6 @@ The following is a collection of suggested changes to optimize Docker builds by 
         Note: Keeping ``pip install --upgrade pip setuptools`` (or similar) is still advised.
 
 * **DELETE** any lines creating ``/usr/src/config``, i.e. ``RUN mkdir -p /usr/src/config``.
-* **DELETE** the two lines ``ARG KLIO_CONFIG=klio-job.yaml`` and ``COPY $KLIO_CONFIG /usr/src/config/.effective-klio-job.yaml``.
 
 
 .. collapsible:: Example of Suggested Changes
@@ -275,8 +267,6 @@ The following is a collection of suggested changes to optimize Docker builds by 
                my-model.h5 \
                /usr/src/app/
 
-        -  ARG KLIO_CONFIG=klio-job.yaml
-        -  COPY $KLIO_CONFIG /usr/src/config/.effective-klio-job.yaml
 
 .. collapsible:: Combined Example of Required & Suggested Changes
 
@@ -303,13 +293,10 @@ The following is a collection of suggested changes to optimize Docker builds by 
         +      MANIFEST.in \
         +      job-requirements.txt \
         +      my-model.h5 \
-        +      klio-job.yaml \
                run.py \
                transforms.py \
                /usr/src/app/
 
-        -  ARG KLIO_CONFIG=klio-job.yaml
-        -  COPY $KLIO_CONFIG /usr/src/config/.effective-klio-job.yaml
         +  RUN pip install .
 
 .. _source distribution: https://packaging.python.org/guides/distributing-packages-using-setuptools/#source-distributions

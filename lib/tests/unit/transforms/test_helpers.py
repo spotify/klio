@@ -27,11 +27,9 @@ from klio_core.proto import klio_pb2
 from klio.transforms import core
 from tests.unit import conftest
 
-# NOTE: When the config attribute is accessed (when setting up
-# a metrics counter object), it will try to read a
-# `/usr/src/config/.effective-klio-job.yaml` file. Since some helper transforms
-# use some decorators that access config, we just patch on the module level
-# instead of within each and every test function.
+# NOTE: Since some helper transforms use some decorators that access config, we
+# just patch on the module level instead of within each and every test
+# function.
 patcher = mock.patch.object(core.RunConfig, "get", conftest._klio_config)
 patcher.start()
 

@@ -25,6 +25,4 @@ COPY __init__.py \
      setup.py \
      /usr/src/app/
 
-ARG KLIO_CONFIG=klio-job.yaml
-COPY $KLIO_CONFIG klio-job-run-effective.yaml
 RUN pip install .

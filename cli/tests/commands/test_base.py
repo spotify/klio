@@ -165,7 +165,7 @@ def test_get_docker_runflags(
 
     if requires_config:
         expected_command.extend(
-            ["--config-file", "/usr/src/app/klio-job-run-effective.yaml"]
+            ["--config-file", "/usr/src/config/materialized_config.yaml"]
         )
 
     exp_runflags = {

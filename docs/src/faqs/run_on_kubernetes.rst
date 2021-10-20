@@ -85,7 +85,7 @@ Step 3: Update Dockerfile
 .. code-block:: Docker
 
     ARG KLIO_CONFIG=klio-job.yaml
-    COPY $KLIO_CONFIG klio-job-run-effective.yaml
+    COPY $KLIO_CONFIG klio-job.yaml
 
 
 Step 4: Update ``klio-job.yaml``

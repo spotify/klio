@@ -118,7 +118,7 @@ def _klio_context():
         # decorators in particular are imported, they're evaluated. Some
         # decorators need access to the Klio context which would otherwise
         # fail because building docs does not give access to the
-        # `/usr/src/config/.klio-job-run-effective.yaml` file.
+        # `KlioConfig` object.
         from unittest import mock
 
         return mock.Mock()

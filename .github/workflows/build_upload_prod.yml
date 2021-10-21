@@ -103,9 +103,9 @@ jobs:
         shell: bash
         run: |
           set -xe
-          FULL_PATH=$(ls ${{ steps.download.outputs.download-path }}/*.tar.gz)
-          BASE_NAME=$(basename ${FULL_PATH} .tar.gz)
-          VERSION=$(echo ${BASE_NAME} | cut -d- -f3)
+          FULL_PATH=$(ls ${{ steps.download.outputs.download-path }}/*.whl)
+          BASE_NAME=$(basename ${FULL_PATH} .whl)
+          VERSION=$(echo ${BASE_NAME} | cut -d- -f2)
           echo ::set-output name=version::$(echo ${VERSION})
 
       - name: "Upload ${{ inputs.package-name }} artifacts to Prod PyPI"

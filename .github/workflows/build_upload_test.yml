@@ -27,7 +27,7 @@ on:
 
 jobs:
   build_install:
-    name: "Build & Install ${{ github.event.inputs.package-name }}"
+    name: "Build & Install ${{ inputs.package-name }}"
     runs-on: "ubuntu-latest"
     steps:
       - uses: "actions/checkout@v2"
@@ -42,63 +42,63 @@ jobs:
           python -VV
           python -m pip install build virtualenv twine --user
 
-      - name: "${{ github.event.inputs.package-name }}: Build wheel & sdist"
+      - name: "${{ inputs.package-name }}: Build wheel & sdist"
         run: |
           set -xe
           pwd
           python -VV
-          python -m build --sdist --wheel --outdir ${{ github.event.inputs.package-dir }}/dist/ ${{ github.event.inputs.package-dir }}
+          python -m build --sdist --wheel --outdir ${{ inputs.package-dir }}/dist/ ${{ inputs.package-dir }}
 
-      - name: "${{ github.event.inputs.package-name }}: Check Long Description"
+      - name: "${{ inputs.package-name }}: Check Long Description"
         run: |
           set -xe
           python -VV
-          python -m twine check ${{ github.event.inputs.package-dir }}/dist/*
+          python -m twine check ${{ inputs.package-dir }}/dist/*
 
-      - name: "${{ github.event.inputs.package-name }}: Test sdist installation from local build"
+      - name: "${{ inputs.package-name }}: Test sdist installation from local build"
         run: |
           set -xe
           python -VV
           python -m virtualenv sdist-test
           source sdist-test/bin/activate
-          python -m pip install ${{ github.event.inputs.package-dir }}/dist/*.tar.gz
-          python -c 'import ${{ github.event.inputs.package-name }}; print(${{ github.event.inputs.package-name }}.__version__)'
+          python -m pip install ${{ inputs.package-dir }}/dist/*.tar.gz
+          python -c 'import ${{ inputs.package-name }}; print(${{ inputs.package-name }}.__version__)'
           deactivate
 
-      - name: "${{ github.event.inputs.package-name }}: Test wheel installation from local build"
+      - name: "${{ inputs.package-name }}: Test wheel installation from local build"
         run: |
           set -xe
           python -VV
           python -m virtualenv wheel-test
           source wheel-test/bin/activate
-          python -m pip install ${{ github.event.inputs.package-dir }}/dist/*.whl
-          python -c 'import ${{ github.event.inputs.package-name }}; print(${{ github.event.inputs.package-name }}.__version__)'
+          python -m pip install ${{ inputs.package-dir }}/dist/*.whl
+          python -c 'import ${{ inputs.package-name }}; print(${{ inputs.package-name }}.__version__)'
           deactivate
 
       # Upload artifact so it can be downloaded & used in the following job
       - name: "Archive artifacts"
         uses: actions/upload-artifact@v2
         with:
-          name: dist-${{ github.event.inputs.package-name }}
-          path: ${{ github.event.inputs.package-dir }}/dist/*
+          name: dist-${{ inputs.package-name }}
+          path: ${{ inputs.package-dir }}/dist/*
           retention-days: 1
 
   upload_test_pypi:
-    name: "Upload ${{ github.event.inputs.package-name }} to PyPI Test Server"
+    name: "Upload ${{ inputs.package-name }} to PyPI Test Server"
     needs: build_install
     outputs:
       version: ${{ steps.version.outputs.version }}
     runs-on: "ubuntu-latest"
     steps:
-      - name: "Download ${{ github.event.inputs.package-name }} artifacts from GH"
+      - name: "Download ${{ inputs.package-name }} artifacts from GH"
         id: download
         uses: actions/download-artifact@v2
         with:
-          name: dist-${{ github.event.inputs.package-name }}
+          name: dist-${{ inputs.package-name }}
 
       # Save the version as a variable we can use later when we test
       # the installation
-      - name: "Grab Package Version for ${{ github.event.inputs.package-name }}"
+      - name: "Grab Package Version for ${{ inputs.package-name }}"
         id: version
         shell: bash
         run: |
@@ -108,7 +108,7 @@ jobs:
           VERSION=$(echo ${BASE_NAME} | cut -d- -f3)
           echo ::set-output name=version::$(echo ${VERSION})
 
-      - name: "Upload ${{ github.event.inputs.package-name }} artifacts to Test PyPI"
+      - name: "Upload ${{ inputs.package-name }} artifacts to Test PyPI"
         uses: pypa/gh-action-pypi-publish@master
         with:
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
@@ -117,7 +117,7 @@ jobs:
           packages_dir: ${{ steps.download.outputs.download-path }}
 
   install_test_pypi:
-    name: "Test installation of ${{ github.event.inputs.package-name }} from Test PyPI"
+    name: "Test installation of ${{ inputs.package-name }} from Test PyPI"
     needs: upload_test_pypi
     runs-on: "ubuntu-latest"
     steps:
@@ -139,20 +139,20 @@ jobs:
 
       # Since not all of our dependencies are on the Test PyPI, we pass in
       # an `--extra-index-url` to include prod so the klio* package can be properly installed 
-      - name: "Test wheel install of ${{ github.event.inputs.package-name }} from Test PyPI"
+      - name: "Test wheel install of ${{ inputs.package-name }} from Test PyPI"
         run: |
           set -xe
           python -m virtualenv test-pypi-wheel
           source test-pypi-wheel/bin/activate
-          python -m pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple --only-binary=${{ github.event.inputs.package-name }} ${{ github.event.inputs.package-name }}==${{ needs.upload_test_pypi.outputs.version }}
-          python -c 'import ${{ github.event.inputs.package-name }}; assert ${{ github.event.inputs.package-name }}.__version__ == "${{ needs.upload_test_pypi.outputs.version }}"'
+          python -m pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple --only-binary=${{ inputs.package-name }} ${{ inputs.package-name }}==${{ needs.upload_test_pypi.outputs.version }}
+          python -c 'import ${{ inputs.package-name }}; assert ${{ inputs.package-name }}.__version__ == "${{ needs.upload_test_pypi.outputs.version }}"'
           deactivate
 
-      - name: "Test sdist install of ${{ github.event.inputs.package-name }} from Test PyPI"
+      - name: "Test sdist install of ${{ inputs.package-name }} from Test PyPI"
         run: |
           set -xe
           python -m virtualenv test-pypi-sdist
           source test-pypi-sdist/bin/activate
-          python -m pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple --no-binary=${{ github.event.inputs.package-name }} ${{ github.event.inputs.package-name }}==${{ needs.upload_test_pypi.outputs.version }}
-          python -c 'import ${{ github.event.inputs.package-name }}; assert ${{ github.event.inputs.package-name }}.__version__ == "${{ needs.upload_test_pypi.outputs.version }}"'
+          python -m pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple --no-binary=${{ inputs.package-name }} ${{ inputs.package-name }}==${{ needs.upload_test_pypi.outputs.version }}
+          python -c 'import ${{ inputs.package-name }}; assert ${{ inputs.package-name }}.__version__ == "${{ needs.upload_test_pypi.outputs.version }}"'
           deactivate

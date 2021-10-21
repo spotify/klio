@@ -17,16 +17,6 @@ on:
     secrets:
       token:
         required: true
-  workflow_dispatch:  # manual trigger
-    inputs:
-      package-dir:
-        description: "Directory of package to build & upload"
-        required: true
-        type: string
-      package-name:
-        description: "Import name of package (e.g. klio_core, not klio-core)"
-        required: true
-        type: string
 
 jobs:
   build_install:

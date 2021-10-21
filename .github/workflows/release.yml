@@ -78,8 +78,8 @@ jobs:
     needs: release_core_prod
     uses: spotify/klio/.github/workflows/build_upload_test.yml@develop
     with:
-      package-dir: cli
-      package-name: klio_cli
+      package-dir: audio
+      package-name: klio_audio
     secrets: 
       token: ${{ secrets.TEST_PYPI_API_TOKEN }}
 

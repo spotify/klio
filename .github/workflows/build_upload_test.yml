@@ -14,16 +14,9 @@ on:
         description: "Import name of package (e.g. klio_core, not klio-core)"
         required: true
         type: string
-  workflow_dispatch:  # manual trigger
-    inputs:
-      package-dir:
-        description: "Directory of package to build & upload"
+    secrets:
+      token:
         required: true
-        type: string
-      package-name:
-        description: "Import name of package (e.g. klio_core, not klio-core)"
-        required: true
-        type: string
 
 jobs:
   build_install:
@@ -111,7 +104,7 @@ jobs:
       - name: "Upload ${{ inputs.package-name }} artifacts to Test PyPI"
         uses: pypa/gh-action-pypi-publish@master
         with:
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          password: ${{ secrets.token }}
           repository_url: https://test.pypi.org/legacy/
           verbose: true
           packages_dir: ${{ steps.download.outputs.download-path }}

@@ -1,20 +1,16 @@
 Changelog
 =========
 
-.. _core-21.10.0:
+.. _core-21.12.0:
 
-21.10.0 (UNRELEASED)
+21.12.0 (UNRELEASED)
 --------------------
 
-.. start-21.10.0
+.. start-21.12.0
 
-Added
-*****
+No changes - bump version to sync with ``21.12.0`` release.
 
-* Added all supported runners to Klio ``variables``.
-
-.. end-21.10.0
-
+.. end-21.12.0
 
 .. _core-21.9.0:
 

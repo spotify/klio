@@ -1,16 +1,16 @@
 Changelog
 =========
 
-.. _exec-21.10.0:
+.. _exec-21.12.0:
 
-21.10.0 (UNRELEASED)
+21.12.0 (UNRELEASED)
 --------------------
 
-.. start-21.10.0
+.. start-21.12.0
 
-No changes - bump version to sync with ``21.10.0`` release.
+No changes - bump version to sync with ``21.12.0`` release.
 
-.. end-21.10.0
+.. end-21.12.0
 
 .. _exec-21.9.0:
 

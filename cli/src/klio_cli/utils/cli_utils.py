@@ -115,7 +115,7 @@ def error_stackdriver_logger_metrics(klio_config, direct_runner):
         if stackdriver_conf not in (False, None):
             msg = (
                 "The Stackdriver log-based metric client has been deprecated "
-                "since 21.3.0 and removed in 21.10.0, in favor of the Native "
+                "since 21.3.0 and removed in 21.12.0, in favor of the Native "
                 "metrics client.\n"
                 "See docs on how to turn on the native client for Dataflow: "
                 "https://docs.klio.io/en/stable/userguide/pipeline/metrics.html"

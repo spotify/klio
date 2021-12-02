@@ -1,12 +1,12 @@
 CLI Changelog
 =============
 
-.. _cli-21.10.0:
+.. _cli-21.12.0:
 
-21.10.0 (UNRELEASED)
+21.12.0 (UNRELEASED)
 --------------------
 
-.. start-21.10.0
+.. start-21.12.0
 
 Added
 *****
@@ -23,8 +23,9 @@ Changed
 *******
 
 * When running a job, effective config is no longer written to ``klio-job-run-effective.yaml``, but instead to a temp file.  This file no longer needs to be included in ``setup.py`` projects (See `PR 233 <https://github.com/spotify/klio/pull/233>`_).
+* Error out when a user tries to run a Dataflow-based job with Stackdriver log-based metrics client configured.
 
-.. end-21.10.0
+.. end-21.12.0
 
 .. _cli-21.9.0:
 

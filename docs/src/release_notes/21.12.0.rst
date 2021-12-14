@@ -1,0 +1,55 @@
+21.12.0
+=======
+
+Load Klio Config from Main Session
+----------------------------------
+Klio now uses Apache Beam's main session to load the Klio config file onto workers. Klio config fields are defined in the ``klio-job.yaml`` and can also be overridden [#f1]_ when running a pipeline. The final config fields are serialized as the ``KlioConfig`` object, saved into the main session, and loaded by Dataflow workers upon starting up. As a result, Klio jobs no longer need to include ``.effective-klio-job.yaml`` and ``klio-job-run-effective.yaml`` in the job's docker image.
+
+This change is dependent on a bug fix available in ``apache-beam>=2.31.0``. Klio jobs using a version lower than this should upgrade ``apache-beam``.
+
+
+Metrics
+-------
+The Stackdriver log-based metric client, which has been deprecated since March 2021, has been removed in this release.
+
+
+Verifying GCP Roles
+-------------------
+The release of ``21.12.0`` also includes minor improvements to the user experience when verifying a Klio job and adding GCP roles to a job's service account.
+
+
+Changes
+-------
+
+:ref:`klio-cli <cli-21.12.0>`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. include:: /reference/cli/changelog.rst
+    :start-after: start-21.12.0
+    :end-before: end-21.12.0
+
+:ref:`klio <lib-21.12.0>`
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. include:: /reference/lib/changelog.rst
+    :start-after: start-21.12.0
+    :end-before: end-21.12.0
+
+
+:ref:`klio-core <core-21.12.0>`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. include:: /reference/core/changelog.rst
+    :start-after: start-21.12.0
+    :end-before: end-21.12.0
+
+:ref:`klio-exec <exec-21.12.0>`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. include:: /reference/executor/changelog.rst
+    :start-after: start-21.12.0
+    :end-before: end-21.12.0
+
+.. rubric:: Footnotes
+
+.. [#f1] https://docs.klio.io/en/stable/userguide/config/index.html?highlight=override#overriding-values

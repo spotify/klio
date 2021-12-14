@@ -46,6 +46,20 @@ pass in the desired unit when instantiating. For example:
             self.my_timer = self._klio.metrics.timer(
                 name="my-timer", timer_unit="ns"
             )
+
+.. caution::
+
+    When running on Dataflow, in order for the Native metrics client to be able
+    to report metrics to Stackdriver, the following ``experiment`` must be
+    added to ``klio-job.yaml``:
+
+    .. code-block:: yaml
+
+        # <--snip-->
+        pipeline_options:
+          experiments:
+            - enable_stackdriver_agent_metrics
+        # <--snip-->
 """
 import logging
 

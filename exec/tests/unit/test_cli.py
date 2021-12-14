@@ -106,7 +106,7 @@ def klio_config(config):
 # imports `klio.transforms.decorators`) and `klio_exec.cli` triggers the  code
 # in those decorators to get evaluated. Therefore, we must patch this part in
 # order to import it, otherwise it will try to load the non-existant
-# `/usr/src/config/.effective-klio-job.yaml`
+# `KlioConfig`
 mock_config = kconfig.KlioConfig(_config())
 patcher = mock.patch(
     "klio.transforms.core.RunConfig.get", lambda: mock_config,

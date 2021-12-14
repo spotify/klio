@@ -1,4 +1,4 @@
-FROM dataflow.gcr.io/v1beta3/python36-fnapi:2.28.0
+FROM dataflow.gcr.io/v1beta3/python36-fnapi:2.32.0
 
 WORKDIR /usr/src/app
 RUN mkdir -p /usr/src/config
@@ -25,6 +25,4 @@ COPY __init__.py \
      batch_track_ids_2.txt \
      /usr/src/app/
 
-ARG KLIO_CONFIG=klio-job.yaml
-COPY $KLIO_CONFIG klio-job-run-effective.yaml
 RUN pip install .

@@ -1,0 +1,150 @@
+name: Build & Release to PyPI
+
+on:
+  # TODO: testing with manual triggering first - will update to trigger on push
+  # for certain branches/tags/whatever is decided once we confirm this works
+  workflow_dispatch:  # manual trigger
+
+# Note: can't combine releasing to test & prod PyPI into one job with 
+# multiple steps, or use a matrix - this is not supported with reusable workflows
+jobs:
+  # core needs to be released first since other klio packages depend on it
+  release_core_test:
+    name: "[core] Build & Release to Test PyPI"
+    uses: spotify/klio/.github/workflows/build_upload_test.yml@develop
+    with:
+      package-dir: core
+      package-name: klio_core
+    secrets: 
+      token: ${{ secrets.TEST_PYPI_API_TOKEN }}
+
+  release_core_prod:
+    name: "[core] Build & Release to Prod PyPI"
+    needs: release_core_test
+    uses: spotify/klio/.github/workflows/build_upload_prod.yml@develop
+    with:
+      package-dir: core
+      package-name: klio_core
+    secrets: 
+      token: ${{ secrets.PROD_PYPI_API_TOKEN }}
+
+  # lib & cli needs to be released next since exec & devtools depend on them
+  release_lib_test:
+    name: "[lib] Build & Release to Test PyPI"
+    needs: release_core_prod
+    uses: spotify/klio/.github/workflows/build_upload_test.yml@develop
+    with:
+      package-dir: lib
+      package-name: klio
+    secrets: 
+      token: ${{ secrets.TEST_PYPI_API_TOKEN }}
+
+  release_lib_prod:
+    name: "[lib] Build & Release to Prod PyPI"
+    needs:
+      - release_lib_test
+      - release_core_prod
+    uses: spotify/klio/.github/workflows/build_upload_prod.yml@develop
+    with:
+      package-dir: lib
+      package-name: klio
+    secrets: 
+      token: ${{ secrets.PROD_PYPI_API_TOKEN }}
+
+  release_cli_test:
+    name: "[cli] Build & Release to Test PyPI"
+    needs: release_core_prod
+    uses: spotify/klio/.github/workflows/build_upload_test.yml@develop
+    with:
+      package-dir: cli
+      package-name: klio_cli
+    secrets: 
+      token: ${{ secrets.TEST_PYPI_API_TOKEN }}
+
+  release_cli_prod:
+    name: "[cli] Build & Release to Prod PyPI"
+    needs:
+      - release_cli_test
+      - release_core_prod
+    uses: spotify/klio/.github/workflows/build_upload_prod.yml@develop
+    with:
+      package-dir: cli
+      package-name: klio_cli
+    secrets: 
+      token: ${{ secrets.PROD_PYPI_API_TOKEN }}
+
+  release_exec_test:
+    name: "[exec] Build & Release to Test PyPI"
+    needs: 
+      - release_core_prod
+      - release_lib_prod
+    uses: spotify/klio/.github/workflows/build_upload_test.yml@develop
+    with:
+      package-dir: exec
+      package-name: klio_exec
+    secrets: 
+      token: ${{ secrets.TEST_PYPI_API_TOKEN }}
+
+  release_exec_prod:
+    name: "[exec] Build & Release to Prod PyPI"
+    needs: 
+      - release_exec_test
+      - release_core_prod
+      - release_lib_prod
+    uses: spotify/klio/.github/workflows/build_upload_prod.yml@develop
+    with:
+      package-dir: exec
+      package-name: klio_exec
+    secrets: 
+      token: ${{ secrets.PROD_PYPI_API_TOKEN }}
+
+  # Uncomment when ready to make regular releases of klio-audio
+  #
+  # release_audio_test:
+  #   name: "[audio] Build & Release to Test PyPI"
+  #   needs: release_core_prod
+  #   uses: spotify/klio/.github/workflows/build_upload_test.yml@develop
+  #   with:
+  #     package-dir: audio
+  #     package-name: klio_audio
+  #   secrets: 
+  #     token: ${{ secrets.TEST_PYPI_API_TOKEN }}
+
+  # release_audio_prod:
+  #   name: "[audio] Build & Release to Prod PyPI"
+  #   needs:
+  #     - release_audio_test
+  #     - release_core_prod
+  #   uses: spotify/klio/.github/workflows/build_upload_prod.yml@develop
+  #   with:
+  #     package-dir: audio
+  #     package-name: klio_audio
+  #   secrets: 
+  #     token: ${{ secrets.PROD_PYPI_API_TOKEN }}
+
+  # Uncomment when ready to make regular releases of klio-devtools
+  #
+  # release_devtools_test:
+  #   name: "[devtools] Build & Release to Test PyPI"
+  #   needs: 
+  #     - release_core_prod
+  #     - release_cli_prod
+  #   uses: spotify/klio/.github/workflows/build_upload_test.yml@develop
+  #   with:
+  #     package-dir: devtools
+  #     package-name: klio_devtools
+  #   secrets: 
+  #     token: ${{ secrets.TEST_PYPI_API_TOKEN }}
+
+  # release_devtools_prod:
+  #   name: "[devtools] Build & Release to Prod PyPI"
+  #   needs: 
+  #     - release_devtools_test
+  #     - release_core_prod
+  #     - release_cli_prod
+  #   uses: spotify/klio/.github/workflows/build_upload_prod.yml@develop
+  #   with:
+  #     package-dir: devtools
+  #     package-name: klio_devtools
+  #   secrets: 
+  #     token: ${{ secrets.PROD_PYPI_API_TOKEN }}

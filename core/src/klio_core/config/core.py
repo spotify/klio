@@ -26,18 +26,6 @@ from klio_core.config import _utils as utils
 logger = logging.getLogger("klio")
 
 
-# path used by both klio-cli and klioexec to write and read the config when
-# running a job
-RUN_EFFECTIVE_CONFIG_FILE = "klio-job-run-effective.yaml"
-RUN_EFFECTIVE_CONFIG_PATH = os.path.join(
-    "/usr/src/app", RUN_EFFECTIVE_CONFIG_FILE
-)
-
-# location where workers expect to load the config file from when using setup.py
-WORKER_RUN_EFFECTIVE_CONFIG_PATH = os.path.join(
-    "/usr/local", RUN_EFFECTIVE_CONFIG_FILE
-)
-
 WORKER_DISK_TYPE_URL = (
     "compute.googleapis.com/projects/{project}/regions/{region}/"
     "diskTypes/{disk_type}"

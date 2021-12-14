@@ -28,11 +28,8 @@ from klio.transforms import decorators
 from klio.utils import _thread_limiter
 from tests.unit import conftest
 
-# NOTE: When the config attribute is accessed (when setting up
-# a metrics counter object), it will try to read a
-# `/usr/src/config/.effective-klio-job.yaml` file. Since all IO transforms
-# use the _KlioIOCounter, we just patch on the module level instead of
-# within each and every test function.
+# NOTE: Since all IO transforms use the _KlioIOCounter, we just patch on the
+# module level instead of within each and every test function.
 patcher = mock.patch.object(core.RunConfig, "get", conftest._klio_config)
 patcher.start()
 
@@ -537,6 +534,41 @@ def test_threadlimitgenerator_del_release(mocker):
 
     subfunc()
     limiter.release.assert_called_once_with()
+
+
+@pytest.mark.parametrize(
+    "metrics_conf,expected_unit",
+    (
+        # default - no config
+        ({}, "s"),
+        # config set
+        ({"timer_unit": "ms"}, "ms"),
+        ({"logger": {"timer_unit": "ms"}}, "ms"),
+        ({"native": {"timer_unit": "ms"}}, "ms"),
+        ({"shumway": {"timer_unit": "ms"}}, "ms"),
+        # expected order
+        ({"timer_unit": "ms", "logger": {"timer_unit": "ns"}}, "ms"),
+        (
+            {"logger": {"timer_unit": "ns"}, "native": {"timer_unit": "ms"}},
+            "ms",
+        ),
+        (
+            {"shumway": {"timer_unit": "ns"}, "native": {"timer_unit": "ms"}},
+            "ms",
+        ),
+        (
+            {"shumway": {"timer_unit": "ns"}, "logger": {"timer_unit": "ms"}},
+            "ns",
+        ),
+        # various combos
+        ({"logger": {"level": "info"}}, "s"),
+        ({"native": False}, "s"),
+        (False, "s"),
+    ),
+)
+def test_get_timer_unit(metrics_conf, expected_unit):
+    actual_unit = decorators.__get_timer_unit(metrics_conf)
+    assert expected_unit == actual_unit
 
 
 patcher.stop()

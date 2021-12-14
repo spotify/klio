@@ -1,4 +1,6 @@
 INFO:root:Found worker image: integration-multi-event-input-batch:multi-event-input-batch
+WARNING:root:Make sure that locally built Python SDK docker image has Python 3.6 interpreter.
+INFO:root:Default Python SDK image for environment is apache/beam_python3.6_sdk:2.33.0
 INFO:klio:Output not found at gs://klio-integration/multi-event-input-batch-output/source1-abcd
 INFO:klio:Output not found at gs://klio-integration/multi-event-input-batch-output/source1-efgh
 INFO:klio:Output not found at gs://klio-integration/multi-event-input-batch-output/source1-ijkl

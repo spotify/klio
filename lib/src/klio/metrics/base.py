@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 """
-Base classes from which a metrics consumer (i.e. Stackdriver, ffwd, etc.)
+Base classes from which a metrics consumer (i.e. ffwd, logger, etc.)
 will need to implement.
 
 New consumers are required to implement the :class:`AbstractRelayClient`, and
@@ -110,7 +110,7 @@ class _ABCBaseMeta(abc.ABCMeta):
 class AbstractRelayClient(six.with_metaclass(_ABCBaseMeta)):
     """Abstract base class for all metric consumer relay clients.
 
-    Each new consumer (i.e. Stackdriver, ffwd, logging-based metrics)
+    Each new consumer (i.e. ffwd, logging-based metrics)
     will need to implement this relay class.
 
     Attributes:

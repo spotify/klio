@@ -13,78 +13,35 @@
 # limitations under the License.
 #
 
-import os
-
 import pytest
-import yaml
-
-from klio_core import config
 
 from klio.metrics import logger as logger_metrics
 from klio.metrics import native as native_metrics
-from klio.metrics import stackdriver as sd_metrics
-from klio.transforms import _utils as utils
+from klio.metrics import shumway
 from klio.transforms import core as core_transforms
 
 
-# FIXME: for some reason, the mocks that are patched on various objects within
-# this test function linger, creating warnings in test_helpers.py and
-# test_io.py. These particular warnings show that something is not patched
-# correctly for them, and therefore creating HTTP calls (i.e. a google auth
-# user warning).
-@pytest.mark.skip("FIXME: patches linger causing HTTP calls in other modules")
 @pytest.mark.parametrize(
-    "runner,metrics_config,exp_clients,exp_warn",
+    "runner,metrics_config,exp_clients",
     (
         # default metrics client config for respective runner
-        ("dataflow", {}, [sd_metrics.StackdriverLogMetricsClient], True),
-        ("direct", {}, [logger_metrics.MetricsLoggerClient], False),
+        ("direct", {}, [logger_metrics.MetricsLoggerClient]),
+        ("directgkerunner", {}, [shumway.ShumwayMetricsClient]),
+        ("dataflow", {}, []),  # default to native
         # explicitly turn on metrics for respective runner
-        (
-            "dataflow",
-            {"stackdriver_logger": True},
-            [sd_metrics.StackdriverLogMetricsClient],
-            True,
-        ),
-        (
-            "direct",
-            {"logger": True},
-            [logger_metrics.MetricsLoggerClient],
-            False,
-        ),
+        ("direct", {"logger": True}, [logger_metrics.MetricsLoggerClient],),
+        ("directgkerunner", {"shumway": True}, [shumway.ShumwayMetricsClient]),
         # turn off default client for respective runner
-        ("dataflow", {"stackdriver_logger": False}, [], False),
-        ("direct", {"logger": False}, [], False),
-        # ignore SD config when on direct
-        (
-            "direct",
-            {"stackdriver_logger": True},
-            [logger_metrics.MetricsLoggerClient],
-            False,
-        ),
-        # ignore logger config when on dataflow
-        (
-            "dataflow",
-            {"logger": False},
-            [sd_metrics.StackdriverLogMetricsClient],
-            True,
-        ),
+        ("direct", {"logger": False}, []),
+        ("directgkerunner", {"shumway": False}, []),
+        # turn off other clients should have no effect
+        ("directgkerunner", {"logger": False}, [shumway.ShumwayMetricsClient]),
+        ("direct", {"shumway": False}, [logger_metrics.MetricsLoggerClient]),
+        ("dataflow", {"shumway": False, "logger": False}, []),
     ),
 )
-@pytest.mark.filterwarnings(
-    (
-        "ignore:StackdriverLogMetricsClient has been deprecated since `klio` "
-        "version 0.2.6"
-    )
-)
 def test_klio_metrics(
-    runner,
-    metrics_config,
-    exp_clients,
-    exp_warn,
-    klio_config,
-    mocker,
-    monkeypatch,
+    runner, metrics_config, exp_clients, klio_config, mocker, monkeypatch,
 ):
     # all should have the native metrics client
     exp_clients.append(native_metrics.NativeMetricsClient)
@@ -98,79 +55,13 @@ def test_klio_metrics(
     mock_config = mocker.PropertyMock(return_value=klio_config)
     monkeypatch.setattr(core_transforms.KlioContext, "config", mock_config)
 
-    if exp_warn:
-        with pytest.warns(utils.KlioDeprecationWarning):
-            registry = klio_ns.metrics
-    else:
-        registry = klio_ns.metrics
+    registry = klio_ns.metrics
 
     assert len(exp_clients) == len(registry._relays)
     for actual_relay in registry._relays:
         assert any([isinstance(actual_relay, ec) for ec in exp_clients])
         if isinstance(actual_relay, logger_metrics.MetricsLoggerClient):
             assert actual_relay.disabled is False
-
-
-@pytest.mark.parametrize("usr_local_exists", (True, False))
-@pytest.mark.parametrize("usr_glob_exists", (True, False))
-def test_load_config_from_file(
-    usr_local_exists, usr_glob_exists, config_dict, mocker, monkeypatch,
-):
-    monkeypatch.setattr(os.path, "exists", lambda x: usr_local_exists)
-    effective_klio_yaml_file = "/usr/src/app/klio-job-run-effective.yaml"
-    expected_open_file = "/usr/src/config/.effective-klio-job.yaml"
-
-    if usr_local_exists:
-        expected_open_file = "/usr/local/klio-job-run-effective.yaml"
-    elif usr_glob_exists:
-        expected_open_file = effective_klio_yaml_file
-
-    mock_iglob = mocker.Mock()
-    if usr_glob_exists:
-        mock_iglob.return_value = [effective_klio_yaml_file]
-    else:
-        mock_iglob.return_value = []
-
-    monkeypatch.setattr(core_transforms.glob, "iglob", mock_iglob)
-
-    open_name = "klio.transforms.core.open"
-    config_str = yaml.dump(config_dict)
-    m_open = mocker.mock_open(read_data=config_str)
-    m = mocker.patch(open_name, m_open)
-
-    klio_config = core_transforms.RunConfig._load_config_from_file()
-
-    m.assert_called_once_with(expected_open_file, "r")
-    assert isinstance(klio_config, config.KlioConfig)
-    if not usr_local_exists:
-        mock_iglob.assert_called_once_with(
-            "/usr/**/klio-job-run-effective.yaml", recursive=True
-        )
-    else:
-        mock_iglob.assert_not_called()
-
-
-def test_load_config_from_file_raises(config_dict, mocker, monkeypatch):
-    monkeypatch.setattr(os.path, "exists", lambda x: False)
-
-    mock_iglob = mocker.Mock()
-    mock_iglob.return_value = iter([])
-    monkeypatch.setattr(core_transforms.glob, "iglob", mock_iglob)
-
-    with pytest.raises(IOError):
-        core_transforms.RunConfig._load_config_from_file()
-
-
-def test_runconfig_load_once(mocker, monkeypatch):
-    # ensures config is only loaded once
-    mock_load = mocker.Mock()
-    monkeypatch.setattr(
-        core_transforms.RunConfig, "_load_config_from_file", mock_load
-    )
-    core_transforms.RunConfig._config = None
-    core_transforms.RunConfig.get()
-    core_transforms.RunConfig.get()
-    assert 1 == mock_load.call_count
 
 
 @pytest.mark.parametrize("thread_local_ret", (True, False))

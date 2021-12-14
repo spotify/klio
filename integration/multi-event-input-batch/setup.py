@@ -138,14 +138,13 @@ setuptools.setup(
     # approach to install deps (i.e. deps that don't require OS-level deps
     # and/or not from internal PyPI)
     install_requires=[],  # optional
-    # NOTE: The `klio-job.yaml` and any other non-Python files
-    # required to run a Klio job *must* be listed in here in `data_files`
+    # NOTE: Any other non-Python files required to run a Klio job *must* be
+    # listed in here in `data_files`
     data_files=[  # required
         # tuple(
         #    str(dir where to install files, relative to Python modules),
         #    list(str(non-Python filenames))
         # )
-        (".", ["klio-job-run-effective.yaml"]),
     ],
     include_package_data=True,  # required
     # NOTE: Explicitly include Python modules names (all relevant Python files

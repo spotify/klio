@@ -85,18 +85,74 @@ def test_validate_dataflow_runner_config(
         cli_utils.validate_dataflow_runner_config(mock_klio_cfg)
 
 
-@pytest.mark.parametrize("direct_runner", [False, True])
-def test_is_direct_runner(mocker, monkeypatch, direct_runner):
+@pytest.mark.parametrize(
+    "config_runner,direct_runner,exp_is_direct,exp_mock_validate_df",
+    (
+        ("direct", True, True, False),
+        ("direct", False, True, False),
+        ("DirectRunner", True, True, False),
+        ("DirectRunner", False, True, False),
+        ("dataflow", True, True, False),
+        ("dataflow", False, False, True),
+        ("DataflowRunner", True, True, False),
+        ("DataflowRunner", False, False, True),
+        ("DirectGKERunner", True, True, False),
+        ("DirectGKERunner", False, False, False),
+    ),
+)
+def test_is_direct_runner(
+    mocker,
+    monkeypatch,
+    config_runner,
+    direct_runner,
+    exp_is_direct,
+    exp_mock_validate_df,
+):
     mock_klio_cfg = mocker.Mock()
+    mock_klio_cfg.pipeline_options.runner = config_runner
     mock_validate_df_config = mocker.Mock()
     monkeypatch.setattr(
         cli_utils, "validate_dataflow_runner_config", mock_validate_df_config
     )
 
-    if not direct_runner:
-        assert mock_validate_df_config.called_once_with(mock_klio_cfg)
+    act_resp = cli_utils.is_direct_runner(mock_klio_cfg, direct_runner)
 
+    assert exp_is_direct == act_resp
+    if exp_mock_validate_df:
+        mock_validate_df_config.assert_called_once_with(mock_klio_cfg)
+
+
+@pytest.mark.parametrize(
+    "sd_config",
+    (
+        {"stackdriver_logger": True},
+        {"stackdriver_logger": {"timer_unit": "s"}},
+    ),
+)
+def test_error_stackdriver_logger_metrics_raises(sd_config, mocker, caplog):
+    mock_klio_config = mocker.Mock()
+    mock_klio_config.pipeline_options.runner = "DataflowRunner"
+    mock_klio_config.job_config.metrics = {"stackdriver_logger": sd_config}
+
+    with pytest.raises(SystemExit):
+        cli_utils.error_stackdriver_logger_metrics(mock_klio_config, False)
+
+    assert 1 == len(caplog.records)
     assert (
-        cli_utils.is_direct_runner(mock_klio_cfg, direct_runner)
-        == direct_runner
+        "The Stackdriver log-based metric client has been deprecated"
+        in caplog.records[0].message
     )
+
+
+@pytest.mark.parametrize(
+    "metrics_conf",
+    ({"stackdriver_logger": False}, {"native": {"timer_unit": "s"}}, {},),
+)
+def test_error_stackdriver_logger_metrics(metrics_conf, mocker, caplog):
+    mock_klio_config = mocker.Mock()
+    mock_klio_config.pipeline_options.runner = "DataflowRunner"
+    mock_klio_config.job_config.metrics = metrics_conf
+
+    cli_utils.error_stackdriver_logger_metrics(mock_klio_config, False)
+
+    assert 0 == len(caplog.records)

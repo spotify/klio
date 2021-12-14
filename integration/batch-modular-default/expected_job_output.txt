@@ -1,6 +1,8 @@
 INFO:root:Found worker image: integration-batch-modular-default:batch-modular-default
 /usr/src/app/transforms.py:22: KlioFutureWarning: 'handle_klio' is experimental and is subject to incompatible changes, or removal in a future release of Klio.
   @decorators.handle_klio
+WARNING:root:Make sure that locally built Python SDK docker image has Python 3.6 interpreter.
+INFO:root:Default Python SDK image for environment is apache/beam_python3.6_sdk:2.33.0
 INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/battleclip_daq.wav
 INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/callout_Turn-Table.wav
 INFO:klio:Output not found at gs://klio-integration/batch-modular-default/outputs/callout_azeem.wav

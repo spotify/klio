@@ -118,7 +118,7 @@ def _klio_context():
         # decorators in particular are imported, they're evaluated. Some
         # decorators need access to the Klio context which would otherwise
         # fail because building docs does not give access to the
-        # `/usr/src/config/.klio-job-run-effective.yaml` file.
+        # `KlioConfig` object.
         from unittest import mock
 
         return mock.Mock()
@@ -422,19 +422,45 @@ def __serialize_klio_message(
             return pvalue.TaggedOutput("drop", incoming_item)
 
 
+def __get_timer_unit(metrics_conf):
+    default_unit = "s"  # seconds
+
+    # Maybe if someone set `metrics: False` - but not sure if that'd happen?
+    if not isinstance(metrics_conf, dict):
+        return default_unit
+
+    logger_unit, native_unit, shumway_unit = None, None, None
+
+    timer_unit = metrics_conf.get("timer_unit")
+
+    logger_conf = metrics_conf.get("logger", {})
+    if isinstance(logger_conf, dict):
+        logger_unit = logger_conf.get("timer_unit")
+    native_conf = metrics_conf.get("native", {})
+    if isinstance(native_conf, dict):
+        native_unit = native_conf.get("timer_unit")
+    shumway_conf = metrics_conf.get("shumway", {})
+    if isinstance(shumway_conf, dict):
+        shumway_unit = shumway_conf.get("timer_unit")
+
+    timer_unit = (
+        timer_unit
+        or native_unit
+        or shumway_unit
+        or logger_unit
+        or default_unit
+    )
+    return timer_unit
+
+
 def __get_transform_metrics(func_name, kctx=None):
     if kctx is None:
         with _klio_context() as ctx:
             kctx = ctx
 
-    default_unit = "s"  # seconds
     metrics_conf = kctx.config.job_config.metrics
-    timer_unit = metrics_conf.get("timer_unit")
-    logger_unit = metrics_conf.get("logger", {}).get("timer_unit")
-    # TODO: delete line once stackdriver log-based metrics is fully removed
-    sd_unit = metrics_conf.get("stackdriver_logger", {}).get("timer_unit")
+    timer_unit = __get_timer_unit(metrics_conf)
 
-    timer_unit = timer_unit or sd_unit or logger_unit or default_unit
     received_ctr = kctx.metrics.counter("kmsg-received", transform=func_name)
     success_ctr = kctx.metrics.counter("kmsg-success", transform=func_name)
     drop_err_ctr = kctx.metrics.counter("kmsg-drop-error", transform=func_name)

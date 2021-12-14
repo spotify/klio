@@ -30,12 +30,9 @@ from klio_core.proto import klio_pb2
 from klio.transforms import core
 from tests.unit import conftest
 
-# NOTE: All of the Klio IO transforms use _KlioIOCounter, which instantiates
-# a KlioContext object. When the config attribute is accessed (when setting up
-# a metrics counter object), it will try to read a
-# `/usr/src/config/.effective-klio-job.yaml` file. Since all IO transforms
-# use the _KlioIOCounter, we just patch on the module level instead of
-# within each and every test function.
+# NOTE: All of the Klio IO transforms use _KlioIOCounter, which instantiates a
+# KlioContext object.  Since all IO transforms use the _KlioIOCounter, we just
+# patch on the module level instead of within each and every test function.
 patcher = mock.patch.object(core.RunConfig, "get", conftest._klio_config)
 patcher.start()
 from klio.transforms import io as io_transforms  # NOQA E402

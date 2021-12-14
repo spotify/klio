@@ -1,19 +1,30 @@
 Changelog
 =========
 
-.. _lib-21.10.0:
+.. _lib-21.12.0:
 
-21.10.0 (UNRELEASED)
+21.12.0 (2021-12-14)
 --------------------
 
-.. start-21.10.0
+.. start-21.12.0
 
-Changed
+Fixed
+*****
+
+* Fixed bug in metrics parsing when metrics configuration was set to a bool instead of a dict.
+
+Removed
 *******
 
-* ``KlioConfig`` is now loaded on workers from pickled main session instead of a bundled config file (See `PR 233 <https://github.com/spotify/klio/pull/233>`_).
+* Removed deprecated Stackdriver log-based metrics client.
 
-.. end-21.10.0
+Changes
+*******
+
+* Updated documentation related to the native metrics client.
+* ``KlioConfig`` is now loaded on workers from pickled main session instead of a bundled config file (See `PR 220 <https://github.com/spotify/klio/pull/220>`_).
+
+.. end-21.12.0
 
 
 .. _lib-21.9.0:

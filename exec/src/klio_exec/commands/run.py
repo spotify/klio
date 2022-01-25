@@ -17,9 +17,11 @@ import collections
 import imp
 import logging
 import os
+import time
 import re
 
 import apache_beam as beam
+from apache_beam.runners.runner import PipelineState, PipelineResult
 from apache_beam.options import pipeline_options
 
 from klio import __version__ as klio_lib_version
@@ -552,6 +554,41 @@ class KlioPipeline(object):
                     **output_config.to_io_kwargs()
                 )
 
+    def wait_for_pipeline_running(
+        self,
+        result: PipelineResult,
+        timeout_sec=10 * 60,  # 10 minutes in seconds
+        poll_interval_sec=60,
+    ):
+        status = None
+
+        for _ in range(0, timeout_sec, poll_interval_sec):
+            try:
+                status = result.state
+                if status in PipelineState.RUNNING:
+                    logging.info(
+                        f"Pipeline status is %s, done waiting", status,
+                    )
+                    return status
+                elif PipelineState.is_terminal(status):
+                    logging.error("Pipeline already in terminal status.")
+                    return status
+
+                logging.info(
+                    f"Pipeline status %s not in %s, retrying in %s seconds",
+                    status,
+                    PipelineState.RUNNING,
+                    poll_interval_sec,
+                )
+            except Exception as e:
+                logging.exception(e)
+
+            time.sleep(poll_interval_sec)
+
+        raise TimeoutError(
+            f"Pipeline finished in status {status} but expected {PipelineState.RUNNING}"
+        )
+
     def run(self):
         self._verify_packaging()
         options = self._get_pipeline_options()
@@ -586,11 +623,23 @@ class KlioPipeline(object):
         is_direct_gke = (
             self.config.pipeline_options.runner == "DirectGKERunner"
         )
-        should_block = (
-            self.runtime_conf.direct_runner,
-            self.runtime_conf.blocking,
-            is_direct_gke,
+        should_block = any(
+            (
+                self.runtime_conf.direct_runner,
+                self.runtime_conf.blocking,
+                is_direct_gke,
+            )
         )
-        if any(should_block):
+
+        if should_block:
             # the pipeline on direct runner will otherwise get garbage collected
             result.wait_until_finish()
+
+        # If the blocking flag was already passed don't wait again
+        # import pdb; pdb.set_trace()
+        if (
+            self.config.job_config.wait_for_pipeline_running
+            and self.config.pipeline_options.streaming
+            and not should_block
+        ):
+            self.wait_for_pipeline_running(result)

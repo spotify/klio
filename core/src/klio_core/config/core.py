@@ -177,9 +177,11 @@ class KlioJobConfig(object):
     version = utils.field(type=int)
 
     # optional attributes
+
     allow_non_klio_messages = utils.field(type=bool, default=False)
     metrics = utils.field(default={})
     blocking = utils.field(type=bool, default=False)
+    wait_for_pipeline_running = utils.field(type=bool, default=False)
 
     def __config_post_init__(self, config_dict):
         self._raw = config_dict

@@ -15,6 +15,7 @@
 
 from klio_cli.commands.job import audit
 from klio_cli.commands.job import configuration
+from klio_cli.commands.job import console
 from klio_cli.commands.job import create
 from klio_cli.commands.job import delete
 from klio_cli.commands.job import profile
@@ -27,6 +28,7 @@ from klio_cli.commands.job import verify
 __all__ = (
     audit,
     configuration,
+    console,
     create,
     delete,
     profile,

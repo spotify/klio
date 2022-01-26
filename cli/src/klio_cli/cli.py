@@ -28,6 +28,7 @@ from klio_core import variables as var
 
 from klio_cli import __version__ as version
 from klio_cli import options
+# from klio_cli.commands import console as console_command
 from klio_cli.commands import image as image_commands
 from klio_cli.commands import job as job_commands
 from klio_cli.commands import message as message_commands
@@ -61,6 +62,9 @@ RunJobConfig = collections.namedtuple(
 )
 ProfileConfig = collections.namedtuple(
     "ProfileConfig", ["input_file", "output_file", "show_logs", "entity_ids"],
+)
+JobConsoleConfig = collections.namedtuple(
+    "JobConsoleConfig", ["direct_runner", "klio_cli_version", "config_file"]
 )
 
 
@@ -171,6 +175,37 @@ def run_job(klio_config, config_meta, **kwargs):
         )
     rc = klio_pipeline.run()
     sys.exit(rc)
+
+
+@job.command(
+    "console", help="Run an interactive Python console with a job's context."
+)
+@core_options.image_tag(default=None, show_default="``git-sha[dirty?]``")
+@core_options.direct_runner
+@core_utils.with_klio_config
+def console(klio_config, config_meta, **kwargs):
+    git_sha = cli_utils.get_git_sha(
+        config_meta.job_dir, kwargs.get("image_tag")
+    )
+    image_tag = kwargs.get("image_tag") or git_sha
+    runtime_config = DockerRuntimeConfig(
+        image_tag=image_tag,
+        force_build=kwargs.get("force_build"),
+        config_file_override=config_meta.config_file,
+    )
+
+    direct_runner = cli_utils.is_direct_runner(
+        klio_config, kwargs.pop("direct_runner")
+    )
+    job_console_config = JobConsoleConfig(
+        direct_runner=direct_runner,
+        klio_cli_version=version,
+        config_file=config_meta.config_path,
+    )
+    interactive_pipeline = job_commands.console.InteractivePipeline(
+        config_meta.job_dir, klio_config, runtime_config, job_console_config
+    )
+    interactive_pipeline.run()
 
 
 @job.command(

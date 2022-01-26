@@ -16,6 +16,7 @@
 import collections
 import logging
 import os
+import warnings
 
 import click
 import yaml
@@ -31,6 +32,7 @@ from klio_core import utils as core_utils
 from klio_exec import options
 from klio_exec.commands import audit
 from klio_exec.commands import stop
+from klio_exec.commands import console
 
 
 # TODO remove 'INFO:root:' bit from cli status logs.
@@ -40,6 +42,15 @@ logging.getLogger().setLevel(logging.INFO)
 
 RuntimeConfig = collections.namedtuple(
     "RuntimeConfig", ["image_tag", "direct_runner", "update", "blocking"]
+)
+JobConsoleConfig = collections.namedtuple(
+    "JobConsoleConfig", [
+        "image_name", 
+        "direct_runner", 
+        "docker_version", 
+        "klio_cli_version",
+        "config_file",
+    ]
 )
 
 
@@ -93,6 +104,28 @@ def run_pipeline(
         klio_config.job_name, klio_config, runtime_conf
     )
     klio_pipeline.run()
+
+
+@main.command("console")
+@core_options.image_tag
+@core_options.direct_runner
+@click.option("--docker-version")
+@click.option("--klio-cli-version")
+@click.option("--active-config-file")
+@click.option("--image-name")
+@core_utils.with_klio_config
+def job_console(image_tag, direct_runner, klio_config, config_meta, **kwargs):
+    warnings.simplefilter("ignore")  # todo: only ignore KlioFutureWarning
+    runtime_conf = RuntimeConfig(image_tag, True, False, False)
+    job_console_conf = JobConsoleConfig(
+        image_name=kwargs.get("image_name"),
+        direct_runner=direct_runner,
+        docker_version=kwargs.get("docker_version"),
+        klio_cli_version=kwargs.get("klio_cli_version"),
+        config_file=kwargs.get("active_config_file"))
+    console.start(
+        klio_config, config_meta, image_tag, runtime_conf, job_console_conf
+    )
 
 
 @main.command("stop")

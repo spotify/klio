@@ -156,6 +156,7 @@ INSTALL_REQUIRES = [
     "click",
     f"klio-core>={PACKAGE_VERSION}",
     f"klio>={PACKAGE_VERSION}",
+    "colored",
     "pyyaml",
     # 2.22 added DirectRunner support for `DoFn.setup`
     "apache-beam[gcp]>2.21.0",

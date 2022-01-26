@@ -22,13 +22,14 @@ import uuid
 from IPython.terminal import embed
 from notebook import notebookapp
 
-from klio_exec.commands.utils import console_utils
+from klio_exec.commands.utils import interactive_utils
+from klio_exec.commands.utils import interactive_common as ic
 from klio_exec.commands.utils import ipython_ext
 
 
-# Note: this is defined here rather than in console_utils because we don't
+# Note: this is defined here rather than in interactive_utils because we don't
 # want to expose unnecessary variables when calling `globals()` that are 
-# defined in the console_utils module
+# defined in the interactive_utils module
 class KlioConsole(code.InteractiveConsole):
     def __init__(self, *args, **kwargs):
         super(KlioConsole, self).__init__(*args, **kwargs)
@@ -56,31 +57,21 @@ class KlioConsole(code.InteractiveConsole):
 
 
 def _start_repl(config, meta, image_tag, runtime_conf, job_console_config):
-    sys.ps1 = console_utils.PS1
-    sys.ps2 = console_utils.PS2
-    ctx_mgr = console_utils.KlioConsoleContextManager(
-        config.job_name, 
-        config, 
-        runtime_conf, 
-        job_console_config=job_console_config
-    )
-    header = ctx_mgr.get_header_with_logo()
-    scope_vars = ctx_mgr.get_local_scope()
+    sys.ps1 = ic.REPL_PROMPT1
+    sys.ps2 = ic.REPL_PROMPT2
+    ctx_mgr = interactive_utils.InteractiveKlioContext()
+    banner = ctx_mgr.get_banner()
+    scope_vars = ctx_mgr.get_local_scope_objects()
     console = KlioConsole(locals=scope_vars)
-    console.interact(header, console_utils.EXIT_MSG)
+    console.interact(banner, ic.EXIT_MSG)
 
 
 def _start_ipython_repl(config, meta, image_tag, runtime_conf, job_console_config):
-    ctx_mgr = console_utils.KlioConsoleContextManager(
-        config.job_name, 
-        config, 
-        runtime_conf, 
-        job_console_config=job_console_config
-    )
-    header = ctx_mgr.get_header_with_logo()
-    scope_vars = ctx_mgr.get_local_scope()
+    ctx_mgr = interactive_utils.InteractiveKlioContext()
+    banner = ctx_mgr.get_banner()
+    scope_vars = ctx_mgr.get_local_scope_objects()
     ipython_repl = embed.InteractiveShellEmbed()
-    ipython_repl(header=header, local_ns=scope_vars)
+    ipython_repl(header=banner, local_ns=scope_vars)
 
 
 def _start_notebook(config, meta, image_tag, runtime_conf, job_console_config):
@@ -107,8 +98,6 @@ def _start_notebook(config, meta, image_tag, runtime_conf, job_console_config):
 
 
 def start(config, meta, image_tag, runtime_conf, job_console_config):
-    print(f"Starting a notebook? {job_console_config.notebook}")
-    print(f"Starting ipython? {job_console_config.ipython}")
     if job_console_config.notebook:
         return _start_notebook(config, meta, image_tag, runtime_conf, job_console_config)
     if job_console_config.ipython:

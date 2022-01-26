@@ -34,6 +34,34 @@ class KlioMissingConfiguration(BaseKlioIOException):
     """Required configuration is missing."""
 
 
+class KlioCreate(beam.PTransform):
+    def __init__(self, values, reshuffle=True):
+        super(KlioCreate, self).__init__()
+        self.values = tuple(values)
+        self.reshuffle = reshuffle
+
+    def _to_klio_message(self, element):
+        if isinstance(element, str):
+            element = element.encode("utf-8")
+        if not isinstance(element, bytes):
+            raise TypeError(
+                f"Element '{element}' is an unsupported type "
+                f"({type(element)}). Please provide either `str` or `bytes`."
+            )
+        message = klio_pb2.KlioMessage()
+        message.version = klio_pb2.Version.V2
+        message.metadata.intended_recipients.anyone.SetInParent()
+        message.data.element = element
+        return message.SerializeToString()
+
+    def expand(self, pbegin):
+        return (
+            pbegin 
+            | beam.Create(values=self.values, reshuffle=self.reshuffle) 
+            | beam.Map(self._to_klio_message)
+        )
+
+
 class _KlioReadWrapper(beam.io.Read):
     """Klio-ified `beam.io.Read` class.
 

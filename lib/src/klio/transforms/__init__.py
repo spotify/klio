@@ -15,6 +15,7 @@
 """Collection of commonly used transforms and transform-utilities."""
 
 from klio.transforms.io import (
+    KlioCreate,
     KlioReadFromAvro,
     KlioReadFromBigQuery,
     KlioReadFromPubSub,
@@ -27,6 +28,7 @@ from klio.transforms.io import (
 
 
 __all__ = (
+    "KlioCreate",
     "KlioReadFromAvro",
     "KlioReadFromBigQuery",
     "KlioReadFromPubSub",

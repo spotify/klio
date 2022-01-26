@@ -61,19 +61,32 @@ class InteractivePipeline(base.BaseDockerizedPipeline):
             "--active-config-file",
             self.job_console_config.config_file,
             "--image-name",
-            self._full_image_name
+            self._full_image_name,
         ]
         docker_info = self._docker_client.info()
         docker_version = docker_info.get("ServerVersion")
         if docker_version:
             command.extend(["--docker-version", str(docker_version)])
 
+        if self.job_console_config.notebook:
+            command.append("--notebook")
+
+        if self.job_console_config.ipython:
+            command.append("--ipython")
+        print(f"Running the following command: {command}")
         return command
 
-    # def _get_environment(self):
-    #     envs = super(InteractivePipeline, self)._get_environment()
-    #     envs["PYTHONSTARTUP"] = "/root/.python_history"
-    #     return envs
+    def _get_environment(self):
+        envs = super(InteractivePipeline, self)._get_environment()
+        envs["IMAGE_TAG"] = self.docker_runtime_config.image_tag
+        envs["IMAGE_NAME"] = self._full_image_name
+        docker_info = self._docker_client.info()
+        docker_version = docker_info.get("ServerVersion")
+        if docker_version:
+            envs["DOCKER_VERSION"] = str(docker_version)
+        envs["KLIO_CLI_VERSION"] = self.job_console_config.klio_cli_version
+        envs["ACTIVE_CONFIG_FILE"] = self.job_console_config.config_file
+        return envs
 
     def _get_docker_runflags(self, *args, **kwargs):
         return {
@@ -84,4 +97,7 @@ class InteractivePipeline(base.BaseDockerizedPipeline):
             "environment": self._get_environment(),
             "stdin_open": True,
             "tty": True,
+            # TODO: make port configurable
+            # TODO: add port only if running a notebook
+            "ports": {"8888/tcp": ("0.0.0.0", 8888)},
         }

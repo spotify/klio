@@ -13,11 +13,17 @@
 # limitations under the License.
 
 import code
+import pickle
 import rlcompleter
 import readline
 import sys
+import uuid
+
+from IPython.terminal import embed
+from notebook import notebookapp
 
 from klio_exec.commands.utils import console_utils
+from klio_exec.commands.utils import ipython_ext
 
 
 # Note: this is defined here rather than in console_utils because we don't
@@ -49,7 +55,7 @@ class KlioConsole(code.InteractiveConsole):
         readline.set_completer(completer.complete)
 
 
-def start(config, meta, image_tag, runtime_conf, job_console_config):
+def _start_repl(config, meta, image_tag, runtime_conf, job_console_config):
     sys.ps1 = console_utils.PS1
     sys.ps2 = console_utils.PS2
     ctx_mgr = console_utils.KlioConsoleContextManager(
@@ -61,4 +67,50 @@ def start(config, meta, image_tag, runtime_conf, job_console_config):
     header = ctx_mgr.get_header_with_logo()
     scope_vars = ctx_mgr.get_local_scope()
     console = KlioConsole(locals=scope_vars)
-    console.interact(header, console_utils.EXIT_MSG) 
+    console.interact(header, console_utils.EXIT_MSG)
+
+
+def _start_ipython_repl(config, meta, image_tag, runtime_conf, job_console_config):
+    ctx_mgr = console_utils.KlioConsoleContextManager(
+        config.job_name, 
+        config, 
+        runtime_conf, 
+        job_console_config=job_console_config
+    )
+    header = ctx_mgr.get_header_with_logo()
+    scope_vars = ctx_mgr.get_local_scope()
+    ipython_repl = embed.InteractiveShellEmbed()
+    ipython_repl(header=header, local_ns=scope_vars)
+
+
+def _start_notebook(config, meta, image_tag, runtime_conf, job_console_config):
+    ipython_ext.generate_ipython_config()
+
+    token = uuid.uuid4()
+    port = "8888"
+
+    init_args = [
+        "--port", port, 
+        f"--NotebookApp.token={token}", 
+        "--ip", "0.0.0.0", 
+        "--allow-root", 
+        "--no-browser",
+    ]
+
+    url = f"http://0.0.0.0:{port}/?token={token}"
+    app = notebookapp.NotebookApp()
+
+    # TODO: custom NotebookApp to fixup logging
+    print(f"XXX URL: {url}")
+    app.initialize(init_args)
+    app.start()
+
+
+def start(config, meta, image_tag, runtime_conf, job_console_config):
+    print(f"Starting a notebook? {job_console_config.notebook}")
+    print(f"Starting ipython? {job_console_config.ipython}")
+    if job_console_config.notebook:
+        return _start_notebook(config, meta, image_tag, runtime_conf, job_console_config)
+    if job_console_config.ipython:
+        return _start_ipython_repl(config, meta, image_tag, runtime_conf, job_console_config)
+    return _start_repl(config, meta, image_tag, runtime_conf, job_console_config)

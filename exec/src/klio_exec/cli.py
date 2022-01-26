@@ -50,6 +50,8 @@ JobConsoleConfig = collections.namedtuple(
         "docker_version", 
         "klio_cli_version",
         "config_file",
+        "notebook",
+        "ipython",
     ]
 )
 
@@ -113,6 +115,8 @@ def run_pipeline(
 @click.option("--klio-cli-version")
 @click.option("--active-config-file")
 @click.option("--image-name")
+@click.option("--notebook", is_flag=True, default=False)
+@click.option("--ipython", is_flag=True, default=False)
 @core_utils.with_klio_config
 def job_console(image_tag, direct_runner, klio_config, config_meta, **kwargs):
     warnings.simplefilter("ignore")  # todo: only ignore KlioFutureWarning
@@ -122,7 +126,10 @@ def job_console(image_tag, direct_runner, klio_config, config_meta, **kwargs):
         direct_runner=direct_runner,
         docker_version=kwargs.get("docker_version"),
         klio_cli_version=kwargs.get("klio_cli_version"),
-        config_file=kwargs.get("active_config_file"))
+        config_file=kwargs.get("active_config_file"),
+        notebook=kwargs.get("notebook"),
+        ipython=kwargs.get("ipython"),
+    )
     console.start(
         klio_config, config_meta, image_tag, runtime_conf, job_console_conf
     )

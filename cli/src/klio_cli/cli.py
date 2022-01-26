@@ -64,7 +64,7 @@ ProfileConfig = collections.namedtuple(
     "ProfileConfig", ["input_file", "output_file", "show_logs", "entity_ids"],
 )
 JobConsoleConfig = collections.namedtuple(
-    "JobConsoleConfig", ["direct_runner", "klio_cli_version", "config_file"]
+    "JobConsoleConfig", ["direct_runner", "klio_cli_version", "config_file", "notebook", "ipython"]
 )
 
 
@@ -180,6 +180,12 @@ def run_job(klio_config, config_meta, **kwargs):
 @job.command(
     "console", help="Run an interactive Python console with a job's context."
 )
+@click.option(
+    "--notebook", is_flag=True, default=False, show_default=True, help="Launch a Jupyter notebook"
+)
+@click.option(
+    "--ipython", is_flag=True, default=False, show_default=True, help="Use IPython's REPL"
+)  # TODO: mutually exclusive with notebook
 @core_options.image_tag(default=None, show_default="``git-sha[dirty?]``")
 @core_options.direct_runner
 @core_utils.with_klio_config
@@ -201,6 +207,8 @@ def console(klio_config, config_meta, **kwargs):
         direct_runner=direct_runner,
         klio_cli_version=version,
         config_file=config_meta.config_path,
+        notebook=kwargs.get("notebook"),
+        ipython=kwargs.get("ipython"),
     )
     interactive_pipeline = job_commands.console.InteractivePipeline(
         config_meta.job_dir, klio_config, runtime_config, job_console_config

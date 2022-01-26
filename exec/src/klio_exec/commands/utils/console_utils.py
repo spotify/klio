@@ -240,10 +240,10 @@ class KlioPipelineWrapper(beam.Pipeline):
         self._klio_transform_stack.add(transform)
         return super(KlioPipelineWrapper, self).apply(transform, *args, **kwargs)
 
-    def get_graph(self):
-        graph = pipeline_graph.PipelineGraph(self)
-        dot_graph = graph._get_graph()
-        g = nx_pydot.from_pydot(dot_graph)
+    # def get_graph(self):
+    #     graph = pipeline_graph.PipelineGraph(self)
+    #     dot_graph = graph._get_graph()
+    #     g = nx_pydot.from_pydot(dot_graph)
 
     def __repr__(self):
         # TODO: what to name this? prob not with `id` - maybe something more recognizable
@@ -257,12 +257,15 @@ class KlioConsoleContextManager(run.KlioPipeline):
         super(KlioConsoleContextManager, self).__init__(*args, **kwargs)
         self.job_console_config = job_console_config
 
-    @staticmethod
-    def __parse_runner(runner):
+    def __parse_runner(self, runner):
+        supported_runners = (
+            "dataflowrunner", "directrunner", "dataflow", "direct",
+            "interactive", "interactiverunner"
+        )
         if runner is None:
             runner = "DirectRunner"
 
-        elif runner.lower() not in ["dataflowrunner", "directrunner", "dataflow", "direct"]:
+        elif runner.lower() not in supported_runners:
             raise Exception(f"Unrecognized runner: {runner}")
 
         else:
@@ -271,6 +274,8 @@ class KlioConsoleContextManager(run.KlioPipeline):
                 "dataflow": "DataflowRunner",
                 "directrunner": "DirectRunner",
                 "direct": "DirectRunner",
+                "interactive": "InteractiveRunner",
+                "interactiverunner": "InteractiveRunner",
             }[runner.lower()]
         return runner
 

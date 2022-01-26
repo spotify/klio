@@ -168,6 +168,7 @@ INSTALL_REQUIRES = [
     "pytest-mock",
 ]
 EXTRAS_REQUIRE = {
+    "interactive": ["jupyter", "apache-beam[interactive]"],
     "docs": ["sphinx", "interrogate"],
     "tests": [
         "coverage",

@@ -58,23 +58,23 @@ COL4 = colored.stylize(LINE, LOGO_CLR_4)
 COL5 = colored.stylize(LINE, LOGO_CLR_5)
 
 LOGO = rf"""
-                                      {COL4}             
-                                      {COL4}             
-                                      {COL4}             
-{COL1}                    {COL3}                   {COL5}
-{COL1}                    {COL3}      {COL4}       {COL5}
-{COL1}                    {COL3}      {COL4}       {COL5}
-                                      {COL4}             
-{COL1}                    {COL3}                   {COL5}
-{COL1}                    {COL3}                   {COL5}
-{COL1}                    {COL3}                   {COL5}
-             {COL2}                                        
-{COL1}       {COL2}       {COL3}                   {COL5}
-{COL1}       {COL2}       {COL3}                   {COL5}
-{COL1}                    {COL3}                   {COL5}
-             {COL2}                                        
-             {COL2}                                        
-             {COL2}                                        
+                                    {COL4}             
+                                    {COL4}             
+                                    {COL4}             
+{COL1}                  {COL3}                  {COL5}
+{COL1}                  {COL3}      {COL4}      {COL5}
+{COL1}                  {COL3}      {COL4}      {COL5}
+                                    {COL4}             
+{COL1}                  {COL3}                  {COL5}
+{COL1}                  {COL3}                  {COL5}
+{COL1}                  {COL3}                  {COL5}
+            {COL2}                                        
+{COL1}      {COL2}      {COL3}                  {COL5}
+{COL1}      {COL2}      {COL3}                  {COL5}
+{COL1}                  {COL3}                  {COL5}
+            {COL2}                                        
+            {COL2}                                        
+            {COL2}                                        
 """
 
 # --- Headers/Banner ---
@@ -137,8 +137,9 @@ _SCOPE_FUNC_INFO = f"""
     get_new_pipeline_options      : create new Beam pipeline options object
     get_original_pipeline         : get original pipeline Klio constructed from `run.py`
     get_original_pipeline_options : get original pipeline options used to construct `kpipeline`
-    handle_klio                   : transform decorator for handling Klio messages
-"""
+    handle_klio                   : transform decorator for handling Klio messages"""
+_SCOPE_FUNC_INFO_NB = f"""{_SCOPE_FUNC_INFO}
+    show_graph                    : display graphviz graph of a pipeline"""
 
 # -- Available scope - modules
 _SCOPE_MOD_INTRO = "Available modules in scope "
@@ -149,9 +150,11 @@ _SCOPE_MOD_INFO = f"""
     apache_beam : the top-level Apache Beam module as installed in the job's container
     beam        : alias to `apache_beam` module
     klio        : the `klio` library
+    transforms  : your job's transforms module (`transforms.py`)
 """
 
-SCOPE_HEADER=f"{_SCOPE_VAR_INFO}{_SCOPE_FUNC_INFO}{_SCOPE_MOD_INFO}"
+SCOPE_HEADER = f"{_SCOPE_VAR_INFO}{_SCOPE_FUNC_INFO}\n{_SCOPE_MOD_INFO}"
+NOTEBOOK_SCOPE_HEADER = f"{_SCOPE_VAR_INFO}{_SCOPE_FUNC_INFO_NB}\n{_SCOPE_MOD_INFO}"
 
 # Example headers
 _EX_INDENT = r"    "
@@ -234,21 +237,46 @@ EXAMPLES_HEADER = f"""{_EX_INTRO}
 {_EX3}
 {_EX4}"""
 
+
 # --- Suffixes ---
-REPL_SUFFIX = """Call `show_info()` to see this information again.
-Call `exit()` or use "CTRL+D" to exit.
-"""
+_CALL = colored.stylize("Call `", LOGO_CLR_3 + BOLD) 
+
+_SHOW_INFO = colored.stylize("show_info()", LOGO_CLR_5 + BOLD)
+_SHOW_INFO_SFX = colored.stylize(
+    "` to see this information again.", LOGO_CLR_3 + BOLD
+)
+_NB_SHOW_INFO_SFX = colored.stylize(
+    "` to see context available and information about this environment.",
+    LOGO_CLR_3 + BOLD
+)
+_SHOW_INFO_BANNER = f"{_CALL}{_SHOW_INFO}{_SHOW_INFO_SFX}"
+
+_EXIT = colored.stylize("exit()", LOGO_CLR_5 + BOLD)
+_EXIT_SUFFIX = colored.stylize("` or use 'CTRL+D' to exit.", LOGO_CLR_3 + BOLD)
+_EXIT_BANNER = f"{_CALL}{_EXIT}{_EXIT_SUFFIX}"
+
+# REPL_SUFFIX = """Call `show_info()` to see this information again.
+# Call `exit()` or use "CTRL+D" to exit.
+# """
+REPL_SUFFIX = f"{_SHOW_INFO_BANNER}\n{_EXIT_BANNER}"
 
 # --- Full banners ---
 SHOW_INFO_BANNER = f"""{VERSION_HEADER}
 {CTX_HEADER}
 {SCOPE_HEADER}
 {EXAMPLES_HEADER}
-{REPL_SUFFIX}"""
+{REPL_SUFFIX}
+"""
 
 REPL_BANNER = f"""{REPL_INTRO}
 
 {SHOW_INFO_BANNER}"""
 
+NOTEBOOK_SHOW_INFO_INTRO = f"{_CALL}{_SHOW_INFO}{_NB_SHOW_INFO_SFX}"
+NOTEBOOK_SHOW_INFO_BANNER = f"""{VERSION_HEADER}
+{CTX_HEADER}
+{NOTEBOOK_SCOPE_HEADER}
+{EXAMPLES_HEADER}
+{_SHOW_INFO_BANNER}"""
 # --- Other ---
 EXIT_MSG = "Exiting the Klio console..."

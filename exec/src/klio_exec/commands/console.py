@@ -17,7 +17,6 @@ import pickle
 import rlcompleter
 import readline
 import sys
-import uuid
 
 from IPython.terminal import embed
 from notebook import notebookapp
@@ -76,23 +75,15 @@ def _start_ipython_repl(config, meta, image_tag, runtime_conf, job_console_confi
 
 def _start_notebook(config, meta, image_tag, runtime_conf, job_console_config):
     ipython_ext.generate_ipython_config()
-
-    token = uuid.uuid4()
-    port = "8888"
-
+    port = "8888"  # TODO: make configurable
     init_args = [
         "--port", port, 
-        f"--NotebookApp.token={token}", 
-        "--ip", "0.0.0.0", 
-        "--allow-root", 
-        "--no-browser",
+        "--ip", "0.0.0.0",  # makes jupyter nb accessible from host thru container
+        "--allow-root",  # docker runs as root
+        "--no-browser",  # don't launch browser while in the docker container
     ]
 
-    url = f"http://0.0.0.0:{port}/?token={token}"
     app = notebookapp.NotebookApp()
-
-    # TODO: custom NotebookApp to fixup logging
-    print(f"XXX URL: {url}")
     app.initialize(init_args)
     app.start()
 

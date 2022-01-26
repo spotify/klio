@@ -73,7 +73,6 @@ class InteractivePipeline(base.BaseDockerizedPipeline):
 
         if self.job_console_config.ipython:
             command.append("--ipython")
-        print(f"Running the following command: {command}")
         return command
 
     def _get_environment(self):

@@ -22,7 +22,7 @@ import time
 
 import apache_beam as beam
 from apache_beam.options import pipeline_options
-from apache_beam.runners.runner import PipelineResult, PipelineState
+from apache_beam.runners import runner
 
 from klio import __version__ as klio_lib_version
 from klio import transforms
@@ -559,7 +559,7 @@ class KlioPipeline(object):
 
     def wait_for_pipeline_running(
         self,
-        result: PipelineResult,
+        pipeline_result,
         timeout_sec=10 * 60,  # 10 minutes in seconds
         poll_interval_sec=60,
     ):
@@ -567,21 +567,18 @@ class KlioPipeline(object):
 
         for _ in range(0, timeout_sec, poll_interval_sec):
             try:
-                status = result.state
-                if status == PipelineState.RUNNING:
-                    logging.info(
-                        "Pipeline status is %s, done waiting", status,
-                    )
+                status = pipeline_result.state
+                if status == runner.PipelineState.RUNNING:
+                    logging.info(f"Pipeline status is {status}, done waiting")
                     return status
-                elif PipelineState.is_terminal(status):
-                    logging.error("Pipeline already in terminal status.")
+                elif runner.PipelineState.is_terminal(status):
+                    logging.error("Pipeline already in terminal status")
                     return status
 
                 logging.info(
-                    "Pipeline status %s not in %s, retrying in %s seconds",
-                    status,
-                    PipelineState.RUNNING,
-                    poll_interval_sec,
+                    f"Pipeline status {status} is not "
+                    f"{runner.PipelineState.RUNNING}, retrying in "
+                    f"{poll_interval_sec} seconds"
                 )
             except Exception as e:
                 logging.exception(e)
@@ -589,8 +586,8 @@ class KlioPipeline(object):
             time.sleep(poll_interval_sec)
 
         raise TimeoutError(
-            f"Pipeline finished in status {status}"
-            f"but expected {PipelineState.RUNNING}"
+            f"Pipeline finished in status {status} "
+            f"but expected {runner.PipelineState.RUNNING}"
         )
 
     def run(self):

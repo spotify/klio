@@ -644,9 +644,9 @@ def test_get_pipeline_options(
 )
 @pytest.mark.parametrize("blocking", (True, False))
 @pytest.mark.parametrize("streaming", (True, False))
-@pytest.mark.parametrize("wait_until_pipeline_complete", (True, False))
+@pytest.mark.parametrize("wait_until_pipeline_running", (True, False))
 def test_run_pipeline(
-    wait_until_pipeline_complete,
+    wait_until_pipeline_running,
     streaming,
     blocking,
     direct_runner,
@@ -716,8 +716,10 @@ def test_run_pipeline(
         config.job_config.events.inputs = [mock_input]
         config.job_config.events.outputs = [mock_output]
 
-    if wait_until_pipeline_complete and streaming:
-        config.job_config.wait_for_pipeline_running = True
+    if streaming:
+        config.job_config.wait_for_pipeline_running = (
+            wait_until_pipeline_running
+        )
     else:
         config.job_config.wait_for_pipeline_running = False
 
@@ -764,7 +766,7 @@ def test_run_pipeline(
     if (
         streaming
         and not blocking
-        and wait_until_pipeline_complete
+        and wait_until_pipeline_running
         and not direct_runner
         and config.pipeline_options.runner != "DirectGKERunner"
     ):

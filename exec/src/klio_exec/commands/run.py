@@ -354,11 +354,14 @@ class KlioPipeline(object):
                 output_exists.found
                 | lbl("Output Force Filter") >> helpers.KlioFilterForce()
             )
-            to_pass_thru_tuple = (pass_thru, output_force.pass_thru)
-            to_pass_thru = (
-                to_pass_thru_tuple
-                | lbl("Flatten to Pass Thru") >> beam.Flatten()
-            )
+            if pass_thru is not None:
+                to_pass_thru_tuple = (pass_thru, output_force.pass_thru)
+                to_pass_thru = (
+                    to_pass_thru_tuple
+                    | lbl("Flatten to Pass Thru") >> beam.Flatten()
+                )
+            else:
+                to_pass_thru = output_force.pass_thru
 
             to_filter_input_tuple = (
                 output_exists.not_found,

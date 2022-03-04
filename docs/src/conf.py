@@ -114,6 +114,7 @@ extensions = [
     "sphinx_click",  # auto-docs for Click commands
     "sphinx_reredirects",  # page redirects
     "notfound.extension",  # add support for 404 page
+    "sphinxcontrib.redirects",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -156,6 +157,7 @@ nitpick_ignore = [
     # -->
     # <-- missing docstrings in Beam of objects these docs refer to
     ("py:class", "apache_beam.coders.coders.ToBytesCoder"),
+    ("py:func", "librosa.display.waveplot"),
     # -->
 ]
 

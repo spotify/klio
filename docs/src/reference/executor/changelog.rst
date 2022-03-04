@@ -1,6 +1,21 @@
 Changelog
 =========
 
+.. _lib-22.3.0:
+
+22.3.0 (2022-03-04)
+--------------------
+
+.. start-22.3.0
+
+Fixed
+*****
+
+* Fix bug when pass thru PCollection is None. For example when a user would like to remove their data input configuration entirely from the job's configuration.
+*
+
+.. end-22.3.0
+
 .. _exec-21.12.0:
 
 21.12.0 (2021-12-14)

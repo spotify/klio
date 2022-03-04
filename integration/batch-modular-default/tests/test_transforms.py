@@ -50,19 +50,19 @@ def expected_log_messages(klio_msg):
             ),
         },
         {
-            "level": "DEBUG",
-            "message": (
-                "[kmsg-received] value: 1 transform: 'LogKlioMessage.process' "
-                "tags: {'metric_type': 'counter'}"
-            )
-        },
-        {
             "level": "INFO",
             "message": "Received element {}".format(klio_msg.data.element),
         },
         {
             "level": "INFO",
             "message": "Received payload {}".format(klio_msg.data.payload),
+        },
+        {
+            "level": "DEBUG",
+            "message": (
+                "[kmsg-received] value: 1 transform: 'LogKlioMessage.process' "
+                "tags: {'metric_type': 'counter'}"
+            )
         },
         {
             "level": "DEBUG",

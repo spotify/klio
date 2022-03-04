@@ -129,7 +129,6 @@ CLASSIFIERS = [
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS :: MacOS X",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: Implementation :: CPython",
@@ -188,8 +187,8 @@ EXTRAS_REQUIRE["dev"] = (
     # synced right now)
     + ["klio-devtools", "bumpversion", "wheel"]
 )
-# support 3.6, 3.7, & 3.8, matching Beam's support
-PYTHON_REQUIRES = ">=3.6, <3.9"
+# support 3.7, & 3.8, matching Beam's support
+PYTHON_REQUIRES = ">=3.7, <3.9"
 
 setup(
     name=NAME,

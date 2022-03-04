@@ -35,7 +35,7 @@ def _create_publisher(topic):
             "subscribed to this topic? or is there a typo in the configured "
             "topic?".format(topic)
         )
-        logging.error(emoji.emojize(msg, use_aliases=True))
+        logging.error(emoji.emojize(msg, language="alias"))
         raise SystemExit(1)
     except Exception:
         raise
@@ -123,7 +123,7 @@ def publish_messages(
 
     if not config.job_config.events.inputs:
         msg = "No input topics configured for {} :-1:".format(config.job_name)
-        logging.error(emoji.emojize(msg, use_aliases=True))
+        logging.error(emoji.emojize(msg, language="alias"))
         raise SystemExit(1)
 
     logging.info(
@@ -140,10 +140,10 @@ def publish_messages(
 
     if success:
         msg = ":boom: Successfully published {} messages.".format(len(success))
-        logging.info(emoji.emojize(msg, use_aliases=True))
+        logging.info(emoji.emojize(msg, language="alias"))
     if fail:
         msg = (
             ":persevere: Failed to publish the following {} entity "
             "IDs: {}".format(len(fail), ", ".join(fail))
         )
-        logging.warning(emoji.emojize(msg, use_aliases=True))
+        logging.warning(emoji.emojize(msg, language="alias"))

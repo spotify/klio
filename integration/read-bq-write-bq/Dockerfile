@@ -1,4 +1,4 @@
-FROM dataflow.gcr.io/v1beta3/python36-fnapi:2.28.0
+FROM dataflow.gcr.io/v1beta3/python38-fnapi:2.35.0
 
 WORKDIR /usr/src/app
 RUN mkdir -p /usr/src/config

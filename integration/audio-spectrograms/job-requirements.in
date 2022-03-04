@@ -1,4 +1,4 @@
-apache-beam[gcp]==2.33.0
+apache-beam[gcp]==2.35.0
 librosa
 pytest
 # see https://github.com/spotify/klio/pull/210#issuecomment-898969607

@@ -6,7 +6,7 @@ Klio packages releases are mostly automated via GitHub Actions, but can also be 
 Note on Version Scheme
 ----------------------
 
-All Klio packages are released synchronously and use `calendar versioning <https://docs.klio.io/en/stable/release_notes/21.2.0.html#new-versioning-scheme-synchronization>`_, 
+All Klio packages are released synchronously and use `calendar versioning <https://docs.klio.io/en/stable/release_notes/21.2.0.html#new-versioning-scheme-synchronization>`_,
 following the scheme of ``YY.MM.MICRO(suffixN)``:
 
 * no zero-padding for the month (e.g. ``21.2.0`` for February release);
@@ -78,7 +78,7 @@ Locally, run the following commands, replacing the ``<VERSION>`` with the target
     $ git checkout -b release-<VERSION>
     $ git push origin release-<VERSION>
 
-    # if the release branch already exists 
+    # if the release branch already exists
     # and additional code needs to be added to the release
     $ git checkout release-<VERSION>
     $ git merge develop
@@ -97,14 +97,14 @@ Non-developmental Releases
 
 From the ``release-<VERSION>``, create a new local branch.
 
-For instance, if a pre-release is being made, then name the new branch with the ``suffixN`` added. 
+For instance, if a pre-release is being made, then name the new branch with the ``suffixN`` added.
 If we're making a pre-release of ``21.2.0``,  e.g.:
 
 .. code-block:: sh
 
     $ git checkout release-21.2.0  # make sure we start from the correct branch
     $ git checkout -b <USER>/release-21.2.0
- 
+
 Make the changes in the next steps on this branch. This branch will eventually be merged into the ``release-<VERSION>`` branch via pull request.
 
 Developmental Releases
@@ -112,7 +112,7 @@ Developmental Releases
 
 From the ``develop``, create a new local branch.
 
-For instance, if a pre-release is being made, then name the new branch with the ``suffixN`` added. 
+For instance, if a pre-release is being made, then name the new branch with the ``suffixN`` added.
 If we're making a pre-release of ``21.2.0``,  e.g.:
 
 .. code-block:: sh
@@ -120,7 +120,7 @@ If we're making a pre-release of ``21.2.0``,  e.g.:
     $ git checkout develop
     $ git pull --rebase origin develop
     $ git checkout -b <USER>/release-21.2.0.dev1
- 
+
 Make the changes in the next steps on this branch. This branch will eventually be merged into the ``develop`` branch via pull request.
 
 2b. Update Packages' Changelog
@@ -129,7 +129,7 @@ Make the changes in the next steps on this branch. This branch will eventually b
 For each Klio package,
 
 1. Navigate to the package's changelog in ``docs/src/reference/<package>/changelog.rst``.
-2. If making a pre-release: If it doesn't exist already, add the header for the current version plus ``(UNRELEASED)``, e.g. ``21.2.0 (UNRELEASED)`` (see `below <#changelog-format>`_ for an example). 
+2. If making a pre-release: If it doesn't exist already, add the header for the current version plus ``(UNRELEASED)``, e.g. ``21.2.0 (UNRELEASED)`` (see `below <#changelog-format>`_ for an example).
 3. If making a general release: Update the header from ``(UNRELEASED)`` to the package's release date, e.g. ``21.2.0 (2021-01-01)`` (see `below <#changelog-format>`_ for an example).
 4. If there are no changes for a particular package, add the message ``No changes - bump version to sync with <version> release.`` (`an example <https://docs.klio.io/en/stable/reference/core/changelog.html#core-21-9-0>`_)
 5. Add the necessary rST references and labels (see `below <#changelog-format>`_ for what this means). These help us avoid duplicate text for when we prepare the `Release Notes <#d-update-release-notes>`_ and the packages' long description.
@@ -207,7 +207,7 @@ For example, for ``klio-core`` when bumping from ``21.9.0rc1`` to ``21.9.0``:
 **For general and post-releases only. Skip for dev- and pre-releases.**
 
 Create a general release ``git`` tag in the form of ``YY.MM.build`` (no ``release-`` or ``<pkg>-`` prefixes).
-This tells Read The Docs (where `docs.klio.io <https://docs.klio.io>`_ is hosted) to create a new version of the documentation based off of this commit. 
+This tells Read The Docs (where `docs.klio.io <https://docs.klio.io>`_ is hosted) to create a new version of the documentation based off of this commit.
 This allows users to be able to navigate to the documentation for their specific Klio version.
 
 .. code-block:: sh
@@ -340,7 +340,7 @@ Here's an example `pull request to the master branch <https://github.com/spotify
 Once everything is merged above, we're ready to release the packages!
 
 1. Navigate to the `releasing GitHub workflow <https://github.com/spotify/klio/actions/workflows/release.yml>`_ (titled "Build & Release to PyPI").
-2. In the upper-ish right corner, navigate to the drop down called "Run workflow". 
+2. In the upper-ish right corner, navigate to the drop down called "Run workflow".
 3. Click on "Run workflow" and select the specific ``release-*`` branch. If this is a developmental release, then select the ``develop`` branch.
 4. Once the release branch is selected, hit the green button for "Run workflow".
 
@@ -358,7 +358,7 @@ It will first do the above steps for ``klio-core`` (as all other Klio packages d
 Once done, then ``klio``, ``klio-cli``, and ``klio-audio`` is done simultaneously.
 After that, ``klio-exec`` and ``klio-devtools`` (which depend on ``klio`` and ``klio-cli`` respectively) is built & uploaded.
 
-If any step fails, then the whole workflow fails. 
+If any step fails, then the whole workflow fails.
 Refer to the workflow's logs to debug any failures.
 
 Manual Releasing
@@ -438,38 +438,38 @@ Sanity Check: Test Installation Locally
 Create two virtualenvs to test installation.
 The virtualenvs are needed to test both the source (``.tar.gz``) and the wheel (``.whl``) distributions.
 
-For **extra** sanity checks, create a virtualenv per Python version supported for both source and wheel testing (e.g. ``36-sdist``, ``36-whl``, ``37-sdist``, ``37-whl``, and so on).
+For **extra** sanity checks, create a virtualenv per Python version supported for both source and wheel testing (e.g. ``37-sdist``, ``37-whl``, ``38-sdist``, ``38-whl``, and so on).
 
-**Example workflow with python 3.6 testing the source distribution:**
+**Example workflow with python 3.7 testing the source distribution:**
 
 .. code-block:: sh
 
     # deactivate the releasing-specific virtualenv
     (klio-release) $ deactivate  # or source deactivate
 
-    # create virtualenv your standard way, with $PY36_VERSION referring to the
-    # full version of Python available,  e.g. 3.6.11:
-    $ pyenv virtualenv $PY36_VERSION 36-sdist
-    $ pyenv activate 36-sdist
-    (36-sdist) $
+    # create virtualenv your standard way, with $PY37_VERSION referring to the
+    # full version of Python available,  e.g. 3.7.7:
+    $ pyenv virtualenv $PY37_VERSION 37-sdist
+    $ pyenv activate 37-sdist
+    (37-sdist) $
 
     # be sure to be in a *different* directory than the repo to avoid
     # misleading successful installs & imports
-    (36-sdist) $ cd ~
+    (37-sdist) $ cd ~
 
     # install the just-built relevant distribution
-    (36-sdist) $ pip install path/to/$KLIO_PKG_DIR/dist/$KLIO_PACKAGE-1.2.3.tar.gz
+    (37-sdist) $ pip install path/to/$KLIO_PKG_DIR/dist/$KLIO_PACKAGE-1.2.3.tar.gz
 
     # test the package is correctly installed
-    (36-sdist) $ python -c 'import $KLIO_PACKAGE; print($KLIO_PACKAGE.__version__)'
+    (37-sdist) $ python -c 'import $KLIO_PACKAGE; print($KLIO_PACKAGE.__version__)'
     '1.2.3'
 
 If successful, you can deactivate and delete the virtualenv:
 
 .. code-block:: sh
 
-    (36-sdist) $ deactivate  # or source deactivate
-    $ pyenv virtualenv delete 36-sdist
+    (37-sdist) $ deactivate  # or source deactivate
+    $ pyenv virtualenv delete 37-sdist
 
 **Repeat** for the remaining test virtualenvs.
 
@@ -691,11 +691,11 @@ This also gives you the "verified" tag next to your name in GitHub.
 Changelog Format
 ~~~~~~~~~~~~~~~~
 
-**Note:** Below is the format for writing ``docs/src/reference/<package>/changelog.rst`` files. 
+**Note:** Below is the format for writing ``docs/src/reference/<package>/changelog.rst`` files.
 When writing an entry for a changelog as you're making a particular change, see the `Changelog section in CONTRIBUTING.rst <https://github.com/spotify/klio/blob/master/CONTRIBUTING.rst#changelog>`_.
 
 
-1. Header 
+1. Header
 ^^^^^^^^^
 
 A release's header may already exist if changelog entries were added as new changes were committed.
@@ -731,8 +731,8 @@ Releases are listed in reverse chronological order (latest at the top).
 
 Hopefully, these entries have already been added when the changes were originally made.
 
-Each changelog entry should describe the change with the users as the audience. 
-For example, "Dropped support for Python 3.5", or "Added support for configuration templating." 
+Each changelog entry should describe the change with the users as the audience.
+For example, "Dropped support for Python 3.5", or "Added support for configuration templating."
 If the change doesn't affect the user, then it should probably not have an entry.
 
 
@@ -790,7 +790,7 @@ Example:
 3. rST References
 ^^^^^^^^^^^^^^^^^
 
-Each release section needs a couple of rST references. 
+Each release section needs a couple of rST references.
 
 **Why?** This enables other areas of our documentation to refer to or pull in content so we don't have to repeat ourselves.
 See the `aside <#aside-where-are-these-references-used>`_ below for more information.
@@ -798,7 +798,7 @@ See the `aside <#aside-where-are-these-references-used>`_ below for more informa
 1. Reference to Header
 **********************
 
-Before each `release header <#header>`_, a rST reference is needed, using the format ``.. _<pkg>-YY.MM.build:``, followed by an empty newline. 
+Before each `release header <#header>`_, a rST reference is needed, using the format ``.. _<pkg>-YY.MM.build:``, followed by an empty newline.
 For example, for the ``klio-core`` package:
 
 .. code-block:: rst
@@ -815,8 +815,8 @@ For example, for the ``klio-core`` package:
 2. Start & End Reference Labels
 *******************************
 
-Two tags are needed to surround the content of the changelog for each release. 
-The first one marks the start of the content, is in the format of ``.. start-YY.MM.build``, and is placed after the `release header <#header>`_. 
+Two tags are needed to surround the content of the changelog for each release.
+The first one marks the start of the content, is in the format of ``.. start-YY.MM.build``, and is placed after the `release header <#header>`_.
 The second one marks the end of the content, is in the format of ``.. end-YY.MM.build``, and is placed after the last changelog entry of the release (before the `reference to the header <#reference-to-header>`_ of the previous release).
 
 Example:

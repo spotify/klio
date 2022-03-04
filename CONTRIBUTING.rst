@@ -4,7 +4,7 @@ Contributing to the ``klio`` ecosystem
 Requirements
 ------------
 
-* Python 3.6, 3.7, and 3.8 (suggestion: use `pyenv <https://github.com/pyenv/pyenv>`_ to install required versions)
+* Python 3.7, and 3.8 (suggestion: use `pyenv <https://github.com/pyenv/pyenv>`_ to install required versions)
 * `tox <https://tox.readthedocs.io/en/latest/>`_ (suggestion: use `pipx <https://pypi.org/project/pipx/>`_ to install ``tox``)
 * `protoc <https://github.com/protocolbuffers/protobuf/>`_
 

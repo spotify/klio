@@ -40,11 +40,11 @@ class build(_build):
 # command will spawn a child process.
 
 APT_COMMANDS = [
-#     # Example of defining OS-level depedencies
-#     ["apt-get", "update"],
-#     # Debian-packaged dependencies (or otherwise OS-level requirements)
-#     # `--assume-yes` to avoid interactive confirmation
-#     ["apt-get", "install", "--assume-yes", "<MY_DEP_1>", "<MY_DEP_2>"],
+    #     # Example of defining OS-level dependencies
+    #     ["apt-get", "update"],
+    #     # Debian-packaged dependencies (or otherwise OS-level requirements)
+    #     # `--assume-yes` to avoid interactive confirmation
+    #     ["apt-get", "install", "--assume-yes", "<MY_DEP_1>", "<MY_DEP_2>"],
 ]
 
 

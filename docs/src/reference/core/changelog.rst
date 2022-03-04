@@ -1,6 +1,17 @@
 Changelog
 =========
 
+.. _core-22.3.0:
+
+22.3.0 (2022-03-04)
+--------------------
+
+.. start-22.3.0
+
+No changes - bump version to sync with ``22.3.0`` release.
+
+.. end-22.3.0
+
 .. _core-21.12.0:
 
 21.12.0 (2021-12-14)

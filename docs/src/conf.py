@@ -156,6 +156,7 @@ nitpick_ignore = [
     # -->
     # <-- missing docstrings in Beam of objects these docs refer to
     ("py:class", "apache_beam.coders.coders.ToBytesCoder"),
+    ("py:func", "librosa.display.waveplot"),
     # -->
 ]
 

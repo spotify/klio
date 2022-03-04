@@ -310,7 +310,7 @@ The instructions below is in case the workflow is failing, or manual deployment 
 .. admonition:: FYI
     :class: tip
 
-    The microsite is deployed to the ``gh-pages`` branch, created as an `orphaned branch <https://git-scm.com/docs/git-checkout#Documentation/git-checkout.txt---orphanltnewbranchgt>`_ from ``master``.
+    The microsite is deployed to the ``gh-pages`` branch, created as an `orphaned branch <https://git-scm.com/docs/git-checkout#Documentation/git-checkout.txt---orphanltnew-branchgt>`_ from ``master``.
     The contents of the ``microsite/`` directory on ``master`` are mirrored in the root directory in ``gh-pages``.
 
 Manual Deployment

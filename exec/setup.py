@@ -159,9 +159,10 @@ INSTALL_REQUIRES = [
     "pyyaml",
     # 2.22 added DirectRunner support for `DoFn.setup`
     "apache-beam[gcp]>2.21.0",
-    # beam[gcp] limits this dep as well, but there could be a possibility
-    # that unsupported versions are installed (i.e. via tox)
-    "google-cloud-pubsub<2",
+    # Note: apache-beam v2.36.0 updated pubsub dep version to >=2.1.0, <3;
+    # Before 2.36.0, it was <2. Leaving no version spec here so folks can
+    # install the needed pubsub version depending on their beam version
+    "google-cloud-pubsub",
     "setuptools",  # for loading entry points w pkg_resources
     "py",
     "pytest",

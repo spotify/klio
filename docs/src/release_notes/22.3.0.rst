@@ -1,0 +1,45 @@
+22.3.0
+======
+
+Improved Configuration Flexibility
+----------------------------------
+Users no longer need to define data inputs in their `klio-job.yaml`.
+
+Changes
+-------
+
+:ref:`klio-cli <cli-22.3.0>`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. include:: /reference/cli/changelog.rst
+    :start-after: start-22.3.0
+    :end-before: end-22.3.0
+
+:ref:`klio <lib-21.12.0>`
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. include:: /reference/lib/changelog.rst
+    :start-after: start-22.3.0
+    :end-before: end-22.3.0
+
+
+:ref:`klio-core <core-22.3.0>`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. include:: /reference/core/changelog.rst
+    :start-after: start-22.3.0
+    :end-before: end-22.3.0
+
+:ref:`klio-exec <exec-22.3.0>`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. include:: /reference/executor/changelog.rst
+    :start-after: start-22.3.0
+    :end-before: end-22.3.0
+
+:ref:`klio-devtools <devtools-22.3.0>`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. include:: /reference/devtools/changelog.rst
+    :start-after: start-22.3.0
+    :end-before: end-22.3.0

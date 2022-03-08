@@ -10,6 +10,8 @@ Changelog
 
 No changes - bump version to sync with ``22.3.0`` release.
 
+.. end-22.3.0
+
 0.1.1 (2020-12-03)
 ------------------
 

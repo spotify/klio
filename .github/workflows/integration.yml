@@ -50,7 +50,7 @@ jobs:
           IT_GCP_CREDS_KEY: ${{ secrets.IT_GCP_CREDS_KEY }}
       - uses: "actions/setup-python@v1"
         with:
-          python-version: "3.6"
+          python-version: "3.7"
       - name: "Install dependencies"
         run: |
           set -xe
@@ -58,7 +58,7 @@ jobs:
           python -m site
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install --upgrade virtualenv tox tox-gh-actions
-      - name: "Run Integration Test ${{ matrix.test-dir }} with python 3.6"
+      - name: "Run Integration Test ${{ matrix.test-dir }} with python 3.7"
         run: "KLIO_TEST_DIR=${{ matrix.test-dir }} python -m tox -c tox.ini"
       - name: "Assert Apache License Headers & Copyright"
         run: |

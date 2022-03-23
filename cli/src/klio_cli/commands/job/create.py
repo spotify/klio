@@ -36,7 +36,7 @@ TOPIC_REGEX = re.compile(
     r"^projects/(?P<project>[a-z0-9-]{6,30})/"
     r"topics/(?P<topic>[a-zA-Z0-9-_.~+%]{3,255})"
 )
-VALID_BEAM_PY_VERSIONS = ["3.6", "3.7", "3.8"]
+VALID_BEAM_PY_VERSIONS = ["3.7", "3.8"]
 
 DEFAULTS = {
     "region": "europe-west1",
@@ -46,7 +46,7 @@ DEFAULTS = {
     "autoscaling_algorithm": "NONE",
     "disk_size_gb": 32,
     "worker_machine_type": "n1-standard-2",
-    "python_version": "3.6",
+    "python_version": "3.7",
     "use_fnapi": False,
     "create_resources": False,
     "job_type": "streaming",
@@ -184,12 +184,21 @@ class CreateJob(object):
             )
             raise click.BadParameter(msg)
 
+        if python_version.startswith("3.6") or python_version.startswith("36"):
+            msg = (
+                "Klio no longer supports Python 3.6. "
+                "Supported versions: {}".format(
+                    ", ".join(VALID_BEAM_PY_VERSIONS)
+                )
+            )
+            raise click.BadParameter(msg)
+
         invalid_err_msg = (
             "Invalid Python version given: '{}'. Valid Python versions: "
             "{}".format(python_version, ", ".join(VALID_BEAM_PY_VERSIONS))
         )
 
-        # valid examples: 36, 3.6, 3.6.6
+        # valid examples: 37, 3.7, 3.7.7
         if len(python_version) < 2 or len(python_version) > 5:
             raise click.BadParameter(invalid_err_msg)
 
@@ -778,4 +787,4 @@ class CreateJob(object):
         self._create_readme(env, context, output_dir)
 
         msg = "Klio job {} created successfully! :tada:".format(job_name)
-        logging.info(emoji.emojize(msg, use_aliases=True))
+        logging.info(emoji.emojize(msg, language="alias"))

@@ -7,7 +7,7 @@ Requirements
 ------------
 
 * `git`_
-* Python version 3.6, 3.7, or 3.8 (recommended installation via `pyenv`_)
+* Python version 3.7, or 3.8 (recommended installation via `pyenv`_)
 * `Docker`_
 * Google Cloud SDK (:ref:`setup instructions below <gcloud-setup>`)
 * `pipx`_ (suggested) or `virtualenv`_ (`pyenv-virtualenv`_ when using `pyenv`_).

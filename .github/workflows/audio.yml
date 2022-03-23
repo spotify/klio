@@ -31,7 +31,7 @@ jobs:
     #   USING_COVERAGE: '3.7'
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8"]
+        python-version: ["3.7", "3.8"]
       # do not cancel other jobs in matrix if one fails
       fail-fast: false
     steps:

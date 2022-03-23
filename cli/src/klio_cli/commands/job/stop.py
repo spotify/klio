@@ -164,4 +164,4 @@ class StopJob(object):
         self._watch_job_state(current_running_job)
         verb = "cancelled" if strategy == "cancel" else "drained"
         msg = "Successfully {} job '{}' :smile_cat:".format(verb, job_name)
-        logging.info(emoji.emojize(msg, use_aliases=True))
+        logging.info(emoji.emojize(msg, language="alias"))

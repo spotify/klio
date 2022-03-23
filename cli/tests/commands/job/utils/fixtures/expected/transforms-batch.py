@@ -35,7 +35,9 @@ class HelloKlio(beam.DoFn):
         element = data.element.decode("utf-8")
         self._klio.logger.info(
             "Received '%s' from file '%s'"
-            % (element, self._klio.config.job_config.events.inputs[0].file_pattern)
+            % (
+                element,
+                self._klio.config.job_config.events.inputs[0].file_pattern,
+            )
         )
         yield data
-

@@ -1,5 +1,5 @@
 ## -*- docker-image-name: "gcr.io/foo/bar" -*-
-FROM apache/beam_python3.6_sdk:2.26.0
+FROM apache/beam_python3.7_sdk:2.35.0
 
 WORKDIR /usr/src/app
 

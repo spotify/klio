@@ -55,6 +55,7 @@ def job_config_dict():
         },
         "more": "config",
         "that": {"the": "user"},
+        "wait_for_pipeline_running": False,
         "might": ["include"],
         "blocking": False,
     }
@@ -103,6 +104,7 @@ def final_job_config_dict():
         },
         "more": "config",
         "that": {"the": "user"},
+        "wait_for_pipeline_running": False,
         "might": ["include"],
         "blocking": False,
         "allow_non_klio_messages": False,

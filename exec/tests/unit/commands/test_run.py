@@ -644,7 +644,9 @@ def test_get_pipeline_options(
 )
 @pytest.mark.parametrize("blocking", (True, False))
 @pytest.mark.parametrize("streaming", (True, False))
+@pytest.mark.parametrize("wait_until_pipeline_running", (True, False))
 def test_run_pipeline(
+    wait_until_pipeline_running,
     streaming,
     blocking,
     direct_runner,
@@ -659,6 +661,9 @@ def test_run_pipeline(
         direct_runner=direct_runner, update=True, blocking=blocking
     )
 
+    mock_wait_until_pipeline_running = mocker.patch.object(
+        run.KlioPipeline, "wait_for_pipeline_running", autospec=True
+    )
     mock_verify_packaging = mocker.Mock()
     mock_get_run_callable = mocker.Mock()
     mock_run_callable = mocker.Mock()
@@ -711,6 +716,13 @@ def test_run_pipeline(
         config.job_config.events.inputs = [mock_input]
         config.job_config.events.outputs = [mock_output]
 
+    if streaming:
+        config.job_config.wait_for_pipeline_running = (
+            wait_until_pipeline_running
+        )
+    else:
+        config.job_config.wait_for_pipeline_running = False
+
     if run_error:
         mock_pipeline.return_value.run.side_effect = [
             run_error,
@@ -750,6 +762,17 @@ def test_run_pipeline(
     if direct_runner or blocking:
         result = mock_pipeline.return_value.run.return_value
         result.wait_until_finish.assert_called_once_with()
+
+    if (
+        streaming
+        and not blocking
+        and wait_until_pipeline_running
+        and not direct_runner
+        and config.pipeline_options.runner != "DirectGKERunner"
+    ):
+        mock_wait_until_pipeline_running.assert_called_once()
+    else:
+        mock_wait_until_pipeline_running.assert_not_called()
 
 
 @pytest.mark.parametrize(

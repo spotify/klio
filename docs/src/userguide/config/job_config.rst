@@ -19,6 +19,14 @@ Klio-specific and :ref:`user-specified custom <custom-conf>` job configuration.
 
     **Default**: ``False``
 
+.. option:: job_config.wait_for_pipeline_running BOOL
+
+    Wait for Streaming job to reach running state and then exit. klio pools every
+    minute for 10 minutes max. If The pipeline has not reached running status after
+    10 minutes, klio fails. If the pipeline reaches a terminal non-running state,
+    klio logs an error and exits.
+
+    **Default**: ``False``
 
 .. _custom-conf:
 .. option:: job_config.<additional_key> ANY
@@ -273,7 +281,7 @@ client depends on the runner:
 
 .. caution::
 
-    When running on Dataflow, in order for the Native metrics client to be able to report metrics to Stackdriver, 
+    When running on Dataflow, in order for the Native metrics client to be able to report metrics to Stackdriver,
     the following ``experiment`` must be added to ``klio-job.yaml``:
 
     .. code-block:: yaml

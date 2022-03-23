@@ -616,7 +616,7 @@ class KlioPipeline(object):
                 self.runtime_conf = self.runtime_conf._replace(update=None)
                 return self.run()
 
-            logging.error("Error running pipeline: %s" % e)
+            logging.error(f"Error running pipeline: {e}")
             raise SystemExit(1)
 
         # TODO: update me to `var.KlioRunner.DIRECT_GKE_RUNNER` once

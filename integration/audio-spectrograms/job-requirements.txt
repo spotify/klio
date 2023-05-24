@@ -217,7 +217,7 @@ pytz==2021.3
     #   apache-beam
     #   google-api-core
     #   google-cloud-dlp
-requests==2.26.0
+requests==2.31.0
     # via
     #   apache-beam
     #   google-api-core

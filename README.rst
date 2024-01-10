@@ -13,10 +13,6 @@
     :target: https://docs.klio.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. image:: https://slackin.spotify.com/badge.svg
-   :target: https://slackin.spotify.com
-   :alt: Join the #klio channel in Spotify FOSS Slack
-
 | *Latest Versions of Klio Packages:*
 
 .. image:: https://img.shields.io/pypi/v/klio-cli?color=%2300aa55&label=klio-cli
@@ -75,7 +71,6 @@ Resources
 
 * Have a look at our `complete documentation <https://docs.klio.io/en/latest/index.html>`_.
 * Check out our `contributors' guide <https://docs.klio.io/en/latest/contributors.html>`_.
-* Join the ``#klio`` channel in the `Spotify FOSS Slack organization <https://slackin.spotify.com>`_.
 * Read up on some of our `FAQs <https://docs.klio.io/en/latest/faqs/index.html>`_.
 * Review our `Code of Conduct <https://github.com/spotify/klio/blob/master/CODE_OF_CONDUCT.rst>`_ - this is how we roll.
 

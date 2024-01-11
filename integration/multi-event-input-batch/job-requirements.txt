@@ -175,7 +175,7 @@ pytz==2021.3
     # via
     #   apache-beam
     #   google-api-core
-requests==2.26.0
+requests==2.31.0
     # via
     #   apache-beam
     #   google-api-core

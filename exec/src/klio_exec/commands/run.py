@@ -455,28 +455,32 @@ class KlioPipeline(object):
 
     # TODO this can prob go away if/when we make event_inputs a
     # dictionary rather than a list of dicts (@lynn)
-    def _generate_input_conf_names(self):
+    def _validate_input_conf_names(self):
         ev_inputs = self.config.job_config.events.inputs
-        input_dict = {}
-        for index, ev in enumerate(ev_inputs):
-            name = "{}{}".format(ev.name, index)
-            input_dict[name] = ev
-        return input_dict
+        ev_names = [input.name for input in ev_inputs]
+        # Enforce no duplicate event input names
+        # We could beef up the error message by returning the duplicates
+        # but this will go away when we make event_inputs a dict.
+        return len(ev_names) == len(set(ev_names))
 
     def _generate_pcoll_per_input(self, pipeline):
-        inputs = self._generate_input_conf_names()
+        if not self._validate_input_conf_names():
+            msg = "Duplicate event input names found."
+            logging.error(msg)
+            raise SystemExit(1)
+        inputs = self.config.job_config.events.inputs
         MultiInputPCollTuple = collections.namedtuple(
-            "MultiInputPCollTuple", list(inputs.keys())
+            "MultiInputPCollTuple", [input.name for input in inputs]
         )
         input_name_to_input_pcolls = {}
         multi_to_pass_thru = []
-        for input_name, input_conf in inputs.items():
+        for input_conf in inputs:
             input_to_process, input_to_pass_thru = self._generate_pcoll(
-                pipeline, input_conf, label_prefix=input_name
+                pipeline, input_conf, label_prefix=input_conf.name
             )
             if input_to_pass_thru:
                 multi_to_pass_thru.append(input_to_pass_thru)
-            input_name_to_input_pcolls[input_name] = input_to_process
+            input_name_to_input_pcolls[input_conf.name] = input_to_process
 
         to_process = MultiInputPCollTuple(**input_name_to_input_pcolls)
         to_pass_thru = (
@@ -496,7 +500,7 @@ class KlioPipeline(object):
         if label_prefix:
             label = "[{}] {}".format(label_prefix, label)
 
-        transform_cls_in = self._io_mapper.input[input_config.name]
+        transform_cls_in = self._io_mapper.input[input_config.type_name]
         in_pcol = pipeline | label >> transform_cls_in(
             **input_config.to_io_kwargs()
         )
@@ -545,7 +549,9 @@ class KlioPipeline(object):
         if self._has_event_outputs:
             output_config = self.config.job_config.events.outputs[0]
             if not output_config.skip_klio_write:
-                transform_cls_out = self._io_mapper.output[output_config.name]
+                transform_cls_out = self._io_mapper.output[
+                    output_config.type_name
+                ]
                 to_output = out_pcol
                 if to_pass_thru:
                     to_output_tuple = (out_pcol, to_pass_thru)

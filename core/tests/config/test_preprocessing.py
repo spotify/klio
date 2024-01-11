@@ -223,53 +223,68 @@ def test_apply_templates(
         assert expected == json.loads(new_dict)
 
 
-def test_transform_io(kcp):
-    config = {
-        "job_config": {
-            "events": {
-                "inputs": [
-                    {"type": "bq", "key": "value"},
-                    {"type": "bq", "key": "value2"},
-                    {"type": "gcs", "gcskey": "gcsvalue"},
-                ],
-                "outputs": [
-                    {"type": "bq", "key": "value", "name": "mybq"},
-                    {"type": "bq", "key": "value2"},
-                ],
+@pytest.mark.parametrize(
+    "config,expected",
+    (
+        # No overrides given - no changes in returned dict
+        (
+            {
+                "job_config": {
+                    "events": {
+                        "inputs": [
+                            {"type": "bq", "key": "value"},
+                            {"type": "bq", "key": "value2"},
+                            {"type": "gcs", "gcskey": "gcsvalue"},
+                        ],
+                        "outputs": [
+                            {"type": "bq", "key": "value", "name": "mybq"},
+                            {"type": "bq", "key": "value2"},
+                        ],
+                    },
+                    "data": {
+                        "inputs": [],
+                        "outputs": [
+                            {"type": "bq", "key": "value", "name": "mybq"},
+                            {"type": "bq", "key": "value2"},
+                        ],
+                    },
+                }
             },
-            "data": {
-                "inputs": [],
-                "outputs": [
-                    {"type": "bq", "key": "value", "name": "mybq"},
-                    {"type": "bq", "key": "value2"},
-                ],
+            {
+                "job_config": {
+                    "events": {
+                        "inputs": {
+                            0: {"type": "bq", "key": "value"},
+                            1: {"type": "bq", "key": "value2"},
+                            2: {"type": "gcs", "gcskey": "gcsvalue"},
+                        },
+                        "outputs": {
+                            "mybq": {
+                                "type": "bq",
+                                "key": "value",
+                                "name": "mybq",
+                            },
+                            1: {"type": "bq", "key": "value2"},
+                        },
+                    },
+                    "data": {
+                        "inputs": {},
+                        "outputs": {
+                            "mybq": {
+                                "type": "bq",
+                                "key": "value",
+                                "name": "mybq",
+                            },
+                            1: {"type": "bq", "key": "value2"},
+                        },
+                    },
+                }
             },
-        }
-    }
-    expected = {
-        "job_config": {
-            "events": {
-                "inputs": {
-                    "bq0": {"type": "bq", "key": "value"},
-                    "bq1": {"type": "bq", "key": "value2"},
-                    "gcs0": {"type": "gcs", "gcskey": "gcsvalue"},
-                },
-                "outputs": {
-                    "mybq": {"type": "bq", "key": "value"},
-                    "bq0": {"type": "bq", "key": "value2"},
-                },
-            },
-            "data": {
-                "inputs": {},
-                "outputs": {
-                    "mybq": {"type": "bq", "key": "value"},
-                    "bq0": {"type": "bq", "key": "value2"},
-                },
-            },
-        }
-    }
+        ),
+    ),
+)
+def test_transform_io(kcp, config, expected):
     actual = kcp._transform_io_sections(config)
-
     assert actual == expected
 
 

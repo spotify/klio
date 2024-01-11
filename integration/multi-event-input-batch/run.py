@@ -58,8 +58,8 @@ def combined_func(ctx, item):
 
 
 def run(pcolls, config):
-    first = pcolls.file0 | "process first" >> beam.Map(first_func)
-    second = pcolls.file1 | "process second" >> beam.Map(second_func)
+    first = pcolls.first_input | "process first" >> beam.Map(first_func)
+    second = pcolls.second_input | "process second" >> beam.Map(second_func)
     combined = (first, second) | beam.Flatten()
     return combined | "process combined" >> beam.Map(combined_func)
 

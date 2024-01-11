@@ -13,7 +13,6 @@
 # limitations under the License.
 #
 
-import collections
 import string
 
 import glom
@@ -46,7 +45,7 @@ class KlioConfigPreprocessor(object):
         """Transform lists of dicts into a nested dict of dicts, where the keys
         for the top-level dict come from the `name` field in the nested dict.
         If `name` is not present, a name is auto-generated based on the index
-        of the I/O and it's type.
+        of the I/O.
 
         example:
 
@@ -77,20 +76,12 @@ class KlioConfigPreprocessor(object):
         }
         """
 
-        type_counters = collections.defaultdict(int)
         io_dict = {}
-        for conf in io_subsection_list:
+        for count, conf in enumerate(io_subsection_list):
             if "name" in conf:
                 name = conf["name"]
-                # TODO: right now "name" isn't supported in IOConfig (conflicts
-                # with existing "name" attribute), once that's fixed we
-                # shouldn't drop name here
-                conf.pop("name")
             else:
-                type_name = conf.get("type", "unknown")
-                type_id = type_counters[type_name]
-                type_counters[type_name] += 1
-                name = "{}{}".format(type_name, type_id)
+                name = count
 
             io_dict[name] = conf
 

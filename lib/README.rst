@@ -13,5 +13,5 @@ The ``klio`` Library
 
 The library for implementing Klio-ified Apache Beam transforms with `decorators <https://docs.klio.io/en/latest/userguide/pipeline/utilities.html>`_, `helper transforms <https://docs.klio.io/en/latest/userguide/pipeline/transforms.html>`_, and leverage Klio's `message-handling logic <https://docs.klio.io/en/latest/userguide/pipeline/message.html>`_.
 
-As the ``klio`` library is **not** meant to be installed directly, check out the `installation guide <https://docs.klio.io/en/latest/quickstart/installation.html>`_ for how to setup installation.
+As the ``klio`` library is **not** meant to be installed directly, check out the `installation guide <https://docs.klio.io/en/latest/userguide/quickstart/installation.html>`_ for how to setup installation.
 There is also the `user guide <https://docs.klio.io/en/latest/userguide/index.html>`_ and the `API documentation <https://docs.klio.io/en/latest/reference/lib/index.html>`_ for more information.

@@ -23,7 +23,7 @@ To make use of ``klio-audio``, add ``klio[audio]`` in your ``job-requirements.tx
 .. start-klio-audio-install
 
 As the ``klio-audio`` library is **not** meant to be installed directly, check out the `installation
-guide <https://docs.klio.io/en/latest/quickstart/installation.html>`_ for how to setup
+guide <https://docs.klio.io/en/latest/userguide/quickstart/installation.html>`_ for how to setup
 installation.
 There is also the `user guide <https://docs.klio.io/en/latest/userguide/index.html>`_ and the `API
 documentation <https://docs.klio.io/en/latest/reference/audio/index.html>`_ for more information.
